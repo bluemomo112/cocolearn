@@ -2,47 +2,249 @@
 
 import { useState, useRef } from 'react'
 import Image from 'next/image'
-import {
-  heroTools,
-  abilityPacks,
-  cases,
-  resourceTypes,
-  resourceSubjects,
-  type Resource
-} from '@/data/mockData'
+
+// 名师课堂数据
+const masterClassrooms = [
+  {
+    id: '1',
+    title: '《湿地生态系统》跨学科探究课',
+    teacher: '张老师',
+    school: '实验中学',
+    subject: '生物+地理',
+    grade: '初中',
+    duration: 45,
+    views: 12458,
+    rating: 4.9,
+    tags: ['跨学科融合', '项目式学习', '生态探究'],
+    thumbnail: 'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=400&h=240&fit=crop',
+    highlights: [
+      { time: '08:30', type: 'interaction', title: '精彩师生问答' },
+      { time: '15:20', type: 'technology', title: '数据可视化展示' },
+      { time: '28:45', type: 'collaboration', title: '小组讨论高潮' }
+    ]
+  },
+  {
+    id: '2',
+    title: '《丝绸之路的科学与文化》综合课',
+    teacher: '李老师',
+    school: '育才中学',
+    subject: '历史+化学',
+    grade: '高中',
+    duration: 50,
+    views: 8924,
+    rating: 4.8,
+    tags: ['文化融合', '化学原理', '跨学科思维'],
+    thumbnail: 'https://images.unsplash.com/photo-1548013146-72479768bada?w=400&h=240&fit=crop',
+    highlights: [
+      { time: '05:15', type: 'emotion', title: '情境导入精彩' },
+      { time: '18:30', type: 'reading', title: '史料分析指导' },
+      { time: '32:10', type: 'thinking', title: '深度概念联结' }
+    ]
+  },
+  {
+    id: '3',
+    title: '《音乐中的数学奥秘》融合课',
+    teacher: '王老师',
+    school: '艺术学校',
+    subject: '数学+音乐',
+    grade: '初中',
+    duration: 40,
+    views: 15632,
+    rating: 4.9,
+    tags: ['艺术融合', '数学思维', '动手实践'],
+    thumbnail: 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=400&h=240&fit=crop',
+    highlights: [
+      { time: '12:45', type: 'experiment', title: '乐器实验演示' },
+      { time: '25:30', type: 'discovery', title: '学生发现规律' },
+      { time: '38:15', type: 'application', title: '创作应用拓展' }
+    ]
+  }
+]
+
+// 教师成长计划问题库
+const growthProblems = [
+  {
+    id: 'integration',
+    problem: '跨学科融合困难',
+    description: '不知道如何将不同学科知识有效整合',
+    solutions: [
+      { type: 'video', title: 'C-POTE模型实战讲解', duration: '15分钟', views: 4156 },
+      { type: 'template', title: '跨学科教案设计模板库', downloads: 2580 },
+      { type: 'guide', title: '大概念提取实用手册', pages: 24 }
+    ],
+    caseStudies: [
+      { title: '从单一学科到跨学科的转变之路', teacher: '张老师' },
+      { title: '如何找到学科间的自然连接点', teacher: '李老师' }
+    ]
+  },
+  {
+    id: 'engagement',
+    problem: '学生参与度低',
+    description: '课堂上学生不积极参与，缺乏主动性',
+    solutions: [
+      { type: 'video', title: '5个激发参与度的课堂策略', duration: '8分钟', views: 3240 },
+      { type: 'template', title: '小组角色分工表模板', downloads: 1580 },
+      { type: 'strategy', title: '课堂互动机制设计指南', pages: 12 }
+    ],
+    caseStudies: [
+      { title: '从沉闷到活跃：一堂跨学科课的转变', teacher: '王老师' },
+      { title: '让每个学生都有话说的课堂设计', teacher: '赵老师' }
+    ]
+  },
+  {
+    id: 'assessment',
+    problem: '评价方式单一',
+    description: '不知道如何设计跨学科的多元评价',
+    solutions: [
+      { type: 'video', title: '跨学科评价量表设计', duration: '12分钟', views: 2890 },
+      { type: 'rubric', title: '多维度评价量表集', count: 18 },
+      { type: 'checklist', title: '形成性评价自检清单', items: 20 }
+    ],
+    caseStudies: [
+      { title: '项目式学习的评价实践', teacher: '陈老师' },
+      { title: '如何评价学生的综合能力', teacher: '刘老师' }
+    ]
+  }
+]
+
+// 能力成长资源包数据
+const capabilityResources = {
+  teaching_design: {
+    name: '跨学科教学设计',
+    level: 'intermediate',
+    progress: 75,
+    resources: [
+      { type: 'template', title: 'C-POTE教案设计模板库', count: 25, featured: true },
+      { type: 'checklist', title: '教学目标设计自检表', items: 15 },
+      { type: 'video', title: '名师教案设计思路解析', duration: '20分钟' }
+    ]
+  },
+  concept_extraction: {
+    name: '大概念提取',
+    level: 'beginner',
+    progress: 45,
+    resources: [
+      { type: 'video', title: '大概念提取方法讲解', count: 12, featured: true },
+      { type: 'guide', title: '学科概念图谱参考', count: 30 },
+      { type: 'tool', title: '概念关联分析工具', rating: 4.8 }
+    ]
+  },
+  classroom_interaction: {
+    name: '课堂互动技巧',
+    level: 'advanced',
+    progress: 88,
+    resources: [
+      { type: 'course', title: '高阶提问技巧实践', hours: 8, featured: true },
+      { type: 'game', title: '课堂互动游戏库', count: 45 },
+      { type: 'community', title: '教学互动创新社群', members: 1240 }
+    ]
+  },
+  assessment: {
+    name: '多元评价策略',
+    level: 'intermediate',
+    progress: 60,
+    resources: [
+      { type: 'rubric', title: '跨学科评价量表集', count: 18 },
+      { type: 'video', title: '有效反馈的艺术', duration: '15分钟', featured: true },
+      { type: 'system', title: '数字化评价系统试用', period: '30天' }
+    ]
+  }
+}
+
+// 情境模拟数据
+const simulationScenarios = [
+  {
+    id: 'concept_challenge',
+    title: '概念联结困难',
+    scenario: '学生问："老师，这两个学科的知识有什么关系？"',
+    difficulty: 'medium',
+    category: 'concept_integration',
+    responses: [
+      {
+        type: 'analogy_method',
+        title: '类比联结法',
+        content: '"就像河流连接不同的城市一样，这两个概念都在描述..."',
+        effectiveness: 85,
+        usage_rate: 67
+      },
+      {
+        type: 'visual_method',
+        title: '可视化联结法',
+        content: '"让我们画一张概念图，看看它们是如何连接的..."',
+        effectiveness: 91,
+        usage_rate: 52
+      },
+      {
+        type: 'real_case',
+        title: '真实案例法',
+        content: '"在我们生活中，有一个很好的例子可以说明..."',
+        effectiveness: 88,
+        usage_rate: 78
+      }
+    ]
+  },
+  {
+    id: 'group_collaboration',
+    title: '小组协作失衡',
+    scenario: '小组活动中，只有少数学生在参与',
+    difficulty: 'hard',
+    category: 'classroom_management',
+    responses: [
+      {
+        type: 'role_assignment',
+        title: '角色轮换法',
+        content: '为每个学生分配明确的角色，并定期轮换...',
+        effectiveness: 87,
+        usage_rate: 71
+      },
+      {
+        type: 'structured_task',
+        title: '任务拆分法',
+        content: '将任务拆分为必须合作才能完成的子任务...',
+        effectiveness: 82,
+        usage_rate: 65
+      }
+    ]
+  },
+  {
+    id: 'depth_thinking',
+    title: '思考深度不足',
+    scenario: '学生的回答停留在表面，缺乏深度思考',
+    difficulty: 'medium',
+    category: 'instructional_strategy',
+    responses: [
+      {
+        type: 'bloom_questioning',
+        title: '布鲁姆提问法',
+        content: '使用高阶思维问题引导，如"如果...会怎样？"',
+        effectiveness: 91,
+        usage_rate: 78
+      },
+      {
+        type: 'socratic_method',
+        title: '苏格拉底追问',
+        content: '通过连续追问引导学生深入思考...',
+        effectiveness: 88,
+        usage_rate: 62
+      }
+    ]
+  }
+]
 
 export default function ResourceHub() {
-  const [selectedType, setSelectedType] = useState('all')
-  const [selectedSubject, setSelectedSubject] = useState('全部')
-  const [searchText, setSearchText] = useState('')
-  const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(new Set())
-
+  const [selectedVideo, setSelectedVideo] = useState<typeof masterClassrooms[0] | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [selectedProblem, setSelectedProblem] = useState('')
+  const [activeSection, setActiveSection] = useState<string | null>(null)
   const carouselRef = useRef<HTMLDivElement>(null)
 
-  // 过滤案例
-  const filteredCases = cases.filter(item => {
-    const matchSubject = selectedSubject === '全部' || item.subjects?.includes(selectedSubject)
-    const matchSearch = searchText === '' ||
-      item.title.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.tags.some(tag => tag.includes(searchText))
-    const matchType = selectedType === 'all' || selectedType === 'case'
-    return matchSubject && matchSearch && matchType
-  })
+  const filteredMasters = masterClassrooms.filter(item =>
+    searchQuery === '' ||
+    item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    item.teacher.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    item.subject.toLowerCase().includes(searchQuery.toLowerCase())
+  )
 
-  // 切换收藏
-  const toggleBookmark = (id: string) => {
-    setBookmarkedIds(prev => {
-      const newSet = new Set(prev)
-      if (newSet.has(id)) {
-        newSet.delete(id)
-      } else {
-        newSet.add(id)
-      }
-      return newSet
-    })
-  }
-
-  // 轮播控制
   const scrollCarousel = (direction: 'left' | 'right') => {
     if (carouselRef.current) {
       const scrollAmount = 320
@@ -52,11 +254,6 @@ export default function ResourceHub() {
       })
     }
   }
-
-  // 判断是否显示各区域
-  const showHeroTools = selectedType === 'all' || selectedType === 'tool'
-  const showAbilityPacks = selectedType === 'all' || selectedType === 'ability-pack'
-  const showCases = selectedType === 'all' || selectedType === 'case'
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -68,381 +265,684 @@ export default function ResourceHub() {
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-6 py-8">
-        {/* Hero 区域 */}
+        {/* 页面标题 */}
         <div className="text-center mb-10 animate-fade-in-up">
-          <h1 className="text-4xl font-bold text-gray-900 mb-3">
-            <span className="gradient-text">教师资源中心</span>
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+            <span className="gradient-text">教师专业发展资源库</span>
           </h1>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            发现创作工具、学习资源包与精选案例，助力你的跨学科教学之旅
+            数据驱动的教师成长引擎，提供个性化跨学科教学专业发展资源
           </p>
         </div>
 
-        {/* 区域一：筛选栏 */}
-        <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 mb-8 animate-fade-in" style={{ animationDelay: '0.1s' }}>
-          <div className="flex flex-wrap items-center gap-4">
-            {/* 搜索框 */}
-            <div className="flex-1 min-w-[240px]">
-              <div className="relative">
+        {/* 模块导航概览 */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+          {[
+            { icon: '⭐', title: '名师课堂', desc: '观摩优秀教学案例', count: masterClassrooms.length, unit: '精选课程', color: 'text-yellow-500' },
+            { icon: '🚀', title: '成长计划', desc: '针对性问题解决', count: growthProblems.length, unit: '常见问题', color: 'text-emerald-500' },
+            { icon: '📦', title: '能力资源包', desc: '系统性技能提升', count: Object.keys(capabilityResources).length, unit: '核心能力', color: 'text-teal-500' },
+            { icon: '🤖', title: 'AI训练场', desc: '情境模拟练习', count: simulationScenarios.length, unit: '模拟场景', color: 'text-cyan-500' }
+          ].map((item, index) => (
+            <div
+              key={item.title}
+              className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer group"
+              style={{ animationDelay: `${0.1 + index * 0.05}s` }}
+            >
+              <div className={`text-3xl mb-3 ${item.color}`}>{item.icon}</div>
+              <h3 className="text-base font-bold text-gray-800 mb-1 group-hover:text-emerald-600 transition-colors">{item.title}</h3>
+              <p className="text-xs text-gray-500 mb-3">{item.desc}</p>
+              <div className="text-2xl font-bold text-emerald-600">{item.count}</div>
+              <div className="text-xs text-gray-400">{item.unit}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* 1. 名师课堂模块 */}
+        <section className="mb-16 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+          <div className="flex items-center mb-6">
+            <div className="text-3xl mr-3">⭐</div>
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">名师课堂</h2>
+              <p className="text-gray-600 text-sm mt-1">观摩优秀跨学科教学案例，学习教学精髓</p>
+            </div>
+          </div>
+
+          {/* 搜索栏 */}
+          <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 mb-6">
+            <div className="flex items-center gap-4">
+              <div className="relative flex-1">
                 <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
                 <input
                   type="text"
-                  placeholder="搜索工具、资源包或案例..."
-                  value={searchText}
-                  onChange={(e) => setSearchText(e.target.value)}
+                  placeholder="搜索名师课堂..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-opacity-50 focus:border-emerald-500 transition-all duration-200"
                 />
               </div>
+              <select className="px-4 py-2.5 rounded-xl border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-opacity-50 transition-all">
+                <option>全部学科</option>
+                <option>数学</option>
+                <option>物理</option>
+                <option>化学</option>
+                <option>生物</option>
+                <option>地理</option>
+                <option>历史</option>
+              </select>
             </div>
-
-            {/* 一级筛选 - 类型 */}
-            <div className="flex gap-2">
-              {resourceTypes.map(type => (
-                <button
-                  key={type.value}
-                  onClick={() => setSelectedType(type.value)}
-                  className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
-                    selectedType === type.value
-                      ? 'bg-emerald-500 text-white shadow-md'
-                      : 'bg-gray-100 text-gray-600 hover:bg-emerald-50 hover:text-emerald-600'
-                  }`}
-                >
-                  {type.label}
-                </button>
-              ))}
-            </div>
-
-            {/* 二级筛选 - 学科 */}
-            <select
-              value={selectedSubject}
-              onChange={(e) => setSelectedSubject(e.target.value)}
-              className="px-4 py-2.5 rounded-xl border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-opacity-50 transition-all duration-200"
-            >
-              {resourceSubjects.map(subject => (
-                <option key={subject} value={subject}>{subject === '全部' ? '全部学科' : subject}</option>
-              ))}
-            </select>
           </div>
-        </div>
 
-        {/* 区域二：核心创作工具 (Hero Cards) */}
-        {showHeroTools && (
-          <section className="mb-12 animate-fade-in-up" style={{ animationDelay: '0.15s' }}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {heroTools.map((tool, index) => (
-                <HeroToolCard key={tool.id} tool={tool} index={index} />
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* 区域三：能力资源包 (Carousel) */}
-        {showAbilityPacks && (
-          <section className="mb-12 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="text-2xl font-bold text-gray-900">精选能力提升包</h2>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => scrollCarousel('left')}
-                  className="w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center hover:bg-emerald-50 hover:border-emerald-300 transition-all duration-200"
-                >
-                  <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                  </svg>
-                </button>
-                <button
-                  onClick={() => scrollCarousel('right')}
-                  className="w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center hover:bg-emerald-50 hover:border-emerald-300 transition-all duration-200"
-                >
-                  <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-
-            <div
-              ref={carouselRef}
-              className="flex gap-5 overflow-x-auto pb-4 scrollbar-hide scroll-smooth"
-            >
-              {abilityPacks.map((pack) => (
-                <AbilityPackCard
-                  key={pack.id}
-                  pack={pack}
-                  isBookmarked={bookmarkedIds.has(pack.id)}
-                  onToggleBookmark={() => toggleBookmark(pack.id)}
-                />
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* 区域四：案例与素材库 (Grid) */}
-        {showCases && (
-          <section className="animate-fade-in-up" style={{ animationDelay: '0.25s' }}>
-            <h2 className="text-2xl font-bold text-gray-900 mb-5">跨学科案例库</h2>
-
-            {filteredCases.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredCases.map((caseItem, index) => (
-                  <CaseCard
-                    key={caseItem.id}
-                    caseItem={caseItem}
-                    delay={index * 0.05}
-                    isBookmarked={bookmarkedIds.has(caseItem.id)}
-                    onToggleBookmark={() => toggleBookmark(caseItem.id)}
+          {/* 名师课堂列表 */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+            {filteredMasters.map((classroom, index) => (
+              <div
+                key={classroom.id}
+                className="bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group animate-fade-in-up"
+                style={{ animationDelay: `${0.1 + index * 0.05}s` }}
+              >
+                {/* 视频缩略图 */}
+                <div className="relative h-48 overflow-hidden">
+                  <Image
+                    src={classroom.thumbnail}
+                    alt={classroom.title}
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-500"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                   />
-                ))}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+
+                  {/* 播放按钮 */}
+                  <button
+                    onClick={() => setSelectedVideo(classroom)}
+                    className="absolute inset-0 flex items-center justify-center group/play"
+                  >
+                    <div className="w-14 h-14 bg-white/90 rounded-full flex items-center justify-center transition-all duration-300 group-hover/play:scale-110 group-hover/play:bg-white shadow-lg">
+                      <svg className="w-6 h-6 text-emerald-600 ml-1" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z" />
+                      </svg>
+                    </div>
+                  </button>
+
+                  {/* 时长标记 */}
+                  <div className="absolute bottom-3 right-3 px-2 py-1 bg-black/70 text-white text-sm rounded-lg">
+                    {classroom.duration}分钟
+                  </div>
+
+                  {/* 评分 */}
+                  <div className="absolute top-3 right-3 flex items-center gap-1 bg-black/70 text-white text-sm px-2 py-1 rounded-lg">
+                    <svg className="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                    <span>{classroom.rating}</span>
+                  </div>
+                </div>
+
+                {/* 课堂信息 */}
+                <div className="p-5">
+                  <h3 className="font-bold text-gray-900 text-lg mb-2 line-clamp-2 group-hover:text-emerald-600 transition-colors">
+                    {classroom.title}
+                  </h3>
+
+                  <div className="flex items-center gap-3 text-sm text-gray-600 mb-3">
+                    <span className="font-medium">{classroom.teacher}</span>
+                    <span className="text-gray-300">|</span>
+                    <span>{classroom.school}</span>
+                    <span className="text-gray-300">|</span>
+                    <span>{classroom.subject}</span>
+                  </div>
+
+                  {/* 标签 */}
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {classroom.tags.slice(0, 2).map((tag) => (
+                      <span key={tag} className="px-3 py-1 bg-emerald-100 text-emerald-700 text-xs font-medium rounded-full">
+                        {tag}
+                      </span>
+                    ))}
+                    {classroom.tags.length > 2 && (
+                      <span className="px-3 py-1 bg-gray-100 text-gray-600 text-xs font-medium rounded-full">
+                        +{classroom.tags.length - 2}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* 互动数据 */}
+                  <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                    <div className="flex items-center gap-4 text-sm text-gray-500">
+                      <div className="flex items-center gap-1">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                        <span>{classroom.views.toLocaleString()}</span>
+                      </div>
+                    </div>
+
+                    <button className="px-4 py-2 bg-emerald-500 text-white text-sm font-medium rounded-xl hover:bg-emerald-600 hover:scale-105 active:scale-95 transition-all duration-200 shadow-sm">
+                      观看学习
+                    </button>
+                  </div>
+                </div>
               </div>
-            ) : (
-              <div className="text-center py-16 bg-white rounded-2xl border border-gray-100">
-                <div className="text-6xl mb-4">📚</div>
-                <p className="text-gray-500 text-lg">暂无匹配的案例</p>
-                <p className="text-gray-400 text-sm mt-2">尝试调整筛选条件</p>
+            ))}
+          </div>
+        </section>
+
+        {/* 2. 教师成长计划模块 */}
+        <section className="mb-16 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+          <div className="flex items-center mb-6">
+            <div className="text-3xl mr-3">🚀</div>
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">教师成长计划</h2>
+              <p className="text-gray-600 text-sm mt-1">针对常见跨学科教学问题，提供专业解决方案</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* 问题选择器 */}
+            <div className="lg:col-span-1">
+              <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 sticky top-6">
+                <h3 className="text-lg font-bold text-gray-800 mb-5">选择您遇到的问题</h3>
+                <div className="space-y-3">
+                  {growthProblems.map((problem) => (
+                    <button
+                      key={problem.id}
+                      onClick={() => setSelectedProblem(problem.id)}
+                      className={`w-full p-4 rounded-2xl text-left transition-all duration-300 ${
+                        selectedProblem === problem.id
+                          ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-lg'
+                          : 'bg-gray-50 text-gray-700 hover:bg-emerald-50 hover:text-emerald-600'
+                      }`}
+                    >
+                      <div className="font-semibold mb-1">{problem.problem}</div>
+                      <div className={`text-sm ${selectedProblem === problem.id ? 'text-emerald-100' : 'text-gray-500'}`}>
+                        {problem.description}
+                      </div>
+                    </button>
+                  ))}
+                </div>
               </div>
-            )}
-          </section>
-        )}
-      </div>
-    </div>
-  )
-}
+            </div>
 
-// 核心工具 Hero 卡片
-function HeroToolCard({ tool, index }: { tool: Resource; index: number }) {
-  const gradients = [
-    'from-emerald-500 via-emerald-400 to-teal-400',
-    'from-teal-500 via-teal-400 to-cyan-400'
-  ]
+            {/* 解决方案展示 */}
+            <div className="lg:col-span-2">
+              {selectedProblem ? (
+                (() => {
+                  const problem = growthProblems.find(p => p.id === selectedProblem)
+                  return problem ? (
+                    <div className="space-y-6">
+                      {/* 解决方案资源 */}
+                      <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+                        <h4 className="text-xl font-bold text-gray-800 mb-5">针对性解决方案</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {problem.solutions.map((solution, index) => (
+                            <div key={index} className="bg-gray-50 rounded-2xl p-5 hover:shadow-md hover:bg-white transition-all duration-300 cursor-pointer group">
+                              <div className="flex items-start gap-4">
+                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                                  solution.type === 'video' ? 'bg-red-100' :
+                                  solution.type === 'template' ? 'bg-emerald-100' :
+                                  solution.type === 'guide' ? 'bg-blue-100' :
+                                  'bg-teal-100'
+                                }`}>
+                                  {solution.type === 'video' && (
+                                    <svg className="w-5 h-5 text-red-600" fill="currentColor" viewBox="0 0 24 24">
+                                      <path d="M8 5v14l11-7z" />
+                                    </svg>
+                                  )}
+                                  {solution.type === 'template' && (
+                                    <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                  )}
+                                  {(solution.type === 'guide' || solution.type === 'strategy') && (
+                                    <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                    </svg>
+                                  )}
+                                  {(solution.type === 'rubric' || solution.type === 'checklist') && (
+                                    <svg className="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                                    </svg>
+                                  )}
+                                </div>
+                                <div className="flex-1">
+                                  <h5 className="font-bold text-gray-800 mb-1 group-hover:text-emerald-600 transition-colors">{solution.title}</h5>
+                                  <div className="text-sm text-gray-500">
+                                    {'duration' in solution && <span>时长：{solution.duration}</span>}
+                                    {'downloads' in solution && <span>下载：{solution.downloads}次</span>}
+                                    {'views' in solution && <span>观看：{solution.views}次</span>}
+                                    {'pages' in solution && <span>页数：{solution.pages}页</span>}
+                                    {'count' in solution && <span>{solution.count}个</span>}
+                                    {'items' in solution && <span>{solution.items}项</span>}
+                                  </div>
+                                </div>
+                              </div>
+                              <button className="mt-4 w-full py-2 bg-emerald-500 text-white text-sm font-medium rounded-xl hover:bg-emerald-600 transition-all duration-200">
+                                立即获取
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
 
-  const icons = [
-    // 教案工坊图标
-    <svg key="cpote" className="w-16 h-16 text-white/90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 11V8m0 0l-2 2m2-2l2 2" />
-    </svg>,
-    // AI训练场图标
-    <svg key="ai" className="w-16 h-16 text-white/90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-      <circle cx="12" cy="9" r="3" strokeWidth={1.5} />
-    </svg>
-  ]
+                      {/* 成功案例 */}
+                      <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+                        <h4 className="text-xl font-bold text-gray-800 mb-5">成功案例分析</h4>
+                        <div className="space-y-3">
+                          {problem.caseStudies.map((caseStudy, index) => (
+                            <div key={index} className="bg-gray-50 rounded-2xl p-4 hover:shadow-md hover:bg-white transition-all duration-300 cursor-pointer">
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-full flex items-center justify-center">
+                                  <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                                  </svg>
+                                </div>
+                                <div className="flex-1">
+                                  <h5 className="font-semibold text-gray-800">{caseStudy.title}</h5>
+                                  <div className="text-sm text-gray-500">by {caseStudy.teacher}</div>
+                                </div>
+                                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                </svg>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ) : null
+                })()
+              ) : (
+                <div className="bg-white rounded-3xl p-12 shadow-sm border border-gray-100 text-center">
+                  <div className="w-20 h-20 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-full flex items-center justify-center mx-auto mb-5">
+                    <svg className="w-10 h-10 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-800 mb-2">选择一个问题开始</h3>
+                  <p className="text-gray-500">从左侧选择您在跨学科教学中遇到的问题，我们将为您提供针对性的解决方案</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
 
-  return (
-    <div
-      className={`relative overflow-hidden rounded-3xl bg-gradient-to-br ${gradients[index]} p-8 shadow-lg hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 group cursor-pointer`}
-    >
-      {/* 背景装饰 */}
-      <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-      <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
+        {/* 3. 能力成长资源包模块 */}
+        <section className="mb-16 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
+          <div className="flex items-center mb-6">
+            <div className="text-3xl mr-3">📦</div>
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">能力成长资源包</h2>
+              <p className="text-gray-600 text-sm mt-1">系统化提升跨学科教学核心能力，个性化成长路径</p>
+            </div>
+          </div>
 
-      <div className="relative z-10 flex items-start justify-between">
-        <div className="flex-1">
-          <h3 className="text-2xl font-bold text-white mb-3">{tool.title}</h3>
-          <p className="text-white/80 text-base mb-6 leading-relaxed">{tool.description}</p>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {Object.entries(capabilityResources).map(([key, capability], index) => (
+              <div
+                key={key}
+                className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300 animate-fade-in-up"
+                style={{ animationDelay: `${0.1 + index * 0.05}s` }}
+              >
+                {/* 能力标题和进度 */}
+                <div className="flex items-center justify-between mb-5">
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900">{capability.name}</h3>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${
+                        capability.level === 'beginner' ? 'bg-emerald-100 text-emerald-700' :
+                        capability.level === 'intermediate' ? 'bg-yellow-100 text-yellow-700' :
+                        'bg-teal-100 text-teal-700'
+                      }`}>
+                        {capability.level === 'beginner' ? '入门级' :
+                         capability.level === 'intermediate' ? '进阶级' : '专家级'}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-2xl font-bold text-emerald-600">{capability.progress}%</div>
+                    <div className="text-xs text-gray-500">掌握度</div>
+                  </div>
+                </div>
 
-          {/* 标签 */}
-          <div className="flex flex-wrap gap-2 mb-6">
-            {tool.tags.map(tag => (
-              <span key={tag} className="px-3 py-1 bg-white/20 backdrop-blur-sm text-white text-sm rounded-full">
-                {tag}
-              </span>
+                {/* 进度条 */}
+                <div className="mb-5">
+                  <div className="w-full bg-gray-100 rounded-full h-2.5">
+                    <div
+                      className="bg-gradient-to-r from-emerald-500 to-teal-500 h-2.5 rounded-full transition-all duration-500"
+                      style={{ width: `${capability.progress}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* 资源列表 */}
+                <div className="space-y-3">
+                  {capability.resources.map((resource, resourceIndex) => (
+                    <div
+                      key={resourceIndex}
+                      className={`bg-gray-50 rounded-xl p-4 hover:shadow-md hover:bg-white transition-all duration-300 cursor-pointer ${
+                        resource.featured ? 'ring-2 ring-emerald-500/20 bg-emerald-50/50' : ''
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                          resource.type === 'template' ? 'bg-emerald-100' :
+                          resource.type === 'video' ? 'bg-red-100' :
+                          resource.type === 'course' ? 'bg-teal-100' :
+                          resource.type === 'tool' ? 'bg-yellow-100' :
+                          'bg-gray-100'
+                        }`}>
+                          {resource.type === 'template' && (
+                            <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                          )}
+                          {resource.type === 'video' && (
+                            <svg className="w-4 h-4 text-red-600" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M8 5v14l11-7z" />
+                            </svg>
+                          )}
+                          {resource.type === 'course' && (
+                            <svg className="w-4 h-4 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                            </svg>
+                          )}
+                          {(resource.type === 'tool' || resource.type === 'game' || resource.type === 'guide') && (
+                            <svg className="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                            </svg>
+                          )}
+                          {(resource.type === 'checklist' || resource.type === 'rubric' || resource.type === 'community' || resource.type === 'system') && (
+                            <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                            </svg>
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="font-medium text-gray-800 text-sm">{resource.title}</h4>
+                          <div className="text-xs text-gray-500 mt-0.5">
+                            {'count' in resource && <span>{resource.count}个</span>}
+                            {'duration' in resource && <span>{resource.duration}</span>}
+                            {'hours' in resource && <span>{resource.hours}小时</span>}
+                            {'items' in resource && <span>{resource.items}项</span>}
+                            {'rating' in resource && (
+                              <span className="flex items-center gap-0.5 inline-flex">
+                                <svg className="w-3 h-3 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                </svg>
+                                {resource.rating}
+                              </span>
+                            )}
+                            {'members' in resource && <span>{resource.members}成员</span>}
+                            {'period' in resource && <span>{resource.period}试用</span>}
+                          </div>
+                        </div>
+                        {resource.featured && (
+                          <span className="px-2 py-0.5 bg-emerald-500 text-white text-xs font-medium rounded-full">
+                            推荐
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <button className="w-full mt-5 py-3 bg-emerald-500 text-white font-medium rounded-xl hover:bg-emerald-600 hover:shadow-lg transition-all duration-200">
+                  制定专属成长计划
+                </button>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* 4. AI训练场模块 */}
+        <section className="mb-16 animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
+          <div className="flex items-center mb-6">
+            <div className="text-3xl mr-3">🤖</div>
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">AI训练场</h2>
+              <p className="text-gray-600 text-sm mt-1">情境模拟练习，提升跨学科教学应对能力和技巧</p>
+            </div>
+          </div>
+
+          <div className="space-y-6">
+            {simulationScenarios.map((scenario, index) => (
+              <div
+                key={scenario.id}
+                className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 animate-fade-in-up"
+                style={{ animationDelay: `${0.1 + index * 0.05}s` }}
+              >
+                {/* 场景标题 */}
+                <div className="flex items-center justify-between mb-5">
+                  <div className="flex items-center gap-3">
+                    <div className="w-11 h-11 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-xl flex items-center justify-center">
+                      <svg className="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-gray-900">{scenario.title}</h3>
+                      <div className="flex items-center gap-3 mt-1">
+                        <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${
+                          scenario.difficulty === 'easy' ? 'bg-emerald-100 text-emerald-700' :
+                          scenario.difficulty === 'medium' ? 'bg-yellow-100 text-yellow-700' :
+                          'bg-red-100 text-red-700'
+                        }`}>
+                          {scenario.difficulty === 'easy' ? '简单' :
+                           scenario.difficulty === 'medium' ? '中等' : '困难'}
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          {scenario.category === 'concept_integration' ? '概念融合' :
+                           scenario.category === 'classroom_management' ? '课堂管理' :
+                           scenario.category === 'instructional_strategy' ? '教学策略' : '其他'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <button className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-medium rounded-xl hover:shadow-lg hover:scale-105 transition-all duration-200">
+                    开始训练
+                  </button>
+                </div>
+
+                {/* 场景描述 */}
+                <div className="bg-gray-50 rounded-2xl p-5 mb-5">
+                  <h4 className="font-semibold text-gray-800 mb-2">模拟场景</h4>
+                  <p className="text-gray-700 leading-relaxed">&ldquo;{scenario.scenario}&rdquo;</p>
+                </div>
+
+                {/* 应对策略 */}
+                <div>
+                  <h4 className="font-semibold text-gray-800 mb-4">AI推荐应对策略</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {scenario.responses.map((response, responseIndex) => (
+                      <div
+                        key={responseIndex}
+                        className="bg-gray-50 rounded-2xl p-5 hover:shadow-md hover:bg-white transition-all duration-300 cursor-pointer group"
+                      >
+                        <div className="mb-4">
+                          <h5 className="font-bold text-gray-800 group-hover:text-emerald-600 transition-colors">
+                            {response.title}
+                          </h5>
+                          <p className="text-sm text-gray-600 mt-2 leading-relaxed line-clamp-2">
+                            {response.content}
+                          </p>
+                        </div>
+
+                        {/* 效果指标 */}
+                        <div className="space-y-3">
+                          <div>
+                            <div className="flex justify-between text-xs mb-1">
+                              <span className="text-gray-500">有效性</span>
+                              <span className="font-semibold text-emerald-600">{response.effectiveness}%</span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-1.5">
+                              <div
+                                className="bg-gradient-to-r from-emerald-400 to-emerald-600 h-1.5 rounded-full transition-all duration-500"
+                                style={{ width: `${response.effectiveness}%` }}
+                              />
+                            </div>
+                          </div>
+
+                          <div>
+                            <div className="flex justify-between text-xs mb-1">
+                              <span className="text-gray-500">使用率</span>
+                              <span className="font-semibold text-teal-600">{response.usage_rate}%</span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-1.5">
+                              <div
+                                className="bg-gradient-to-r from-teal-400 to-teal-600 h-1.5 rounded-full transition-all duration-500"
+                                style={{ width: `${response.usage_rate}%` }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        <button className="w-full mt-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-xl hover:bg-emerald-50 hover:text-emerald-600 transition-all duration-200">
+                          练习此策略
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
             ))}
           </div>
 
-          {/* CTA 按钮 */}
-          <button className="px-6 py-3 bg-white text-emerald-600 font-semibold rounded-xl hover:bg-emerald-50 hover:scale-105 active:scale-95 transition-all duration-200 shadow-md group-hover:shadow-lg">
-            {index === 0 ? '开始创作' : '开始练习'}
-            <svg className="inline-block w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-            </svg>
-          </button>
-        </div>
+          {/* 话术优化工坊 */}
+          <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 mt-6 animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
+            <div className="text-center mb-6">
+              <div className="w-14 h-14 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-7 h-7 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-gray-800 mb-2">话术优化工坊</h3>
+              <p className="text-gray-600 text-sm">让AI帮您优化跨学科课堂话术，提升教学效果</p>
+            </div>
 
-        {/* 图标 */}
-        <div className="ml-6 p-4 bg-white/10 backdrop-blur-sm rounded-2xl">
-          {icons[index]}
-        </div>
-      </div>
-    </div>
-  )
-}
+            <div className="max-w-4xl mx-auto">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* 输入区域 */}
+                <div className="bg-gray-50 rounded-2xl p-5">
+                  <h4 className="font-bold text-gray-800 mb-3">您的原话术</h4>
+                  <textarea
+                    placeholder="请输入您在跨学科课堂中使用的话术，例如：'这两个概念之间有什么联系？'"
+                    className="w-full h-28 p-4 bg-white rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-opacity-50 focus:border-emerald-500 transition-all resize-none"
+                  />
+                  <button className="w-full mt-4 py-3 bg-emerald-500 text-white font-medium rounded-xl hover:bg-emerald-600 transition-all duration-200">
+                    AI优化建议
+                  </button>
+                </div>
 
-// 能力资源包卡片
-function AbilityPackCard({
-  pack,
-  isBookmarked,
-  onToggleBookmark
-}: {
-  pack: Resource
-  isBookmarked: boolean
-  onToggleBookmark: () => void
-}) {
-  return (
-    <div className="flex-shrink-0 w-72 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
-      {/* 封面 */}
-      <div className="h-36 relative overflow-hidden">
-        <Image
-          src={pack.cover}
-          alt={pack.title}
-          fill
-          className="object-cover group-hover:scale-105 transition-transform duration-500"
-          sizes="288px"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-black/10" />
-        <div className="absolute top-3 right-3">
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              onToggleBookmark()
-            }}
-            className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 ${
-              isBookmarked
-                ? 'bg-yellow-400 text-white'
-                : 'bg-white/90 text-gray-400 hover:text-yellow-500'
-            }`}
-          >
-            <svg className="w-4 h-4" fill={isBookmarked ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-            </svg>
-          </button>
-        </div>
-        <div className="absolute bottom-4 left-4 text-white">
-          <div className="text-3xl font-bold drop-shadow-lg">{pack.title.charAt(0)}</div>
-        </div>
-      </div>
+                {/* 输出区域 */}
+                <div className="bg-gray-50 rounded-2xl p-5">
+                  <h4 className="font-bold text-gray-800 mb-3">AI优化建议</h4>
+                  <div className="space-y-3">
+                    <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl p-4 border border-emerald-200">
+                      <div className="font-semibold text-emerald-800 mb-2">升级版本 1</div>
+                      <p className="text-emerald-700 text-sm">&ldquo;如果我们把生物课学的生态平衡和地理课学的水循环放在一起看，你能发现什么有趣的联系吗？&rdquo;</p>
+                      <div className="text-xs text-emerald-600 mt-2">
+                        优化点：具体化学科内容，引导学生主动发现联系
+                      </div>
+                    </div>
 
-      {/* 内容 */}
-      <div className="p-4">
-        <h3 className="font-semibold text-gray-900 mb-2 group-hover:text-emerald-600 transition-colors">
-          {pack.title}
-        </h3>
-        <p className="text-sm text-gray-500 mb-3 line-clamp-2">{pack.description}</p>
-
-        {/* 标签 */}
-        <div className="flex flex-wrap gap-1.5 mb-3">
-          {pack.tags.map(tag => (
-            <span key={tag} className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs rounded-full">
-              {tag}
-            </span>
-          ))}
-        </div>
-
-        {/* 学习人数 */}
-        <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-          <div className="flex items-center gap-1 text-sm text-gray-500">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-            </svg>
-            {pack.learnerCount?.toLocaleString()} 人学习
+                    <div className="bg-gradient-to-r from-teal-50 to-cyan-50 rounded-xl p-4 border border-teal-200">
+                      <div className="font-semibold text-teal-800 mb-2">升级版本 2</div>
+                      <p className="text-teal-700 text-sm">&ldquo;想象一下，如果你是一滴水，你在这个生态系统中会经历怎样的旅程？&rdquo;</p>
+                      <div className="text-xs text-teal-600 mt-2">
+                        优化点：角色代入，激发想象力，促进跨学科思维
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-          <button className="text-emerald-600 text-sm font-medium hover:text-emerald-700">
-            开始学习 →
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// 案例卡片
-function CaseCard({
-  caseItem,
-  delay,
-  isBookmarked,
-  onToggleBookmark
-}: {
-  caseItem: Resource
-  delay: number
-  isBookmarked: boolean
-  onToggleBookmark: () => void
-}) {
-  return (
-    <div
-      className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group animate-fade-in-up"
-      style={{ animationDelay: `${delay}s` }}
-    >
-      {/* 封面 */}
-      <div className="h-44 relative overflow-hidden">
-        <Image
-          src={caseItem.cover}
-          alt={caseItem.title}
-          fill
-          className="object-cover group-hover:scale-105 transition-transform duration-500"
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-
-        {/* 学科标签 */}
-        <div className="absolute bottom-3 left-3 right-3 flex flex-wrap gap-1.5">
-          {caseItem.subjects?.map(subject => (
-            <span
-              key={subject}
-              className="px-2.5 py-1 bg-white/90 backdrop-blur-sm text-gray-700 text-xs font-medium rounded-full"
-            >
-              {subject}
-            </span>
-          ))}
-        </div>
-
-        {/* 收藏按钮 */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation()
-            onToggleBookmark()
-          }}
-          className={`absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 ${
-            isBookmarked
-              ? 'bg-yellow-400 text-white'
-              : 'bg-white/90 text-gray-400 hover:text-yellow-500'
-          }`}
-        >
-          <svg className="w-4 h-4" fill={isBookmarked ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-          </svg>
-        </button>
+        </section>
       </div>
 
-      {/* 内容 */}
-      <div className="p-5">
-        <h3 className="font-semibold text-gray-900 text-lg mb-2 group-hover:text-emerald-600 transition-colors">
-          {caseItem.title}
-        </h3>
-        <p className="text-sm text-gray-500 mb-3 line-clamp-2">{caseItem.description}</p>
+      {/* 视频播放模态框 */}
+      {selectedVideo && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-black rounded-3xl max-w-5xl w-full max-h-[90vh] overflow-hidden shadow-2xl animate-scale-in">
+            {/* 视频播放器头部 */}
+            <div className="bg-gray-900 px-6 py-4 flex items-center justify-between">
+              <div>
+                <h3 className="text-white text-lg font-bold line-clamp-1">{selectedVideo.title}</h3>
+                <p className="text-gray-300 text-sm">{selectedVideo.teacher} · {selectedVideo.school}</p>
+              </div>
+              <button
+                onClick={() => setSelectedVideo(null)}
+                className="text-gray-400 hover:text-white p-2 rounded-xl transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
 
-        {/* 核心概念 */}
-        <div className="mb-4">
-          <div className="text-xs text-gray-400 mb-1.5">核心大概念</div>
-          <div className="flex flex-wrap gap-1.5">
-            {caseItem.concepts?.map(concept => (
-              <span key={concept} className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full">
-                {concept}
-              </span>
-            ))}
+            {/* 视频播放区域 */}
+            <div className="aspect-video bg-gray-900 flex items-center justify-center">
+              <div className="text-center text-white">
+                <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-10 h-10" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
+                </div>
+                <p>视频播放器组件</p>
+                <p className="text-sm text-gray-400 mt-2">时长：{selectedVideo.duration}分钟</p>
+              </div>
+            </div>
+
+            {/* 视频信息和亮点 */}
+            <div className="bg-gray-900 px-6 py-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h4 className="text-white font-bold mb-3">课堂亮点</h4>
+                  <div className="space-y-2">
+                    {selectedVideo.highlights.map((highlight, index) => (
+                      <button
+                        key={index}
+                        className="w-full text-left p-3 bg-gray-800 rounded-xl hover:bg-gray-700 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
+                            highlight.type === 'interaction' ? 'bg-emerald-600' :
+                            highlight.type === 'technology' ? 'bg-teal-600' :
+                            highlight.type === 'collaboration' ? 'bg-cyan-600' :
+                            'bg-gray-600'
+                          }`}>
+                            {highlight.time.split(':')[0]}
+                          </div>
+                          <div className="flex-1">
+                            <div className="text-white text-sm font-medium">{highlight.title}</div>
+                            <div className="text-gray-400 text-xs">{highlight.time}</div>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="text-white font-bold mb-3">相关资源</h4>
+                  <div className="space-y-2">
+                    {['教案设计', 'PPT课件', '学习单', '教学反思'].map((resource, index) => (
+                      <div key={index} className="flex items-center justify-between p-3 bg-gray-800 rounded-xl">
+                        <span className="text-white text-sm">{resource}</span>
+                        <button className="text-emerald-400 hover:text-emerald-300 text-sm font-medium transition-colors">
+                          下载
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-
-        {/* 标签 */}
-        <div className="flex flex-wrap gap-1.5 mb-4">
-          {caseItem.tags.map(tag => (
-            <span key={tag} className="px-2 py-0.5 bg-emerald-50 text-emerald-600 text-xs rounded-full border border-emerald-100">
-              {tag}
-            </span>
-          ))}
-        </div>
-
-        {/* 操作按钮 */}
-        <div className="flex gap-2 pt-3 border-t border-gray-100">
-          <button className="flex-1 px-4 py-2 bg-emerald-500 text-white text-sm font-medium rounded-xl hover:bg-emerald-600 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 shadow-sm">
-            以此创建教案
-          </button>
-          <button className="px-4 py-2 bg-white text-gray-700 text-sm font-medium rounded-xl border border-gray-200 hover:border-emerald-300 hover:text-emerald-600 transition-all duration-200">
-            查看详情
-          </button>
-        </div>
-      </div>
+      )}
     </div>
   )
 }
