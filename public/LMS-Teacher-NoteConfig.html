@@ -398,7 +398,6 @@
 
             const handlePublish = () => {
                 console.log('Publishing config:', JSON.stringify(config, null, 2));
-                alert(`发布成功！\n\n课程: ${config.noteInfo.title}\n班级: ${config.noteInfo.bindClasses.join(', ')}\n模式: ${config.publishMode === 'self-study' ? '自学模式' : '考核模式'}\n\n配置已生成 Class Note，学生可以开始学习。`);
                 setHasUnsavedChanges(false);
 
                 // 打开学生工作台页面
@@ -701,7 +700,7 @@
                     <div className="p-4 border-b border-slate-200 bg-gradient-to-r from-indigo-50 to-blue-50">
                         <h2 className="font-bold text-slate-700 flex items-center gap-2">
                             <Icon name="FolderOpen" size={18} className="text-indigo-600" />
-                            教学输入层
+                            学习资料库
                         </h2>
                         <p className="text-xs text-slate-500 mt-1">资源分发 & 任务布置 <span className="text-indigo-600 font-medium">(必填)</span></p>
                     </div>
@@ -1007,10 +1006,10 @@
                     <div className="h-14 bg-white border-b border-slate-200 flex items-center justify-between px-4 shadow-sm">
                         <div className="flex items-center gap-3">
                             <Icon name="MessageSquare" size={18} className="text-indigo-600" />
-                            <span className="font-bold text-slate-700">交互策略层</span>
+                            <span className="font-bold text-slate-700">AI学习对话区</span>
                             <span className="inherited-badge text-xs px-2 py-0.5 rounded-full flex items-center gap-1">
                                 <Icon name="Link" size={10} />
-                                继承自通用版
+                                
                             </span>
                         </div>
                     </div>
@@ -1242,7 +1241,7 @@
                     <div className="p-4 border-b border-slate-200 bg-gradient-to-r from-emerald-50 to-teal-50">
                         <h2 className="font-bold text-slate-700 flex items-center gap-2">
                             <Icon name="Layout" size={18} className="text-emerald-600" />
-                            产出与监控层
+                            学习工作室
                         </h2>
                         <p className="text-xs text-slate-500 mt-1">笔记模板 & 学情监控</p>
                     </div>
