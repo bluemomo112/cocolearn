@@ -11,13 +11,10 @@ interface Course {
   title: string
   cover: string
   subjects: string[]
-  source: 'official' | 'school'
-  sourceName: string
-  knowledgeTags: string[]
-  supportSelfStudy: boolean
-  studentCount: number
-  grade: string
+  source: 'official' | 'organization'
   concepts: string[] // 跨学科大概念
+  studentCount: number
+  rating: number
 }
 
 interface KnowledgeNode {
@@ -48,166 +45,129 @@ const platformStats = {
 }
 
 const subjects = ['全部', '语文', '数学', '物理', '化学', '生物', '地理', '历史', '道德与法治', '信息科技']
-const grades = ['全部', '小学', '初中', '高中']
-const sources = ['全部', '官方', '学校']
+const sources = ['全部', '官方', '组织']
 
 // 跨学科课程数据
 const courses: Course[] = [
   {
     id: '1',
-    title: '水循环与气候变化探究',
+    title: '湿地生态系统的科学探究',
     cover: 'https://images.unsplash.com/photo-1501630834273-4b5604d2ee31?w=400&h=300&fit=crop',
-    subjects: ['地理', '物理', '化学'],
+    subjects: ['生物', '地理'],
     source: 'official',
-    sourceName: '平台官方',
-    knowledgeTags: ['水循环', '气候系统', '全球变暖', '生态平衡'],
-    supportSelfStudy: true,
-    studentCount: 1250,
-    grade: '高中',
-    concepts: ['地球表层系统', '物质的化学变化', '能量守恒与可持续发展'],
+    concepts: ['系统与平衡', '生态系统', '水循环', '生物多样性'],
+    studentCount: 1240,
+    rating: 4.8,
   },
   {
     id: '2',
-    title: '数学建模与生态系统',
-    cover: 'https://images.unsplash.com/photo-1509228468518-180dd4864904?w=400&h=300&fit=crop',
-    subjects: ['数学', '生物'],
-    source: 'school',
-    sourceName: '北京四中',
-    knowledgeTags: ['函数建模', '数据分析', '生态系统', '种群动态'],
-    supportSelfStudy: true,
-    studentCount: 856,
-    grade: '高中',
-    concepts: ['生物与环境', '数据分析与应用'],
+    title: '古诗词中的天文地理',
+    cover: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=300&fit=crop',
+    subjects: ['语文', '地理'],
+    source: 'organization',
+    concepts: ['诗词鉴赏', '天文现象', '地理特征', '文化传承'],
+    studentCount: 890,
+    rating: 4.9,
   },
   {
     id: '3',
-    title: '文艺复兴的科学革命',
-    cover: 'https://images.unsplash.com/photo-1568667256549-094345857637?w=400&h=300&fit=crop',
-    subjects: ['历史', '物理'],
+    title: '数据可视化与统计分析',
+    cover: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=300&fit=crop',
+    subjects: ['数学', '信息科技'],
     source: 'official',
-    sourceName: '平台官方',
-    knowledgeTags: ['文艺复兴', '科学发展', '天文学', '力学'],
-    supportSelfStudy: false,
-    studentCount: 643,
-    grade: '初中',
-    concepts: ['世界文明互动与发展', '运动与相互作用'],
+    concepts: ['统计推断', '数据表示', '算法思维', '可视化设计'],
+    studentCount: 2100,
+    rating: 4.7,
   },
   {
     id: '4',
-    title: '音乐中的数学之美',
-    cover: 'https://images.unsplash.com/photo-1507838153414-b4b713384a76?w=400&h=300&fit=crop',
-    subjects: ['数学', '音乐'],
-    source: 'school',
-    sourceName: '上海中学',
-    knowledgeTags: ['波形', '频率', '和声', '数学比例', '黄金分割'],
-    supportSelfStudy: true,
-    studentCount: 428,
-    grade: '初中',
-    concepts: ['运动与相互作用', '文学阅读与创意表达'],
+    title: '文艺复兴的科学革命',
+    cover: 'https://images.unsplash.com/photo-1568667256549-094345857637?w=400&h=300&fit=crop',
+    subjects: ['历史', '物理'],
+    source: 'organization',
+    concepts: ['科学发展', '文化变革', '天文学', '力学基础'],
+    studentCount: 643,
+    rating: 4.6,
   },
   {
     id: '5',
-    title: '化学反应与艺术创作',
-    cover: 'https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?w=400&h=300&fit=crop',
-    subjects: ['化学', '美术'],
+    title: '音乐中的数学之美',
+    cover: 'https://images.unsplash.com/photo-1507838153414-b4b713384a76?w=400&h=300&fit=crop',
+    subjects: ['数学', '音乐'],
     source: 'official',
-    sourceName: '平台官方',
-    knowledgeTags: ['化学变化', '颜料', '材料科学', '色彩原理'],
-    supportSelfStudy: true,
-    studentCount: 312,
-    grade: '高中',
-    concepts: ['物质的性质与应用', '文学阅读与创意表达'],
+    concepts: ['波形与频率', '比例关系', '和声原理', '数学建模'],
+    studentCount: 756,
+    rating: 4.8,
   },
   {
     id: '6',
-    title: '编程思维与数学逻辑',
-    cover: 'https://images.unsplash.com/photo-1515879218367-8466d910aaa4?w=400&h=300&fit=crop',
-    subjects: ['信息科技', '数学'],
-    source: 'school',
-    sourceName: '深圳中学',
-    knowledgeTags: ['算法', '逻辑思维', '函数', '递归'],
-    supportSelfStudy: true,
-    studentCount: 567,
-    grade: '初中',
-    concepts: ['算法', '数据分析与应用'],
+    title: '化学反应与艺术创作',
+    cover: 'https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?w=400&h=300&fit=crop',
+    subjects: ['化学', '美术'],
+    source: 'organization',
+    concepts: ['化学变化', '颜料科学', '材料特性', '色彩理论'],
+    studentCount: 512,
+    rating: 4.5,
   },
   {
     id: '7',
-    title: '古诗词中的物理现象',
-    cover: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=300&fit=crop',
-    subjects: ['语文', '物理'],
+    title: '编程思维与逻辑推理',
+    cover: 'https://images.unsplash.com/photo-1515879218367-8466d910aaa4?w=400&h=300&fit=crop',
+    subjects: ['信息科技', '数学'],
     source: 'official',
-    sourceName: '平台官方',
-    knowledgeTags: ['古诗词', '光学', '声学', '力学现象'],
-    supportSelfStudy: true,
-    studentCount: 892,
-    grade: '初中',
-    concepts: ['文学阅读与创意表达', '运动与相互作用'],
+    concepts: ['算法设计', '逻辑思维', '问题分解', '抽象建模'],
+    studentCount: 1890,
+    rating: 4.9,
   },
   {
     id: '8',
-    title: '地理信息与大数据分析',
-    cover: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=300&fit=crop',
-    subjects: ['地理', '信息科技'],
-    source: 'school',
-    sourceName: '杭州学军中学',
-    knowledgeTags: ['GIS', '数据可视化', '空间分析', '人口分布'],
-    supportSelfStudy: true,
-    studentCount: 345,
-    grade: '高中',
-    concepts: ['地理工具与实践能力', '数据分析与应用'],
+    title: '生态文明与可持续发展',
+    cover: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&h=300&fit=crop',
+    subjects: ['生物', '道德与法治'],
+    source: 'official',
+    concepts: ['生态平衡', '责任意识', '可持续发展', '环境伦理'],
+    studentCount: 1023,
+    rating: 4.7,
   },
   {
     id: '9',
-    title: '生态文明与可持续发展',
-    cover: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&h=300&fit=crop',
-    subjects: ['生物', '道德与法治', '地理'],
-    source: 'official',
-    sourceName: '平台官方',
-    knowledgeTags: ['生态保护', '可持续发展', '环境伦理', '碳中和'],
-    supportSelfStudy: true,
-    studentCount: 723,
-    grade: '初中',
-    concepts: ['生物与环境', '责任意识', '化学与可持续发展'],
-  },
-  {
-    id: '10',
     title: '历史事件中的地理因素',
     cover: 'https://images.unsplash.com/photo-1524661135-423995f22d0b?w=400&h=300&fit=crop',
     subjects: ['历史', '地理'],
-    source: 'school',
-    sourceName: '成都七中',
-    knowledgeTags: ['地缘政治', '气候影响', '资源争夺', '文明交流'],
-    supportSelfStudy: false,
-    studentCount: 456,
-    grade: '高中',
-    concepts: ['中国历史演进脉络', '区域认知方法'],
+    source: 'organization',
+    concepts: ['地缘政治', '气候影响', '资源分布', '文明交流'],
+    studentCount: 678,
+    rating: 4.6,
   },
   {
-    id: '11',
+    id: '10',
     title: 'AI与信息素养教育',
     cover: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=400&h=300&fit=crop',
     subjects: ['信息科技', '道德与法治'],
     source: 'official',
-    sourceName: '平台官方',
-    knowledgeTags: ['人工智能', '信息安全', '网络伦理', '数字公民'],
-    supportSelfStudy: true,
-    studentCount: 634,
-    grade: '初中',
-    concepts: ['人工智能', '法治观念', '信息安全'],
+    concepts: ['人工智能', '信息安全', '网络伦理', '数字公民'],
+    studentCount: 1456,
+    rating: 4.8,
   },
   {
-    id: '12',
+    id: '11',
     title: '化学元素与宇宙起源',
     cover: 'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=400&h=300&fit=crop',
     subjects: ['化学', '物理'],
-    source: 'school',
-    sourceName: '南京外国语学校',
-    knowledgeTags: ['元素周期表', '恒星演化', '核聚变', '宇宙大爆炸'],
-    supportSelfStudy: true,
-    studentCount: 289,
-    grade: '高中',
-    concepts: ['物质结构与周期律', '能量守恒与可持续发展'],
+    source: 'organization',
+    concepts: ['元素周期律', '恒星演化', '核反应', '宇宙结构'],
+    studentCount: 534,
+    rating: 4.7,
+  },
+  {
+    id: '12',
+    title: '水循环与气候变化',
+    cover: 'https://images.unsplash.com/photo-1509228468518-180dd4864904?w=400&h=300&fit=crop',
+    subjects: ['地理', '物理'],
+    source: 'official',
+    concepts: ['水循环', '能量转换', '气候系统', '全球变暖'],
+    studentCount: 1678,
+    rating: 4.8,
   },
 ]
 
@@ -348,19 +308,17 @@ const subjectColors: Record<string, string> = {
 export default function CourseCenter() {
   const [viewMode, setViewMode] = useState<'courses' | 'visualization'>('courses')
   const [selectedSubject, setSelectedSubject] = useState('全部')
-  const [selectedGrade, setSelectedGrade] = useState('全部')
   const [selectedSource, setSelectedSource] = useState('全部')
   const [searchQuery, setSearchQuery] = useState('')
 
   const filteredCourses = courses.filter((course) => {
     if (selectedSubject !== '全部' && !course.subjects.includes(selectedSubject)) return false
-    if (selectedGrade !== '全部' && course.grade !== selectedGrade) return false
     if (selectedSource !== '全部') {
       if (selectedSource === '官方' && course.source !== 'official') return false
-      if (selectedSource === '学校' && course.source !== 'school') return false
+      if (selectedSource === '组织' && course.source !== 'organization') return false
     }
     if (searchQuery && !course.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
-        !course.knowledgeTags.some(tag => tag.includes(searchQuery))) return false
+        !course.concepts.some(concept => concept.includes(searchQuery))) return false
     return true
   })
 
@@ -369,7 +327,7 @@ export default function CourseCenter() {
       {/* 背景装饰 */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-20 right-10 w-96 h-96 bg-blue-200/20 rounded-full blur-3xl" />
-        <div className="absolute bottom-20 left-10 w-72 h-72 bg-emerald-200/20 rounded-full blur-3xl" />
+        <div className="absolute bottom-20 left-10 w-72 h-72 bg-blue-200/20 rounded-full blur-3xl" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-purple-200/10 rounded-full blur-3xl" />
       </div>
 
@@ -377,7 +335,7 @@ export default function CourseCenter() {
         {/* Hero 区域 */}
         <div className="text-center mb-8 animate-fade-in-up">
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-            <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-emerald-600 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 bg-clip-text text-transparent">
               跨学科课程中心
             </span>
           </h1>
@@ -412,7 +370,7 @@ export default function CourseCenter() {
           </div>
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center text-white text-xl">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-xl">
                 👨‍🏫
               </div>
               <div>
@@ -480,16 +438,6 @@ export default function CourseCenter() {
               >
                 {subjects.map((subject) => (
                   <option key={subject} value={subject}>{subject === '全部' ? '全部学科' : subject}</option>
-                ))}
-              </select>
-
-              <select
-                value={selectedGrade}
-                onChange={(e) => setSelectedGrade(e.target.value)}
-                className="px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-              >
-                {grades.map((grade) => (
-                  <option key={grade} value={grade}>{grade === '全部' ? '全部年级' : grade}</option>
                 ))}
               </select>
 
@@ -572,18 +520,36 @@ function CourseGridView({ courses }: { courses: Course[] }) {
               className="object-cover group-hover:scale-105 transition-transform duration-500"
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
+
+            {/* 来源标签 - 右上角 */}
+            <div className="absolute top-3 right-3">
+              <span className={`px-2.5 py-1 text-xs font-medium rounded-lg ${
+                course.source === 'official'
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-purple-500 text-white'
+              }`}>
+                {course.source === 'official' ? '官方' : '组织'}
+              </span>
+            </div>
+          </div>
+
+          {/* 内容 */}
+          <div className="p-5">
+            {/* 课程标题 */}
+            <h3 className="font-bold text-gray-900 text-lg mb-3 line-clamp-2 group-hover:text-blue-600 transition-colors">
+              {course.title}
+            </h3>
 
             {/* 学科标签 */}
-            <div className="absolute top-3 left-3 flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap gap-1.5 mb-3">
               {course.subjects.map((subject) => (
                 <span
                   key={subject}
-                  className="px-2 py-1 text-xs font-medium rounded-lg backdrop-blur-sm"
+                  className="px-2.5 py-1 text-xs font-medium rounded-lg"
                   style={{
-                    backgroundColor: `${subjectColors[subject]}20`,
+                    backgroundColor: `${subjectColors[subject]}15`,
                     color: subjectColors[subject],
-                    border: `1px solid ${subjectColors[subject]}40`,
                   }}
                 >
                   {subject}
@@ -591,76 +557,33 @@ function CourseGridView({ courses }: { courses: Course[] }) {
               ))}
             </div>
 
-            {/* 来源标签 */}
-            <div className="absolute top-3 right-3">
-              <span className={`px-2.5 py-1 text-xs font-medium rounded-lg backdrop-blur-sm ${
-                course.source === 'official'
-                  ? 'bg-blue-500/90 text-white'
-                  : 'bg-purple-500/90 text-white'
-              }`}>
-                {course.sourceName}
-              </span>
-            </div>
-
-            {/* 底部信息 */}
-            <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between">
-              {course.supportSelfStudy && (
-                <span className="px-2 py-1 bg-white/90 backdrop-blur-sm text-gray-700 text-xs font-medium rounded-lg flex items-center gap-1">
-                  <svg className="w-3 h-3 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  支持自学
-                </span>
-              )}
-              <span className="px-2 py-1 bg-white/90 backdrop-blur-sm text-gray-700 text-xs font-medium rounded-lg flex items-center gap-1 ml-auto">
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                </svg>
-                {course.studentCount}
-              </span>
-            </div>
-          </div>
-
-          {/* 内容 */}
-          <div className="p-5">
-            <h3 className="font-bold text-gray-900 text-lg mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors">
-              {course.title}
-            </h3>
-
-            {/* 知识点标签 */}
-            <div className="flex flex-wrap gap-1.5 mb-3">
-              {course.knowledgeTags.slice(0, 3).map((tag) => (
-                <span key={tag} className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full">
-                  {tag}
+            {/* 跨学科概念 */}
+            <div className="flex flex-wrap gap-1.5 mb-4">
+              {course.concepts.map((concept) => (
+                <span key={concept} className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full">
+                  {concept}
                 </span>
               ))}
-              {course.knowledgeTags.length > 3 && (
-                <span className="px-2 py-0.5 bg-gray-100 text-gray-500 text-xs rounded-full">
-                  +{course.knowledgeTags.length - 3}
+            </div>
+
+            {/* 底部信息：学习人数、评分、授课按钮 */}
+            <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+              <div className="flex items-center gap-4">
+                {/* 学习人数 */}
+                <span className="flex items-center gap-1 text-sm text-gray-500">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                  </svg>
+                  {course.studentCount}人学习
                 </span>
-              )}
-            </div>
-
-            {/* 跨学科概念 */}
-            <div className="mb-4">
-              <div className="text-xs text-gray-500 mb-1.5">跨学科大概念</div>
-              <div className="flex flex-wrap gap-1">
-                {course.concepts.slice(0, 2).map((concept) => (
-                  <span key={concept} className="px-2 py-0.5 bg-blue-50 text-blue-600 text-xs rounded-full border border-blue-100">
-                    {concept}
-                  </span>
-                ))}
+                {/* 评分 */}
+                <span className="flex items-center gap-1 text-sm text-gray-500">
+                  <svg className="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                  {course.rating}
+                </span>
               </div>
-            </div>
-
-            {/* 年级和操作 */}
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-500 flex items-center gap-1">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                </svg>
-                {course.grade}
-              </span>
               <button className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-sm font-medium rounded-xl hover:shadow-lg hover:shadow-blue-500/25 transition-all duration-300">
                 去授课
               </button>
@@ -999,7 +922,7 @@ function KnowledgeGraphView({
           <div className="pt-4 border-t border-gray-100 space-y-2">
             <p className="text-xs text-gray-500 font-medium mb-2">连接类型</p>
             <div className="flex items-center gap-2">
-              <div className="w-8 h-0.5 bg-emerald-500" />
+              <div className="w-8 h-0.5 bg-blue-500" />
               <span className="text-xs text-gray-500">前置关系</span>
             </div>
             <div className="flex items-center gap-2">
@@ -1053,9 +976,15 @@ function KnowledgeGraphView({
                   <div className="flex-1 min-w-0">
                     <h4 className="font-medium text-gray-900 text-sm truncate">{course.title}</h4>
                     <div className="flex items-center gap-2 mt-1">
-                      <span className="text-xs text-gray-500">{course.grade}</span>
+                      <span className="text-xs text-gray-500">{course.subjects.join('/')}</span>
                       <span className="text-xs text-gray-400">•</span>
-                      <span className="text-xs text-gray-500">{course.studentCount} 学生</span>
+                      <span className="text-xs text-gray-500">{course.studentCount}人学习</span>
+                      <span className="text-xs text-yellow-500 flex items-center gap-0.5">
+                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                        </svg>
+                        {course.rating}
+                      </span>
                     </div>
                   </div>
                   <button className="px-3 py-1.5 bg-blue-50 text-blue-600 text-xs font-medium rounded-lg hover:bg-blue-100 transition-colors whitespace-nowrap">

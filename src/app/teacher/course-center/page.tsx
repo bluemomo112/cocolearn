@@ -169,8 +169,8 @@ export default function TeacherCourseCenter() {
 
       {/* Background Decoration */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-20 right-10 w-96 h-96 bg-emerald-200/20 rounded-full blur-3xl" />
-        <div className="absolute bottom-20 left-10 w-72 h-72 bg-teal-200/20 rounded-full blur-3xl" />
+        <div className="absolute top-20 right-10 w-96 h-96 bg-blue-200/20 rounded-full blur-3xl" />
+        <div className="absolute bottom-20 left-10 w-72 h-72 bg-sky-200/20 rounded-full blur-3xl" />
       </div>
 
       <main className="relative z-10 p-6">
@@ -237,7 +237,7 @@ export default function TeacherCourseCenter() {
               <select
                 value={selectedSubject}
                 onChange={(e) => setSelectedSubject(e.target.value)}
-                className="px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                className="px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 {subjects.map((subject) => (
                   <option key={subject} value={subject}>{subject === '全部' ? '全部学科' : subject}</option>
@@ -248,7 +248,7 @@ export default function TeacherCourseCenter() {
               <select
                 value={selectedGrade}
                 onChange={(e) => setSelectedGrade(e.target.value)}
-                className="px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                className="px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 {grades.map((grade) => (
                   <option key={grade} value={grade}>{grade === '全部' ? '全部年级' : grade}</option>
@@ -259,7 +259,7 @@ export default function TeacherCourseCenter() {
               <select
                 value={selectedSource}
                 onChange={(e) => setSelectedSource(e.target.value)}
-                className="px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                className="px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 {sources.map((source) => (
                   <option key={source} value={source}>{source === '全部' ? '全部来源' : source}</option>
@@ -273,7 +273,7 @@ export default function TeacherCourseCenter() {
                   placeholder="搜索课程..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 w-48"
+                  className="pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-48"
                 />
                 <svg
                   className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
@@ -341,7 +341,7 @@ function CourseGridView({ courses }: { courses: Course[] }) {
             <div className="absolute top-3 right-3">
               <span className={`px-2 py-1 text-xs font-medium rounded-lg ${
                 course.source === 'official'
-                  ? 'bg-emerald-500 text-white'
+                  ? 'bg-blue-500 text-white'
                   : 'bg-blue-500 text-white'
               }`}>
                 {course.sourceName}
@@ -352,7 +352,7 @@ function CourseGridView({ courses }: { courses: Course[] }) {
             {course.supportSelfStudy && (
               <div className="absolute bottom-3 left-3">
                 <span className="px-2 py-1 bg-white/90 text-gray-700 text-xs font-medium rounded-lg flex items-center gap-1">
-                  <svg className="w-3 h-3 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-3 h-3 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                   支持自学
@@ -395,7 +395,7 @@ function CourseGridView({ courses }: { courses: Course[] }) {
             </div>
 
             {/* Action Button */}
-            <button className="w-full px-4 py-2.5 bg-emerald-600 text-white font-medium rounded-xl hover:bg-emerald-700 transition-colors">
+            <button className="w-full px-4 py-2.5 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition-colors">
               去授课
             </button>
           </div>
@@ -548,7 +548,7 @@ function VisualizationView({
             <select
               value={selectedSubject}
               onChange={(e) => onSelectSubject(e.target.value)}
-              className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               {subjects.map((subject) => (
                 <option key={subject} value={subject}>{subject === '全部' ? '全部学科' : subject}</option>
@@ -568,7 +568,7 @@ function VisualizationView({
               step="0.1"
               value={linkStrength}
               onChange={(e) => setLinkStrength(parseFloat(e.target.value))}
-              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-emerald-500"
+              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-500"
             />
           </div>
 
@@ -579,7 +579,7 @@ function VisualizationView({
               <button
                 onClick={() => setShowLabels(!showLabels)}
                 className={`relative w-11 h-6 rounded-full transition-colors ${
-                  showLabels ? 'bg-emerald-500' : 'bg-gray-300'
+                  showLabels ? 'bg-blue-500' : 'bg-gray-300'
                 }`}
               >
                 <span
@@ -594,7 +594,7 @@ function VisualizationView({
               <button
                 onClick={() => setShowLinks(!showLinks)}
                 className={`relative w-11 h-6 rounded-full transition-colors ${
-                  showLinks ? 'bg-emerald-500' : 'bg-gray-300'
+                  showLinks ? 'bg-blue-500' : 'bg-gray-300'
                 }`}
               >
                 <span
@@ -620,7 +620,7 @@ function VisualizationView({
           </div>
           <div className="mt-4 pt-4 border-t border-gray-100 space-y-2">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-0.5 bg-emerald-500" />
+              <div className="w-8 h-0.5 bg-blue-500" />
               <span className="text-xs text-gray-500">前置关系</span>
             </div>
             <div className="flex items-center gap-2">
@@ -657,7 +657,7 @@ function VisualizationView({
                       <h4 className="font-medium text-gray-900 text-sm truncate">{course.title}</h4>
                       <p className="text-xs text-gray-500">{course.studentCount} 学生</p>
                     </div>
-                    <button className="px-3 py-1.5 bg-emerald-100 text-emerald-600 text-xs font-medium rounded-lg hover:bg-emerald-200">
+                    <button className="px-3 py-1.5 bg-blue-100 text-blue-600 text-xs font-medium rounded-lg hover:bg-blue-200">
                       查看
                     </button>
                   </div>

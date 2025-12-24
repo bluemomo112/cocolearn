@@ -117,7 +117,7 @@ const fileTypeIcons: Record<string, { icon: string; color: string }> = {
   pdf: { icon: '📄', color: 'bg-red-100 text-red-600' },
   pptx: { icon: '📊', color: 'bg-orange-100 text-orange-600' },
   docx: { icon: '📝', color: 'bg-blue-100 text-blue-600' },
-  video: { icon: '🎬', color: 'bg-teal-100 text-teal-600' },
+  video: { icon: '🎬', color: 'bg-sky-100 text-sky-600' },
   image: { icon: '🖼️', color: 'bg-pink-100 text-pink-600' },
   folder: { icon: '📁', color: 'bg-amber-100 text-amber-600' },
 }
@@ -136,7 +136,7 @@ export default function KnowledgeBase() {
 
       {/* Background Decoration */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-20 right-10 w-96 h-96 bg-emerald-200/20 rounded-full blur-3xl" />
+        <div className="absolute top-20 right-10 w-96 h-96 bg-blue-200/20 rounded-full blur-3xl" />
         <div className="absolute bottom-20 left-10 w-72 h-72 bg-blue-200/20 rounded-full blur-3xl" />
       </div>
 
@@ -149,7 +149,7 @@ export default function KnowledgeBase() {
               onClick={() => setActiveTab('personal')}
               className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
                 activeTab === 'personal'
-                  ? 'bg-emerald-600 text-white'
+                  ? 'bg-blue-600 text-white'
                   : 'text-gray-600 hover:bg-gray-100'
               }`}
             >
@@ -164,7 +164,7 @@ export default function KnowledgeBase() {
               onClick={() => setActiveTab('shared')}
               className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
                 activeTab === 'shared'
-                  ? 'bg-emerald-600 text-white'
+                  ? 'bg-blue-600 text-white'
                   : 'text-gray-600 hover:bg-gray-100'
               }`}
             >
@@ -209,7 +209,7 @@ export default function KnowledgeBase() {
                 </button>
                 <button
                   onClick={() => setShowUploadModal(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-xl hover:bg-emerald-700 transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 transition-colors"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
@@ -245,7 +245,7 @@ export default function KnowledgeBase() {
                 key={folder.id}
                 onClick={() => setSelectedFolder(folder.id)}
                 className={`bg-white rounded-2xl border ${
-                  selectedFolder === folder.id ? 'border-emerald-300 ring-2 ring-emerald-100' : 'border-gray-100'
+                  selectedFolder === folder.id ? 'border-blue-300 ring-2 ring-blue-100' : 'border-gray-100'
                 } p-5 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 cursor-pointer group`}
                 style={{ animationDelay: `${index * 0.05}s` }}
               >
@@ -278,7 +278,7 @@ export default function KnowledgeBase() {
                 </div>
                 <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
                   <span className="text-xs text-gray-400">更新于 {folder.lastUpdate}</span>
-                  <button className="text-sm text-emerald-600 font-medium hover:text-emerald-700">
+                  <button className="text-sm text-blue-600 font-medium hover:text-blue-700">
                     打开
                   </button>
                 </div>
@@ -317,8 +317,8 @@ export default function KnowledgeBase() {
                     <td className="py-4 px-4 text-sm text-gray-600">{file.size}</td>
                     <td className="py-4 px-4">
                       {file.status === 'ready' && (
-                        <span className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-100 text-emerald-600 text-xs font-medium rounded-full">
-                          <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span>
+                        <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-600 text-xs font-medium rounded-full">
+                          <span className="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
                           就绪
                         </span>
                       )}
@@ -375,7 +375,7 @@ export default function KnowledgeBase() {
         <div className="mt-8 bg-white rounded-2xl border border-gray-100 p-6 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold text-gray-900">存储空间</h3>
-            <button className="text-sm text-emerald-600 font-medium hover:text-emerald-700">升级空间</button>
+            <button className="text-sm text-blue-600 font-medium hover:text-blue-700">升级空间</button>
           </div>
           <div className="flex items-center gap-6">
             <div className="flex-1">
@@ -384,7 +384,7 @@ export default function KnowledgeBase() {
                 <span className="font-medium text-gray-900">42.5%</span>
               </div>
               <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden">
-                <div className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full" style={{ width: '42.5%' }} />
+                <div className="h-full bg-gradient-to-r from-blue-500 to-sky-500 rounded-full" style={{ width: '42.5%' }} />
               </div>
             </div>
             <div className="flex items-center gap-4 text-sm">
@@ -393,7 +393,7 @@ export default function KnowledgeBase() {
                 <span className="text-gray-600">文档 3.2 GB</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="w-3 h-3 bg-teal-500 rounded-full"></span>
+                <span className="w-3 h-3 bg-sky-500 rounded-full"></span>
                 <span className="text-gray-600">视频 4.5 GB</span>
               </div>
               <div className="flex items-center gap-2">
@@ -422,9 +422,9 @@ export default function KnowledgeBase() {
             </div>
 
             {/* Upload Area */}
-            <div className="border-2 border-dashed border-gray-200 rounded-2xl p-8 text-center hover:border-emerald-300 transition-colors cursor-pointer mb-6">
-              <div className="w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="border-2 border-dashed border-gray-200 rounded-2xl p-8 text-center hover:border-blue-300 transition-colors cursor-pointer mb-6">
+              <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                 </svg>
               </div>
@@ -435,7 +435,7 @@ export default function KnowledgeBase() {
             {/* Folder Selection */}
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-2">选择目标文件夹</label>
-              <select className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+              <select className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <option value="">选择文件夹...</option>
                 {personalFolders.map((folder) => (
                   <option key={folder.id} value={folder.id}>{folder.name}</option>
@@ -451,7 +451,7 @@ export default function KnowledgeBase() {
               >
                 取消
               </button>
-              <button className="flex-1 px-4 py-3 bg-emerald-600 text-white font-medium rounded-xl hover:bg-emerald-700 transition-colors">
+              <button className="flex-1 px-4 py-3 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition-colors">
                 开始上传
               </button>
             </div>

@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>学生端 - 自学模式 (Workbench Mode)</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide 图标库 -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- Babel Standalone for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Chart.js for data visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        /* 自定义滚动条 */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* 任务卡片动画 */
+        .task-card-enter { animation: taskCardEnter 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes taskCardEnter {
+            from { opacity: 0; transform: scale(0.95) translateY(20px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        /* 资源项悬停效果 */
+        .resource-item { transition: all 0.2s ease; }
+        .resource-item:hover { transform: translateX(4px); }
+        .resource-item.active { background-color: #eff6ff; border-left-color: #3b82f6; }
+
+        /* 可调整大小的分隔条 */
+        .resizer {
+            width: 4px;
+            cursor: col-resize;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .resizer:hover {
+            background: #3b82f6;
+        }
+        .resizer.resizing {
+            background: #2563eb;
+        }
+
+        /* 笔记编辑器样式 */
+        .markdown-editor {
+            font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 h-screen flex flex-col font-sans overflow-hidden">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // 模拟数据
+        const MOCK_RESOURCES = [
+            {
+                id: 'r1',
+                title: '视频：水滴的旅行',
+                type: 'video',
+                icon: 'play-circle',
+                color: 'purple',
+                duration: '03:45',
+                status: 'open',
+                content: 'video-content',
+                url: 'https://example.com/video.mp4'
+            },
+            {
+                id: 'r2',
+                title: '课件：水循环原理',
+                type: 'ppt',
+                icon: 'presentation',
+                color: 'orange',
+                pages: 12,
+                status: 'open',
+                content: 'ppt-content'
+            },
+            {
+                id: 'r3',
+                title: '文档：水资源保护',
+                type: 'pdf',
+                icon: 'file-text',
+                color: 'blue',
+                pages: 8,
+                status: 'open',
+                content: 'pdf-content'
+            },
+            {
+                id: 'r4',
+                title: '网页：全球水危机',
+                type: 'web',
+                icon: 'globe',
+                color: 'green',
+                status: 'open',
+                url: 'https://example.com/water-crisis'
+            }
+        ];
+
+        const MOCK_TASKS = [
+            { id: 't1', title: '随堂测验：水循环理解', type: 'quiz', icon: 'zap', color: 'green', status: 'required', questions: 3 },
+            { id: 't2', title: '作业：设计节水方案', type: 'assignment', icon: 'file-edit', color: 'blue', status: 'required' },
+            { id: 't3', title: '投票：最关心的水问题', type: 'poll', icon: 'bar-chart', color: 'yellow', status: 'open' }
+        ];
+
+        // 主应用组件
+        function WorkbenchApp() {
+            // 左侧面板状态
+            const [leftPanelMode, setLeftPanelMode] = useState('list'); // 'list' or 'detail'
+            const [selectedResource, setSelectedResource] = useState(null);
+            const [isResourceFullscreen, setIsResourceFullscreen] = useState(false);
+
+            // 聊天状态
+            const [chatMessages, setChatMessages] = useState([
+                {
+                    role: 'assistant',
+                    content: '欢迎进入自学模式！你现在可以自由探索左侧的学习资源。有任何问题都可以问我，我会引导你思考和学习。',
+                    timestamp: new Date()
+                }
+            ]);
+            const [inputMessage, setInputMessage] = useState('');
+
+            // 右侧面板状态
+            const [activeTab, setActiveTab] = useState('workspace');
+            const [notes, setNotes] = useState('# 我的学习笔记\n\n## 今日学习目标\n- [ ] 理解水循环的三个阶段\n- [ ] 完成随堂测验\n\n');
+            const [completedTasks, setCompletedTasks] = useState([]);
+            const [studyTime, setStudyTime] = useState(0);
+            const [rightPanelCollapsed, setRightPanelCollapsed] = useState(false);
+
+            // 三栏宽度状态
+            const [leftWidth, setLeftWidth] = useState(25);
+            const [rightWidth, setRightWidth] = useState(25);
+
+            // 计时器
+            useEffect(() => {
+                const timer = setInterval(() => {
+                    setStudyTime(prev => prev + 1);
+                }, 1000);
+                return () => clearInterval(timer);
+            }, []);
+
+            // 初始化：设置当前页面为自学模式
+            useEffect(() => {
+                localStorage.setItem('teacher_learning_mode', 'workbench');
+                console.log('[学生端-自学模式] 初始化完成');
+            }, []);
+
+            // 监听教师端的模式切换命令
+            useEffect(() => {
+                let lastTimestamp = localStorage.getItem('teacher_mode_change_timestamp') || '0';
+
+                const checkModeChange = () => {
+                    const currentTimestamp = localStorage.getItem('teacher_mode_change_timestamp') || '0';
+                    const currentMode = localStorage.getItem('teacher_learning_mode');
+
+                    // 检测到新的模式切换命令
+                    if (currentTimestamp !== lastTimestamp && currentMode === 'theater') {
+                        lastTimestamp = currentTimestamp;
+                        console.log('[学生端-自学模式] 收到教师端指令，正在切换到跟随模式...');
+                        // 跳转到跟随模式页面
+                        window.location.href = 'LMS-Student-Theater.html';
+                    }
+                };
+
+                // 每500ms检查一次
+                const interval = setInterval(checkModeChange, 500);
+                return () => clearInterval(interval);
+            }, []);
+
+            // 选择资源 - 切换到详情模式
+            const handleResourceClick = (resource) => {
+                setSelectedResource(resource);
+                setLeftPanelMode('detail');
+                setIsResourceFullscreen(false);
+
+                // AI提示
+                const aiMessage = {
+                    role: 'assistant',
+                    content: `很好！你选择了"${resource.title}"。这个资源可以帮助你理解相关概念。浏览时，思考一下：你能从中发现哪些关键信息？`,
+                    timestamp: new Date()
+                };
+                setChatMessages([...chatMessages, aiMessage]);
+            };
+
+            // 返回列表
+            const handleBackToList = () => {
+                setLeftPanelMode('list');
+                setIsResourceFullscreen(false);
+            };
+
+            // 全屏资源
+            const handleFullscreenResource = () => {
+                setIsResourceFullscreen(true);
+            };
+
+            // 退出全屏
+            const handleExitFullscreen = () => {
+                setIsResourceFullscreen(false);
+            };
+
+            // 点击任务，推送任务卡片到聊天区
+            const handleTaskClick = (task) => {
+                const taskCard = {
+                    role: 'task',
+                    taskData: task,
+                    timestamp: new Date()
+                };
+                setChatMessages([...chatMessages, taskCard]);
+            };
+
+            // 发送消息
+            const sendMessage = () => {
+                if (!inputMessage.trim()) return;
+
+                const newMessage = { role: 'user', content: inputMessage, timestamp: new Date() };
+                setChatMessages([...chatMessages, newMessage]);
+                setInputMessage('');
+
+                // 模拟AI回复
+                setTimeout(() => {
+                    const response = generateContextualAIResponse(inputMessage, selectedResource);
+                    setChatMessages(prev => [...prev, { role: 'assistant', content: response, timestamp: new Date() }]);
+                }, 1000);
+            };
+
+            // 上下文感知的AI响应
+            const generateContextualAIResponse = (question, currentResource) => {
+                const lowerQ = question.toLowerCase();
+
+                if (currentResource) {
+                    if (lowerQ.includes('这个') || lowerQ.includes('这里')) {
+                        return `关于"${currentResource.title}"，我注意到你在思考相关问题。能具体说说是哪个部分让你产生了疑问吗？`;
+                    }
+                }
+
+                if (lowerQ.includes('答案') || lowerQ.includes('是什么')) {
+                    return '在给出答案之前，让我们先一起分析一下。你能尝试从刚才看过的资源中找到相关线索吗？';
+                } else if (lowerQ.includes('不懂') || lowerQ.includes('难')) {
+                    return '我理解这个概念确实需要时间消化。让我们换个角度：你能用自己的生活经验来类比这个概念吗？';
+                } else {
+                    return '这是一个很好的问题！让我们一步步来思考。首先，你觉得这个问题与我们学习的哪个主题最相关？';
+                }
+            };
+
+            // 完成任务
+            const completeTask = (taskId) => {
+                setCompletedTasks([...completedTasks, taskId]);
+                setChatMessages([...chatMessages, {
+                    role: 'assistant',
+                    content: '🎉 太棒了！你完成了一个任务。继续保持这样的学习节奏！',
+                    timestamp: new Date()
+                }]);
+            };
+
+            // 检查是否可以完成课程
+            const canCompleteCourse = () => {
+                const requiredTasks = MOCK_TASKS.filter(t => t.status === 'required');
+                return requiredTasks.every(t => completedTasks.includes(t.id));
+            };
+
+            // 完成课程
+            const completeCourse = () => {
+                if (canCompleteCourse()) {
+                    alert('🎊 恭喜你完成了本节课程！\n\n学习时长: ' + formatTime(studyTime) + '\n完成任务: ' + completedTasks.length + '/' + MOCK_TASKS.filter(t => t.status === 'required').length);
+                } else {
+                    const remaining = MOCK_TASKS.filter(t => t.status === 'required' && !completedTasks.includes(t.id));
+                    alert('还有 ' + remaining.length + ' 个必修任务未完成：\n\n' + remaining.map(t => '• ' + t.title).join('\n'));
+                }
+            };
+
+            return (
+                <div className="h-screen flex flex-col">
+                    {/* 顶部状态栏 */}
+                    <Header studyTime={studyTime} completedTasks={completedTasks.length} totalRequiredTasks={MOCK_TASKS.filter(t => t.status === 'required').length} />
+
+                    {/* 主体三栏布局 */}
+                    <div className="flex-1 flex overflow-hidden">
+                        {/* 全屏资源覆盖层 */}
+                        {isResourceFullscreen && selectedResource && (
+                            <div className="absolute inset-0 z-50 bg-white">
+                                <ResourceViewer
+                                    resource={selectedResource}
+                                    isFullscreen={true}
+                                    onExitFullscreen={handleExitFullscreen}
+                                />
+                            </div>
+                        )}
+
+                        {/* 左侧：资料面板 */}
+                        <div style={{ width: `${leftWidth}%` }} className="bg-white border-r border-gray-200 flex flex-col shrink-0">
+                            {leftPanelMode === 'list' ? (
+                                <LeftPanelList
+                                    resources={MOCK_RESOURCES}
+                                    tasks={MOCK_TASKS}
+                                    completedTasks={completedTasks}
+                                    onResourceClick={handleResourceClick}
+                                    onTaskClick={handleTaskClick}
+                                />
+                            ) : (
+                                <LeftPanelDetail
+                                    resource={selectedResource}
+                                    onBack={handleBackToList}
+                                    onFullscreen={handleFullscreenResource}
+                                />
+                            )}
+                        </div>
+
+                        {/* 左侧分隔条 */}
+                        <Resizer
+                            onResize={(delta) => {
+                                const newLeft = Math.max(15, Math.min(40, leftWidth + delta));
+                                setLeftWidth(newLeft);
+                            }}
+                        />
+
+                        {/* 中间：AI对话学习区 */}
+                        <div style={{ width: `${100 - leftWidth - (rightPanelCollapsed ? 0 : rightWidth)}%` }} className="flex flex-col bg-gray-50 min-w-0">
+                            <CenterChatPanel
+                                messages={chatMessages}
+                                inputMessage={inputMessage}
+                                setInputMessage={setInputMessage}
+                                sendMessage={sendMessage}
+                                onCompleteTask={completeTask}
+                                completedTasks={completedTasks}
+                            />
+                        </div>
+
+                        {/* 右侧分隔条 */}
+                        {!rightPanelCollapsed && (
+                            <Resizer
+                                onResize={(delta) => {
+                                    const newRight = Math.max(15, Math.min(40, rightWidth - delta));
+                                    setRightWidth(newRight);
+                                }}
+                            />
+                        )}
+
+                        {/* 右侧：工作室 */}
+                        {!rightPanelCollapsed && (
+                            <div style={{ width: `${rightWidth}%` }} className="bg-white border-l border-gray-200 flex flex-col shrink-0">
+                                <RightStudioPanel
+                                    activeTab={activeTab}
+                                    setActiveTab={setActiveTab}
+                                    notes={notes}
+                                    setNotes={setNotes}
+                                    studyTime={studyTime}
+                                    completedTasks={completedTasks}
+                                    onCollapse={() => setRightPanelCollapsed(true)}
+                                />
+                            </div>
+                        )}
+
+                        {/* 折叠后的展开按钮 */}
+                        {rightPanelCollapsed && (
+                            <button
+                                onClick={() => setRightPanelCollapsed(false)}
+                                className="w-8 bg-gray-200 hover:bg-gray-300 border-l border-gray-300 flex items-center justify-center transition-colors group"
+                            >
+                                <i data-lucide="chevron-left" className="w-4 h-4 text-gray-600 group-hover:text-gray-800"></i>
+                            </button>
+                        )}
+                    </div>
+
+                    {/* 底部完成按钮 */}
+                    <footer className="h-16 bg-white border-t border-gray-200 flex items-center justify-center px-6 shrink-0">
+                        <button
+                            onClick={completeCourse}
+                            className={`px-8 py-3 rounded-xl font-bold text-sm shadow-lg transition-all flex items-center gap-2 ${
+                                canCompleteCourse()
+                                    ? 'bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700 shadow-green-500/30'
+                                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                            }`}
+                        >
+                            <i data-lucide={canCompleteCourse() ? "check-circle" : "circle-dashed"} className="w-5 h-5"></i>
+                            {canCompleteCourse() ? '完成课程' : `还需完成 ${MOCK_TASKS.filter(t => t.status === 'required').length - completedTasks.length} 个必修任务`}
+                        </button>
+                    </footer>
+                </div>
+            );
+        }
+
+        // 可调整大小的分隔条组件
+        function Resizer({ onResize }) {
+            const [isResizing, setIsResizing] = useState(false);
+            const startXRef = useRef(0);
+
+            const handleMouseDown = (e) => {
+                setIsResizing(true);
+                startXRef.current = e.clientX;
+                document.body.style.cursor = 'col-resize';
+            };
+
+            useEffect(() => {
+                if (!isResizing) return;
+
+                const handleMouseMove = (e) => {
+                    const delta = ((e.clientX - startXRef.current) / window.innerWidth) * 100;
+                    onResize(delta);
+                    startXRef.current = e.clientX;
+                };
+
+                const handleMouseUp = () => {
+                    setIsResizing(false);
+                    document.body.style.cursor = 'default';
+                };
+
+                document.addEventListener('mousemove', handleMouseMove);
+                document.addEventListener('mouseup', handleMouseUp);
+
+                return () => {
+                    document.removeEventListener('mousemove', handleMouseMove);
+                    document.removeEventListener('mouseup', handleMouseUp);
+                };
+            }, [isResizing]);
+
+            return (
+                <div
+                    className={`resizer ${isResizing ? 'resizing' : ''}`}
+                    onMouseDown={handleMouseDown}
+                />
+            );
+        }
+
+        // 顶部状态栏组件
+        function Header({ studyTime, completedTasks, totalRequiredTasks }) {
+            useEffect(() => {
+                lucide.createIcons();
+            });
+
+            return (
+                <header className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-6 shadow-sm shrink-0">
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-lg">K</div>
+                        <div>
+                            <h1 className="font-bold text-sm text-gray-800">跨学科探究：水资源与环境</h1>
+                            <div className="flex items-center gap-2 text-xs text-gray-500">
+                                <span className="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></span>
+                                自学模式 · AI引导学习中
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-6">
+                        <div className="flex items-center gap-2 text-xs text-gray-600">
+                            <i data-lucide="clock" className="w-3 h-3"></i>
+                            学习时长: <span className="font-mono font-bold">{formatTime(studyTime)}</span>
+                        </div>
+                        <div className="h-4 w-px bg-gray-200"></div>
+                        <div className="flex items-center gap-2 text-xs text-gray-600">
+                            <i data-lucide="check-square" className="w-3 h-3"></i>
+                            任务完成: <span className="font-bold">{completedTasks}/{totalRequiredTasks}</span>
+                        </div>
+                    </div>
+                </header>
+            );
+        }
+
+        // 左侧列表视图
+        function LeftPanelList({ resources, tasks, completedTasks, onResourceClick, onTaskClick }) {
+            useEffect(() => {
+                lucide.createIcons();
+            }, [completedTasks]);
+
+            return (
+                <>
+                    <div className="p-4 border-b border-gray-100 bg-gray-50/50">
+                        <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wider">学习资料库</h2>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto">
+                        {/* 资源列表 */}
+                        <div className="p-4">
+                            <div className="flex items-center gap-2 mb-3">
+                                <i data-lucide="folder-open" className="w-4 h-4 text-gray-400"></i>
+                                <h3 className="text-xs font-bold text-gray-600 uppercase">课程资源</h3>
+                            </div>
+                            <div className="space-y-2">
+                                {resources.map(resource => (
+                                    <div
+                                        key={resource.id}
+                                        onClick={() => onResourceClick(resource)}
+                                        className="resource-item cursor-pointer px-4 py-3 rounded-lg hover:bg-gray-50 border-l-4 border-transparent transition-all"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-10 h-10 rounded-lg bg-${resource.color}-100 flex items-center justify-center shrink-0`}>
+                                                <i data-lucide={resource.icon} className={`w-5 h-5 text-${resource.color}-600`}></i>
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-medium text-gray-700 truncate">{resource.title}</p>
+                                                <p className="text-xs text-gray-400">
+                                                    {resource.duration || resource.pages ? `${resource.duration || resource.pages + '页'}` : '在线资源'}
+                                                </p>
+                                            </div>
+                                            <i data-lucide="chevron-right" className="w-4 h-4 text-gray-400"></i>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* 任务列表 */}
+                        <div className="p-4 border-t border-gray-100">
+                            <div className="flex items-center gap-2 mb-3">
+                                <i data-lucide="list-checks" className="w-4 h-4 text-gray-400"></i>
+                                <h3 className="text-xs font-bold text-gray-600 uppercase">学习任务</h3>
+                            </div>
+                            <div className="space-y-2">
+                                {tasks.map(task => (
+                                    <div
+                                        key={task.id}
+                                        onClick={() => onTaskClick(task)}
+                                        className="cursor-pointer px-4 py-3 rounded-lg hover:bg-gray-50 border border-gray-200 hover:border-gray-300 transition-all group"
+                                    >
+                                        <div className="flex items-start gap-3">
+                                            <div className={`w-8 h-8 rounded-lg bg-${task.color}-100 flex items-center justify-center shrink-0 mt-0.5`}>
+                                                <i data-lucide={task.icon} className={`w-4 h-4 text-${task.color}-600`}></i>
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-medium text-gray-700 mb-1">{task.title}</p>
+                                                <div className="flex items-center gap-2">
+                                                    {task.status === 'required' && (
+                                                        <span className="text-xs bg-red-50 text-red-600 px-2 py-0.5 rounded-full font-medium">必修</span>
+                                                    )}
+                                                    {completedTasks.includes(task.id) && (
+                                                        <span className="text-xs bg-green-50 text-green-600 px-2 py-0.5 rounded-full font-medium flex items-center gap-1">
+                                                            <i data-lucide="check" className="w-3 h-3"></i> 已完成
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <i data-lucide="arrow-right" className="w-4 h-4 text-gray-400 group-hover:text-gray-600 transition-colors mt-1"></i>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </>
+            );
+        }
+
+        // 左侧详情视图
+        function LeftPanelDetail({ resource, onBack, onFullscreen }) {
+            useEffect(() => {
+                lucide.createIcons();
+            }, [resource]);
+
+            if (!resource) return null;
+
+            return (
+                <>
+                    <div className="p-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
+                        <button onClick={onBack} className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-800 transition-colors">
+                            <i data-lucide="chevron-left" className="w-4 h-4"></i>
+                            返回列表
+                        </button>
+                        <button onClick={onFullscreen} className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 transition-colors">
+                            <i data-lucide="maximize-2" className="w-4 h-4"></i>
+                            全屏
+                        </button>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto">
+                        <ResourceViewer resource={resource} isFullscreen={false} />
+                    </div>
+                </>
+            );
+        }
+
+        // 资源查看器组件
+        function ResourceViewer({ resource, isFullscreen, onExitFullscreen }) {
+            useEffect(() => {
+                lucide.createIcons();
+            }, [resource]);
+
+            const containerClass = isFullscreen ? "h-full flex flex-col" : "h-full";
+
+            return (
+                <div className={containerClass}>
+                    {isFullscreen && (
+                        <div className="h-14 bg-gray-800 text-white flex items-center justify-between px-6 shrink-0">
+                            <div className="flex items-center gap-3">
+                                <i data-lucide={resource.icon} className="w-5 h-5"></i>
+                                <span className="font-medium">{resource.title}</span>
+                            </div>
+                            <button onClick={onExitFullscreen} className="flex items-center gap-2 text-sm hover:text-gray-300 transition-colors">
+                                <i data-lucide="minimize-2" className="w-4 h-4"></i>
+                                退出全屏
+                            </button>
+                        </div>
+                    )}
+
+                    <div className={`${isFullscreen ? 'flex-1' : 'h-full'} flex items-center justify-center p-6`}>
+                        {resource.type === 'video' && (
+                            <div className="w-full h-full bg-black rounded-lg flex items-center justify-center">
+                                <div className="text-center text-white">
+                                    <i data-lucide="play-circle" className="w-16 h-16 mx-auto mb-4 opacity-70"></i>
+                                    <p className="text-lg mb-2">{resource.title}</p>
+                                    <p className="text-sm text-gray-400">视频播放器 (模拟)</p>
+                                </div>
+                            </div>
+                        )}
+
+                        {resource.type === 'ppt' && (
+                            <div className="w-full h-full bg-gradient-to-br from-orange-50 to-white rounded-lg p-8 border border-gray-200">
+                                <h2 className="text-2xl font-bold text-gray-800 mb-6">水循环原理</h2>
+                                <div className="space-y-4">
+                                    <div className="bg-white rounded-lg p-4 shadow-sm">
+                                        <h3 className="font-bold text-gray-700 mb-2">1. 蒸发 (Evaporation)</h3>
+                                        <p className="text-sm text-gray-600">太阳能量使水从液态变为气态，上升到大气中。</p>
+                                    </div>
+                                    <div className="bg-white rounded-lg p-4 shadow-sm">
+                                        <h3 className="font-bold text-gray-700 mb-2">2. 凝结 (Condensation)</h3>
+                                        <p className="text-sm text-gray-600">水蒸气在高空遇冷凝结成小水滴，形成云。</p>
+                                    </div>
+                                    <div className="bg-white rounded-lg p-4 shadow-sm">
+                                        <h3 className="font-bold text-gray-700 mb-2">3. 降水 (Precipitation)</h3>
+                                        <p className="text-sm text-gray-600">云中水滴聚集变大，以雨、雪等形式降落地面。</p>
+                                    </div>
+                                </div>
+                                <div className="mt-6 text-xs text-gray-400 text-center">第 1 页 / 共 {resource.pages} 页</div>
+                            </div>
+                        )}
+
+                        {resource.type === 'pdf' && (
+                            <div className="w-full h-full bg-white rounded-lg border border-gray-300 p-6 overflow-y-auto">
+                                <h1 className="text-2xl font-bold text-gray-800 mb-4">水资源保护</h1>
+                                <div className="prose prose-sm max-w-none">
+                                    <p className="text-gray-700 leading-relaxed mb-4">
+                                        水是生命之源，地球上的水资源总量约为13.8亿立方千米，但其中97.5%是海水，淡水仅占2.5%。而在这些淡水中，68.7%冻结在南北两极的冰川中，30.1%分布在地下，真正可被人类直接利用的淡水资源不足总水量的1%。
+                                    </p>
+                                    <h2 className="text-lg font-bold text-gray-800 mt-6 mb-3">全球水资源现状</h2>
+                                    <p className="text-gray-700 leading-relaxed mb-4">
+                                        随着人口增长和经济发展，全球水资源短缺问题日益严重。联合国数据显示，目前全球约有22亿人缺乏安全管理的饮用水服务，42亿人缺乏安全管理的卫生设施。
+                                    </p>
+                                    <h2 className="text-lg font-bold text-gray-800 mt-6 mb-3">水资源保护策略</h2>
+                                    <ul className="list-disc list-inside text-gray-700 space-y-2">
+                                        <li>提高水资源利用效率，发展节水农业</li>
+                                        <li>加强污水处理和水质监测</li>
+                                        <li>推广雨水收集和中水回用技术</li>
+                                        <li>加强水资源管理和立法保护</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        )}
+
+                        {resource.type === 'web' && (
+                            <div className="w-full h-full bg-white rounded-lg border border-gray-300 flex items-center justify-center">
+                                <div className="text-center">
+                                    <i data-lucide="globe" className="w-16 h-16 text-green-600 mx-auto mb-4"></i>
+                                    <p className="text-lg font-medium text-gray-800 mb-2">{resource.title}</p>
+                                    <p className="text-sm text-gray-500 mb-4">外部网页链接</p>
+                                    <a href={resource.url} target="_blank" className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                                        <i data-lucide="external-link" className="w-4 h-4"></i>
+                                        在新窗口打开
+                                    </a>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        // 中间聊天面板组件
+        function CenterChatPanel({ messages, inputMessage, setInputMessage, sendMessage, onCompleteTask, completedTasks }) {
+            const messagesEndRef = useRef(null);
+
+            useEffect(() => {
+                messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+                lucide.createIcons();
+            }, [messages]);
+
+            const handleKeyPress = (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            };
+
+            return (
+                <>
+                    <div className="p-4 bg-white border-b border-gray-200">
+                        <div className="flex items-center gap-2 text-gray-800 mb-1">
+                            <i data-lucide="brain-circuit" className="w-5 h-5 text-indigo-600"></i>
+                            <h2 className="font-bold text-sm">AI 学习对话区</h2>
+                        </div>
+                        <p className="text-xs text-gray-500 pl-7">上下文感知 · 引导式学习</p>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                        {messages.map((msg, idx) => (
+                            <div key={idx} className="fade-in">
+                                {msg.role === 'task' ? (
+                                    <TaskCard task={msg.taskData} onComplete={onCompleteTask} isCompleted={completedTasks.includes(msg.taskData.id)} />
+                                ) : (
+                                    <ChatMessage message={msg} />
+                                )}
+                            </div>
+                        ))}
+                        <div ref={messagesEndRef} />
+                    </div>
+
+                    <div className="p-4 bg-white border-t border-gray-200">
+                        <div className="flex gap-3">
+                            <input
+                                type="text"
+                                value={inputMessage}
+                                onChange={(e) => setInputMessage(e.target.value)}
+                                onKeyPress={handleKeyPress}
+                                placeholder="有问题随时问我，我会引导你思考..."
+                                className="flex-1 bg-gray-50 text-gray-800 text-sm px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 border border-gray-200"
+                            />
+                            <button
+                                onClick={sendMessage}
+                                className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl transition-colors flex items-center gap-2 shadow-lg shadow-indigo-600/30"
+                            >
+                                <i data-lucide="send" className="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+                </>
+            );
+        }
+
+        // 聊天消息组件
+        function ChatMessage({ message }) {
+            return (
+                <div className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-[75%] rounded-xl px-5 py-3 ${
+                        message.role === 'user'
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-white text-gray-800 border border-gray-200 shadow-sm'
+                    }`}>
+                        <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
+                        <p className={`text-xs mt-2 ${message.role === 'user' ? 'text-blue-100' : 'text-gray-400'}`}>
+                            {message.timestamp.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                    </div>
+                </div>
+            );
+        }
+
+        // 任务卡片组件
+        function TaskCard({ task, onComplete, isCompleted }) {
+            const [answers, setAnswers] = useState({});
+
+            useEffect(() => {
+                lucide.createIcons();
+            }, [isCompleted]);
+
+            const handleSubmit = () => {
+                console.log('提交答案:', answers);
+                onComplete(task.id);
+            };
+
+            return (
+                <div className="task-card-enter bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-6 border-2 border-blue-200 shadow-lg">
+                    <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                            <div className={`w-12 h-12 rounded-xl bg-${task.color}-100 flex items-center justify-center`}>
+                                <i data-lucide={task.icon} className={`w-6 h-6 text-${task.color}-600`}></i>
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-gray-800 text-lg">{task.title}</h3>
+                                <p className="text-xs text-gray-500 mt-0.5">
+                                    {task.status === 'required' ? '必修任务' : '可选任务'}
+                                    {task.questions && ` · ${task.questions} 道题`}
+                                </p>
+                            </div>
+                        </div>
+                        {isCompleted && (
+                            <div className="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
+                                <i data-lucide="check" className="w-3 h-3"></i> 已完成
+                            </div>
+                        )}
+                    </div>
+
+                    {!isCompleted && (
+                        <>
+                            {task.type === 'quiz' && (
+                                <div className="space-y-4 mb-4">
+                                    <div className="bg-white rounded-xl p-4 border border-gray-200">
+                                        <p className="font-medium text-gray-800 mb-3">1. 水循环的三个主要阶段是什么？</p>
+                                        <div className="space-y-2">
+                                            {['蒸发、凝结、降水', '蒸发、沸腾、下雨', '蒸发、液化、融化'].map((option, idx) => (
+                                                <label key={idx} className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg cursor-pointer">
+                                                    <input type="radio" name="q1" className="w-4 h-4 text-blue-600" />
+                                                    <span className="text-sm text-gray-700">{option}</span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {task.type === 'assignment' && (
+                                <div className="mb-4">
+                                    <textarea
+                                        placeholder="请在这里提交你的节水方案设计..."
+                                        className="w-full bg-white border border-gray-300 rounded-xl p-4 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 min-h-[120px]"
+                                    />
+                                </div>
+                            )}
+
+                            <button
+                                onClick={handleSubmit}
+                                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-medium transition-colors flex items-center justify-center gap-2"
+                            >
+                                <i data-lucide="check-circle" className="w-4 h-4"></i>
+                                提交任务
+                            </button>
+                        </>
+                    )}
+                </div>
+            );
+        }
+
+        // 右侧工作室面板组件
+        function RightStudioPanel({ activeTab, setActiveTab, notes, setNotes, studyTime, completedTasks, onCollapse }) {
+            useEffect(() => {
+                lucide.createIcons();
+            }, [activeTab]);
+
+            return (
+                <>
+                    <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <i data-lucide="layout-panel-left" className="w-5 h-5 text-gray-600"></i>
+                            <h2 className="font-bold text-sm text-gray-800">学习工作室</h2>
+                        </div>
+                        <button onClick={onCollapse} className="p-1 hover:bg-gray-100 rounded transition-colors">
+                            <i data-lucide="chevron-right" className="w-4 h-4 text-gray-500"></i>
+                        </button>
+                    </div>
+
+                    {/* Tab 切换 */}
+                    <div className="flex border-b border-gray-200 bg-gray-50">
+                        <button
+                            onClick={() => setActiveTab('workspace')}
+                            className={`flex-1 px-4 py-2.5 text-sm font-medium transition-colors ${
+                                activeTab === 'workspace'
+                                    ? 'text-blue-600 border-b-2 border-blue-600 bg-white'
+                                    : 'text-gray-500 hover:text-gray-700'
+                            }`}
+                        >
+                            工作区
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('stats')}
+                            className={`flex-1 px-4 py-2.5 text-sm font-medium transition-colors ${
+                                activeTab === 'stats'
+                                    ? 'text-blue-600 border-b-2 border-blue-600 bg-white'
+                                    : 'text-gray-500 hover:text-gray-700'
+                            }`}
+                        >
+                            数据分析
+                        </button>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto">
+                        {activeTab === 'workspace' ? (
+                            <WorkspaceTab notes={notes} setNotes={setNotes} />
+                        ) : (
+                            <StatsTab studyTime={studyTime} completedTasks={completedTasks} />
+                        )}
+                    </div>
+                </>
+            );
+        }
+
+        // 工作区Tab
+        function WorkspaceTab({ notes, setNotes }) {
+            const [activeSubTab, setActiveSubTab] = useState('notes');
+
+            useEffect(() => {
+                lucide.createIcons();
+            }, [activeSubTab]);
+
+            return (
+                <div className="p-4 space-y-4">
+                    {/* 子Tab */}
+                    <div className="flex gap-2">
+                        {[
+                            { id: 'notes', label: '笔记', icon: 'sticky-note' },
+                            { id: 'graph', label: '知识图谱', icon: 'network' },
+                            { id: 'review', label: '复习队列', icon: 'repeat' }
+                        ].map(tab => (
+                            <button
+                                key={tab.id}
+                                onClick={() => setActiveSubTab(tab.id)}
+                                className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1.5 ${
+                                    activeSubTab === tab.id
+                                        ? 'bg-blue-100 text-blue-700'
+                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                }`}
+                            >
+                                <i data-lucide={tab.icon} className="w-3.5 h-3.5"></i>
+                                {tab.label}
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* 笔记编辑器 */}
+                    {activeSubTab === 'notes' && (
+                        <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                                <label className="text-xs font-bold text-gray-600 uppercase">Markdown 笔记</label>
+                                <button className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1">
+                                    <i data-lucide="download" className="w-3 h-3"></i>
+                                    导出
+                                </button>
+                            </div>
+                            <textarea
+                                value={notes}
+                                onChange={(e) => setNotes(e.target.value)}
+                                className="w-full bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 markdown-editor min-h-[400px]"
+                            />
+                        </div>
+                    )}
+
+                    {/* 知识图谱 */}
+                    {activeSubTab === 'graph' && (
+                        <div className="bg-gray-50 rounded-xl p-6 border border-gray-200 min-h-[400px]">
+                            <KnowledgeGraph />
+                        </div>
+                    )}
+
+                    {/* 复习队列 */}
+                    {activeSubTab === 'review' && (
+                        <div className="space-y-2">
+                            {[
+                                { concept: '水循环三阶段', dueIn: '2小时后' },
+                                { concept: '蒸发与沸腾的区别', dueIn: '明天' },
+                                { concept: '水资源保护方法', dueIn: '3天后' }
+                            ].map((item, idx) => (
+                                <div key={idx} className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                                    <div className="flex items-center justify-between mb-1">
+                                        <span className="font-medium text-sm text-gray-800">{item.concept}</span>
+                                        <span className="text-xs text-amber-600 font-medium">{item.dueIn}</span>
+                                    </div>
+                                    <button className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1 mt-2">
+                                        <i data-lucide="brain" className="w-3 h-3"></i>
+                                        立即复习
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        // 知识图谱组件
+        function KnowledgeGraph() {
+            useEffect(() => {
+                lucide.createIcons();
+            }, []);
+
+            const nodes = [
+                { id: 1, label: '水循环', x: 150, y: 100, color: 'blue' },
+                { id: 2, label: '蒸发', x: 80, y: 200, color: 'orange' },
+                { id: 3, label: '凝结', x: 150, y: 200, color: 'purple' },
+                { id: 4, label: '降水', x: 220, y: 200, color: 'green' }
+            ];
+
+            return (
+                <div className="relative w-full h-full min-h-[350px]">
+                    <svg className="w-full h-full">
+                        {/* 连接线 */}
+                        <line x1="150" y1="120" x2="80" y2="180" stroke="#cbd5e1" strokeWidth="2" />
+                        <line x1="150" y1="120" x2="150" y2="180" stroke="#cbd5e1" strokeWidth="2" />
+                        <line x1="150" y1="120" x2="220" y2="180" stroke="#cbd5e1" strokeWidth="2" />
+
+                        {/* 节点 */}
+                        {nodes.map(node => (
+                            <g key={node.id} className="graph-node cursor-pointer">
+                                <circle cx={node.x} cy={node.y} r="30" className={`fill-${node.color}-100 stroke-${node.color}-500`} strokeWidth="2" />
+                                <text x={node.x} y={node.y} textAnchor="middle" dominantBaseline="middle" className={`text-xs font-bold fill-${node.color}-700`}>
+                                    {node.label}
+                                </text>
+                            </g>
+                        ))}
+                    </svg>
+                    <p className="text-xs text-gray-500 text-center mt-4">基于学习内容自动生成的概念关系</p>
+                </div>
+            );
+        }
+
+        // 数据分析Tab
+        function StatsTab({ studyTime, completedTasks }) {
+            useEffect(() => {
+                lucide.createIcons();
+                initRadarChart();
+            }, []);
+
+            return (
+                <div className="p-4 space-y-6">
+                    {/* 学习统计 */}
+                    <div className="space-y-3">
+                        <h3 className="text-xs font-bold text-gray-600 uppercase flex items-center gap-2">
+                            <i data-lucide="bar-chart-3" className="w-4 h-4"></i>
+                            学习状态监控
+                        </h3>
+
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <i data-lucide="clock" className="w-4 h-4 text-blue-600"></i>
+                                    <span className="text-xs text-blue-700">专注时长</span>
+                                </div>
+                                <p className="text-2xl font-bold text-blue-600">{formatTime(studyTime)}</p>
+                            </div>
+
+                            <div className="bg-green-50 rounded-xl p-4 border border-green-100">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <i data-lucide="check-circle" className="w-4 h-4 text-green-600"></i>
+                                    <span className="text-xs text-green-700">完成任务</span>
+                                </div>
+                                <p className="text-2xl font-bold text-green-600">{completedTasks.length}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 掌握度雷达图 */}
+                    <div className="space-y-3">
+                        <h3 className="text-xs font-bold text-gray-600 uppercase flex items-center gap-2">
+                            <i data-lucide="target" className="w-4 h-4"></i>
+                            概念掌握度
+                        </h3>
+                        <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                            <canvas id="radarChart" height="200"></canvas>
+                        </div>
+                    </div>
+
+                    {/* AI元认知建议 */}
+                    <div className="space-y-3">
+                        <h3 className="text-xs font-bold text-gray-600 uppercase flex items-center gap-2">
+                            <i data-lucide="brain" className="w-4 h-4"></i>
+                            AI 元认知导师
+                        </h3>
+                        <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl p-4 border border-indigo-200">
+                            <div className="flex items-start gap-3">
+                                <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center shrink-0">
+                                    <i data-lucide="lightbulb" className="w-4 h-4 text-indigo-600"></i>
+                                </div>
+                                <div className="flex-1">
+                                    <p className="text-sm text-gray-700 leading-relaxed mb-2">
+                                        <strong>观察：</strong>你的学习节奏很稳定，但在"凝结"概念上停留时间较长。
+                                    </p>
+                                    <p className="text-sm text-indigo-700 font-medium">
+                                        💡 建议：尝试用生活中的例子（如镜子起雾）来理解这个概念。
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // 初始化雷达图
+        function initRadarChart() {
+            const ctx = document.getElementById('radarChart');
+            if (!ctx) return;
+
+            new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: ['水循环', '蒸发', '凝结', '降水', '水资源'],
+                    datasets: [{
+                        label: '掌握度',
+                        data: [85, 70, 60, 75, 80],
+                        backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                        borderColor: 'rgb(59, 130, 246)',
+                        pointBackgroundColor: 'rgb(59, 130, 246)',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'rgb(59, 130, 246)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: { stepSize: 20 }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+
+        // 格式化时间
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // 渲染应用
+        ReactDOM.render(<WorkbenchApp />, document.getElementById('root'));
+
+        // 初始化图标
+        setTimeout(() => {
+            lucide.createIcons();
+        }, 100);
+    </script>
+</body>
+</html>

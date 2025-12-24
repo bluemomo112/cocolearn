@@ -46,10 +46,10 @@ const studentActivities = [
 ]
 
 const quickStats = [
-  { label: '进行中课程', value: '3', change: '+1', icon: '📚', color: 'emerald' },
+  { label: '进行中课程', value: '3', change: '+1', icon: '📚', color: 'blue' },
   { label: '活跃学生', value: '85', change: '+12', icon: '👥', color: 'blue' },
   { label: '待批改作业', value: '12', change: '-5', icon: '📝', color: 'amber' },
-  { label: '本周互动', value: '156', change: '+23%', icon: '💬', color: 'emerald' },
+  { label: '本周互动', value: '156', change: '+23%', icon: '💬', color: 'blue' },
 ]
 
 const todayTasks = [
@@ -75,8 +75,8 @@ export default function TeacherDashboard() {
     <div className="min-h-screen bg-gray-50">
       {/* Background Decoration */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-20 right-10 w-96 h-96 bg-emerald-200/20 rounded-full blur-3xl" />
-        <div className="absolute bottom-20 left-10 w-72 h-72 bg-teal-200/20 rounded-full blur-3xl" />
+        <div className="absolute top-20 right-10 w-96 h-96 bg-blue-200/20 rounded-full blur-3xl" />
+        <div className="absolute bottom-20 left-10 w-72 h-72 bg-sky-200/20 rounded-full blur-3xl" />
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-6 py-8">
@@ -115,11 +115,11 @@ export default function TeacherDashboard() {
               onClick={() => setActiveTab(tab.id as typeof activeTab)}
               className={`flex items-center gap-2 px-1 py-4 text-sm font-medium border-b-2 transition-all ${
                 activeTab === tab.id
-                  ? 'border-emerald-600 text-emerald-600'
+                  ? 'border-blue-600 text-blue-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
-              <span className={activeTab === tab.id ? 'text-emerald-500' : 'text-gray-400'}>{tab.icon}</span>
+              <span className={activeTab === tab.id ? 'text-blue-500' : 'text-gray-400'}>{tab.icon}</span>
               {tab.label}
             </button>
           ))}
@@ -137,7 +137,7 @@ export default function TeacherDashboard() {
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-2xl">{stat.icon}</span>
                     <span className={`text-xs font-medium px-2 py-1 rounded-full ${
-                      stat.change.startsWith('+') ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'
+                      stat.change.startsWith('+') ? 'bg-blue-100 text-blue-600' : 'bg-red-100 text-red-600'
                     }`}>
                       {stat.change}
                     </span>
@@ -149,7 +149,7 @@ export default function TeacherDashboard() {
             </div>
 
             {/* 探索更多课程资源 Banner */}
-            <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl p-6 border border-emerald-100 flex items-center justify-between animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+            <div className="bg-gradient-to-r from-blue-50 to-sky-50 rounded-2xl p-6 border border-blue-100 flex items-center justify-between animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-1">探索更多课程资源</h3>
                 <p className="text-gray-600 text-sm">发现平台上的优质跨学科课程资源</p>
@@ -157,22 +157,22 @@ export default function TeacherDashboard() {
               <div className="flex items-center gap-3">
                 <Link
                   href="/course-center"
-                  className="flex items-center gap-2 px-5 py-2.5 border border-emerald-300 text-emerald-700 text-sm font-medium rounded-xl hover:bg-emerald-100 transition-colors"
+                  className="flex items-center gap-2 px-5 py-2.5 border border-blue-300 text-blue-700 text-sm font-medium rounded-xl hover:bg-blue-100 transition-colors"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
                   进入课程中心
                 </Link>
-                <Link
-                  href="/teacher/courses/create"
-                  className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 text-white text-sm font-medium rounded-xl hover:bg-emerald-700 transition-colors"
+                <a
+                  href="/LMS-Teacher-NoteConfig.html"
+                  className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 transition-colors"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                   </svg>
                   创建新课程
-                </Link>
+                </a>
               </div>
             </div>
 
@@ -204,10 +204,10 @@ export default function TeacherDashboard() {
                     <div className="absolute top-3 left-3">
                       <span className={`px-2.5 py-1 rounded-lg text-xs font-medium ${
                         course.status === 'completed'
-                          ? 'bg-emerald-500 text-white'
+                          ? 'bg-blue-500 text-white'
                           : course.status === 'draft'
                           ? 'bg-gray-500 text-white'
-                          : 'bg-teal-500 text-white'
+                          : 'bg-sky-500 text-white'
                       }`}>
                         {course.status === 'completed' ? '已发布' : course.status === 'draft' ? '草稿' : '已发布'}
                       </span>
@@ -253,7 +253,7 @@ export default function TeacherDashboard() {
                         </div>
                         <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
                           <div
-                            className="h-full bg-emerald-500 rounded-full transition-all"
+                            className="h-full bg-blue-500 rounded-full transition-all"
                             style={{ width: `${course.progress}%` }}
                           />
                         </div>
@@ -271,7 +271,7 @@ export default function TeacherDashboard() {
                       {course.status !== 'draft' && (
                         <Link
                           href={`/teacher/courses/${course.id}/teach`}
-                          className="flex-1 px-3 py-2 bg-emerald-600 text-white text-sm font-medium rounded-xl hover:bg-emerald-700 transition-colors text-center"
+                          className="flex-1 px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 transition-colors text-center"
                         >
                           授课
                         </Link>
@@ -332,8 +332,8 @@ export default function TeacherDashboard() {
                         <button
                           className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
                             task.done
-                              ? 'bg-emerald-500 border-emerald-500'
-                              : 'border-gray-300 hover:border-emerald-500'
+                              ? 'bg-blue-500 border-blue-500'
+                              : 'border-gray-300 hover:border-blue-500'
                           }`}
                         >
                           {task.done && (
@@ -372,7 +372,7 @@ export default function TeacherDashboard() {
                   <div className="p-4 space-y-3">
                     {studentActivities.map((activity) => (
                       <div key={activity.id} className="flex items-start gap-3">
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white text-sm font-medium flex-shrink-0">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-sky-600 flex items-center justify-center text-white text-sm font-medium flex-shrink-0">
                           {activity.avatar}
                         </div>
                         <div className="flex-1 min-w-0">
@@ -468,7 +468,7 @@ function TeachingInsights() {
               <p className="text-3xl font-bold text-gray-900">{metric.value}</p>
               <span
                 className={`text-sm font-medium ${
-                  metric.good ? 'text-emerald-600' : 'text-red-500'
+                  metric.good ? 'text-blue-600' : 'text-red-500'
                 }`}
               >
                 {metric.trend}
@@ -500,7 +500,7 @@ function TeachingInsights() {
                       <div className="w-24 h-2 bg-gray-100 rounded-full overflow-hidden">
                         <div
                           className={`h-full rounded-full ${
-                            course.completion >= 80 ? 'bg-emerald-500' : course.completion >= 60 ? 'bg-amber-500' : 'bg-red-500'
+                            course.completion >= 80 ? 'bg-blue-500' : course.completion >= 60 ? 'bg-amber-500' : 'bg-red-500'
                           }`}
                           style={{ width: `${course.completion}%` }}
                         />
@@ -520,7 +520,7 @@ function TeachingInsights() {
                     <span
                       className={`px-2 py-1 rounded-full text-xs font-medium ${
                         course.engagement >= 85
-                          ? 'bg-emerald-100 text-emerald-600'
+                          ? 'bg-blue-100 text-blue-600'
                           : course.engagement >= 70
                           ? 'bg-amber-100 text-amber-600'
                           : 'bg-red-100 text-red-600'
@@ -539,7 +539,7 @@ function TeachingInsights() {
       {/* AI Suggestions */}
       <div className="bg-white rounded-2xl border border-gray-100 p-6 animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
         <div className="flex items-center gap-2 mb-4">
-          <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
           </svg>
           <h3 className="font-semibold text-gray-900">AI 教学建议</h3>
@@ -552,7 +552,7 @@ function TeachingInsights() {
                 suggestion.type === 'improvement'
                   ? 'bg-blue-50 border-blue-100'
                   : suggestion.type === 'success'
-                  ? 'bg-emerald-50 border-emerald-100'
+                  ? 'bg-blue-50 border-blue-100'
                   : 'bg-amber-50 border-amber-100'
               }`}
             >
@@ -566,7 +566,7 @@ function TeachingInsights() {
                     suggestion.type === 'improvement'
                       ? 'bg-blue-100 text-blue-600 hover:bg-blue-200'
                       : suggestion.type === 'success'
-                      ? 'bg-emerald-100 text-emerald-600 hover:bg-emerald-200'
+                      ? 'bg-blue-100 text-blue-600 hover:bg-blue-200'
                       : 'bg-amber-100 text-amber-600 hover:bg-amber-200'
                   }`}
                 >
@@ -602,14 +602,14 @@ function KnowledgeBase() {
         <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
           <div className="p-5 border-b border-gray-100 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
-                <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
               </div>
               <h3 className="font-semibold text-gray-900">个人知识库</h3>
             </div>
-            <button className="px-3 py-1.5 text-sm text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors">
+            <button className="px-3 py-1.5 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
               + 上传文件
             </button>
           </div>
@@ -647,14 +647,14 @@ function KnowledgeBase() {
         <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
           <div className="p-5 border-b border-gray-100 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
-                <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
               </div>
               <h3 className="font-semibold text-gray-900">共享知识库</h3>
             </div>
-            <button className="px-3 py-1.5 text-sm text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors">
+            <button className="px-3 py-1.5 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
               浏览更多
             </button>
           </div>
@@ -679,7 +679,7 @@ function KnowledgeBase() {
                     <p className="font-medium text-gray-900 text-sm">{item.title}</p>
                     <p className="text-xs text-gray-500">{item.author} · {item.downloads} 次下载</p>
                   </div>
-                  <button className="px-3 py-1.5 text-xs text-emerald-600 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition-colors">
+                  <button className="px-3 py-1.5 text-xs text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors">
                     引用
                   </button>
                 </div>
@@ -711,12 +711,12 @@ function GrowthArchive() {
     <div className="space-y-6">
       {/* 成长概览 */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-5 text-white">
+        <div className="bg-gradient-to-br from-blue-500 to-sky-600 rounded-2xl p-5 text-white">
           <p className="text-white/80 text-sm mb-2">教学时长</p>
           <p className="text-3xl font-bold">156</p>
           <p className="text-white/60 text-sm">小时</p>
         </div>
-        <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-5 text-white">
+        <div className="bg-gradient-to-br from-blue-500 to-sky-600 rounded-2xl p-5 text-white">
           <p className="text-white/80 text-sm mb-2">累计学生</p>
           <p className="text-3xl font-bold">328</p>
           <p className="text-white/60 text-sm">人次</p>
@@ -736,9 +736,9 @@ function GrowthArchive() {
             <div key={level.level} className="flex-1 flex flex-col items-center">
               <div className={`relative w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold ${
                 level.completed
-                  ? 'bg-emerald-500 text-white'
+                  ? 'bg-blue-500 text-white'
                   : level.current
-                  ? 'bg-emerald-100 text-emerald-600 ring-4 ring-emerald-200'
+                  ? 'bg-blue-100 text-blue-600 ring-4 ring-blue-200'
                   : 'bg-gray-100 text-gray-400'
               }`}>
                 {level.completed ? '✓' : level.level}
@@ -751,7 +751,7 @@ function GrowthArchive() {
               </p>
               {index < growthPath.length - 1 && (
                 <div className={`absolute top-6 left-1/2 w-full h-0.5 ${
-                  level.completed ? 'bg-emerald-500' : 'bg-gray-200'
+                  level.completed ? 'bg-blue-500' : 'bg-gray-200'
                 }`} style={{ transform: 'translateX(50%)' }} />
               )}
             </div>

@@ -22,9 +22,9 @@ import {
 
 // 模拟数据
 const overviewStats = [
-  { label: '总教师数', value: '342', change: '+12', changeType: 'up', icon: '👨‍🏫', color: 'emerald' },
+  { label: '总教师数', value: '342', change: '+12', changeType: 'up', icon: '👨‍🏫', color: 'blue' },
   { label: '总学生数', value: '8,562', change: '+256', changeType: 'up', icon: '👨‍🎓', color: 'teal' },
-  { label: '课程总数', value: '156', change: '+8', changeType: 'up', icon: '📚', color: 'emerald' },
+  { label: '课程总数', value: '156', change: '+8', changeType: 'up', icon: '📚', color: 'blue' },
   { label: '本周活跃度', value: '94.2%', change: '+2.3%', changeType: 'up', icon: '📊', color: 'amber' },
 ]
 
@@ -139,7 +139,7 @@ export default function AdminDashboard() {
 
       {/* Background Decoration */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-20 right-10 w-96 h-96 bg-emerald-200/10 rounded-full blur-3xl" />
+        <div className="absolute top-20 right-10 w-96 h-96 bg-blue-200/10 rounded-full blur-3xl" />
         <div className="absolute bottom-20 left-10 w-72 h-72 bg-blue-200/10 rounded-full blur-3xl" />
       </div>
 
@@ -155,7 +155,7 @@ export default function AdminDashboard() {
               <div className="flex items-center justify-between mb-3">
                 <span className="text-2xl">{stat.icon}</span>
                 <span className={`text-xs font-medium px-2 py-1 rounded-full ${
-                  stat.changeType === 'up' ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'
+                  stat.changeType === 'up' ? 'bg-blue-100 text-blue-600' : 'bg-red-100 text-red-600'
                 }`}>
                   {stat.change}
                 </span>
@@ -174,7 +174,7 @@ export default function AdminDashboard() {
               <h3 className="font-semibold text-gray-900">用户增长趋势</h3>
               <div className="flex items-center gap-4 text-sm">
                 <span className="flex items-center gap-2">
-                  <span className="w-3 h-3 bg-emerald-500 rounded-full"></span>
+                  <span className="w-3 h-3 bg-blue-500 rounded-full"></span>
                   教师
                 </span>
                 <span className="flex items-center gap-2">
@@ -290,7 +290,7 @@ export default function AdminDashboard() {
           <div className="bg-white rounded-2xl border border-gray-100 p-6 animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold text-gray-900">优秀教师榜</h3>
-              <Link href="/admin/teachers" className="text-sm text-emerald-600 hover:text-emerald-700 font-medium">
+              <Link href="/admin/teachers" className="text-sm text-blue-600 hover:text-blue-700 font-medium">
                 查看全部 →
               </Link>
             </div>
@@ -305,7 +305,7 @@ export default function AdminDashboard() {
                   }`}>
                     {index + 1}
                   </span>
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white text-sm font-medium">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-sky-500 flex items-center justify-center text-white text-sm font-medium">
                     {teacher.avatar}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -330,9 +330,9 @@ export default function AdminDashboard() {
               {recentActivities.map((activity) => (
                 <div key={activity.id} className="flex items-start gap-3">
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                    activity.type === 'course' ? 'bg-emerald-100 text-emerald-600' :
-                    activity.type === 'teacher' ? 'bg-teal-100 text-teal-600' :
-                    activity.type === 'report' ? 'bg-emerald-100 text-emerald-600' :
+                    activity.type === 'course' ? 'bg-blue-100 text-blue-600' :
+                    activity.type === 'teacher' ? 'bg-sky-100 text-sky-600' :
+                    activity.type === 'report' ? 'bg-blue-100 text-blue-600' :
                     'bg-red-100 text-red-600'
                   }`}>
                     {activity.type === 'course' && (
@@ -361,7 +361,7 @@ export default function AdminDashboard() {
                       <span className="font-medium">{activity.user}</span>{' '}
                       <span className="text-gray-600">{activity.action}</span>
                       {activity.target && (
-                        <span className="font-medium text-emerald-600"> {activity.target}</span>
+                        <span className="font-medium text-blue-600"> {activity.target}</span>
                       )}
                     </p>
                     <p className="text-xs text-gray-400 mt-0.5">{activity.time}</p>
@@ -376,7 +376,7 @@ export default function AdminDashboard() {
         <div className="bg-white rounded-2xl border border-gray-100 p-6 animate-fade-in-up" style={{ animationDelay: '0.7s' }}>
           <div className="flex items-center justify-between mb-6">
             <h3 className="font-semibold text-gray-900">学校排名</h3>
-            <button className="text-sm text-emerald-600 hover:text-emerald-700 font-medium">
+            <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">
               查看详细报告 →
             </button>
           </div>
@@ -412,15 +412,15 @@ export default function AdminDashboard() {
                     <td className="py-4 px-4 text-center text-gray-600">{school.courses}</td>
                     <td className="py-4 px-4 text-center">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        school.score >= 95 ? 'bg-emerald-100 text-emerald-600' :
-                        school.score >= 90 ? 'bg-teal-100 text-teal-600' :
+                        school.score >= 95 ? 'bg-blue-100 text-blue-600' :
+                        school.score >= 90 ? 'bg-sky-100 text-sky-600' :
                         'bg-amber-100 text-amber-600'
                       }`}>
                         {school.score}分
                       </span>
                     </td>
                     <td className="py-4 px-4 text-right">
-                      <button className="text-sm text-emerald-600 hover:text-emerald-700 font-medium">
+                      <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">
                         详情
                       </button>
                     </td>
