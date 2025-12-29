@@ -368,7 +368,8 @@
             const [editingTaskId, setEditingTaskId] = useState(null); // 单个任务编辑
             const [centerTab, setCenterTab] = useState('free');
             const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-            const [isPreviewMode, setIsPreviewMode] = useState(false);
+            // 视角状态：'edit' 编辑视角 | 'use' 使用视角 | 'results' 结果视角
+            const [viewPerspective, setViewPerspective] = useState('edit');
             const [previewingResource, setPreviewingResource] = useState(null); // 资源预览
 
             const [leftWidth, setLeftWidth] = useState(25);
@@ -404,12 +405,30 @@
                 window.open('/LMS-Student-Workbench.html', '_blank');
             };
 
-            // 预览模式
-            if (isPreviewMode) {
+            // 使用视角模式
+            if (viewPerspective === 'use') {
                 return (
                     <div className="h-screen w-full flex flex-col bg-slate-100 overflow-hidden">
-                        <PreviewHeader config={config} onExit={() => setIsPreviewMode(false)} />
+                        <UseViewHeader
+                            config={config}
+                            viewPerspective={viewPerspective}
+                            onSwitchPerspective={setViewPerspective}
+                        />
                         <StudentPreview config={config} leftWidth={leftWidth} rightWidth={rightWidth} />
+                    </div>
+                );
+            }
+
+            // 结果视角模式
+            if (viewPerspective === 'results') {
+                return (
+                    <div className="h-screen w-full flex flex-col bg-slate-100 overflow-hidden">
+                        <ResultsViewHeader
+                            config={config}
+                            viewPerspective={viewPerspective}
+                            onSwitchPerspective={setViewPerspective}
+                        />
+                        <ResultsViewDashboard config={config} />
                     </div>
                 );
             }
@@ -419,7 +438,8 @@
                     <TeacherHeader
                         config={config}
                         hasUnsavedChanges={hasUnsavedChanges}
-                        onPreview={() => setIsPreviewMode(true)}
+                        viewPerspective={viewPerspective}
+                        onSwitchPerspective={setViewPerspective}
                         onPublish={handlePublish}
                         onEditNoteInfo={() => setActiveModal('noteInfo')}
                     />
@@ -566,8 +586,46 @@
             );
         }
 
+        // --- 视角切换按钮组 ---
+        function PerspectiveToggle({ viewPerspective, onSwitchPerspective, variant = 'light' }) {
+            const perspectives = [
+                { id: 'edit', label: '编辑视角', icon: 'Edit3' },
+                { id: 'use', label: '使用视角', icon: 'Eye' },
+                { id: 'results', label: '结果视角', icon: 'BarChart3' }
+            ];
+
+            const baseClass = variant === 'light'
+                ? 'bg-slate-100 border border-slate-200'
+                : 'bg-slate-700/50 border border-slate-600';
+
+            return (
+                <div className={`flex items-center ${baseClass} rounded-lg p-1`}>
+                    {perspectives.map((p) => {
+                        const isActive = viewPerspective === p.id;
+                        const activeClass = variant === 'light'
+                            ? 'bg-white text-indigo-600 shadow-sm'
+                            : 'bg-white text-slate-800 shadow-sm';
+                        const inactiveClass = variant === 'light'
+                            ? 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                            : 'text-slate-300 hover:text-white hover:bg-slate-600';
+
+                        return (
+                            <button
+                                key={p.id}
+                                onClick={() => onSwitchPerspective(p.id)}
+                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${isActive ? activeClass : inactiveClass}`}
+                            >
+                                <Icon name={p.icon} size={14} />
+                                {p.label}
+                            </button>
+                        );
+                    })}
+                </div>
+            );
+        }
+
         // --- Teacher Header ---
-        function TeacherHeader({ config, hasUnsavedChanges, onPreview, onPublish, onEditNoteInfo }) {
+        function TeacherHeader({ config, hasUnsavedChanges, viewPerspective, onSwitchPerspective, onPublish, onEditNoteInfo }) {
             return (
                 <header className="h-14 bg-white border-b border-slate-200 flex items-center justify-between px-4 shrink-0 shadow-sm">
                     <div className="flex items-center gap-4">
@@ -589,17 +647,16 @@
                         )}
                     </div>
                     <div className="flex items-center gap-3">
+                        <PerspectiveToggle
+                            viewPerspective={viewPerspective}
+                            onSwitchPerspective={onSwitchPerspective}
+                            variant="light"
+                        />
+                        <div className="h-5 w-px bg-slate-300"></div>
                         <div className="flex items-center gap-2 text-xs text-slate-500 bg-slate-100 px-3 py-1.5 rounded-lg">
                             <Icon name="Users" size={12} />
                             <span>绑定班级: {config.noteInfo.bindClasses.length}个</span>
                         </div>
-                        <button
-                            onClick={onPreview}
-                            className="flex items-center gap-1 bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-1.5 rounded-lg text-sm font-medium transition-colors"
-                        >
-                            <Icon name="Eye" size={14} />
-                            学生视角预览
-                        </button>
                         <button
                             onClick={onPublish}
                             className="flex items-center gap-1 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-1.5 rounded-lg text-sm font-medium transition-colors shadow-sm"
@@ -3268,24 +3325,278 @@
             );
         }
 
-        // ===================== PREVIEW MODE =====================
+        // ===================== 使用视角 & 结果视角 =====================
 
-        function PreviewHeader({ config, onExit }) {
+        // --- 使用视角头部 ---
+        function UseViewHeader({ config, viewPerspective, onSwitchPerspective }) {
             return (
                 <header className="h-14 bg-slate-800 text-white flex items-center justify-between px-4 shrink-0">
                     <div className="flex items-center gap-3">
-                        <div className="bg-emerald-500 px-3 py-1 rounded font-bold text-sm">学生视角预览</div>
-                        <span className="text-slate-300">|</span>
+                        <div onClick={() => window.location.href = '/teacher'} className="bg-indigo-500 px-3 py-1 rounded font-bold text-sm cursor-pointer hover:bg-indigo-600 transition-colors">CocoLearn Teacher</div>
+                        <span className="text-slate-500">|</span>
                         <span className="text-sm text-slate-300">{config.noteInfo.title}</span>
+                        <div className="bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded text-xs font-medium border border-emerald-500/30">使用视角</div>
                     </div>
-                    <button
-                        onClick={onExit}
-                        className="flex items-center gap-1 bg-slate-700 hover:bg-slate-600 px-4 py-1.5 rounded-lg text-sm font-medium transition-colors"
-                    >
-                        <Icon name="X" size={14} />
-                        退出预览
-                    </button>
+                    <div className="flex items-center gap-3">
+                        <PerspectiveToggle
+                            viewPerspective={viewPerspective}
+                            onSwitchPerspective={onSwitchPerspective}
+                            variant="dark"
+                        />
+                    </div>
                 </header>
+            );
+        }
+
+        // --- 结果视角头部 ---
+        function ResultsViewHeader({ config, viewPerspective, onSwitchPerspective }) {
+            return (
+                <header className="h-14 bg-slate-800 text-white flex items-center justify-between px-4 shrink-0">
+                    <div className="flex items-center gap-3">
+                        <div onClick={() => window.location.href = '/teacher'} className="bg-indigo-500 px-3 py-1 rounded font-bold text-sm cursor-pointer hover:bg-indigo-600 transition-colors">CocoLearn Teacher</div>
+                        <span className="text-slate-500">|</span>
+                        <span className="text-sm text-slate-300">{config.noteInfo.title}</span>
+                        <div className="bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded text-xs font-medium border border-blue-500/30">结果视角</div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <PerspectiveToggle
+                            viewPerspective={viewPerspective}
+                            onSwitchPerspective={onSwitchPerspective}
+                            variant="dark"
+                        />
+                    </div>
+                </header>
+            );
+        }
+
+        // --- 结果视角仪表盘 ---
+        function ResultsViewDashboard({ config }) {
+            // 模拟学生数据
+            const mockStudents = [
+                { id: 1, name: '张三', avatar: '👦', status: 'online' },
+                { id: 2, name: '李四', avatar: '👧', status: 'online' },
+                { id: 3, name: '王五', avatar: '👦', status: 'offline' },
+                { id: 4, name: '赵六', avatar: '👧', status: 'online' },
+                { id: 5, name: '孙七', avatar: '👦', status: 'online' },
+                { id: 6, name: '周八', avatar: '👧', status: 'offline' },
+            ];
+
+            // 模拟资源查看情况
+            const mockResourceViews = mockStudents.map(student => ({
+                studentId: student.id,
+                studentName: student.name,
+                resources: config.resources.map(resource => ({
+                    resourceId: resource.id,
+                    resourceTitle: resource.title,
+                    viewed: Math.random() > 0.3,
+                    viewedAt: Math.random() > 0.3 ? new Date(Date.now() - Math.random() * 3600000).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }) : null,
+                    progress: Math.random() > 0.3 ? Math.floor(Math.random() * 100) : 0
+                }))
+            }));
+
+            // 模拟作业完成情况
+            const mockTaskCompletions = mockStudents.map(student => ({
+                studentId: student.id,
+                studentName: student.name,
+                tasks: config.tasks.map(task => ({
+                    taskId: task.id,
+                    taskTitle: task.title,
+                    status: ['completed', 'in_progress', 'not_started'][Math.floor(Math.random() * 3)],
+                    score: Math.random() > 0.5 ? Math.floor(Math.random() * 40) + 60 : null,
+                    submittedAt: Math.random() > 0.5 ? new Date(Date.now() - Math.random() * 7200000).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }) : null
+                }))
+            }));
+
+            const getStatusBadge = (status) => {
+                switch (status) {
+                    case 'completed':
+                        return <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs"><Icon name="Check" size={12} />已完成</span>;
+                    case 'in_progress':
+                        return <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full text-xs"><Icon name="Clock" size={12} />进行中</span>;
+                    default:
+                        return <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 text-slate-500 rounded-full text-xs"><Icon name="Minus" size={12} />未开始</span>;
+                }
+            };
+
+            // 统计数据
+            const onlineCount = mockStudents.filter(s => s.status === 'online').length;
+            const totalResources = config.resources.length;
+            const totalTasks = config.tasks.length;
+            const avgResourceProgress = Math.floor(mockResourceViews.reduce((sum, s) => sum + s.resources.reduce((rs, r) => rs + r.progress, 0) / s.resources.length, 0) / mockResourceViews.length);
+            const completedTasksCount = mockTaskCompletions.reduce((sum, s) => sum + s.tasks.filter(t => t.status === 'completed').length, 0);
+            const totalTasksCount = mockStudents.length * totalTasks;
+
+            return (
+                <div className="flex-1 overflow-auto bg-slate-100 p-6">
+                    {/* 顶部统计卡片 */}
+                    <div className="grid grid-cols-4 gap-4 mb-6">
+                        <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                                    <Icon name="Users" size={20} className="text-green-600" />
+                                </div>
+                                <div>
+                                    <p className="text-2xl font-bold text-slate-800">{onlineCount}/{mockStudents.length}</p>
+                                    <p className="text-xs text-slate-500">在线学生</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                                    <Icon name="BookOpen" size={20} className="text-blue-600" />
+                                </div>
+                                <div>
+                                    <p className="text-2xl font-bold text-slate-800">{totalResources}</p>
+                                    <p className="text-xs text-slate-500">学习资源</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                                    <Icon name="TrendingUp" size={20} className="text-purple-600" />
+                                </div>
+                                <div>
+                                    <p className="text-2xl font-bold text-slate-800">{avgResourceProgress}%</p>
+                                    <p className="text-xs text-slate-500">平均学习进度</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
+                                    <Icon name="CheckSquare" size={20} className="text-amber-600" />
+                                </div>
+                                <div>
+                                    <p className="text-2xl font-bold text-slate-800">{completedTasksCount}/{totalTasksCount}</p>
+                                    <p className="text-xs text-slate-500">作业完成</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-6">
+                        {/* 资源查看情况表格 */}
+                        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                            <div className="px-4 py-3 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <Icon name="BookOpen" size={16} className="text-blue-600" />
+                                    <span className="font-medium text-slate-700">资源查看情况</span>
+                                </div>
+                                <span className="text-xs text-slate-500">实时更新</span>
+                            </div>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-sm">
+                                    <thead>
+                                        <tr className="bg-slate-50 border-b border-slate-200">
+                                            <th className="text-left px-4 py-2 font-medium text-slate-600">学生</th>
+                                            {config.resources.slice(0, 4).map(resource => (
+                                                <th key={resource.id} className="text-center px-3 py-2 font-medium text-slate-600">
+                                                    <div className="flex flex-col items-center gap-1">
+                                                        <Icon name={resource.icon} size={14} className="text-slate-400" />
+                                                        <span className="text-xs truncate max-w-[80px]" title={resource.title}>{resource.title.length > 6 ? resource.title.slice(0, 6) + '...' : resource.title}</span>
+                                                    </div>
+                                                </th>
+                                            ))}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {mockResourceViews.map((student, idx) => (
+                                            <tr key={student.studentId} className={idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}>
+                                                <td className="px-4 py-2">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-lg">{mockStudents.find(s => s.id === student.studentId)?.avatar}</span>
+                                                        <span className="text-slate-700">{student.studentName}</span>
+                                                        {mockStudents.find(s => s.id === student.studentId)?.status === 'online' && (
+                                                            <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                                {student.resources.slice(0, 4).map(resource => (
+                                                    <td key={resource.resourceId} className="text-center px-3 py-2">
+                                                        {resource.viewed ? (
+                                                            <div className="flex flex-col items-center gap-1">
+                                                                <div className="w-full bg-slate-200 rounded-full h-1.5">
+                                                                    <div
+                                                                        className="bg-blue-500 h-1.5 rounded-full transition-all"
+                                                                        style={{ width: `${resource.progress}%` }}
+                                                                    ></div>
+                                                                </div>
+                                                                <span className="text-xs text-slate-500">{resource.progress}%</span>
+                                                            </div>
+                                                        ) : (
+                                                            <span className="text-slate-300">-</span>
+                                                        )}
+                                                    </td>
+                                                ))}
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        {/* 作业完成情况表格 */}
+                        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                            <div className="px-4 py-3 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <Icon name="CheckSquare" size={16} className="text-amber-600" />
+                                    <span className="font-medium text-slate-700">作业完成情况</span>
+                                </div>
+                                <span className="text-xs text-slate-500">实时更新</span>
+                            </div>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-sm">
+                                    <thead>
+                                        <tr className="bg-slate-50 border-b border-slate-200">
+                                            <th className="text-left px-4 py-2 font-medium text-slate-600">学生</th>
+                                            {config.tasks.slice(0, 3).map(task => (
+                                                <th key={task.id} className="text-center px-3 py-2 font-medium text-slate-600">
+                                                    <div className="flex flex-col items-center gap-1">
+                                                        <Icon name="FileText" size={14} className="text-slate-400" />
+                                                        <span className="text-xs truncate max-w-[80px]" title={task.title}>{task.title.length > 6 ? task.title.slice(0, 6) + '...' : task.title}</span>
+                                                    </div>
+                                                </th>
+                                            ))}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {mockTaskCompletions.map((student, idx) => (
+                                            <tr key={student.studentId} className={idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}>
+                                                <td className="px-4 py-2">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-lg">{mockStudents.find(s => s.id === student.studentId)?.avatar}</span>
+                                                        <span className="text-slate-700">{student.studentName}</span>
+                                                        {mockStudents.find(s => s.id === student.studentId)?.status === 'online' && (
+                                                            <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                                {student.tasks.slice(0, 3).map(task => (
+                                                    <td key={task.taskId} className="text-center px-3 py-2">
+                                                        <div className="flex flex-col items-center gap-1">
+                                                            {getStatusBadge(task.status)}
+                                                            {task.score !== null && (
+                                                                <span className="text-xs font-medium text-slate-600">{task.score}分</span>
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                ))}
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 提示信息 */}
+                    <div className="mt-6 flex items-center justify-center gap-2 text-slate-400 text-sm">
+                        <Icon name="Info" size={14} />
+                        <span>此为模拟数据展示，实际数据将在与后端对接后显示</span>
+                    </div>
+                </div>
             );
         }
 
