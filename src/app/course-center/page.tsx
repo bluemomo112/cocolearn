@@ -707,12 +707,111 @@ const subjectColors: Record<string, string> = {
   '美术': '#f43f5e',
 }
 
+// ==================== 教学模式选择弹窗 ====================
+function TeachingModeModal({
+  isOpen,
+  onClose,
+  onSelect,
+  courseTitle,
+}: {
+  isOpen: boolean
+  onClose: () => void
+  onSelect: (mode: 'teacher-centered' | 'student-centered') => void
+  courseTitle?: string
+}) {
+  if (!isOpen) return null
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      {/* 背景遮罩 */}
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+
+      {/* 弹窗内容 */}
+      <div className="relative bg-white rounded-3xl shadow-2xl max-w-lg w-full mx-4 overflow-hidden animate-scale-in">
+        {/* 头部 */}
+        <div className="px-8 pt-8 pb-4">
+          <h2 className="text-2xl font-bold text-gray-900 text-center">选择授课模式</h2>
+          {courseTitle && (
+            <p className="text-gray-500 text-center mt-2 text-sm">课程：{courseTitle}</p>
+          )}
+          <p className="text-gray-500 text-center mt-1">请选择本次授课的教学模式</p>
+        </div>
+
+        {/* 选项 */}
+        <div className="px-8 pb-8 space-y-4">
+          {/* 讲授模式 */}
+          <button
+            onClick={() => onSelect('teacher-centered')}
+            className="w-full p-6 rounded-2xl border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50/50 transition-all duration-300 text-left group"
+          >
+            <div className="flex items-start gap-4">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-2xl flex-shrink-0 group-hover:scale-110 transition-transform">
+                👨‍🏫
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-bold text-gray-900 mb-1">讲授模式</h3>
+                <p className="text-sm text-gray-600">教师主导课堂，进行知识讲解与示范，适合新知识的系统性教学</p>
+              </div>
+            </div>
+          </button>
+
+          {/* 自学模式 */}
+          <button
+            onClick={() => onSelect('student-centered')}
+            className="w-full p-6 rounded-2xl border-2 border-gray-200 hover:border-purple-500 hover:bg-purple-50/50 transition-all duration-300 text-left group"
+          >
+            <div className="flex items-start gap-4">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center text-white text-2xl flex-shrink-0 group-hover:scale-110 transition-transform">
+                🎯
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-bold text-gray-900 mb-1">自学模式</h3>
+                <p className="text-sm text-gray-600">学生自主探究学习，教师作为引导者与支持者，适合培养学生自主学习能力</p>
+              </div>
+            </div>
+          </button>
+        </div>
+
+        {/* 关闭按钮 */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
+        >
+          <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  )
+}
+
 // ==================== 主组件 ====================
 export default function CourseCenter() {
   const [viewMode, setViewMode] = useState<'courses' | 'visualization'>('courses')
   const [selectedSubject, setSelectedSubject] = useState('全部')
   const [selectedSource, setSelectedSource] = useState('全部')
   const [searchQuery, setSearchQuery] = useState('')
+  const [showTeachingModal, setShowTeachingModal] = useState(false)
+  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null)
+
+  // 处理去授课按钮点击
+  const handleTeachClick = (course: Course) => {
+    setSelectedCourse(course)
+    setShowTeachingModal(true)
+  }
+
+  // 处理教学模式选择
+  const handleModeSelect = (mode: 'teacher-centered' | 'student-centered') => {
+    setShowTeachingModal(false)
+    if (mode === 'teacher-centered') {
+      // 讲授模式 - 跳转到讲授页面
+      window.location.href = '/LMS-Teacher-Teaching.html'
+    } else {
+      // 自学模式 - 跳转到使用视角
+      window.location.href = '/LMS-Teacher-NoteConfig.html?view=use'
+    }
+  }
 
   const filteredCourses = courses.filter((course) => {
     if (selectedSubject !== '全部' && !course.subjects.includes(selectedSubject)) return false
@@ -877,21 +976,30 @@ export default function CourseCenter() {
 
         {/* 内容区域 */}
         {viewMode === 'courses' ? (
-          <CourseGridView courses={filteredCourses} />
+          <CourseGridView courses={filteredCourses} onTeach={handleTeachClick} />
         ) : (
           <KnowledgeGraphView
             selectedSubject={selectedSubject}
             onSelectSubject={setSelectedSubject}
             courses={courses}
+            onTeach={handleTeachClick}
           />
         )}
       </div>
+
+      {/* 教学模式选择弹窗 */}
+      <TeachingModeModal
+        isOpen={showTeachingModal}
+        onClose={() => setShowTeachingModal(false)}
+        onSelect={handleModeSelect}
+        courseTitle={selectedCourse?.title}
+      />
     </div>
   )
 }
 
 // ==================== 课程网格视图 ====================
-function CourseGridView({ courses }: { courses: Course[] }) {
+function CourseGridView({ courses, onTeach }: { courses: Course[]; onTeach: (course: Course) => void }) {
   if (courses.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 bg-white/80 backdrop-blur-sm rounded-3xl border border-gray-100 shadow-sm animate-fade-in">
@@ -987,7 +1095,10 @@ function CourseGridView({ courses }: { courses: Course[] }) {
                   {course.rating}
                 </span>
               </div>
-              <button className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-sm font-medium rounded-xl hover:shadow-lg hover:shadow-blue-500/25 transition-all duration-300">
+              <button
+                onClick={() => onTeach(course)}
+                className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-sm font-medium rounded-xl hover:shadow-lg hover:shadow-blue-500/25 transition-all duration-300"
+              >
                 去授课
               </button>
             </div>
@@ -1003,10 +1114,12 @@ function KnowledgeGraphView({
   selectedSubject,
   onSelectSubject,
   courses,
+  onTeach,
 }: {
   selectedSubject: string
   onSelectSubject: (subject: string) => void
   courses: Course[]
+  onTeach: (course: Course) => void
 }) {
   const svgRef = useRef<SVGSVGElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -1421,7 +1534,10 @@ function KnowledgeGraphView({
                       </span>
                     </div>
                   </div>
-                  <button className="px-3 py-1.5 bg-blue-50 text-blue-600 text-xs font-medium rounded-lg hover:bg-blue-100 transition-colors whitespace-nowrap">
+                  <button
+                    onClick={() => onTeach(course)}
+                    className="px-3 py-1.5 bg-blue-50 text-blue-600 text-xs font-medium rounded-lg hover:bg-blue-100 transition-colors whitespace-nowrap"
+                  >
                     去授课
                   </button>
                 </div>

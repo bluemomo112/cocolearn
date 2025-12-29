@@ -270,12 +270,12 @@ export default function TeacherDashboard() {
                         编辑
                       </Link>
                       {course.status !== 'draft' && (
-                        <Link
-                          href={`/teacher/courses/${course.id}/teach`}
+                        <button
+                          onClick={() => setShowCourseTypeModal(true)}
                           className="flex-1 px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 transition-colors text-center"
                         >
                           授课
-                        </Link>
+                        </button>
                       )}
                     </div>
                   </div>
@@ -479,7 +479,7 @@ export default function TeacherDashboard() {
 
               {/* 以学生为中心的课堂 */}
               <a
-                href="/LMS-Teacher-NoteConfig.html"
+                href="/LMS-Teacher-NoteConfig.html?view=use"
                 className="group relative bg-gradient-to-br from-emerald-50 to-teal-50 border-2 border-emerald-100 rounded-2xl p-6 hover:border-emerald-300 hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
               >
                 <div className="flex flex-col items-center text-center">

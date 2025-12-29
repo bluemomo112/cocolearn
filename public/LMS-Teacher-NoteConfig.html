@@ -369,7 +369,16 @@
             const [centerTab, setCenterTab] = useState('free');
             const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
             // 视角状态：'edit' 编辑视角 | 'use' 使用视角 | 'results' 结果视角
-            const [viewPerspective, setViewPerspective] = useState('edit');
+            // 从 URL 参数读取初始视角（支持从课程中心跳转时设置默认视角）
+            const getInitialViewPerspective = () => {
+                const urlParams = new URLSearchParams(window.location.search);
+                const viewParam = urlParams.get('view');
+                if (viewParam === 'use' || viewParam === 'results' || viewParam === 'edit') {
+                    return viewParam;
+                }
+                return 'edit'; // 默认为编辑视角
+            };
+            const [viewPerspective, setViewPerspective] = useState(getInitialViewPerspective());
             const [previewingResource, setPreviewingResource] = useState(null); // 资源预览
 
             const [leftWidth, setLeftWidth] = useState(25);
