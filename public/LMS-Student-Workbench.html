@@ -63,7 +63,7 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, useRef } = React;
+        const { useState, useEffect, useRef, useMemo } = React;
 
         // 模拟数据
         const MOCK_RESOURCES = [
@@ -114,6 +114,33 @@
             { id: 't2', title: '作业：设计节水方案', type: 'assignment', icon: 'file-edit', color: 'blue', status: 'required' },
             { id: 't3', title: '投票：最关心的水问题', type: 'poll', icon: 'bar-chart', color: 'yellow', status: 'open' }
         ];
+
+        // --- 预览模式支持 ---
+        const isPreviewMode = new URLSearchParams(window.location.search).get('preview') === 'true';
+
+        // 预览模式配置状态（从父窗口接收）
+        let previewConfig = null;
+
+        // 监听来自教师端的配置消息
+        window.addEventListener('message', (event) => {
+            if (event.data && event.data.type === 'TEACHER_PREVIEW_CONFIG') {
+                previewConfig = event.data.config;
+                console.log('[学生端-预览模式] 收到教师配置:', previewConfig);
+                // 触发重新渲染
+                window.dispatchEvent(new CustomEvent('previewConfigUpdated', { detail: previewConfig }));
+            }
+        });
+
+        // 图标映射：将教师端的 PascalCase 图标名转换为 lucide 的 kebab-case
+        const iconNameMap = {
+            'PlayCircle': 'play-circle',
+            'Presentation': 'presentation',
+            'FileText': 'file-text',
+            'Globe': 'globe',
+            'Zap': 'zap',
+            'FileEdit': 'file-edit',
+            'BarChart': 'bar-chart',
+        };
 
         // --- 从教师端继承的配置（只读） ---
         const INHERITED_FROM_BASE = {
@@ -168,6 +195,21 @@
 
         // 主应用组件
         function WorkbenchApp() {
+            // --- 预览模式状态 ---
+            const [currentPreviewConfig, setCurrentPreviewConfig] = useState(null);
+
+            // 监听预览配置更新
+            useEffect(() => {
+                if (isPreviewMode) {
+                    const handleConfigUpdate = (event) => {
+                        console.log('[学生端-预览模式] 配置已更新，触发重新渲染');
+                        setCurrentPreviewConfig(event.detail);
+                    };
+                    window.addEventListener('previewConfigUpdated', handleConfigUpdate);
+                    return () => window.removeEventListener('previewConfigUpdated', handleConfigUpdate);
+                }
+            }, []);
+
             // 左侧面板状态
             const [leftPanelMode, setLeftPanelMode] = useState('list'); // 'list' or 'detail'
             const [selectedResource, setSelectedResource] = useState(null);
@@ -212,26 +254,32 @@
             const [studyTime, setStudyTime] = useState(0);
             const [rightPanelCollapsed, setRightPanelCollapsed] = useState(false);
 
+            // AI结算报告弹窗状态
+            const [showReportModal, setShowReportModal] = useState(false);
+
             // 三栏宽度状态
             const [leftWidth, setLeftWidth] = useState(25);
             const [rightWidth, setRightWidth] = useState(25);
 
-            // 计时器
+            // 计时器（预览模式下禁用）
             useEffect(() => {
+                if (isPreviewMode) return; // 预览模式不启动计时器
                 const timer = setInterval(() => {
                     setStudyTime(prev => prev + 1);
                 }, 1000);
                 return () => clearInterval(timer);
             }, []);
 
-            // 初始化：设置当前页面为自学模式
+            // 初始化：设置当前页面为自学模式（预览模式下跳过）
             useEffect(() => {
+                if (isPreviewMode) return;
                 localStorage.setItem('teacher_learning_mode', 'workbench');
                 console.log('[学生端-自学模式] 初始化完成');
             }, []);
 
-            // 监听教师端的模式切换命令
+            // 监听教师端的模式切换命令（预览模式下禁用）
             useEffect(() => {
+                if (isPreviewMode) return;
                 let lastTimestamp = localStorage.getItem('teacher_mode_change_timestamp') || '0';
 
                 const checkModeChange = () => {
@@ -337,26 +385,79 @@
                 }]);
             };
 
+            // --- 预览模式数据转换 ---
+            // 将教师端配置转换为学生端可用的资源和任务数组
+            const convertPreviewConfig = (config) => {
+                if (!config) return { resources: MOCK_RESOURCES, tasks: MOCK_TASKS };
+
+                // 转换资源
+                const resources = (config.resources || []).map((r, idx) => ({
+                    id: r.id || `r${idx + 1}`,
+                    title: r.title || '未命名资源',
+                    type: r.type || 'article',
+                    icon: iconNameMap[r.icon] || r.icon?.toLowerCase() || 'file-text',
+                    color: r.color || 'gray',
+                    status: 'open',
+                    url: r.url || null,
+                    aiSuggested: r.aiSuggested || false
+                }));
+
+                // 转换任务
+                const tasks = (config.tasks || []).map((t, idx) => ({
+                    id: t.id || `t${idx + 1}`,
+                    title: t.title || '未命名任务',
+                    type: t.type || 'assignment',
+                    icon: iconNameMap[t.icon] || t.icon?.toLowerCase() || 'file-edit',
+                    color: t.color || 'blue',
+                    status: t.status || 'open',
+                    questions: t.questions || undefined,
+                    aiSuggested: t.aiSuggested || false
+                }));
+
+                return { resources, tasks };
+            };
+
+            // 根据模式选择数据源
+            const { resources: activeResources, tasks: activeTasks } = useMemo(() => {
+                if (isPreviewMode && currentPreviewConfig) {
+                    return convertPreviewConfig(currentPreviewConfig);
+                }
+                return { resources: MOCK_RESOURCES, tasks: MOCK_TASKS };
+            }, [currentPreviewConfig]);
+
             // 检查是否可以完成课程
             const canCompleteCourse = () => {
-                const requiredTasks = MOCK_TASKS.filter(t => t.status === 'required');
+                const requiredTasks = activeTasks.filter(t => t.status === 'required');
                 return requiredTasks.every(t => completedTasks.includes(t.id));
             };
 
-            // 完成课程
+            // 完成课程 - 显示AI结算报告弹窗
             const completeCourse = () => {
                 if (canCompleteCourse()) {
-                    alert('🎊 恭喜你完成了本节课程！\n\n学习时长: ' + formatTime(studyTime) + '\n完成任务: ' + completedTasks.length + '/' + MOCK_TASKS.filter(t => t.status === 'required').length);
-                } else {
-                    const remaining = MOCK_TASKS.filter(t => t.status === 'required' && !completedTasks.includes(t.id));
-                    alert('还有 ' + remaining.length + ' 个必修任务未完成：\n\n' + remaining.map(t => '• ' + t.title).join('\n'));
+                    setShowReportModal(true);
                 }
             };
 
             return (
                 <div className="h-screen flex flex-col">
+                    {/* AI结算报告弹窗 */}
+                    {showReportModal && (
+                        <AIReportModal
+                            studyTime={studyTime}
+                            completedTasks={completedTasks}
+                            totalTasks={activeTasks}
+                            onClose={() => setShowReportModal(false)}
+                        />
+                    )}
+
                     {/* 顶部状态栏 */}
-                    <Header studyTime={studyTime} completedTasks={completedTasks.length} totalRequiredTasks={MOCK_TASKS.filter(t => t.status === 'required').length} />
+                    <Header
+                        studyTime={studyTime}
+                        completedTasks={completedTasks.length}
+                        totalRequiredTasks={activeTasks.filter(t => t.status === 'required').length}
+                        canComplete={canCompleteCourse()}
+                        onComplete={completeCourse}
+                    />
 
                     {/* 主体三栏布局 */}
                     <div className="flex-1 flex overflow-hidden">
@@ -375,8 +476,8 @@
                         <div style={{ width: `${leftWidth}%` }} className="bg-white border-r border-gray-200 flex flex-col shrink-0">
                             {leftPanelMode === 'list' ? (
                                 <LeftPanelList
-                                    resources={MOCK_RESOURCES}
-                                    tasks={MOCK_TASKS}
+                                    resources={activeResources}
+                                    tasks={activeTasks}
                                     completedTasks={completedTasks}
                                     onResourceClick={handleResourceClick}
                                     onTaskClick={handleTaskClick}
@@ -451,21 +552,6 @@
                             </button>
                         )}
                     </div>
-
-                    {/* 底部完成按钮 */}
-                    <footer className="h-16 bg-white border-t border-gray-200 flex items-center justify-center px-6 shrink-0">
-                        <button
-                            onClick={completeCourse}
-                            className={`px-8 py-3 rounded-xl font-bold text-sm shadow-lg transition-all flex items-center gap-2 ${
-                                canCompleteCourse()
-                                    ? 'bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700 shadow-green-500/30'
-                                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                            }`}
-                        >
-                            <i data-lucide={canCompleteCourse() ? "check-circle" : "circle-dashed"} className="w-5 h-5"></i>
-                            {canCompleteCourse() ? '完成课程' : `还需完成 ${MOCK_TASKS.filter(t => t.status === 'required').length - completedTasks.length} 个必修任务`}
-                        </button>
-                    </footer>
                 </div>
             );
         }
@@ -513,10 +599,12 @@
         }
 
         // 顶部状态栏组件
-        function Header({ studyTime, completedTasks, totalRequiredTasks }) {
+        function Header({ studyTime, completedTasks, totalRequiredTasks, canComplete, onComplete }) {
             useEffect(() => {
                 lucide.createIcons();
             });
+
+            const remainingTasks = totalRequiredTasks - completedTasks;
 
             return (
                 <header className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-6 shadow-sm shrink-0">
@@ -531,16 +619,29 @@
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-6">
+                    <div className="flex items-center gap-4">
                         <div className="flex items-center gap-2 text-xs text-gray-600">
                             <i data-lucide="clock" className="w-3 h-3"></i>
-                            学习时长: <span className="font-mono font-bold">{formatTime(studyTime)}</span>
+                            <span className="font-mono font-bold">{formatTime(studyTime)}</span>
                         </div>
                         <div className="h-4 w-px bg-gray-200"></div>
                         <div className="flex items-center gap-2 text-xs text-gray-600">
                             <i data-lucide="check-square" className="w-3 h-3"></i>
-                            任务完成: <span className="font-bold">{completedTasks}/{totalRequiredTasks}</span>
+                            <span className="font-bold">{completedTasks}/{totalRequiredTasks}</span>
                         </div>
+                        <div className="h-4 w-px bg-gray-200"></div>
+                        <button
+                            onClick={onComplete}
+                            disabled={!canComplete}
+                            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${
+                                canComplete
+                                    ? 'bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700 shadow-sm shadow-green-500/30'
+                                    : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                            }`}
+                        >
+                            <i data-lucide={canComplete ? "check-circle" : "circle-dashed"} className="w-4 h-4"></i>
+                            {canComplete ? '完成课程' : `还需 ${remainingTasks} 项`}
+                        </button>
                     </div>
                 </header>
             );
@@ -1317,6 +1418,226 @@
                     }
                 }
             });
+        }
+
+        // AI结算报告弹窗组件
+        function AIReportModal({ studyTime, completedTasks, totalTasks, onClose }) {
+            const [isGenerating, setIsGenerating] = useState(true);
+            const [reportData, setReportData] = useState(null);
+
+            useEffect(() => {
+                lucide.createIcons();
+            });
+
+            // 模拟AI生成报告
+            useEffect(() => {
+                const timer = setTimeout(() => {
+                    setReportData({
+                        overallScore: 92,
+                        learningEfficiency: 88,
+                        conceptMastery: 85,
+                        engagementLevel: 95,
+                        strengths: [
+                            '对水循环核心概念理解深入',
+                            '学习专注度高，持续时间稳定',
+                            '善于通过提问深化理解'
+                        ],
+                        improvements: [
+                            '可以尝试更多跨学科联系',
+                            '建议增加实践应用练习'
+                        ],
+                        nextSteps: [
+                            '复习"凝结"相关概念',
+                            '完成拓展阅读：全球水危机',
+                            '尝试设计一个家庭节水方案'
+                        ],
+                        aiComment: '你在本次学习中表现出色！对水循环的理解已经达到了较高水平。建议下次学习时可以更多地将知识与日常生活联系起来，这样会帮助你更好地记忆和应用所学内容。继续保持这样的学习热情！'
+                    });
+                    setIsGenerating(false);
+                }, 2000);
+                return () => clearTimeout(timer);
+            }, []);
+
+            const requiredTasks = totalTasks.filter(t => t.status === 'required');
+            const completedRequired = requiredTasks.filter(t => completedTasks.includes(t.id));
+
+            return (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl shadow-2xl w-[90%] max-w-3xl max-h-[90vh] overflow-hidden flex flex-col animate-fadeIn">
+                        {/* 头部 */}
+                        <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white p-6">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                                        <i data-lucide="trophy" className="w-6 h-6"></i>
+                                    </div>
+                                    <div>
+                                        <h2 className="text-xl font-bold">课程完成！</h2>
+                                        <p className="text-green-100 text-sm">AI 学习报告已生成</p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={onClose}
+                                    className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
+                                >
+                                    <i data-lucide="x" className="w-5 h-5"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* 内容区 */}
+                        <div className="flex-1 overflow-y-auto p-6">
+                            {isGenerating ? (
+                                <div className="flex flex-col items-center justify-center py-16">
+                                    <div className="w-16 h-16 border-4 border-green-200 border-t-green-500 rounded-full animate-spin mb-4"></div>
+                                    <p className="text-gray-600 font-medium">AI 正在分析你的学习数据...</p>
+                                    <p className="text-gray-400 text-sm mt-2">生成个性化学习报告中</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-6">
+                                    {/* 学习概览 */}
+                                    <div className="grid grid-cols-4 gap-4">
+                                        <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 text-center">
+                                            <div className="text-3xl font-bold text-blue-600">{reportData.overallScore}</div>
+                                            <div className="text-xs text-blue-700 mt-1">综合评分</div>
+                                        </div>
+                                        <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 text-center">
+                                            <div className="text-3xl font-bold text-green-600">{formatTime(studyTime)}</div>
+                                            <div className="text-xs text-green-700 mt-1">学习时长</div>
+                                        </div>
+                                        <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-4 text-center">
+                                            <div className="text-3xl font-bold text-purple-600">{completedRequired.length}/{requiredTasks.length}</div>
+                                            <div className="text-xs text-purple-700 mt-1">任务完成</div>
+                                        </div>
+                                        <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-4 text-center">
+                                            <div className="text-3xl font-bold text-orange-600">{reportData.engagementLevel}%</div>
+                                            <div className="text-xs text-orange-700 mt-1">参与度</div>
+                                        </div>
+                                    </div>
+
+                                    {/* 能力雷达图 */}
+                                    <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                                        <h3 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+                                            <i data-lucide="radar" className="w-4 h-4 text-blue-500"></i>
+                                            能力分析
+                                        </h3>
+                                        <div className="grid grid-cols-3 gap-4">
+                                            <div className="text-center">
+                                                <div className="relative w-20 h-20 mx-auto">
+                                                    <svg className="w-20 h-20 transform -rotate-90">
+                                                        <circle cx="40" cy="40" r="35" stroke="#e5e7eb" strokeWidth="6" fill="none" />
+                                                        <circle cx="40" cy="40" r="35" stroke="#3b82f6" strokeWidth="6" fill="none"
+                                                            strokeDasharray={`${reportData.learningEfficiency * 2.2} 220`} strokeLinecap="round" />
+                                                    </svg>
+                                                    <div className="absolute inset-0 flex items-center justify-center text-lg font-bold text-blue-600">{reportData.learningEfficiency}</div>
+                                                </div>
+                                                <p className="text-xs text-gray-600 mt-2">学习效率</p>
+                                            </div>
+                                            <div className="text-center">
+                                                <div className="relative w-20 h-20 mx-auto">
+                                                    <svg className="w-20 h-20 transform -rotate-90">
+                                                        <circle cx="40" cy="40" r="35" stroke="#e5e7eb" strokeWidth="6" fill="none" />
+                                                        <circle cx="40" cy="40" r="35" stroke="#10b981" strokeWidth="6" fill="none"
+                                                            strokeDasharray={`${reportData.conceptMastery * 2.2} 220`} strokeLinecap="round" />
+                                                    </svg>
+                                                    <div className="absolute inset-0 flex items-center justify-center text-lg font-bold text-green-600">{reportData.conceptMastery}</div>
+                                                </div>
+                                                <p className="text-xs text-gray-600 mt-2">概念掌握</p>
+                                            </div>
+                                            <div className="text-center">
+                                                <div className="relative w-20 h-20 mx-auto">
+                                                    <svg className="w-20 h-20 transform -rotate-90">
+                                                        <circle cx="40" cy="40" r="35" stroke="#e5e7eb" strokeWidth="6" fill="none" />
+                                                        <circle cx="40" cy="40" r="35" stroke="#f59e0b" strokeWidth="6" fill="none"
+                                                            strokeDasharray={`${reportData.engagementLevel * 2.2} 220`} strokeLinecap="round" />
+                                                    </svg>
+                                                    <div className="absolute inset-0 flex items-center justify-center text-lg font-bold text-orange-600">{reportData.engagementLevel}</div>
+                                                </div>
+                                                <p className="text-xs text-gray-600 mt-2">学习参与</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* 优势与改进 */}
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="bg-green-50 rounded-xl p-4 border border-green-200">
+                                            <h3 className="text-sm font-bold text-green-700 mb-3 flex items-center gap-2">
+                                                <i data-lucide="thumbs-up" className="w-4 h-4"></i>
+                                                学习亮点
+                                            </h3>
+                                            <ul className="space-y-2">
+                                                {reportData.strengths.map((item, idx) => (
+                                                    <li key={idx} className="text-sm text-green-800 flex items-start gap-2">
+                                                        <i data-lucide="check" className="w-4 h-4 text-green-500 shrink-0 mt-0.5"></i>
+                                                        {item}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                        <div className="bg-amber-50 rounded-xl p-4 border border-amber-200">
+                                            <h3 className="text-sm font-bold text-amber-700 mb-3 flex items-center gap-2">
+                                                <i data-lucide="lightbulb" className="w-4 h-4"></i>
+                                                提升建议
+                                            </h3>
+                                            <ul className="space-y-2">
+                                                {reportData.improvements.map((item, idx) => (
+                                                    <li key={idx} className="text-sm text-amber-800 flex items-start gap-2">
+                                                        <i data-lucide="arrow-right" className="w-4 h-4 text-amber-500 shrink-0 mt-0.5"></i>
+                                                        {item}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    </div>
+
+                                    {/* AI 点评 */}
+                                    <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl p-4 border border-indigo-200">
+                                        <h3 className="text-sm font-bold text-indigo-700 mb-3 flex items-center gap-2">
+                                            <i data-lucide="sparkles" className="w-4 h-4"></i>
+                                            AI 导师点评
+                                        </h3>
+                                        <p className="text-sm text-gray-700 leading-relaxed">{reportData.aiComment}</p>
+                                    </div>
+
+                                    {/* 下一步建议 */}
+                                    <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
+                                        <h3 className="text-sm font-bold text-blue-700 mb-3 flex items-center gap-2">
+                                            <i data-lucide="compass" className="w-4 h-4"></i>
+                                            推荐下一步
+                                        </h3>
+                                        <div className="flex flex-wrap gap-2">
+                                            {reportData.nextSteps.map((item, idx) => (
+                                                <span key={idx} className="bg-white text-blue-700 text-sm px-3 py-1.5 rounded-lg border border-blue-200 flex items-center gap-2">
+                                                    <span className="w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center text-xs font-bold">{idx + 1}</span>
+                                                    {item}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* 底部按钮 */}
+                        {!isGenerating && (
+                            <div className="p-4 border-t border-gray-200 bg-gray-50 flex justify-end gap-3">
+                                <button
+                                    onClick={onClose}
+                                    className="px-6 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-200 transition-colors"
+                                >
+                                    关闭
+                                </button>
+                                <button
+                                    className="px-6 py-2.5 rounded-lg text-sm font-medium bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700 transition-colors flex items-center gap-2"
+                                >
+                                    <i data-lucide="download" className="w-4 h-4"></i>
+                                    下载报告
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
         }
 
         // 格式化时间

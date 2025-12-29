@@ -3289,412 +3289,49 @@
             );
         }
 
+        // --- StudentPreview: 使用 iframe 嵌入真实学生页面 ---
         function StudentPreview({ config, leftWidth, rightWidth }) {
-            const [rightTab, setRightTab] = useState('workspace'); // 'workspace' | 'status'
-            const selectedTemplate = NOTE_TEMPLATE_DETAILS[config.outputConfig.noteTemplate];
-            const selectedStrategy = INHERITED_FROM_BASE.metacognitionStrategies.find(s => s.id === config.outputConfig.metacognitionStrategy);
+            const iframeRef = useRef(null);
+            const [isLoaded, setIsLoaded] = useState(false);
 
-            // 笔记模板预览组件
-            const NoteTemplatePreview = () => {
-                const templateId = config.outputConfig.noteTemplate;
-                const details = NOTE_TEMPLATE_DETAILS[templateId];
-                if (!details) return null;
-
-                const { preview } = details;
-
-                // 空白笔记
-                if (preview.layout === 'single') {
-                    return (
-                        <div className="flex-1 bg-white border border-slate-200 rounded-xl p-4">
-                            <textarea
-                                className="w-full h-full bg-transparent text-sm text-slate-600 resize-none outline-none"
-                                placeholder={preview.sections[0].placeholder}
-                                disabled
-                            />
-                        </div>
-                    );
+            // 当配置变化或 iframe 加载完成时，发送配置到学生端
+            useEffect(() => {
+                if (iframeRef.current && isLoaded) {
+                    iframeRef.current.contentWindow?.postMessage({
+                        type: 'TEACHER_PREVIEW_CONFIG',
+                        config: {
+                            resources: config.resources,
+                            tasks: config.tasks,
+                            interactionConfig: config.interactionConfig,
+                            outputConfig: config.outputConfig
+                        }
+                    }, '*');
+                    console.log('[教师端-预览] 已发送配置到学生页面:', config);
                 }
+            }, [config, isLoaded]);
 
-                // 康奈尔笔记
-                if (preview.layout === 'cornell') {
-                    return (
-                        <div className="flex-1 flex flex-col gap-2">
-                            <div className="flex gap-2 flex-1">
-                                <div className="w-1/3 bg-blue-50 border border-blue-200 rounded-xl p-3">
-                                    <div className="text-xs font-bold text-blue-600 mb-2 flex items-center gap-1">
-                                        <Icon name="Key" size={12} />
-                                        要点区
-                                    </div>
-                                    <textarea
-                                        className="w-full h-20 bg-transparent text-xs text-slate-500 resize-none outline-none"
-                                        placeholder="记录关键词、问题..."
-                                        disabled
-                                    />
-                                </div>
-                                <div className="flex-1 bg-white border border-slate-200 rounded-xl p-3">
-                                    <div className="text-xs font-bold text-slate-600 mb-2 flex items-center gap-1">
-                                        <Icon name="FileText" size={12} />
-                                        笔记区
-                                    </div>
-                                    <textarea
-                                        className="w-full h-20 bg-transparent text-xs text-slate-500 resize-none outline-none"
-                                        placeholder="详细记录课堂内容、解释、例子..."
-                                        disabled
-                                    />
-                                </div>
-                            </div>
-                            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
-                                <div className="text-xs font-bold text-amber-600 mb-1 flex items-center gap-1">
-                                    <Icon name="Sparkles" size={12} />
-                                    总结区
-                                </div>
-                                <textarea
-                                    className="w-full h-12 bg-transparent text-xs text-slate-500 resize-none outline-none"
-                                    placeholder="用自己的话总结本节课的核心收获..."
-                                    disabled
-                                />
-                            </div>
-                        </div>
-                    );
-                }
-
-                // 空雨伞
-                if (preview.layout === 'three-column') {
-                    return (
-                        <div className="flex-1 flex gap-2">
-                            <div className="flex-1 bg-blue-50 border border-blue-200 rounded-xl p-3">
-                                <div className="text-xs font-bold text-blue-600 mb-2 flex items-center gap-1">
-                                    ☁️ 空（事实）
-                                </div>
-                                <textarea
-                                    className="w-full h-24 bg-transparent text-xs text-slate-500 resize-none outline-none"
-                                    placeholder="观察到了什么客观事实？"
-                                    disabled
-                                />
-                            </div>
-                            <div className="flex-1 bg-slate-50 border border-slate-200 rounded-xl p-3">
-                                <div className="text-xs font-bold text-slate-600 mb-2 flex items-center gap-1">
-                                    🌧️ 雨（解读）
-                                </div>
-                                <textarea
-                                    className="w-full h-24 bg-transparent text-xs text-slate-500 resize-none outline-none"
-                                    placeholder="这些事实说明了什么？"
-                                    disabled
-                                />
-                            </div>
-                            <div className="flex-1 bg-emerald-50 border border-emerald-200 rounded-xl p-3">
-                                <div className="text-xs font-bold text-emerald-600 mb-2 flex items-center gap-1">
-                                    ☂️ 伞（行动）
-                                </div>
-                                <textarea
-                                    className="w-full h-24 bg-transparent text-xs text-slate-500 resize-none outline-none"
-                                    placeholder="应该采取什么行动？"
-                                    disabled
-                                />
-                            </div>
-                        </div>
-                    );
-                }
-
-                return null;
+            const handleIframeLoad = () => {
+                setIsLoaded(true);
+                console.log('[教师端-预览] iframe 加载完成');
             };
 
             return (
-                <div className="flex-1 flex overflow-hidden">
-                    {/* 左侧：资源列表 */}
-                    <div style={{ width: `${leftWidth}%` }} className="bg-white border-r border-slate-200 flex flex-col">
-                        <div className="p-4 border-b border-slate-100 bg-gradient-to-r from-blue-50 to-indigo-50">
-                            <h2 className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                                <Icon name="FolderOpen" size={14} className="text-blue-500" />
-                                学习资料库
-                            </h2>
-                        </div>
-                        <div className="flex-1 overflow-y-auto p-3 space-y-2">
-                            {config.resources.map(resource => (
-                                <div key={resource.id} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg hover:bg-blue-50 cursor-pointer transition-colors border border-transparent hover:border-blue-200">
-                                    <div className={`w-10 h-10 rounded-lg bg-${resource.color}-100 flex items-center justify-center`}>
-                                        <Icon name={resource.icon} size={16} className={`text-${resource.color}-600`} />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-medium text-slate-700 truncate">{resource.title}</p>
-                                        <p className="text-xs text-slate-400">{resource.duration || `${resource.pages}页`}</p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-
-                        {/* 学习任务 */}
-                        <div className="p-3 border-t border-slate-100 bg-amber-50/50">
-                            <h3 className="text-sm font-bold text-slate-600 flex items-center gap-2 mb-2">
-                                <Icon name="ListChecks" size={14} className="text-amber-500" />
-                                学习任务
-                            </h3>
-                            <div className="space-y-1.5">
-                                {config.tasks.map(task => (
-                                    <div key={task.id} className="flex items-center gap-2 p-2 bg-white rounded-lg border border-slate-200">
-                                        <div className={`w-6 h-6 rounded flex items-center justify-center ${task.status === 'required' ? 'bg-red-100' : 'bg-slate-100'}`}>
-                                            <Icon name={task.type === 'quiz' ? 'Zap' : 'FileEdit'} size={12} className={task.status === 'required' ? 'text-red-600' : 'text-slate-500'} />
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-xs font-medium text-slate-700 truncate">{task.title}</p>
-                                        </div>
-                                        {task.status === 'required' && (
-                                            <span className="text-xs bg-red-100 text-red-600 px-1.5 py-0.5 rounded">必修</span>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* 智能自测 */}
-                        <div className="p-3 border-t border-slate-200 bg-gradient-to-r from-purple-50 to-indigo-50">
-                            <div className="flex items-center gap-2 mb-2">
-                                <Icon name="Zap" size={14} className="text-purple-500" />
-                                <span className="text-xs font-bold text-slate-700">智能自测</span>
-                            </div>
-                            <button className="w-full py-2 bg-white border border-purple-200 text-purple-600 rounded-lg text-xs font-medium hover:bg-purple-50 transition-colors flex items-center justify-center gap-1">
-                                <Icon name="HelpCircle" size={12} />
-                                考考我
-                            </button>
-                        </div>
+                <div className="flex-1 flex overflow-hidden bg-gray-100">
+                    {/* 提示条 */}
+                    <div className="absolute top-2 left-1/2 -translate-x-1/2 z-10 bg-blue-600/90 text-white text-xs px-4 py-1.5 rounded-full shadow-lg flex items-center gap-2">
+                        <Icon name="Eye" size={14} />
+                        <span>学生视角预览（实时同步）</span>
+                        {!isLoaded && <span className="animate-pulse ml-2">加载中...</span>}
                     </div>
 
-                    {/* 中间：对话区 */}
-                    <div style={{ width: `${100 - leftWidth - rightWidth}%` }} className="flex flex-col bg-slate-50">
-                        <div className="p-3 bg-white border-b border-slate-200 flex items-center justify-between">
-                            <h2 className="font-bold text-slate-700 flex items-center gap-2">
-                                <Icon name="MessageSquare" size={16} className="text-indigo-600" />
-                                AI 学习对话
-                            </h2>
-                            <div className="flex items-center gap-2">
-                                <span className="text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded flex items-center gap-1">
-                                    <Icon name="Clock" size={10} />
-                                    00:00
-                                </span>
-                            </div>
-                        </div>
-                        <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                            {/* 系统消息 */}
-                            <div className="text-center">
-                                <span className="inline-block bg-indigo-100 text-indigo-700 px-4 py-1.5 rounded-full text-xs">
-                                    ✨ 已进入「自学模式」
-                                </span>
-                            </div>
-
-                            {/* AI 消息 */}
-                            <div className="flex gap-3">
-                                <div className="w-9 h-9 rounded-full bg-indigo-600 flex-shrink-0 flex items-center justify-center">
-                                    <Icon name="Bot" size={14} className="text-white" />
-                                </div>
-                                <div className="bg-white p-4 rounded-2xl rounded-tl-none border border-slate-200 shadow-sm max-w-[80%]">
-                                    <p className="text-sm text-slate-700 leading-relaxed">
-                                        欢迎进入自学模式！今天我们要学习《{config.noteInfo.title}》。
-                                    </p>
-                                    <p className="text-sm text-slate-700 leading-relaxed mt-2">
-                                        你可以自由浏览左侧的学习资源，有任何问题都可以问我，我会引导你思考和学习。
-                                    </p>
-                                </div>
-                            </div>
-
-                            {/* 示例用户消息 */}
-                            <div className="flex gap-3 flex-row-reverse">
-                                <div className="w-9 h-9 rounded-full bg-slate-200 flex-shrink-0 flex items-center justify-center text-slate-600 text-xs font-bold">
-                                    我
-                                </div>
-                                <div className="bg-indigo-600 text-white p-4 rounded-2xl rounded-tr-none shadow-sm max-w-[80%]">
-                                    <p className="text-sm">水循环的主要过程是什么？</p>
-                                </div>
-                            </div>
-
-                            {/* AI 回复 */}
-                            <div className="flex gap-3">
-                                <div className="w-9 h-9 rounded-full bg-indigo-600 flex-shrink-0 flex items-center justify-center">
-                                    <Icon name="Bot" size={14} className="text-white" />
-                                </div>
-                                <div className="bg-white p-4 rounded-2xl rounded-tl-none border border-slate-200 shadow-sm max-w-[80%]">
-                                    <p className="text-sm text-slate-700 leading-relaxed">
-                                        这是个很好的问题！让我引导你思考一下：
-                                    </p>
-                                    <p className="text-sm text-slate-700 leading-relaxed mt-2">
-                                        🌊 想象一滴水从大海蒸发后，它会经历哪些变化？最终又会回到哪里？试着用你自己的话描述一下这个过程。
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="p-3 bg-white border-t border-slate-200">
-                            <div className="relative">
-                                <input
-                                    type="text"
-                                    placeholder="输入你的问题或想法..."
-                                    disabled
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-4 pr-12 py-3 text-sm text-slate-400"
-                                />
-                                <button className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-indigo-600 text-white rounded-lg">
-                                    <Icon name="Send" size={14} />
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* 右侧：学习工作室 */}
-                    <div style={{ width: `${rightWidth}%` }} className="bg-white border-l border-slate-200 flex flex-col">
-                        <div className="p-3 border-b border-slate-200 flex items-center justify-between bg-gradient-to-r from-emerald-50 to-teal-50">
-                            <h2 className="font-bold text-slate-700 flex items-center gap-2 text-sm">
-                                <Icon name="Layout" size={14} className="text-emerald-600" />
-                                学习工作室
-                            </h2>
-                        </div>
-
-                        {/* Tabs */}
-                        <div className="flex border-b border-slate-200 bg-slate-50">
-                            <button
-                                onClick={() => setRightTab('workspace')}
-                                className={`flex-1 px-3 py-2 text-xs font-medium transition-colors ${
-                                    rightTab === 'workspace' ? 'text-indigo-600 border-b-2 border-indigo-600 bg-white' : 'text-slate-500'
-                                }`}
-                            >
-                                工作区
-                            </button>
-                            <button
-                                onClick={() => setRightTab('status')}
-                                className={`flex-1 px-3 py-2 text-xs font-medium transition-colors ${
-                                    rightTab === 'status' ? 'text-indigo-600 border-b-2 border-indigo-600 bg-white' : 'text-slate-500'
-                                }`}
-                            >
-                                学习状态
-                            </button>
-                        </div>
-
-                        <div className="flex-1 overflow-y-auto p-3">
-                            {rightTab === 'workspace' ? (
-                                <div className="space-y-4">
-                                    {/* 笔记模板区 */}
-                                    <div>
-                                        <div className="flex items-center justify-between mb-2">
-                                            <span className="text-xs font-bold text-slate-600 flex items-center gap-1">
-                                                <Icon name="FileText" size={12} />
-                                                {selectedTemplate?.name || '笔记'}
-                                            </span>
-                                            {config.outputConfig.enableSubmit && (
-                                                <button className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded flex items-center gap-1">
-                                                    <Icon name="Send" size={10} />
-                                                    提交
-                                                </button>
-                                            )}
-                                        </div>
-                                        <div className="bg-slate-50 rounded-xl p-3 border border-slate-200 min-h-[180px] flex flex-col">
-                                            <NoteTemplatePreview />
-                                        </div>
-                                    </div>
-
-                                    {/* 快捷工具 */}
-                                    <div>
-                                        <span className="text-xs font-bold text-slate-600 block mb-2">快捷工具</span>
-                                        <div className="grid grid-cols-2 gap-1.5">
-                                            {[
-                                                { icon: 'Network', label: '知识图谱', color: 'blue' },
-                                                { icon: 'Layers', label: '思维导图', color: 'purple' },
-                                                { icon: 'CreditCard', label: '闪卡', color: 'amber' },
-                                                { icon: 'Clock', label: '时间轴', color: 'emerald' },
-                                            ].map(tool => (
-                                                <button key={tool.label} className={`flex items-center gap-1.5 p-2 bg-${tool.color}-50 hover:bg-${tool.color}-100 rounded-lg text-xs text-${tool.color}-700 transition-colors border border-${tool.color}-100`}>
-                                                    <Icon name={tool.icon} size={12} />
-                                                    {tool.label}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    {/* 复习队列 */}
-                                    <div>
-                                        <div className="flex items-center justify-between mb-2">
-                                            <span className="text-xs font-bold text-slate-600">复习队列</span>
-                                            <span className="bg-amber-100 text-amber-700 text-xs px-1.5 py-0.5 rounded-full font-medium">3</span>
-                                        </div>
-                                        <div className="space-y-1.5">
-                                            {['水循环基础概念', '蒸发与凝结', '水资源保护'].map((item, idx) => (
-                                                <div key={idx} className="bg-amber-50 border border-amber-200 rounded-lg p-2 text-xs text-slate-700 flex items-center justify-between">
-                                                    <span className="truncate">{item}</span>
-                                                    <span className="text-amber-600 font-medium text-xs">{idx === 0 ? '今天' : idx === 1 ? '明天' : '3天后'}</span>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="space-y-4">
-                                    {/* 学习统计 */}
-                                    <div className="grid grid-cols-2 gap-2">
-                                        <div className="bg-blue-50 rounded-xl p-3 border border-blue-100">
-                                            <div className="flex items-center gap-1.5 mb-1">
-                                                <Icon name="Clock" size={12} className="text-blue-600" />
-                                                <span className="text-xs text-blue-700">专注时长</span>
-                                            </div>
-                                            <p className="text-lg font-bold text-blue-600">00:00</p>
-                                        </div>
-                                        <div className="bg-emerald-50 rounded-xl p-3 border border-emerald-100">
-                                            <div className="flex items-center gap-1.5 mb-1">
-                                                <Icon name="Target" size={12} className="text-emerald-600" />
-                                                <span className="text-xs text-emerald-700">理解度</span>
-                                            </div>
-                                            <p className="text-lg font-bold text-emerald-600">--%</p>
-                                        </div>
-                                    </div>
-
-                                    {/* 元认知监控 */}
-                                    <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl p-3 border border-purple-100">
-                                        <div className="flex items-start gap-2">
-                                            <div className="w-7 h-7 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
-                                                <Icon name="Brain" size={12} className="text-purple-600" />
-                                            </div>
-                                            <div>
-                                                <p className="text-xs font-medium text-purple-700 mb-1">
-                                                    {selectedStrategy?.name || '学情监控'}
-                                                </p>
-                                                <p className="text-xs text-purple-600 leading-relaxed">
-                                                    {selectedStrategy?.description || '监控你的学习状态'}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* 技能进度 */}
-                                    <div>
-                                        <span className="text-xs font-bold text-slate-600 block mb-3">技能进度</span>
-                                        <div className="space-y-3">
-                                            {[
-                                                { label: '理解', value: 0, color: 'indigo' },
-                                                { label: '分析', value: 0, color: 'emerald' },
-                                                { label: '应用', value: 0, color: 'amber' },
-                                            ].map(skill => (
-                                                <div key={skill.label} className="flex items-center gap-3">
-                                                    <span className="text-xs text-slate-500 w-8">{skill.label}</span>
-                                                    <div className="flex-1 h-2 bg-slate-200 rounded-full overflow-hidden">
-                                                        <div
-                                                            className={`h-full bg-${skill.color}-500 rounded-full transition-all`}
-                                                            style={{ width: `${skill.value}%` }}
-                                                        />
-                                                    </div>
-                                                    <span className="text-xs text-slate-400 w-8 text-right">{skill.value}%</span>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    {/* AI 洞察 */}
-                                    <div className="bg-slate-50 rounded-xl p-3 border border-slate-200">
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <Icon name="Lightbulb" size={12} className="text-amber-500" />
-                                            <span className="text-xs font-bold text-slate-600">AI 学习洞察</span>
-                                        </div>
-                                        <p className="text-xs text-slate-500 leading-relaxed">
-                                            开始学习后，AI 将实时分析你的学习状态并提供个性化建议...
-                                        </p>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    </div>
+                    {/* iframe 容器 */}
+                    <iframe
+                        ref={iframeRef}
+                        src="LMS-Student-Workbench.html?preview=true"
+                        className="w-full h-full border-0"
+                        onLoad={handleIframeLoad}
+                        title="学生视角预览"
+                    />
                 </div>
             );
         }
