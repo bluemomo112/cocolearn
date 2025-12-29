@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import Link from 'next/link'
 import Image from 'next/image'
 import * as d3 from 'd3'
 
@@ -173,7 +172,7 @@ const courses: Course[] = [
 
 // 基于学科大概念的知识图谱节点
 const knowledgeNodes: KnowledgeNode[] = [
-  // 学科大概念 (Level 1) - 各学科核心节点
+  // ========== 学科大概念 (Level 1) - 各学科核心节点 ==========
   { id: 'chinese', name: '语文', subject: '语文', level: 1, category: '语言文字' },
   { id: 'math', name: '数学', subject: '数学', level: 1, category: '数理逻辑' },
   { id: 'physics', name: '物理', subject: '物理', level: 1, category: '自然科学' },
@@ -184,109 +183,513 @@ const knowledgeNodes: KnowledgeNode[] = [
   { id: 'politics', name: '道德与法治', subject: '道德与法治', level: 1, category: '人文社科' },
   { id: 'it', name: '信息科技', subject: '信息科技', level: 1, category: '技术应用' },
 
-  // 关键概念 (Level 2) - 语文
+  // ========== 语文关键概念 (Level 2) ==========
   { id: 'literature', name: '文学阅读与创意表达', subject: '语文', level: 2, category: '语言文字' },
   { id: 'thinking', name: '思辨性阅读与表达', subject: '语文', level: 2, category: '语言文字' },
   { id: 'crossread', name: '跨学科学习', subject: '语文', level: 2, category: '语言文字' },
+  { id: 'practicalread', name: '实用性阅读与交流', subject: '语文', level: 2, category: '语言文字' },
+  { id: 'accumulation', name: '语言文字积累与梳理', subject: '语文', level: 2, category: '语言文字' },
+  { id: 'bookreading', name: '整本书阅读', subject: '语文', level: 2, category: '语言文字' },
 
-  // 关键概念 (Level 2) - 数学
+  // 语文知识内容 (Level 3)
+  { id: 'ch_hanculture', name: '汉字文化内涵', subject: '语文', level: 3, category: '语言文字' },
+  { id: 'ch_litappreciate', name: '文学鉴赏能力', subject: '语文', level: 3, category: '语言文字' },
+  { id: 'ch_creativewrite', name: '创意写作实践', subject: '语文', level: 3, category: '语言文字' },
+  { id: 'ch_criticalread', name: '批判性阅读', subject: '语文', level: 3, category: '语言文字' },
+  { id: 'ch_infoget', name: '信息获取与整合', subject: '语文', level: 3, category: '语言文字' },
+  { id: 'ch_readingplan', name: '深度阅读策略', subject: '语文', level: 3, category: '语言文字' },
+  { id: 'ch_multidiscipline', name: '多学科资源整合', subject: '语文', level: 3, category: '语言文字' },
+
+  // ========== 数学关键概念 (Level 2) ==========
   { id: 'dataanalysis', name: '数据分析与应用', subject: '数学', level: 2, category: '数理逻辑' },
   { id: 'function', name: '函数与建模', subject: '数学', level: 2, category: '数理逻辑' },
   { id: 'geometry', name: '空间与几何', subject: '数学', level: 2, category: '数理逻辑' },
+  { id: 'algebra', name: '数与代数', subject: '数学', level: 2, category: '数理逻辑' },
+  { id: 'statistics', name: '统计与概率', subject: '数学', level: 2, category: '数理逻辑' },
+  { id: 'mathmodel', name: '数学建模与问题解决', subject: '数学', level: 2, category: '数理逻辑' },
 
-  // 关键概念 (Level 2) - 物理
+  // 数学知识内容 (Level 3)
+  { id: 'ma_numtheory', name: '数系扩展与运算', subject: '数学', level: 3, category: '数理逻辑' },
+  { id: 'ma_equation', name: '方程与不等式', subject: '数学', level: 3, category: '数理逻辑' },
+  { id: 'ma_function', name: '函数概念与性质', subject: '数学', level: 3, category: '数理逻辑' },
+  { id: 'ma_geometry', name: '图形性质与度量', subject: '数学', level: 3, category: '数理逻辑' },
+  { id: 'ma_coordinate', name: '坐标系与解析几何', subject: '数学', level: 3, category: '数理逻辑' },
+  { id: 'ma_datacollect', name: '数据收集与整理', subject: '数学', level: 3, category: '数理逻辑' },
+  { id: 'ma_probability', name: '概率计算与应用', subject: '数学', level: 3, category: '数理逻辑' },
+
+  // ========== 物理关键概念 (Level 2) ==========
   { id: 'motion', name: '运动与相互作用', subject: '物理', level: 2, category: '自然科学' },
   { id: 'energy', name: '能量守恒与可持续发展', subject: '物理', level: 2, category: '自然科学' },
   { id: 'wave', name: '声和光', subject: '物理', level: 2, category: '自然科学' },
+  { id: 'matterphysics', name: '物质', subject: '物理', level: 2, category: '自然科学' },
+  { id: 'electromagnetic', name: '电和磁', subject: '物理', level: 2, category: '自然科学' },
+  { id: 'phyexperiment', name: '实验探究方法论', subject: '物理', level: 2, category: '自然科学' },
 
-  // 关键概念 (Level 2) - 化学
-  { id: 'matter', name: '物质的组成与结构', subject: '化学', level: 2, category: '自然科学' },
-  { id: 'reaction', name: '化学反应规律', subject: '化学', level: 2, category: '自然科学' },
+  // 物理知识内容 (Level 3)
+  { id: 'ph_mechanical', name: '机械运动和力', subject: '物理', level: 3, category: '自然科学' },
+  { id: 'ph_sound', name: '声音产生与传播', subject: '物理', level: 3, category: '自然科学' },
+  { id: 'ph_light', name: '光的反射与折射', subject: '物理', level: 3, category: '自然科学' },
+  { id: 'ph_electric', name: '静电现象与电流', subject: '物理', level: 3, category: '自然科学' },
+  { id: 'ph_magnetic', name: '磁场与电磁感应', subject: '物理', level: 3, category: '自然科学' },
+  { id: 'ph_energytrans', name: '能量形式与转化', subject: '物理', level: 3, category: '自然科学' },
+  { id: 'ph_material', name: '物质的属性', subject: '物理', level: 3, category: '自然科学' },
+  { id: 'ph_structure', name: '物质的结构与尺度', subject: '物理', level: 3, category: '自然科学' },
+
+  // ========== 化学关键概念 (Level 2) - 义务教育 ==========
+  { id: 'chem_experiment', name: '化学科学探究与实验', subject: '化学', level: 2, category: '自然科学' },
+  { id: 'chem_property', name: '物质的性质与应用', subject: '化学', level: 2, category: '自然科学' },
+  { id: 'chem_composition', name: '物质的组成与结构', subject: '化学', level: 2, category: '自然科学' },
+  { id: 'chem_change', name: '物质的化学变化', subject: '化学', level: 2, category: '自然科学' },
+  { id: 'chem_society', name: '化学与社会的跨学科实践', subject: '化学', level: 2, category: '自然科学' },
+
+  // 化学关键概念 (Level 2) - 高中
+  { id: 'matter', name: '物质的组成、结构与性质关系', subject: '化学', level: 2, category: '自然科学' },
+  { id: 'reaction', name: '化学反应规律与调控', subject: '化学', level: 2, category: '自然科学' },
   { id: 'sustainable', name: '化学与可持续发展', subject: '化学', level: 2, category: '自然科学' },
 
-  // 关键概念 (Level 2) - 生物
-  { id: 'life', name: '生物体的结构层次', subject: '生物', level: 2, category: '自然科学' },
-  { id: 'ecology', name: '生物与环境', subject: '生物', level: 2, category: '自然科学' },
-  { id: 'genetics', name: '遗传与进化', subject: '生物', level: 2, category: '自然科学' },
+  // 化学知识内容 (Level 3)
+  { id: 'ch_matterclass', name: '物质分类', subject: '化学', level: 3, category: '自然科学' },
+  { id: 'ch_atomstruct', name: '原子结构与元素性质', subject: '化学', level: 3, category: '自然科学' },
+  { id: 'ch_chembond', name: '化学键与分子作用力', subject: '化学', level: 3, category: '自然科学' },
+  { id: 'ch_organic', name: '有机化合物结构与官能团', subject: '化学', level: 3, category: '自然科学' },
+  { id: 'ch_reactnature', name: '化学变化本质与能量', subject: '化学', level: 3, category: '自然科学' },
+  { id: 'ch_ionicreact', name: '离子反应规律', subject: '化学', level: 3, category: '自然科学' },
+  { id: 'ch_chambalance', name: '化学平衡与反应限度', subject: '化学', level: 3, category: '自然科学' },
+  { id: 'ch_reactrate', name: '化学反应速率与影响因素', subject: '化学', level: 3, category: '自然科学' },
+  { id: 'ch_solution', name: '水溶液离子平衡', subject: '化学', level: 3, category: '自然科学' },
+  { id: 'ch_experiment', name: '化学实验基础技能', subject: '化学', level: 3, category: '自然科学' },
+  { id: 'ch_inquiry', name: '科学探究流程与方法', subject: '化学', level: 3, category: '自然科学' },
+  { id: 'ch_resources', name: '自然资源开发利用', subject: '化学', level: 3, category: '自然科学' },
+  { id: 'ch_pollution', name: '环境污染与防治', subject: '化学', level: 3, category: '自然科学' },
+  { id: 'ch_green', name: '绿色化学与资源循环', subject: '化学', level: 3, category: '自然科学' },
+  { id: 'ch_material', name: '化学与材料应用', subject: '化学', level: 3, category: '自然科学' },
+  { id: 'ch_health', name: '化学与人体健康', subject: '化学', level: 3, category: '自然科学' },
+  { id: 'ch_periodic', name: '物质结构与周期律', subject: '化学', level: 3, category: '自然科学' },
+  { id: 'ch_organicbase', name: '有机化学基础', subject: '化学', level: 3, category: '自然科学' },
+  { id: 'ch_energyconv', name: '化学反应与能量转化', subject: '化学', level: 3, category: '自然科学' },
 
-  // 关键概念 (Level 2) - 地理
-  { id: 'earth', name: '地球表层系统', subject: '地理', level: 2, category: '人文社科' },
+  // ========== 生物关键概念 (Level 2) ==========
+  { id: 'life', name: '生物体的结构层次', subject: '生物', level: 2, category: '自然科学' },
+  { id: 'diversity', name: '生物的多样性', subject: '生物', level: 2, category: '自然科学' },
+  { id: 'ecology', name: '生物与环境', subject: '生物', level: 2, category: '自然科学' },
+  { id: 'plantlife', name: '植物的生活', subject: '生物', level: 2, category: '自然科学' },
+  { id: 'humanhealth', name: '人体生理与健康', subject: '生物', level: 2, category: '自然科学' },
+  { id: 'genetics', name: '遗传与进化', subject: '生物', level: 2, category: '自然科学' },
+  { id: 'bio_practice', name: '跨学科实践', subject: '生物', level: 2, category: '自然科学' },
+
+  // 生物知识内容 (Level 3)
+  { id: 'bio_cell', name: '细胞基本结构', subject: '生物', level: 3, category: '自然科学' },
+  { id: 'bio_tissue', name: '生物体组织结构', subject: '生物', level: 3, category: '自然科学' },
+  { id: 'bio_classify', name: '生物分类系统', subject: '生物', level: 3, category: '自然科学' },
+  { id: 'bio_microbe', name: '微生物世界', subject: '生物', level: 3, category: '自然科学' },
+  { id: 'bio_protection', name: '生物资源保护', subject: '生物', level: 3, category: '自然科学' },
+  { id: 'bio_ecosystem', name: '生态系统基础', subject: '生物', level: 3, category: '自然科学' },
+  { id: 'bio_ecosafety', name: '生态安全维护', subject: '生物', level: 3, category: '自然科学' },
+  { id: 'bio_growth', name: '植物生长发育', subject: '生物', level: 3, category: '自然科学' },
+  { id: 'bio_physiology', name: '植物生理功能', subject: '生物', level: 3, category: '自然科学' },
+  { id: 'bio_system', name: '人体系统功能', subject: '生物', level: 3, category: '自然科学' },
+  { id: 'bio_healthcare', name: '健康维护', subject: '生物', level: 3, category: '自然科学' },
+  { id: 'bio_dna', name: '遗传信息传递', subject: '生物', level: 3, category: '自然科学' },
+  { id: 'bio_evolution', name: '生物进化证据', subject: '生物', level: 3, category: '自然科学' },
+  { id: 'bio_model', name: '模型制作类', subject: '生物', level: 3, category: '自然科学' },
+  { id: 'bio_cultivation', name: '栽培饲养类', subject: '生物', level: 3, category: '自然科学' },
+  { id: 'bio_fermentation', name: '发酵技术类', subject: '生物', level: 3, category: '自然科学' },
+
+  // ========== 地理关键概念 (Level 2) ==========
+  { id: 'universe', name: '地球的宇宙环境', subject: '地理', level: 2, category: '人文社科' },
+  { id: 'earthmotion', name: '地球的运动', subject: '地理', level: 2, category: '人文社科' },
+  { id: 'earthsys', name: '地球表层系统', subject: '地理', level: 2, category: '人文社科' },
   { id: 'region', name: '区域认知方法', subject: '地理', level: 2, category: '人文社科' },
   { id: 'geotools', name: '地理工具与实践能力', subject: '地理', level: 2, category: '人文社科' },
+  { id: 'geo_practice', name: '跨学科主题学习', subject: '地理', level: 2, category: '人文社科' },
 
-  // 关键概念 (Level 2) - 历史
+  // 地理知识内容 (Level 3)
+  { id: 'geo_earthpos', name: '地球在宇宙中', subject: '地理', level: 3, category: '人文社科' },
+  { id: 'geo_space', name: '太空探索', subject: '地理', level: 3, category: '人文社科' },
+  { id: 'geo_rotation', name: '地球自转', subject: '地理', level: 3, category: '人文社科' },
+  { id: 'geo_revolution', name: '地球公转', subject: '地理', level: 3, category: '人文社科' },
+  { id: 'geo_landsea', name: '陆地和海洋', subject: '地理', level: 3, category: '人文社科' },
+  { id: 'geo_weather', name: '天气与气候', subject: '地理', level: 3, category: '人文社科' },
+  { id: 'geo_residents', name: '居民与文化', subject: '地理', level: 3, category: '人文社科' },
+  { id: 'geo_develop', name: '发展与合作', subject: '地理', level: 3, category: '人文社科' },
+  { id: 'geo_world', name: '认识世界', subject: '地理', level: 3, category: '人文社科' },
+  { id: 'geo_china', name: '认识中国', subject: '地理', level: 3, category: '人文社科' },
+  { id: 'geo_hometown', name: '认识家乡', subject: '地理', level: 3, category: '人文社科' },
+  { id: 'geo_tools', name: '地理工具应用', subject: '地理', level: 3, category: '人文社科' },
+  { id: 'geo_practice', name: '地理实践方法', subject: '地理', level: 3, category: '人文社科' },
+
+  // ========== 历史关键概念 (Level 2) ==========
+  { id: 'historical', name: '唯物史观指导下的历史认知', subject: '历史', level: 2, category: '人文社科' },
   { id: 'chinahistory', name: '中国历史演进脉络', subject: '历史', level: 2, category: '人文社科' },
   { id: 'worldhistory', name: '世界文明互动与发展', subject: '历史', level: 2, category: '人文社科' },
   { id: 'historythink', name: '时空观念构建', subject: '历史', level: 2, category: '人文社科' },
+  { id: 'history_practice', name: '跨学科主题融合实践', subject: '历史', level: 2, category: '人文社科' },
 
-  // 关键概念 (Level 2) - 道德与法治
+  // 历史知识内容 (Level 3)
+  { id: 'hi_historical', name: '历史本质与规律', subject: '历史', level: 3, category: '人文社科' },
+  { id: 'hi_method', name: '历史研究方法论', subject: '历史', level: 3, category: '人文社科' },
+  { id: 'hi_period', name: '时序与分期', subject: '历史', level: 3, category: '人文社科' },
+  { id: 'hi_space', name: '空间与地域', subject: '历史', level: 3, category: '人文社科' },
+  { id: 'hi_ancient', name: '古代统一多民族国家形成', subject: '历史', level: 3, category: '人文社科' },
+  { id: 'hi_modern', name: '近代民族独立斗争', subject: '历史', level: 3, category: '人文社科' },
+  { id: 'hi_contemporary', name: '现代社会主义探索', subject: '历史', level: 3, category: '人文社科' },
+  { id: 'hi_civilization', name: '古代多元文明格局', subject: '历史', level: 3, category: '人文社科' },
+  { id: 'hi_capitalism', name: '近代资本主义扩张', subject: '历史', level: 3, category: '人文社科' },
+  { id: 'hi_globalization', name: '现代全球化与挑战', subject: '历史', level: 3, category: '人文社科' },
+  { id: 'hi_tech', name: '历史与科技交融', subject: '历史', level: 3, category: '人文社科' },
+  { id: 'hi_culture', name: '历史与文化艺术', subject: '历史', level: 3, category: '人文社科' },
+  { id: 'hi_society', name: '历史与社会探究', subject: '历史', level: 3, category: '人文社科' },
+
+  // ========== 道德与法治关键概念 (Level 2) ==========
+  { id: 'identity', name: '政治认同', subject: '道德与法治', level: 2, category: '人文社科' },
   { id: 'morality', name: '道德修养', subject: '道德与法治', level: 2, category: '人文社科' },
   { id: 'law', name: '法治观念', subject: '道德与法治', level: 2, category: '人文社科' },
+  { id: 'personality', name: '健全人格', subject: '道德与法治', level: 2, category: '人文社科' },
   { id: 'responsibility', name: '责任意识', subject: '道德与法治', level: 2, category: '人文社科' },
 
-  // 关键概念 (Level 2) - 信息科技
+  // 道德与法治知识内容 (Level 3)
+  { id: 'po_nation', name: '国家认同', subject: '道德与法治', level: 3, category: '人文社科' },
+  { id: 'po_party', name: '政党认同', subject: '道德与法治', level: 3, category: '人文社科' },
+  { id: 'po_culture', name: '文化认同', subject: '道德与法治', level: 3, category: '人文社科' },
+  { id: 'po_personal', name: '个人品德', subject: '道德与法治', level: 3, category: '人文社科' },
+  { id: 'po_family', name: '家庭美德', subject: '道德与法治', level: 3, category: '人文社科' },
+  { id: 'po_social', name: '社会公德', subject: '道德与法治', level: 3, category: '人文社科' },
+  { id: 'po_constitution', name: '宪法法律至上', subject: '道德与法治', level: 3, category: '人文社科' },
+  { id: 'po_rights', name: '权利义务统一', subject: '道德与法治', level: 3, category: '人文社科' },
+  { id: 'po_legal', name: '依法行为', subject: '道德与法治', level: 3, category: '人文社科' },
+  { id: 'po_self', name: '自我认知与管理', subject: '道德与法治', level: 3, category: '人文社科' },
+  { id: 'po_interpersonal', name: '人际交往能力', subject: '道德与法治', level: 3, category: '人文社科' },
+  { id: 'po_country', name: '家国责任', subject: '道德与法治', level: 3, category: '人文社科' },
+  { id: 'po_socialres', name: '社会责任', subject: '道德与法治', level: 3, category: '人文社科' },
+  { id: 'po_global', name: '全球视野', subject: '道德与法治', level: 3, category: '人文社科' },
+
+  // ========== 信息科技关键概念 (Level 2) ==========
   { id: 'data', name: '数据', subject: '信息科技', level: 2, category: '技术应用' },
   { id: 'algorithm', name: '算法', subject: '信息科技', level: 2, category: '技术应用' },
   { id: 'network', name: '网络', subject: '信息科技', level: 2, category: '技术应用' },
-  { id: 'ai', name: '人工智能', subject: '信息科技', level: 2, category: '技术应用' },
+  { id: 'info_process', name: '信息处理', subject: '信息科技', level: 2, category: '技术应用' },
   { id: 'infosecurity', name: '信息安全', subject: '信息科技', level: 2, category: '技术应用' },
+  { id: 'ai', name: '人工智能', subject: '信息科技', level: 2, category: '技术应用' },
+  { id: 'it_practice', name: '跨学科实践', subject: '信息科技', level: 2, category: '技术应用' },
+
+  // 信息科技知识内容 (Level 3)
+  { id: 'it_dataencode', name: '数据表示与编码', subject: '信息科技', level: 3, category: '技术应用' },
+  { id: 'it_datasecurity', name: '数据安全与管理', subject: '信息科技', level: 3, category: '技术应用' },
+  { id: 'it_dataanalysis', name: '数据分析与应用', subject: '信息科技', level: 3, category: '技术应用' },
+  { id: 'it_algorithmdesc', name: '算法描述与结构', subject: '信息科技', level: 3, category: '技术应用' },
+  { id: 'it_efficiency', name: '算法效率与验证', subject: '信息科技', level: 3, category: '技术应用' },
+  { id: 'it_internet', name: '互联网基础与应用', subject: '信息科技', level: 3, category: '技术应用' },
+  { id: 'it_iot', name: '物联网原理与实践', subject: '信息科技', level: 3, category: '技术应用' },
+  { id: 'it_infoget', name: '信息获取与表达', subject: '信息科技', level: 3, category: '技术应用' },
+  { id: 'it_collaboration', name: '信息协作与创新', subject: '信息科技', level: 3, category: '技术应用' },
+  { id: 'it_personalprotect', name: '个人信息保护', subject: '信息科技', level: 3, category: '技术应用' },
+  { id: 'it_networksecurity', name: '网络安全防护', subject: '信息科技', level: 3, category: '技术应用' },
+  { id: 'it_aibase', name: 'AI基础与特征', subject: '信息科技', level: 3, category: '技术应用' },
+  { id: 'it_aiapply', name: 'AI应用与伦理', subject: '信息科技', level: 3, category: '技术应用' },
+  { id: 'it_device', name: '数字设备体验', subject: '信息科技', level: 3, category: '技术应用' },
+  { id: 'it_dataexplore', name: '数据探秘', subject: '信息科技', level: 3, category: '技术应用' },
+  { id: 'it_systemsim', name: '系统模拟', subject: '信息科技', level: 3, category: '技术应用' },
+  { id: 'it_interconnect', name: '互联设计', subject: '信息科技', level: 3, category: '技术应用' },
 ]
 
 // 知识图谱连接关系
 const knowledgeLinks: KnowledgeLink[] = [
-  // 学科内部结构 (contains)
+  // ==================== 学科内部结构 (contains) ====================
+
+  // 语文
   { source: 'chinese', target: 'literature', type: 'contains', strength: 1 },
   { source: 'chinese', target: 'thinking', type: 'contains', strength: 1 },
   { source: 'chinese', target: 'crossread', type: 'contains', strength: 1 },
+  { source: 'chinese', target: 'practicalread', type: 'contains', strength: 1 },
+  { source: 'chinese', target: 'accumulation', type: 'contains', strength: 1 },
+  { source: 'chinese', target: 'bookreading', type: 'contains', strength: 1 },
+  { source: 'literature', target: 'ch_litappreciate', type: 'contains', strength: 1 },
+  { source: 'literature', target: 'ch_creativewrite', type: 'contains', strength: 1 },
+  { source: 'thinking', target: 'ch_criticalread', type: 'contains', strength: 1 },
+  { source: 'practicalread', target: 'ch_infoget', type: 'contains', strength: 1 },
+  { source: 'bookreading', target: 'ch_readingplan', type: 'contains', strength: 1 },
+  { source: 'crossread', target: 'ch_multidiscipline', type: 'contains', strength: 1 },
+  { source: 'accumulation', target: 'ch_hanculture', type: 'contains', strength: 1 },
+
+  // 数学
   { source: 'math', target: 'dataanalysis', type: 'contains', strength: 1 },
   { source: 'math', target: 'function', type: 'contains', strength: 1 },
   { source: 'math', target: 'geometry', type: 'contains', strength: 1 },
+  { source: 'math', target: 'algebra', type: 'contains', strength: 1 },
+  { source: 'math', target: 'statistics', type: 'contains', strength: 1 },
+  { source: 'math', target: 'mathmodel', type: 'contains', strength: 1 },
+  { source: 'algebra', target: 'ma_numtheory', type: 'contains', strength: 1 },
+  { source: 'algebra', target: 'ma_equation', type: 'contains', strength: 1 },
+  { source: 'function', target: 'ma_function', type: 'contains', strength: 1 },
+  { source: 'geometry', target: 'ma_geometry', type: 'contains', strength: 1 },
+  { source: 'geometry', target: 'ma_coordinate', type: 'contains', strength: 1 },
+  { source: 'dataanalysis', target: 'ma_datacollect', type: 'contains', strength: 1 },
+  { source: 'statistics', target: 'ma_probability', type: 'contains', strength: 1 },
+
+  // 物理
   { source: 'physics', target: 'motion', type: 'contains', strength: 1 },
   { source: 'physics', target: 'energy', type: 'contains', strength: 1 },
   { source: 'physics', target: 'wave', type: 'contains', strength: 1 },
+  { source: 'physics', target: 'matterphysics', type: 'contains', strength: 1 },
+  { source: 'physics', target: 'electromagnetic', type: 'contains', strength: 1 },
+  { source: 'physics', target: 'phyexperiment', type: 'contains', strength: 1 },
+  { source: 'motion', target: 'ph_mechanical', type: 'contains', strength: 1 },
+  { source: 'wave', target: 'ph_sound', type: 'contains', strength: 1 },
+  { source: 'wave', target: 'ph_light', type: 'contains', strength: 1 },
+  { source: 'electromagnetic', target: 'ph_electric', type: 'contains', strength: 1 },
+  { source: 'electromagnetic', target: 'ph_magnetic', type: 'contains', strength: 1 },
+  { source: 'energy', target: 'ph_energytrans', type: 'contains', strength: 1 },
+  { source: 'matterphysics', target: 'ph_material', type: 'contains', strength: 1 },
+  { source: 'matterphysics', target: 'ph_structure', type: 'contains', strength: 1 },
+
+  // 化学
+  { source: 'chemistry', target: 'chem_experiment', type: 'contains', strength: 1 },
+  { source: 'chemistry', target: 'chem_property', type: 'contains', strength: 1 },
+  { source: 'chemistry', target: 'chem_composition', type: 'contains', strength: 1 },
+  { source: 'chemistry', target: 'chem_change', type: 'contains', strength: 1 },
+  { source: 'chemistry', target: 'chem_society', type: 'contains', strength: 1 },
   { source: 'chemistry', target: 'matter', type: 'contains', strength: 1 },
   { source: 'chemistry', target: 'reaction', type: 'contains', strength: 1 },
   { source: 'chemistry', target: 'sustainable', type: 'contains', strength: 1 },
+  { source: 'matter', target: 'ch_matterclass', type: 'contains', strength: 1 },
+  { source: 'matter', target: 'ch_atomstruct', type: 'contains', strength: 1 },
+  { source: 'matter', target: 'ch_chembond', type: 'contains', strength: 1 },
+  { source: 'matter', target: 'ch_organic', type: 'contains', strength: 1 },
+  { source: 'matter', target: 'ch_periodic', type: 'contains', strength: 1 },
+  { source: 'reaction', target: 'ch_reactnature', type: 'contains', strength: 1 },
+  { source: 'reaction', target: 'ch_ionicreact', type: 'contains', strength: 1 },
+  { source: 'reaction', target: 'ch_chambalance', type: 'contains', strength: 1 },
+  { source: 'reaction', target: 'ch_reactrate', type: 'contains', strength: 1 },
+  { source: 'reaction', target: 'ch_solution', type: 'contains', strength: 1 },
+  { source: 'reaction', target: 'ch_energyconv', type: 'contains', strength: 1 },
+  { source: 'chem_experiment', target: 'ch_experiment', type: 'contains', strength: 1 },
+  { source: 'chem_experiment', target: 'ch_inquiry', type: 'contains', strength: 1 },
+  { source: 'sustainable', target: 'ch_resources', type: 'contains', strength: 1 },
+  { source: 'sustainable', target: 'ch_pollution', type: 'contains', strength: 1 },
+  { source: 'sustainable', target: 'ch_green', type: 'contains', strength: 1 },
+  { source: 'sustainable', target: 'ch_material', type: 'contains', strength: 1 },
+  { source: 'sustainable', target: 'ch_health', type: 'contains', strength: 1 },
+  { source: 'matter', target: 'ch_organicbase', type: 'contains', strength: 1 },
+
+  // 生物
   { source: 'biology', target: 'life', type: 'contains', strength: 1 },
+  { source: 'biology', target: 'diversity', type: 'contains', strength: 1 },
   { source: 'biology', target: 'ecology', type: 'contains', strength: 1 },
+  { source: 'biology', target: 'plantlife', type: 'contains', strength: 1 },
+  { source: 'biology', target: 'humanhealth', type: 'contains', strength: 1 },
   { source: 'biology', target: 'genetics', type: 'contains', strength: 1 },
-  { source: 'geography', target: 'earth', type: 'contains', strength: 1 },
+  { source: 'biology', target: 'bio_practice', type: 'contains', strength: 1 },
+  { source: 'life', target: 'bio_cell', type: 'contains', strength: 1 },
+  { source: 'life', target: 'bio_tissue', type: 'contains', strength: 1 },
+  { source: 'diversity', target: 'bio_classify', type: 'contains', strength: 1 },
+  { source: 'diversity', target: 'bio_microbe', type: 'contains', strength: 1 },
+  { source: 'diversity', target: 'bio_protection', type: 'contains', strength: 1 },
+  { source: 'ecology', target: 'bio_ecosystem', type: 'contains', strength: 1 },
+  { source: 'ecology', target: 'bio_ecosafety', type: 'contains', strength: 1 },
+  { source: 'plantlife', target: 'bio_growth', type: 'contains', strength: 1 },
+  { source: 'plantlife', target: 'bio_physiology', type: 'contains', strength: 1 },
+  { source: 'humanhealth', target: 'bio_system', type: 'contains', strength: 1 },
+  { source: 'humanhealth', target: 'bio_healthcare', type: 'contains', strength: 1 },
+  { source: 'genetics', target: 'bio_dna', type: 'contains', strength: 1 },
+  { source: 'genetics', target: 'bio_evolution', type: 'contains', strength: 1 },
+  { source: 'bio_practice', target: 'bio_model', type: 'contains', strength: 1 },
+  { source: 'bio_practice', target: 'bio_cultivation', type: 'contains', strength: 1 },
+  { source: 'bio_practice', target: 'bio_fermentation', type: 'contains', strength: 1 },
+
+  // 地理
+  { source: 'geography', target: 'universe', type: 'contains', strength: 1 },
+  { source: 'geography', target: 'earthmotion', type: 'contains', strength: 1 },
+  { source: 'geography', target: 'earthsys', type: 'contains', strength: 1 },
   { source: 'geography', target: 'region', type: 'contains', strength: 1 },
   { source: 'geography', target: 'geotools', type: 'contains', strength: 1 },
+  { source: 'geography', target: 'geo_practice', type: 'contains', strength: 1 },
+  { source: 'universe', target: 'geo_earthpos', type: 'contains', strength: 1 },
+  { source: 'universe', target: 'geo_space', type: 'contains', strength: 1 },
+  { source: 'earthmotion', target: 'geo_rotation', type: 'contains', strength: 1 },
+  { source: 'earthmotion', target: 'geo_revolution', type: 'contains', strength: 1 },
+  { source: 'earthsys', target: 'geo_landsea', type: 'contains', strength: 1 },
+  { source: 'earthsys', target: 'geo_weather', type: 'contains', strength: 1 },
+  { source: 'earthsys', target: 'geo_residents', type: 'contains', strength: 1 },
+  { source: 'earthsys', target: 'geo_develop', type: 'contains', strength: 1 },
+  { source: 'region', target: 'geo_world', type: 'contains', strength: 1 },
+  { source: 'region', target: 'geo_china', type: 'contains', strength: 1 },
+  { source: 'region', target: 'geo_hometown', type: 'contains', strength: 1 },
+  { source: 'geotools', target: 'geo_tools', type: 'contains', strength: 1 },
+  { source: 'geotools', target: 'geo_practice', type: 'contains', strength: 1 },
+  { source: 'geo_practice', target: 'geo_practice', type: 'contains', strength: 1 },
+
+  // 历史
+  { source: 'history', target: 'historical', type: 'contains', strength: 1 },
   { source: 'history', target: 'chinahistory', type: 'contains', strength: 1 },
   { source: 'history', target: 'worldhistory', type: 'contains', strength: 1 },
   { source: 'history', target: 'historythink', type: 'contains', strength: 1 },
+  { source: 'history', target: 'history_practice', type: 'contains', strength: 1 },
+  { source: 'historical', target: 'hi_historical', type: 'contains', strength: 1 },
+  { source: 'historical', target: 'hi_method', type: 'contains', strength: 1 },
+  { source: 'historythink', target: 'hi_period', type: 'contains', strength: 1 },
+  { source: 'historythink', target: 'hi_space', type: 'contains', strength: 1 },
+  { source: 'chinahistory', target: 'hi_ancient', type: 'contains', strength: 1 },
+  { source: 'chinahistory', target: 'hi_modern', type: 'contains', strength: 1 },
+  { source: 'chinahistory', target: 'hi_contemporary', type: 'contains', strength: 1 },
+  { source: 'worldhistory', target: 'hi_civilization', type: 'contains', strength: 1 },
+  { source: 'worldhistory', target: 'hi_capitalism', type: 'contains', strength: 1 },
+  { source: 'worldhistory', target: 'hi_globalization', type: 'contains', strength: 1 },
+  { source: 'history_practice', target: 'hi_tech', type: 'contains', strength: 1 },
+  { source: 'history_practice', target: 'hi_culture', type: 'contains', strength: 1 },
+  { source: 'history_practice', target: 'hi_society', type: 'contains', strength: 1 },
+
+  // 道德与法治
+  { source: 'politics', target: 'identity', type: 'contains', strength: 1 },
   { source: 'politics', target: 'morality', type: 'contains', strength: 1 },
   { source: 'politics', target: 'law', type: 'contains', strength: 1 },
+  { source: 'politics', target: 'personality', type: 'contains', strength: 1 },
   { source: 'politics', target: 'responsibility', type: 'contains', strength: 1 },
+  { source: 'identity', target: 'po_nation', type: 'contains', strength: 1 },
+  { source: 'identity', target: 'po_party', type: 'contains', strength: 1 },
+  { source: 'identity', target: 'po_culture', type: 'contains', strength: 1 },
+  { source: 'morality', target: 'po_personal', type: 'contains', strength: 1 },
+  { source: 'morality', target: 'po_family', type: 'contains', strength: 1 },
+  { source: 'morality', target: 'po_social', type: 'contains', strength: 1 },
+  { source: 'law', target: 'po_constitution', type: 'contains', strength: 1 },
+  { source: 'law', target: 'po_rights', type: 'contains', strength: 1 },
+  { source: 'law', target: 'po_legal', type: 'contains', strength: 1 },
+  { source: 'personality', target: 'po_self', type: 'contains', strength: 1 },
+  { source: 'personality', target: 'po_interpersonal', type: 'contains', strength: 1 },
+  { source: 'responsibility', target: 'po_country', type: 'contains', strength: 1 },
+  { source: 'responsibility', target: 'po_socialres', type: 'contains', strength: 1 },
+  { source: 'responsibility', target: 'po_global', type: 'contains', strength: 1 },
+
+  // 信息科技
   { source: 'it', target: 'data', type: 'contains', strength: 1 },
   { source: 'it', target: 'algorithm', type: 'contains', strength: 1 },
   { source: 'it', target: 'network', type: 'contains', strength: 1 },
-  { source: 'it', target: 'ai', type: 'contains', strength: 1 },
+  { source: 'it', target: 'info_process', type: 'contains', strength: 1 },
   { source: 'it', target: 'infosecurity', type: 'contains', strength: 1 },
+  { source: 'it', target: 'ai', type: 'contains', strength: 1 },
+  { source: 'it', target: 'it_practice', type: 'contains', strength: 1 },
+  { source: 'data', target: 'it_dataencode', type: 'contains', strength: 1 },
+  { source: 'data', target: 'it_datasecurity', type: 'contains', strength: 1 },
+  { source: 'data', target: 'it_dataanalysis', type: 'contains', strength: 1 },
+  { source: 'algorithm', target: 'it_algorithmdesc', type: 'contains', strength: 1 },
+  { source: 'algorithm', target: 'it_efficiency', type: 'contains', strength: 1 },
+  { source: 'network', target: 'it_internet', type: 'contains', strength: 1 },
+  { source: 'network', target: 'it_iot', type: 'contains', strength: 1 },
+  { source: 'info_process', target: 'it_infoget', type: 'contains', strength: 1 },
+  { source: 'info_process', target: 'it_collaboration', type: 'contains', strength: 1 },
+  { source: 'infosecurity', target: 'it_personalprotect', type: 'contains', strength: 1 },
+  { source: 'infosecurity', target: 'it_networksecurity', type: 'contains', strength: 1 },
+  { source: 'ai', target: 'it_aibase', type: 'contains', strength: 1 },
+  { source: 'ai', target: 'it_aiapply', type: 'contains', strength: 1 },
+  { source: 'it_practice', target: 'it_device', type: 'contains', strength: 1 },
+  { source: 'it_practice', target: 'it_dataexplore', type: 'contains', strength: 1 },
+  { source: 'it_practice', target: 'it_systemsim', type: 'contains', strength: 1 },
+  { source: 'it_practice', target: 'it_interconnect', type: 'contains', strength: 1 },
 
-  // 跨学科关联 (related) - 基于课程实际融合情况
-  { source: 'dataanalysis', target: 'ecology', type: 'related', strength: 0.8 },
-  { source: 'function', target: 'motion', type: 'related', strength: 0.9 },
-  { source: 'energy', target: 'sustainable', type: 'related', strength: 0.85 },
-  { source: 'earth', target: 'ecology', type: 'related', strength: 0.8 },
-  { source: 'literature', target: 'wave', type: 'related', strength: 0.6 },
-  { source: 'algorithm', target: 'dataanalysis', type: 'related', strength: 0.9 },
-  { source: 'worldhistory', target: 'motion', type: 'related', strength: 0.5 },
-  { source: 'region', target: 'chinahistory', type: 'related', strength: 0.7 },
-  { source: 'ai', target: 'law', type: 'related', strength: 0.6 },
-  { source: 'responsibility', target: 'ecology', type: 'related', strength: 0.7 },
-  { source: 'matter', target: 'life', type: 'related', strength: 0.75 },
-  { source: 'reaction', target: 'energy', type: 'related', strength: 0.8 },
-  { source: 'geotools', target: 'data', type: 'related', strength: 0.85 },
-  { source: 'thinking', target: 'algorithm', type: 'related', strength: 0.65 },
-  { source: 'geometry', target: 'geotools', type: 'related', strength: 0.7 },
+  // ==================== 跨学科关联 (related) ====================
 
-  // 前置关系 (prerequisite)
-  { source: 'matter', target: 'reaction', type: 'prerequisite', strength: 0.95 },
-  { source: 'motion', target: 'energy', type: 'prerequisite', strength: 0.9 },
-  { source: 'data', target: 'algorithm', type: 'prerequisite', strength: 0.9 },
-  { source: 'life', target: 'genetics', type: 'prerequisite', strength: 0.85 },
+  // 科学学科间关联
+  { source: 'motion', target: 'ma_function', type: 'related', strength: 0.9 },
+  { source: 'ph_energytrans', target: 'ch_energyconv', type: 'related', strength: 0.95 },
+  { source: 'ph_structure', target: 'ch_atomstruct', type: 'related', strength: 0.9 },
+  { source: 'ph_electric', target: 'ch_ionicreact', type: 'related', strength: 0.85 },
+  { source: 'bio_ecosystem', target: 'geo_landsea', type: 'related', strength: 0.85 },
+  { source: 'bio_ecosystem', target: 'geo_weather', type: 'related', strength: 0.8 },
+  { source: 'bio_physiology', target: 'ph_mechanical', type: 'related', strength: 0.75 },
+  { source: 'ch_material', target: 'ph_material', type: 'related', strength: 0.8 },
+  { source: 'ch_green', target: 'bio_ecosafety', type: 'related', strength: 0.85 },
+  { source: 'ch_health', target: 'bio_system', type: 'related', strength: 0.9 },
+  { source: 'genetics', target: 'ch_organic', type: 'related', strength: 0.85 },
+  { source: 'ch_periodic', target: 'ph_structure', type: 'related', strength: 0.9 },
+
+  // 数学与其他学科关联
+  { source: 'dataanalysis', target: 'it_dataanalysis', type: 'related', strength: 0.95 },
+  { source: 'ma_probability', target: 'statistics', type: 'related', strength: 1 },
+  { source: 'ma_geometry', target: 'ph_light', type: 'related', strength: 0.75 },
+  { source: 'ma_coordinate', target: 'geo_tools', type: 'related', strength: 0.8 },
+  { source: 'ma_datacollect', target: 'bio_ecosystem', type: 'related', strength: 0.7 },
+  { source: 'ma_equation', target: 'ch_reactrate', type: 'related', strength: 0.8 },
+  { source: 'mathmodel', target: 'phyexperiment', type: 'related', strength: 0.75 },
+  { source: 'ma_probability', target: 'hi_historical', type: 'related', strength: 0.5 },
+
+  // 语文与其他学科关联
+  { source: 'literature', target: 'hi_culture', type: 'related', strength: 0.8 },
+  { source: 'literature', target: 'po_culture', type: 'related', strength: 0.75 },
+  { source: 'ch_hanculture', target: 'hi_ancient', type: 'related', strength: 0.7 },
+  { source: 'crossread', target: 'it_practice', type: 'related', strength: 0.65 },
+  { source: 'practicalread', target: 'it_infoget', type: 'related', strength: 0.6 },
+  { source: 'thinking', target: 'it_algorithmdesc', type: 'related', strength: 0.7 },
+  { source: 'ch_multidiscipline', target: 'bio_practice', type: 'related', strength: 0.6 },
+
+  // 英语/外语与其他学科（通过课程关联）
+  { source: 'literature', target: 'worldhistory', type: 'related', strength: 0.55 },
+
+  // 历史与其他学科关联
+  { source: 'chinahistory', target: 'geo_china', type: 'related', strength: 0.85 },
+  { source: 'worldhistory', target: 'geo_world', type: 'related', strength: 0.8 },
+  { source: 'hi_space', target: 'geo_hometown', type: 'related', strength: 0.7 },
+  { source: 'hi_civilization', target: 'geo_earthpos', type: 'related', strength: 0.6 },
+  { source: 'hi_tech', target: 'ph_structure', type: 'related', strength: 0.65 },
+  { source: 'hi_globalization', target: 'geo_develop', type: 'related', strength: 0.75 },
+
+  // 地理与其他学科关联
+  { source: 'geo_space', target: 'ph_structure', type: 'related', strength: 0.7 },
+  { source: 'geo_weather', target: 'ph_energytrans', type: 'related', strength: 0.75 },
+  { source: 'geo_rotation', target: 'ph_mechanical', type: 'related', strength: 0.7 },
+  { source: 'geo_landsea', target: 'bio_ecosystem', type: 'related', strength: 0.85 },
+  { source: 'geo_weather', target: 'ch_pollution', type: 'related', strength: 0.8 },
+  { source: 'geo_practice', target: 'phyexperiment', type: 'related', strength: 0.65 },
+
+  // 道德与法治与其他学科关联
+  { source: 'po_country', target: 'hi_ancient', type: 'related', strength: 0.7 },
+  { source: 'po_culture', target: 'ch_hanculture', type: 'related', strength: 0.75 },
+  { source: 'po_social', target: 'literature', type: 'related', strength: 0.6 },
+  { source: 'po_constitution', target: 'hi_method', type: 'related', strength: 0.5 },
+  { source: 'po_global', target: 'worldhistory', type: 'related', strength: 0.7 },
+  { source: 'po_global', target: 'geo_develop', type: 'related', strength: 0.75 },
+  { source: 'po_socialres', target: 'bio_ecosafety', type: 'related', strength: 0.8 },
+  { source: 'po_socialres', target: 'ch_green', type: 'related', strength: 0.75 },
+  { source: 'po_socialres', target: 'ch_pollution', type: 'related', strength: 0.8 },
+
+  // 信息科技与其他学科关联
+  { source: 'it_dataanalysis', target: 'ma_datacollect', type: 'related', strength: 0.9 },
+  { source: 'it_aiapply', target: 'po_constitution', type: 'related', strength: 0.6 },
+  { source: 'it_networksecurity', target: 'po_legal', type: 'related', strength: 0.7 },
+  { source: 'it_iot', target: 'ph_electric', type: 'related', strength: 0.75 },
+  { source: 'it_iot', target: 'geo_practice', type: 'related', strength: 0.7 },
+  { source: 'it_aibase', target: 'ma_probability', type: 'related', strength: 0.8 },
+  { source: 'it_infoget', target: 'practicalread', type: 'related', strength: 0.65 },
+  { source: 'it_systemsim', target: 'ch_experiment', type: 'related', strength: 0.6 },
+  { source: 'it_systemsim', target: 'phyexperiment', type: 'related', strength: 0.65 },
+
+  // ==================== 前置关系 (prerequisite) ====================
+
+  // 学科内部前置关系
+  { source: 'ma_numtheory', target: 'ma_equation', type: 'prerequisite', strength: 0.95 },
+  { source: 'ma_geometry', target: 'ma_coordinate', type: 'prerequisite', strength: 0.9 },
+  { source: 'ma_datacollect', target: 'ma_probability', type: 'prerequisite', strength: 0.85 },
+  { source: 'ph_mechanical', target: 'ph_energytrans', type: 'prerequisite', strength: 0.9 },
+  { source: 'ph_structure', target: 'ch_atomstruct', type: 'prerequisite', strength: 0.85 },
+  { source: 'ch_matterclass', target: 'ch_reactnature', type: 'prerequisite', strength: 0.95 },
+  { source: 'ch_atomstruct', target: 'ch_chembond', type: 'prerequisite', strength: 0.9 },
+  { source: 'ch_chembond', target: 'ch_reactnature', type: 'prerequisite', strength: 0.85 },
+  { source: 'ch_reactnature', target: 'ch_chambalance', type: 'prerequisite', strength: 0.9 },
+  { source: 'ch_reactnature', target: 'ch_reactrate', type: 'prerequisite', strength: 0.85 },
+  { source: 'bio_cell', target: 'bio_tissue', type: 'prerequisite', strength: 0.95 },
+  { source: 'bio_tissue', target: 'bio_system', type: 'prerequisite', strength: 0.85 },
+  { source: 'bio_ecosystem', target: 'bio_ecosafety', type: 'prerequisite', strength: 0.8 },
+  { source: 'bio_dna', target: 'bio_evolution', type: 'prerequisite', strength: 0.9 },
+  { source: 'geo_earthpos', target: 'geo_rotation', type: 'prerequisite', strength: 0.85 },
+  { source: 'geo_rotation', target: 'geo_weather', type: 'prerequisite', strength: 0.75 },
+  { source: 'it_dataencode', target: 'it_algorithmdesc', type: 'prerequisite', strength: 0.9 },
+  { source: 'it_algorithmdesc', target: 'it_aibase', type: 'prerequisite', strength: 0.8 },
+  { source: 'hi_method', target: 'chinahistory', type: 'prerequisite', strength: 0.85 },
+
+  // 跨学科前置关系
+  { source: 'ma_function', target: 'ph_mechanical', type: 'prerequisite', strength: 0.7 },
+  { source: 'ch_atomstruct', target: 'ph_structure', type: 'prerequisite', strength: 0.75 },
+  { source: 'bio_cell', target: 'ch_organic', type: 'prerequisite', strength: 0.7 },
+  { source: 'ma_equation', target: 'ch_reactrate', type: 'prerequisite', strength: 0.75 },
+  { source: 'geo_landsea', target: 'bio_ecosystem', type: 'prerequisite', strength: 0.65 },
 ]
 
 // 学科颜色配置
@@ -607,25 +1010,55 @@ function KnowledgeGraphView({
 }) {
   const svgRef = useRef<SVGSVGElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+  const nodePositionsRef = useRef<Map<string, { x: number; y: number }>>(new Map())
+  const simulationRef = useRef<d3.Simulation<any, undefined> | null>(null)
+  const isInitializedRef = useRef(false)
   const [linkStrength, setLinkStrength] = useState(0.5)
   const [showLabels, setShowLabels] = useState(true)
   const [showLinks, setShowLinks] = useState(true)
   const [highlightClusters, setHighlightClusters] = useState(false)
   const [selectedNode, setSelectedNode] = useState<string | null>(null)
 
-  const drawGraph = useCallback(() => {
+  // 更新节点选中状态的函数（不触发重绘）
+  const updateNodeSelection = useCallback((nodeId: string | null) => {
+    if (!svgRef.current) return
+
+    const svg = d3.select(svgRef.current)
+
+    // 更新节点的描边样式
+    svg.selectAll('.nodes circle')
+      .attr('stroke', (d: any) => nodeId === d.id ? '#fff' : 'transparent')
+      .attr('stroke-width', (d: any) => nodeId === d.id ? 4 : 0)
+
+    setSelectedNode(nodeId)
+  }, [])
+
+  // 更新节点透明度（基于学科筛选）
+  const updateNodeOpacity = useCallback(() => {
+    if (!svgRef.current) return
+
+    const svg = d3.select(svgRef.current)
+
+    svg.selectAll('.nodes circle')
+      .attr('opacity', (d: any) => {
+        if (selectedSubject === '全部') return d.level === 1 ? 0.95 : 0.8
+        return d.subject === selectedSubject ? (d.level === 1 ? 0.95 : 0.85) : 0.25
+      })
+  }, [selectedSubject])
+
+  // 首次初始化图谱
+  const initializeGraph = useCallback(() => {
     if (!svgRef.current || !containerRef.current) return
 
     const svg = d3.select(svgRef.current)
-    svg.selectAll('*').remove()
-
     const width = containerRef.current.clientWidth
     const height = 550
 
+    svg.selectAll('*').remove()
     svg.attr('width', width).attr('height', height)
 
     // 添加缩放功能
-    const g = svg.append('g')
+    const g = svg.append('g').attr('class', 'main')
 
     const zoom = d3.zoom<SVGSVGElement, unknown>()
       .scaleExtent([0.3, 3])
@@ -639,7 +1072,15 @@ function KnowledgeGraphView({
     const filteredLinks = knowledgeLinks.filter(l => l.strength >= linkStrength)
 
     // 深拷贝节点数据
-    const nodes = knowledgeNodes.map(n => ({ ...n }))
+    const savedPositions = nodePositionsRef.current
+    const nodes = knowledgeNodes.map(n => {
+      const pos = savedPositions.get(n.id)
+      return {
+        ...n,
+        x: pos?.x ?? undefined,
+        y: pos?.y ?? undefined,
+      }
+    })
     const links = filteredLinks.map(l => ({ ...l }))
 
     // 创建力导向图模拟
@@ -651,25 +1092,38 @@ function KnowledgeGraphView({
       .force('charge', d3.forceManyBody().strength(-300))
       .force('center', d3.forceCenter(width / 2, height / 2))
       .force('collision', d3.forceCollide().radius((d: any) => d.level === 1 ? 50 : 35))
+      .alphaDecay(0.02)
+
+    simulationRef.current = simulation
+
+    // 保存节点位置
+    simulation.on('tick', () => {
+      nodes.forEach((n: any) => {
+        if (n.x !== undefined && n.y !== undefined) {
+          nodePositionsRef.current.set(n.id, { x: n.x, y: n.y })
+        }
+      })
+    })
 
     // 绘制连接线
     if (showLinks) {
-      const link = g.append('g')
-        .attr('class', 'links')
-        .selectAll('line')
+      g.append('g').attr('class', 'links')
+
+      const link = g.select('.links')
+        .selectAll<SVGLineElement, any>('line')
         .data(links)
         .enter()
         .append('line')
-        .attr('stroke', d => {
+        .attr('stroke', (d: any) => {
           if (d.type === 'prerequisite') return '#10b981'
           if (d.type === 'contains') return '#d1d5db'
           return '#93c5fd'
         })
-        .attr('stroke-width', d => d.type === 'contains' ? 1.5 : d.strength * 3)
-        .attr('stroke-dasharray', d => d.type === 'related' ? '5,5' : '0')
-        .attr('opacity', d => d.type === 'contains' ? 0.4 : 0.6)
+        .attr('stroke-width', (d: any) => d.type === 'contains' ? 1.5 : d.strength * 3)
+        .attr('stroke-dasharray', (d: any) => d.type === 'related' ? '5,5' : '0')
+        .attr('opacity', (d: any) => d.type === 'contains' ? 0.4 : 0.6)
 
-      simulation.on('tick', () => {
+      simulation.on('tick.links', () => {
         link
           .attr('x1', (d: any) => d.source.x)
           .attr('y1', (d: any) => d.source.y)
@@ -679,15 +1133,16 @@ function KnowledgeGraphView({
     }
 
     // 绘制节点
-    const node = g.append('g')
-      .attr('class', 'nodes')
+    g.append('g').attr('class', 'nodes')
+
+    const node = g.select('.nodes')
       .selectAll('g')
       .data(nodes)
       .enter()
       .append('g')
       .attr('cursor', 'pointer')
-      .on('click', (event, d: any) => {
-        setSelectedNode(d.id)
+      .on('click', (_event, d: any) => {
+        updateNodeSelection(d.id)
         if (d.level === 1) {
           onSelectSubject(d.name)
         }
@@ -708,82 +1163,61 @@ function KnowledgeGraphView({
           d.fy = null
         }))
 
-    // 节点圆形
+    // 添加圆形
     node.append('circle')
-      .attr('r', d => d.level === 1 ? 40 : d.level === 2 ? 28 : 20)
-      .attr('fill', d => subjectColors[d.subject] || '#6b7280')
-      .attr('opacity', d => {
+      .attr('r', (d: any) => d.level === 1 ? 40 : d.level === 2 ? 28 : 20)
+      .attr('fill', (d: any) => subjectColors[d.subject] || '#6b7280')
+      .attr('opacity', (d: any) => {
         if (selectedSubject === '全部') return d.level === 1 ? 0.95 : 0.8
         return d.subject === selectedSubject ? (d.level === 1 ? 0.95 : 0.85) : 0.25
       })
-      .attr('stroke', d => selectedNode === d.id ? '#fff' : 'transparent')
-      .attr('stroke-width', d => selectedNode === d.id ? 4 : 0)
-      .style('filter', d => d.level === 1 ? 'drop-shadow(0 4px 6px rgba(0,0,0,0.15))' : 'none')
+      .attr('stroke', (d: any) => selectedNode === d.id ? '#fff' : 'transparent')
+      .attr('stroke-width', (d: any) => selectedNode === d.id ? 4 : 0)
+      .style('filter', (d: any) => d.level === 1 ? 'drop-shadow(0 4px 6px rgba(0,0,0,0.15))' : 'none')
 
-    // 节点标签
+    // 添加标签
     if (showLabels) {
       node.append('text')
-        .text(d => d.name.length > 6 ? d.name.slice(0, 6) + '...' : d.name)
+        .text((d: any) => d.name.length > 6 ? d.name.slice(0, 6) + '...' : d.name)
         .attr('text-anchor', 'middle')
-        .attr('dy', d => d.level === 1 ? 4 : 3)
+        .attr('dy', (d: any) => d.level === 1 ? 4 : 3)
         .attr('fill', '#fff')
-        .attr('font-size', d => d.level === 1 ? 13 : d.level === 2 ? 10 : 9)
-        .attr('font-weight', d => d.level === 1 ? 'bold' : 'medium')
+        .attr('font-size', (d: any) => d.level === 1 ? 13 : d.level === 2 ? 10 : 9)
+        .attr('font-weight', (d: any) => d.level === 1 ? 'bold' : 'medium')
         .style('pointer-events', 'none')
     }
 
-    // 聚类高亮
-    if (highlightClusters) {
-      const categories = [...new Set(nodes.map(n => n.category))]
-      const categoryColors: Record<string, string> = {
-        '语言文字': '#ec489920',
-        '数理逻辑': '#10b98120',
-        '自然科学': '#3b82f620',
-        '人文社科': '#8b5cf620',
-        '技术应用': '#6366f120',
-      }
-
-      // 为每个类别创建凸包
-      categories.forEach(category => {
-        const categoryNodes = nodes.filter(n => n.category === category)
-        if (categoryNodes.length < 3) return
-
-        const hull = g.append('path')
-          .attr('fill', categoryColors[category] || '#00000010')
-          .attr('stroke', categoryColors[category]?.replace('20', '40') || '#00000020')
-          .attr('stroke-width', 2)
-          .style('pointer-events', 'none')
-
-        simulation.on('tick.hull' + category, () => {
-          const points = categoryNodes.map((n: any) => [n.x, n.y] as [number, number])
-          const hullPoints = d3.polygonHull(points)
-          if (hullPoints) {
-            hull.attr('d', `M${hullPoints.join('L')}Z`)
-          }
-        })
-      })
-    }
-
-    simulation.on('tick', () => {
-      if (showLinks) {
-        g.selectAll('.links line')
-          .attr('x1', (d: any) => d.source.x)
-          .attr('y1', (d: any) => d.source.y)
-          .attr('x2', (d: any) => d.target.x)
-          .attr('y2', (d: any) => d.target.y)
-      }
+    // 更新位置
+    simulation.on('tick.nodes', () => {
       node.attr('transform', (d: any) => `translate(${d.x},${d.y})`)
     })
 
-  }, [linkStrength, showLabels, showLinks, highlightClusters, selectedSubject, selectedNode, onSelectSubject])
+    isInitializedRef.current = true
 
+  }, [linkStrength, showLabels, showLinks, selectedSubject, onSelectSubject, updateNodeSelection, selectedNode])
+
+  // 初始化绘制
   useEffect(() => {
-    drawGraph()
+    initializeGraph()
 
-    const handleResize = () => drawGraph()
+    const handleResize = () => {
+      nodePositionsRef.current.clear()
+      isInitializedRef.current = false
+      initializeGraph()
+    }
     window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [drawGraph])
+    return () => {
+      window.removeEventListener('resize', handleResize)
+      simulationRef.current?.stop()
+    }
+  }, [initializeGraph])
+
+  // 单独处理学科筛选变化（只更新透明度，不重新布局）
+  useEffect(() => {
+    if (isInitializedRef.current) {
+      updateNodeOpacity()
+    }
+  }, [selectedSubject, updateNodeOpacity])
 
   // 获取选中节点相关的课程
   const relatedCourses = selectedNode

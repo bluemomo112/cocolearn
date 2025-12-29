@@ -31,10 +31,10 @@ export default function Home() {
 
           <div className="flex flex-wrap justify-center gap-4">
             <Link
-              href="/teacher"
+              href="/course-center"
               className="px-8 py-4 bg-blue-600 text-white rounded-2xl font-semibold hover:bg-blue-700 hover:scale-105 transition-all duration-300 active:scale-95 shadow-lg hover:shadow-xl"
             >
-              进入教师中心
+              进入课程中心
             </Link>
             <Link
               href="/admin"
@@ -63,7 +63,7 @@ export default function Home() {
             </div>
           </Link>
 
-          <Link href="/teacher/course-center" className="group">
+          <Link href="/resource-hub" className="group">
             <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 hover:shadow-xl hover:-translate-y-2 transition-all duration-300">
               <div className="w-14 h-14 bg-sky-100 rounded-2xl flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300">
                 <svg className="w-7 h-7 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -71,7 +71,7 @@ export default function Home() {
                 </svg>
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-sky-600 transition-colors">
-                课程中心
+                资源库
               </h3>
               <p className="text-gray-500 text-sm">
                 探索跨学科课程资源，知识图谱可视化

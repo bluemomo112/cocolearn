@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>学生端 - 跟随模式 (Theater Mode)</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide 图标库 -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- Babel Standalone for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <script>
+        // React 18 createRoot polyfill
+        if (!ReactDOM.createRoot) {
+            ReactDOM.createRoot = (container) => {
+                return {
+                    render: (element) => ReactDOM.render(element, container)
+                };
+            };
+        }
+    </script>
+
+    <style>
+        /* 自定义滚动条 */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .slide-in-right { animation: slideInRight 0.3s ease-out; }
+        @keyframes slideInRight { from { transform: translateX(100%); } to { transform: translateX(0); } }
+
+        /* 模态框动画 */
+        .modal-backdrop { animation: fadeIn 0.2s ease-out; }
+        .modal-content { animation: modalPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes modalPop { from { opacity: 0; transform: scale(0.9) translateY(20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+
+        /* 禁用选择和右键 */
+        .kiosk-mode {
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+        }
+
+        /* 修复AI侧边栏布局 */
+        .ai-sidebar-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        .ai-chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            min-height: 0;
+        }
+    </style>
+</head>
+<body class="bg-white h-screen overflow-hidden font-sans">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // 资源内容定义（从教师端同步）
+        const RESOURCES_CONTENT = {
+            'video': '<div class="relative w-full h-full bg-black flex items-center justify-center"><div class="text-center"><div class="w-96 h-56 bg-gray-800 rounded-xl shadow-2xl flex items-center justify-center mb-6 mx-auto border-4 border-gray-700 overflow-hidden"><svg class="w-24 h-24 text-gray-600" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"/></svg></div><p class="text-white text-xl font-semibold mb-2">视频：水滴的旅行</p><p class="text-gray-400 text-sm">由教师控制播放中...</p><div class="mt-4 inline-flex items-center gap-2 bg-red-600/90 px-4 py-2 rounded-full text-white text-sm"><span class="w-2 h-2 bg-white rounded-full animate-pulse"></span>直播同步中</div></div></div>',
+
+            'ppt': '<div class="w-full h-full bg-gradient-to-br from-blue-100 to-cyan-50 flex flex-col p-12 overflow-auto"><div class="mb-4 text-xs text-gray-500">第 5 页 / 共 12 页</div><h1 class="text-4xl font-bold text-gray-800 mb-8">水循环的三个主要阶段</h1><div class="grid grid-cols-3 gap-6 flex-1"><div class="bg-white rounded-xl p-6 shadow-lg border-2 border-blue-200"><div class="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mb-4"><svg class="w-8 h-8 text-orange-600" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0z"/></svg></div><h3 class="text-xl font-bold text-gray-800 mb-2">蒸发</h3><p class="text-sm text-gray-600">水受热从液态变为气态</p></div><div class="bg-white rounded-xl p-6 shadow-lg border-2 border-cyan-200"><div class="w-16 h-16 bg-cyan-100 rounded-full flex items-center justify-center mb-4"><svg class="w-8 h-8 text-cyan-600" fill="currentColor" viewBox="0 0 20 20"><path d="M5.5 16a3.5 3.5 0 01-.369-6.98 4 4 0 117.753-1.977A4.5 4.5 0 1113.5 16h-8z"/></svg></div><h3 class="text-xl font-bold text-gray-800 mb-2">凝结</h3><p class="text-sm text-gray-600">水蒸气遇冷形成小水滴</p></div><div class="bg-white rounded-xl p-6 shadow-lg border-2 border-blue-200"><div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4"><svg class="w-8 h-8 text-blue-600" fill="currentColor" viewBox="0 0 20 20"><path d="M10 3v2M4.222 4.222l1.414 1.414M2 10h2m.222 5.778l1.414-1.414M10 17v-2m5.778.222l-1.414-1.414M18 10h-2m-.222-5.778l-1.414 1.414M10 7a3 3 0 100 6 3 3 0 000-6z"/></svg></div><h3 class="text-xl font-bold text-gray-800 mb-2">降水</h3><p class="text-sm text-gray-600">云中水滴聚集降落地面</p></div></div><div class="mt-6 text-center text-sm text-gray-500"><span class="bg-blue-50 text-blue-700 px-4 py-2 rounded-full">由教师控制翻页</span></div></div>',
+
+            'quiz': '<div class="w-full h-full bg-gray-50 p-8 overflow-auto"><div class="max-w-3xl mx-auto"><div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-8"><div class="flex items-center justify-between mb-6"><h2 class="text-2xl font-bold text-gray-800">选择题：阶段检查</h2><span class="bg-green-100 text-green-700 px-4 py-1.5 rounded-full text-sm font-medium">进行中</span></div><div class="space-y-8"><div class="border-l-4 border-blue-500 pl-6 py-4 bg-blue-50/30"><div class="font-bold text-gray-800 mb-4 text-lg">1. 水循环的三个主要阶段是什么？</div><div class="space-y-3"><label class="flex items-center gap-3 p-4 bg-white rounded-lg border-2 border-gray-200 hover:border-blue-400 cursor-pointer transition-all"><input type="radio" name="q1" class="w-5 h-5 text-blue-600" /><span class="text-gray-700">A. 蒸发、凝结、降水</span></label><label class="flex items-center gap-3 p-4 bg-white rounded-lg border-2 border-gray-200 hover:border-blue-400 cursor-pointer transition-all"><input type="radio" name="q1" class="w-5 h-5 text-blue-600" /><span class="text-gray-700">B. 蒸发、沸腾、降水</span></label><label class="flex items-center gap-3 p-4 bg-white rounded-lg border-2 border-gray-200 hover:border-blue-400 cursor-pointer transition-all"><input type="radio" name="q1" class="w-5 h-5 text-blue-600" /><span class="text-gray-700">C. 蒸腾、凝结、径流</span></label><label class="flex items-center gap-3 p-4 bg-white rounded-lg border-2 border-gray-200 hover:border-blue-400 cursor-pointer transition-all"><input type="radio" name="q1" class="w-5 h-5 text-blue-600" /><span class="text-gray-700">D. 蒸发、升华、降水</span></label></div></div><div class="border-l-4 border-blue-500 pl-6 py-4 bg-blue-50/30"><div class="font-bold text-gray-800 mb-4 text-lg">2. 以下哪个不是水循环的驱动力？</div><div class="space-y-3"><label class="flex items-center gap-3 p-4 bg-white rounded-lg border-2 border-gray-200 hover:border-blue-400 cursor-pointer transition-all"><input type="radio" name="q2" class="w-5 h-5 text-blue-600" /><span class="text-gray-700">A. 太阳辐射</span></label><label class="flex items-center gap-3 p-4 bg-white rounded-lg border-2 border-gray-200 hover:border-blue-400 cursor-pointer transition-all"><input type="radio" name="q2" class="w-5 h-5 text-blue-600" /><span class="text-gray-700">B. 重力</span></label><label class="flex items-center gap-3 p-4 bg-white rounded-lg border-2 border-gray-200 hover:border-blue-400 cursor-pointer transition-all"><input type="radio" name="q2" class="w-5 h-5 text-blue-600" /><span class="text-gray-700">C. 风力</span></label><label class="flex items-center gap-3 p-4 bg-white rounded-lg border-2 border-gray-200 hover:border-blue-400 cursor-pointer transition-all"><input type="radio" name="q2" class="w-5 h-5 text-blue-600" /><span class="text-gray-700">D. 月球引力</span></label></div></div><div class="border-l-4 border-blue-500 pl-6 py-4 bg-blue-50/30"><div class="font-bold text-gray-800 mb-4 text-lg">3. 云的形成主要与哪个过程相关？</div><div class="space-y-3"><label class="flex items-center gap-3 p-4 bg-white rounded-lg border-2 border-gray-200 hover:border-blue-400 cursor-pointer transition-all"><input type="radio" name="q3" class="w-5 h-5 text-blue-600" /><span class="text-gray-700">A. 蒸发</span></label><label class="flex items-center gap-3 p-4 bg-white rounded-lg border-2 border-gray-200 hover:border-blue-400 cursor-pointer transition-all"><input type="radio" name="q3" class="w-5 h-5 text-blue-600" /><span class="text-gray-700">B. 凝结</span></label><label class="flex items-center gap-3 p-4 bg-white rounded-lg border-2 border-gray-200 hover:border-blue-400 cursor-pointer transition-all"><input type="radio" name="q3" class="w-5 h-5 text-blue-600" /><span class="text-gray-700">C. 降水</span></label><label class="flex items-center gap-3 p-4 bg-white rounded-lg border-2 border-gray-200 hover:border-blue-400 cursor-pointer transition-all"><input type="radio" name="q3" class="w-5 h-5 text-blue-600" /><span class="text-gray-700">D. 渗透</span></label></div></div></div><div class="mt-8 flex gap-4"><button class="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors shadow-lg">提交答案</button></div></div></div></div>',
+
+            'openended': '<div class="w-full h-full bg-gradient-to-br from-blue-50 to-indigo-50 p-8 overflow-auto"><div class="max-w-3xl mx-auto"><h2 class="text-2xl font-bold text-gray-800 mb-6">问答题：深度思考</h2><div class="space-y-6"><div class="bg-white rounded-xl shadow-lg p-6"><div class="flex items-start gap-4 mb-4"><div class="bg-blue-100 text-blue-600 font-bold w-8 h-8 rounded-full flex items-center justify-center shrink-0">1</div><div class="flex-1"><h3 class="text-lg font-bold text-gray-800 mb-2">请解释水循环对地球生态系统的重要性</h3><p class="text-sm text-gray-500">要求：至少150字，包含3个要点</p></div></div><textarea placeholder="在此输入你的答案..." class="w-full min-h-40 bg-gray-50 rounded-lg p-4 border-2 border-gray-200 focus:border-blue-500 focus:outline-none text-gray-700"></textarea></div><div class="bg-white rounded-xl shadow-lg p-6"><div class="flex items-start gap-4 mb-4"><div class="bg-blue-100 text-blue-600 font-bold w-8 h-8 rounded-full flex items-center justify-center shrink-0">2</div><div class="flex-1"><h3 class="text-lg font-bold text-gray-800 mb-2">如果没有水循环，地球会变成什么样？</h3><p class="text-sm text-gray-500">要求：发挥想象，结合科学原理</p></div></div><textarea placeholder="在此输入你的答案..." class="w-full min-h-40 bg-gray-50 rounded-lg p-4 border-2 border-gray-200 focus:border-blue-500 focus:outline-none text-gray-700"></textarea></div></div><div class="mt-8"><button class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors shadow-lg">提交答案</button></div></div></div>',
+
+            'ai-avatar': '<div class="w-full h-full bg-gradient-to-b from-indigo-900 to-purple-900 flex items-center justify-center relative overflow-hidden"><div class="absolute inset-0 opacity-10"><div class="absolute top-1/4 left-1/4 w-64 h-64 bg-blue-500 rounded-full filter blur-3xl animate-pulse"></div><div class="absolute bottom-1/4 right-1/4 w-64 h-64 bg-purple-500 rounded-full filter blur-3xl animate-pulse" style="animation-delay: 1s"></div></div><div class="relative z-10 text-center"><div class="w-48 h-48 mx-auto mb-6 bg-gradient-to-br from-blue-400 to-purple-400 rounded-full flex items-center justify-center shadow-2xl border-4 border-white/20"><svg class="w-32 h-32 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"/></svg></div><h2 class="text-3xl font-bold text-white mb-2">水博士</h2><p class="text-blue-200 mb-6">虚拟助教 · 随时答疑</p><div class="flex gap-3 justify-center"><div class="bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full text-white text-sm flex items-center gap-2"><div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>在线中</div></div><div class="mt-8 text-white/60 text-sm">通过文字与水博士互动</div></div></div>',
+
+            'virtuallab': '<div class="w-full h-full bg-gradient-to-b from-sky-400 via-blue-300 to-emerald-200 relative overflow-hidden flex items-center justify-center"><div class="text-center max-w-md"><div class="mb-6"><svg class="w-48 h-48 mx-auto text-cyan-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg></div><h3 class="text-2xl font-bold text-white mb-4 drop-shadow-lg">虚拟实验室</h3><p class="text-white/90 mb-6">交互式水循环3D模拟器</p><div class="bg-white/20 backdrop-blur-md rounded-xl p-6"><div class="space-y-4"><div><label class="block text-white text-sm font-medium mb-2">温度: 25°C</label><input type="range" min="0" max="50" value="25" class="w-full" /></div><div><label class="block text-white text-sm font-medium mb-2">湿度: 60%</label><input type="range" min="0" max="100" value="60" class="w-full" /></div><div><label class="block text-white text-sm font-medium mb-2">风速: 中等</label><input type="range" min="0" max="100" value="50" class="w-full" /></div></div><div class="mt-6 flex gap-3"><button class="flex-1 bg-green-500 hover:bg-green-600 text-white py-2 rounded-lg font-medium transition-colors">▶ 开始模拟</button><button class="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-2 rounded-lg font-medium transition-colors">⟲ 重置</button></div></div></div></div>',
+
+            'matching': '<div class="w-full h-full bg-gradient-to-br from-pink-50 to-purple-50 p-8 overflow-auto"><div class="max-w-4xl mx-auto"><h2 class="text-2xl font-bold text-gray-800 mb-6">匹配题：水循环概念配对</h2><p class="text-sm text-gray-600 mb-8">拖动右侧选项到对应的左侧概念</p><div class="grid grid-cols-2 gap-8"><div class="space-y-4"><div class="bg-white p-4 rounded-lg shadow border-2 border-dashed border-pink-200 min-h-20 flex items-center"><span class="text-gray-700 font-medium">蒸发</span></div><div class="bg-white p-4 rounded-lg shadow border-2 border-dashed border-pink-200 min-h-20 flex items-center"><span class="text-gray-700 font-medium">凝结</span></div><div class="bg-white p-4 rounded-lg shadow border-2 border-dashed border-pink-200 min-h-20 flex items-center"><span class="text-gray-700 font-medium">降水</span></div><div class="bg-white p-4 rounded-lg shadow border-2 border-dashed border-pink-200 min-h-20 flex items-center"><span class="text-gray-700 font-medium">渗透</span></div><div class="bg-white p-4 rounded-lg shadow border-2 border-dashed border-pink-200 min-h-20 flex items-center"><span class="text-gray-700 font-medium">径流</span></div></div><div class="space-y-4"><div class="bg-purple-100 p-4 rounded-lg shadow cursor-move hover:shadow-lg transition-shadow"><span class="text-gray-700">水蒸气遇冷形成小水滴</span></div><div class="bg-purple-100 p-4 rounded-lg shadow cursor-move hover:shadow-lg transition-shadow"><span class="text-gray-700">水在地表流动汇入河流</span></div><div class="bg-purple-100 p-4 rounded-lg shadow cursor-move hover:shadow-lg transition-shadow"><span class="text-gray-700">水受热从液态变为气态</span></div><div class="bg-purple-100 p-4 rounded-lg shadow cursor-move hover:shadow-lg transition-shadow"><span class="text-gray-700">雨、雪等从云中降落</span></div><div class="bg-purple-100 p-4 rounded-lg shadow cursor-move hover:shadow-lg transition-shadow"><span class="text-gray-700">水渗入土壤和地下</span></div></div></div><div class="mt-6 text-center text-sm text-gray-500">已完成: 18/28 学生 · 平均用时: 1分42秒</div></div></div>',
+
+            'poll': '<div class="w-full h-full bg-gradient-to-br from-teal-50 to-cyan-50 p-8 overflow-auto"><div class="max-w-3xl mx-auto"><div class="bg-white rounded-xl shadow-lg p-8"><div class="flex items-center gap-3 mb-6"><div class="w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center"><svg class="w-6 h-6 text-teal-600" fill="currentColor" viewBox="0 0 20 20"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/></svg></div><div><h2 class="text-2xl font-bold text-gray-800">下节课实践项目投票</h2><p class="text-sm text-gray-500">请选择你最感兴趣的探究方向（匿名投票）</p></div></div><div class="space-y-4 mb-6"><div class="relative"><div class="flex items-center justify-between mb-2"><span class="font-medium text-gray-700">A. 制作简易净水装置</span><span class="text-sm font-bold text-teal-600">35%</span></div><div class="h-12 bg-gray-100 rounded-lg overflow-hidden"><div class="h-full bg-gradient-to-r from-teal-400 to-teal-500 rounded-lg flex items-center px-4 text-white font-medium" style="width: 35%">10票</div></div></div><div class="relative"><div class="flex items-center justify-between mb-2"><span class="font-medium text-gray-700">B. 调查社区水资源使用情况</span><span class="text-sm font-bold text-blue-600">46%</span></div><div class="h-12 bg-gray-100 rounded-lg overflow-hidden"><div class="h-full bg-gradient-to-r from-blue-400 to-blue-500 rounded-lg flex items-center px-4 text-white font-medium" style="width: 46%">13票</div></div></div><div class="relative"><div class="flex items-center justify-between mb-2"><span class="font-medium text-gray-700">C. 设计节水宣传海报</span><span class="text-sm font-bold text-purple-600">11%</span></div><div class="h-12 bg-gray-100 rounded-lg overflow-hidden"><div class="h-full bg-gradient-to-r from-purple-400 to-purple-500 rounded-lg flex items-center px-4 text-white font-medium" style="width: 11%">3票</div></div></div><div class="relative"><div class="flex items-center justify-between mb-2"><span class="font-medium text-gray-700">D. 参观污水处理厂</span><span class="text-sm font-bold text-orange-600">8%</span></div><div class="h-12 bg-gray-100 rounded-lg overflow-hidden"><div class="h-full bg-gradient-to-r from-orange-400 to-orange-500 rounded-lg flex items-center px-4 text-white font-medium" style="width: 8%">2票</div></div></div></div><div class="flex items-center justify-between pt-4 border-t border-gray-200"><div class="flex items-center gap-4 text-sm text-gray-600"><span>总投票数: <strong class="text-gray-800">28</strong></span><span>参与率: <strong class="text-gray-800">93%</strong></span></div><div class="flex items-center gap-2"><div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div><span class="text-sm text-gray-600">实时更新中</span></div></div></div></div></div>',
+
+            'assignment': '<div class="w-full h-full bg-gray-50 p-8 overflow-auto"><div class="max-w-4xl mx-auto"><div class="bg-white rounded-xl shadow-lg p-6 mb-6"><h2 class="text-2xl font-bold text-gray-800 mb-4">作业：一周水循环观察日志</h2><div class="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4"><div class="flex items-start gap-3"><svg class="w-5 h-5 text-amber-600 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg><div><div class="font-bold text-amber-800 text-sm mb-1">作业要求</div><ul class="text-sm text-amber-700 space-y-1"><li>• 连续观察并记录一周的天气现象</li><li>• 拍摄云的形态照片至少3张</li><li>• 撰写观察日志（文档格式：PDF/Word）</li><li>• 文件大小不超过10MB</li></ul></div></div></div><div class="grid grid-cols-3 gap-4 mb-6"><div class="bg-gradient-to-br from-green-50 to-emerald-50 p-4 rounded-lg border border-green-200"><div class="text-2xl font-bold text-green-600">16</div><div class="text-xs text-green-700">已提交</div></div><div class="bg-gradient-to-br from-blue-50 to-cyan-50 p-4 rounded-lg border border-blue-200"><div class="text-2xl font-bold text-blue-600">8</div><div class="text-xs text-blue-700">进行中</div></div><div class="bg-gradient-to-br from-gray-50 to-slate-50 p-4 rounded-lg border border-gray-200"><div class="text-2xl font-bold text-gray-600">4</div><div class="text-xs text-gray-700">未开始</div></div></div><div class="flex items-center justify-between text-sm"><span class="text-gray-600">截止时间：2024-03-25 23:59</span><span class="text-red-600 font-medium">剩余 18 小时</span></div></div><div class="bg-white rounded-xl shadow-lg p-6"><div class="mb-4"><label class="block text-sm font-medium text-gray-700 mb-2">上传作业文件</label><div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-400 transition-colors cursor-pointer"><svg class="w-12 h-12 mx-auto text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg><p class="text-gray-600 mb-1">点击上传或拖拽文件到此处</p><p class="text-xs text-gray-400">支持 PDF、Word 格式，最大 10MB</p></div></div><button class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors shadow-lg">提交作业</button></div></div></div>'
+        };
+
+        // 主应用组件
+        function TheaterApp() {
+            // 从教师端同步的状态
+            const [aiEnabled, setAiEnabled] = useState(false);
+            const [aiPersona, setAiPersona] = useState('socratic'); // socratic, wiki, etc
+            const [currentResource, setCurrentResource] = useState('video');
+            const [isLocked, setIsLocked] = useState(false);
+
+            // 本地状态
+            const [chatMessages, setChatMessages] = useState([]);
+            const [inputMessage, setInputMessage] = useState('');
+
+            // 使用 refs 来跟踪上一次的 localStorage 值，避免无限循环
+            const prevValuesRef = useRef({
+                aiEnabled: null,
+                aiPersona: null,
+                currentResource: null,
+                lockScreen: null
+            });
+
+            // 清理旧的交互数据并初始化演示数据
+            useEffect(() => {
+                // 页面加载时清理学生端遗留数据，避免误触发
+                localStorage.removeItem('teacher_push_interactive');
+                localStorage.removeItem('student_answers');
+                localStorage.removeItem('student_warning');
+
+                // 初始化默认状态（如果教师端还未设置）
+                if (!localStorage.getItem('teacher_current_resource')) {
+                    localStorage.setItem('teacher_current_resource', 'video');
+                }
+                if (!localStorage.getItem('teacher_ai_enabled')) {
+                    localStorage.setItem('teacher_ai_enabled', 'false');
+                }
+                if (!localStorage.getItem('teacher_lock_screen')) {
+                    localStorage.setItem('teacher_lock_screen', 'false');
+                }
+
+                // 设置当前页面为跟随模式（theater）
+                localStorage.setItem('teacher_learning_mode', 'theater');
+
+                console.log('[学生端-跟随模式] 初始化完成，等待教师端控制...');
+            }, []);
+
+            // 监听教师端的模式切换命令
+            useEffect(() => {
+                let lastTimestamp = localStorage.getItem('teacher_mode_change_timestamp') || '0';
+
+                const checkModeChange = () => {
+                    const currentTimestamp = localStorage.getItem('teacher_mode_change_timestamp') || '0';
+                    const currentMode = localStorage.getItem('teacher_learning_mode');
+
+                    // 检测到新的模式切换命令
+                    if (currentTimestamp !== lastTimestamp && currentMode === 'workbench') {
+                        lastTimestamp = currentTimestamp;
+                        console.log('[学生端-跟随模式] 收到教师端指令，正在切换到自学模式...');
+                        // 跳转到自学模式页面
+                        window.location.href = 'LMS-Student-Workbench.html';
+                    }
+                };
+
+                // 每500ms检查一次
+                const interval = setInterval(checkModeChange, 500);
+                return () => clearInterval(interval);
+            }, []);
+
+            // 轮询教师端状态
+            useEffect(() => {
+                // 轮询教师端命令
+                const pollTeacherCommands = () => {
+                    try {
+                        // 读取教师端的控制命令
+                        const aiState = localStorage.getItem('teacher_ai_enabled');
+                        const aiPersonaState = localStorage.getItem('teacher_ai_persona');
+                        const resourceState = localStorage.getItem('teacher_current_resource');
+                        const lockState = localStorage.getItem('teacher_lock_screen');
+
+                        // 同步AI开关（只在值真正变化时更新）
+                        if (aiState !== null && aiState !== prevValuesRef.current.aiEnabled) {
+                            prevValuesRef.current.aiEnabled = aiState;
+                            const enabled = aiState === 'true';
+                            setAiEnabled(enabled);
+
+                            // 如果是首次开启AI，添加欢迎消息
+                            if (enabled) {
+                                setChatMessages(prev => {
+                                    if (prev.length === 0) {
+                                        return [{
+                                            role: 'assistant',
+                                            content: getPersonaWelcomeMessage(aiPersonaState || 'socratic'),
+                                            timestamp: new Date()
+                                        }];
+                                    }
+                                    return prev;
+                                });
+                            }
+                        }
+
+                        // 同步AI人格（只在值真正变化时更新）
+                        if (aiPersonaState && aiPersonaState !== prevValuesRef.current.aiPersona) {
+                            prevValuesRef.current.aiPersona = aiPersonaState;
+                            setAiPersona(aiPersonaState);
+
+                            // 添加系统消息通知人格切换
+                            setChatMessages(prev => {
+                                // 避免重复添加相同的系统消息
+                                const lastMsg = prev[prev.length - 1];
+                                if (lastMsg?.role === 'system' && lastMsg?.content?.includes('AI助手已切换')) {
+                                    return prev;
+                                }
+                                return [...prev, {
+                                    role: 'system',
+                                    content: `AI助手已切换到：${getPersonaName(aiPersonaState)}`,
+                                    timestamp: new Date()
+                                }];
+                            });
+                        }
+
+                        // 同步资源（只在值真正变化时更新）
+                        if (resourceState && resourceState !== prevValuesRef.current.currentResource) {
+                            prevValuesRef.current.currentResource = resourceState;
+                            setCurrentResource(resourceState);
+                            console.log('[学生端] 资源切换:', resourceState);
+                        }
+
+                        // 同步锁屏状态（只在值真正变化时更新）
+                        if (lockState !== null && lockState !== prevValuesRef.current.lockScreen) {
+                            prevValuesRef.current.lockScreen = lockState;
+                            setIsLocked(lockState === 'true');
+                        }
+                    } catch (e) {
+                        console.error('轮询错误:', e);
+                    }
+                };
+
+                // 立即执行一次
+                pollTeacherCommands();
+
+                // 每500ms轮询一次
+                const interval = setInterval(pollTeacherCommands, 500);
+
+                return () => clearInterval(interval);
+            }, []); // 空依赖数组 - 只在组件挂载时运行一次
+
+            // 获取人格欢迎消息
+            const getPersonaWelcomeMessage = (persona) => {
+                const messages = {
+                    'socratic': '你好！我是你的学习助手（苏格拉底模式）。我会通过提问引导你思考，而不是直接给出答案。有什么问题可以随时问我。',
+                    'wiki': '你好！我是你的百科助手。我会简洁准确地回答你的事实性问题。',
+                    'metacognitive': '你好！我是你的元认知导师。我会帮助你反思学习过程，提升学习策略。'
+                };
+                return messages[persona] || messages['socratic'];
+            };
+
+            // 获取人格名称
+            const getPersonaName = (persona) => {
+                const names = {
+                    'socratic': '苏格拉底导师',
+                    'wiki': '百科助手',
+                    'metacognitive': '元认知导师'
+                };
+                return names[persona] || '苏格拉底导师';
+            };
+
+            // 发送消息
+            const sendMessage = () => {
+                if (!inputMessage.trim()) return;
+
+                const newMessage = { role: 'user', content: inputMessage, timestamp: new Date() };
+                setChatMessages([...chatMessages, newMessage]);
+                setInputMessage('');
+
+                // 模拟AI回复（根据人格不同）
+                setTimeout(() => {
+                    const response = generatePersonaResponse(inputMessage, aiPersona);
+                    setChatMessages(prev => [...prev, { role: 'assistant', content: response, timestamp: new Date() }]);
+                }, 1000);
+            };
+
+            // 根据人格生成响应
+            const generatePersonaResponse = (question, persona) => {
+                const lowerQ = question.toLowerCase();
+
+                if (persona === 'socratic') {
+                    // 苏格拉底模式：引导提问
+                    if (lowerQ.includes('答案') || lowerQ.includes('是什么')) {
+                        return '这是一个很好的问题！在回答之前，让我们先思考一下：你觉得视频中提到的哪个部分可能与这个问题相关？';
+                    } else if (lowerQ.includes('不懂') || lowerQ.includes('难')) {
+                        return '我理解学习过程中遇到困难是很正常的。能告诉我具体是哪个概念让你感到困惑吗？我们可以一步步来梳理。';
+                    } else {
+                        return '很好的思考！基于视频内容，你能尝试用自己的话解释一下你的理解吗？';
+                    }
+                } else if (persona === 'wiki') {
+                    // 百科模式：简短回答
+                    if (lowerQ.includes('水循环')) {
+                        return '水循环是指水从地表蒸发到大气，凝结成云，最后以降水形式回到地表的自然过程。主要包括：蒸发、凝结、降水三个阶段。';
+                    } else {
+                        return '这个问题涉及的概念在课件的第3页有详细说明，你可以查看那部分内容。';
+                    }
+                } else {
+                    // 元认知模式
+                    return '我注意到你在这个问题上停留了较长时间。让我们先回顾一下：你之前理解了哪些相关概念？这可以帮助我们更好地解决当前的问题。';
+                }
+            };
+
+            return (
+                <div className="h-screen flex flex-col relative kiosk-mode bg-white">
+                    {/* 顶部状态栏 */}
+                    <header className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-6 shrink-0 z-30 shadow-sm">
+                        <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold shadow-md">K</div>
+                            <div>
+                                <h1 className="font-semibold text-base text-gray-800">跨学科探究：水资源与环境</h1>
+                                <div className="flex items-center gap-2 text-xs text-gray-500">
+                                    <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                                    正在上课 · 跟随模式
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-4">
+                            {aiEnabled && (
+                                <div className="flex items-center gap-2 text-xs text-green-600 bg-green-50 px-3 py-1.5 rounded-full">
+                                    <i data-lucide="sparkles" className="w-3.5 h-3.5"></i>
+                                    AI助手：{getPersonaName(aiPersona)}
+                                </div>
+                            )}
+                            <div className="text-xs text-gray-400 bg-gray-50 px-3 py-1.5 rounded-full">
+                                由教师控制
+                            </div>
+                        </div>
+                    </header>
+
+                    {/* 主内容区 */}
+                    <div className="flex-1 flex overflow-hidden relative bg-gray-50">
+                        {/* 主舞台区域 */}
+                        <main className={`flex-1 flex flex-col bg-white relative transition-all duration-300 ${aiEnabled ? '' : 'w-full'}`}>
+                            {isLocked ? (
+                                <LockedScreen />
+                            ) : (
+                                <ResourceDisplay resource={currentResource} />
+                            )}
+                        </main>
+
+                        {/* AI助手侧边栏 */}
+                        {aiEnabled && (
+                            <aside className="w-96 bg-white border-l border-gray-200 flex flex-col slide-in-right shadow-lg">
+                                <AIChatPanel
+                                    messages={chatMessages}
+                                    inputMessage={inputMessage}
+                                    setInputMessage={setInputMessage}
+                                    sendMessage={sendMessage}
+                                    persona={aiPersona}
+                                />
+                            </aside>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        // 资源显示组件（重构版 - 直接显示教师端内容）
+        function ResourceDisplay({ resource }) {
+            useEffect(() => {
+                // 延迟初始化图标
+                const timer = setTimeout(() => {
+                    lucide.createIcons();
+                }, 100);
+                return () => clearTimeout(timer);
+            }, [resource]);
+
+            // 获取对应资源的HTML内容，默认显示video
+            const htmlContent = RESOURCES_CONTENT[resource] || RESOURCES_CONTENT['video'];
+
+            return (
+                <div
+                    className="flex-1 overflow-auto"
+                    dangerouslySetInnerHTML={{ __html: htmlContent }}
+                />
+            );
+        }
+
+        // 锁屏组件
+        function LockedScreen() {
+            const containerRef = useRef(null);
+
+            useEffect(() => {
+                // 延迟初始化图标，避免DOM冲突
+                const timer = setTimeout(() => {
+                    if (containerRef.current) {
+                        lucide.createIcons({ nameAttr: 'data-lucide', attrs: {} }, containerRef.current);
+                    }
+                }, 50);
+                return () => clearTimeout(timer);
+            }, []);
+
+            return (
+                <div ref={containerRef} className="flex-1 flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
+                    <div className="text-center">
+                        <div className="w-24 h-24 bg-white rounded-2xl shadow-xl flex items-center justify-center mx-auto mb-6 border-2 border-gray-300">
+                            <i data-lucide="lock" className="w-12 h-12 text-gray-500"></i>
+                        </div>
+                        <p className="text-gray-800 text-xl font-semibold mb-2">屏幕已锁定</p>
+                        <p className="text-gray-500 text-sm">请等待教师解锁</p>
+                    </div>
+                </div>
+            );
+        }
+
+        // AI聊天面板组件
+        function AIChatPanel({ messages, inputMessage, setInputMessage, sendMessage, persona }) {
+            const messagesEndRef = useRef(null);
+            const containerRef = useRef(null);
+
+            useEffect(() => {
+                messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+            }, [messages]);
+
+            useEffect(() => {
+                // 延迟初始化图标，避免DOM冲突
+                const timer = setTimeout(() => {
+                    if (containerRef.current) {
+                        lucide.createIcons({ nameAttr: 'data-lucide', attrs: {} }, containerRef.current);
+                    }
+                }, 50);
+                return () => clearTimeout(timer);
+            }, [persona]);
+
+            const handleKeyPress = (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            };
+
+            const getPersonaIcon = () => {
+                const icons = {
+                    'socratic': 'brain-circuit',
+                    'wiki': 'book-open',
+                    'metacognitive': 'brain'
+                };
+                return icons[persona] || 'brain-circuit';
+            };
+
+            return (
+                <div ref={containerRef} className="ai-sidebar-container">
+                    <div className="p-5 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50 shrink-0">
+                        <div className="flex items-center gap-2 text-gray-800 mb-1">
+                            <i data-lucide={getPersonaIcon()} className="w-5 h-5 text-indigo-600"></i>
+                            <h2 className="font-bold text-base">AI 学习助手</h2>
+                        </div>
+                        <p className="text-xs text-gray-600 pl-7">由教师配置 · 当前模式：{persona === 'socratic' ? '苏格拉底' : persona === 'wiki' ? '百科' : '元认知'}</p>
+                    </div>
+
+                    <div className="ai-chat-messages p-4 space-y-3 bg-gray-50">
+                        {messages.map((msg, idx) => (
+                            <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} fade-in`}>
+                                <div className={`max-w-[85%] rounded-xl px-4 py-2.5 shadow-sm ${
+                                    msg.role === 'user'
+                                        ? 'bg-blue-600 text-white'
+                                        : msg.role === 'system'
+                                        ? 'bg-yellow-50 text-yellow-800 border border-yellow-200'
+                                        : 'bg-white text-gray-800 border border-gray-200'
+                                }`}>
+                                    <p className="text-sm leading-relaxed">{msg.content}</p>
+                                    <p className="text-xs opacity-60 mt-1">
+                                        {msg.timestamp.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}
+                                    </p>
+                                </div>
+                            </div>
+                        ))}
+                        <div ref={messagesEndRef} />
+                    </div>
+
+                    <div className="p-4 border-t border-gray-200 bg-white shrink-0">
+                        <div className="flex gap-2 mb-2">
+                            <input
+                                type="text"
+                                value={inputMessage}
+                                onChange={(e) => setInputMessage(e.target.value)}
+                                onKeyPress={handleKeyPress}
+                                placeholder="有问题随时问我..."
+                                className="flex-1 bg-gray-50 text-gray-800 text-sm px-4 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 border border-gray-300"
+                            />
+                            <button
+                                onClick={sendMessage}
+                                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-lg transition-colors flex items-center gap-2 shadow-md"
+                            >
+                                <i data-lucide="send" className="w-4 h-4"></i>
+                            </button>
+                        </div>
+                        <p className="text-xs text-gray-500 flex items-center gap-1">
+                            <i data-lucide="info" className="w-3 h-3"></i>
+                            AI只能回答课程相关问题
+                        </p>
+                    </div>
+                </div>
+            );
+        }
+
+        // 互动模态框组件
+        function InteractiveModal({ data, onSubmit, onClose }) {
+            const [answers, setAnswers] = useState({});
+            const containerRef = useRef(null);
+
+            useEffect(() => {
+                // 延迟初始化图标，避免DOM冲突
+                const timer = setTimeout(() => {
+                    if (containerRef.current) {
+                        lucide.createIcons({ nameAttr: 'data-lucide', attrs: {} }, containerRef.current);
+                    }
+                }, 50);
+                return () => clearTimeout(timer);
+            }, []);
+
+            const handleSubmit = () => {
+                onSubmit(answers);
+            };
+
+            const updateAnswer = (questionId, value) => {
+                setAnswers({ ...answers, [questionId]: value });
+            };
+
+            return (
+                <div className="fixed inset-0 z-50 flex items-center justify-center modal-backdrop bg-black/70 backdrop-blur-sm">
+                    <div ref={containerRef} className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden modal-content">
+                        <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                                        <span className="bg-green-500 text-white px-2 py-1 rounded text-sm">教师推送</span>
+                                        {data.title}
+                                    </h2>
+                                    <p className="text-sm text-gray-600 mt-1">请认真作答，教师将实时查看结果</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="p-6 overflow-y-auto max-h-[calc(90vh-200px)] space-y-6">
+                            {data.questions.map((q, idx) => (
+                                <div key={q.id} className="bg-gray-50 rounded-xl p-5 border border-gray-200">
+                                    <h3 className="font-bold text-gray-800 mb-4 flex items-start gap-2">
+                                        <span className="bg-blue-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-sm shrink-0">
+                                            {idx + 1}
+                                        </span>
+                                        <span className="flex-1">{q.question}</span>
+                                    </h3>
+
+                                    {q.type === 'multiple' && (
+                                        <div className="space-y-2 ml-8">
+                                            {q.options.map((option, optIdx) => (
+                                                <label key={optIdx} className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 cursor-pointer transition-all">
+                                                    <input
+                                                        type="radio"
+                                                        name={`question-${q.id}`}
+                                                        value={optIdx}
+                                                        onChange={() => updateAnswer(q.id, optIdx)}
+                                                        className="w-4 h-4 text-blue-600"
+                                                    />
+                                                    <span className="text-gray-700">{option}</span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                    )}
+
+                                    {q.type === 'text' && (
+                                        <div className="ml-8">
+                                            <textarea
+                                                placeholder={q.placeholder}
+                                                onChange={(e) => updateAnswer(q.id, e.target.value)}
+                                                className="w-full bg-white border border-gray-300 rounded-lg p-3 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[100px]"
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="p-6 border-t border-gray-200 bg-gray-50 flex justify-end gap-3">
+                            <button
+                                onClick={handleSubmit}
+                                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg font-medium transition-colors flex items-center gap-2 shadow-lg shadow-blue-600/30"
+                            >
+                                <i data-lucide="check" className="w-4 h-4"></i>
+                                提交答案
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // 渲染应用
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<TheaterApp />);
+
+        // 防止切屏（模拟Kiosk模式）
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                console.warn('检测到切屏行为');
+                // 向教师端发送警告
+                localStorage.setItem('student_warning', JSON.stringify({
+                    studentId: 'student_001',
+                    type: 'screen_switch',
+                    timestamp: Date.now()
+                }));
+            }
+        });
+
+        // 禁用右键菜单
+        document.addEventListener('contextmenu', e => e.preventDefault());
+    </script>
+</body>
+</html>

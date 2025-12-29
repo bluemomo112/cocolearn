@@ -188,6 +188,23 @@
             const [selectedAgentId, setSelectedAgentId] = useState('dify_agent_chat_001');
             const [selectedWorkflowId, setSelectedWorkflowId] = useState('dify_workflow_5e');
 
+            // 监听模式切换，更新欢迎消息
+            useEffect(() => {
+                const workflow = INHERITED_FROM_BASE.guidedMode.workflows.find(w => w.id === selectedWorkflowId);
+                const welcomeMessage = chatMode === 'free'
+                    ? '欢迎进入自由对话模式！你现在可以自由探索左侧的学习资源。有任何问题都可以问我，我会引导你思考和学习。'
+                    : `欢迎进入${workflow?.name || '引导学习模式'}！我们将按阶段进行学习，请跟随我的引导完成每个学习任务。让我们开始吧！`;
+
+                // 只在消息只有一条欢迎消息时才更新（避免覆盖用户对话）
+                if (chatMessages.length === 1 && chatMessages[0].role === 'assistant') {
+                    setChatMessages([{
+                        role: 'assistant',
+                        content: welcomeMessage,
+                        timestamp: new Date()
+                    }]);
+                }
+            }, [chatMode, selectedWorkflowId]);
+
             // 右侧面板状态
             const [activeTab, setActiveTab] = useState('workspace');
             const [notes, setNotes] = useState('# 我的学习笔记\n\n## 今日学习目标\n- [ ] 理解水循环的三个阶段\n- [ ] 完成随堂测验\n\n');
@@ -810,31 +827,6 @@
                     <div className="flex-1 overflow-y-auto">
                         {chatMode === 'free' ? (
                             <div className="p-4 space-y-4 animate-fadeIn">
-                                {/* 自由对话模式内容 */}
-                                <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
-                                    <div className="flex items-center gap-2 mb-3">
-                                        <i data-lucide="bot" className="w-5 h-5 text-blue-500"></i>
-                                        <h3 className="font-bold text-gray-700 text-sm">AI 对话助手</h3>
-                                    </div>
-
-                                    {/* Agent 选择 */}
-                                    <div>
-                                        <label className="block text-xs font-medium text-gray-500 mb-1.5">选择导师</label>
-                                        <select
-                                            value={selectedAgentId}
-                                            onChange={(e) => setSelectedAgentId(e.target.value)}
-                                            className="w-full bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 focus:ring-2 focus:ring-blue-500 outline-none"
-                                        >
-                                            {INHERITED_FROM_BASE.freeMode.agents.map(agent => (
-                                                <option key={agent.id} value={agent.id}>{agent.name}</option>
-                                            ))}
-                                        </select>
-                                        {selectedAgent && (
-                                            <p className="text-xs text-gray-500 mt-1.5">{selectedAgent.description}</p>
-                                        )}
-                                    </div>
-                                </div>
-
                                 {/* 对话消息区域 */}
                                 <div className="space-y-4">
                                     {messages.map((msg, idx) => (
@@ -852,30 +844,18 @@
                         ) : (
                             <div className="p-4 space-y-4 animate-fadeIn">
                                 {/* 引导学习模式内容 */}
-                                <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
-                                    <div className="flex items-center gap-2 mb-3">
-                                        <i data-lucide="route" className="w-5 h-5 text-emerald-500"></i>
-                                        <h3 className="font-bold text-gray-700 text-sm">引导学习流程</h3>
-                                    </div>
+                                {selectedWorkflow && (
+                                    <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+                                        <div className="flex items-center gap-2 mb-3">
+                                            <i data-lucide="route" className="w-5 h-5 text-emerald-500"></i>
+                                            <h3 className="font-bold text-gray-700 text-sm">{selectedWorkflow.name}</h3>
+                                        </div>
 
-                                    {/* Workflow 选择 */}
-                                    <div className="mb-3">
-                                        <label className="block text-xs font-medium text-gray-500 mb-1.5">选择教学法</label>
-                                        <select
-                                            value={selectedWorkflowId}
-                                            onChange={(e) => setSelectedWorkflowId(e.target.value)}
-                                            className="w-full bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 focus:ring-2 focus:ring-emerald-500 outline-none"
-                                        >
-                                            {INHERITED_FROM_BASE.guidedMode.workflows.map(workflow => (
-                                                <option key={workflow.id} value={workflow.id}>{workflow.name}</option>
-                                            ))}
-                                        </select>
-                                    </div>
+                                        {/* Workflow 描述 */}
+                                        <p className="text-xs text-gray-600 mb-3">{selectedWorkflow.description}</p>
 
-                                    {/* Workflow 描述和流程预览 */}
-                                    {selectedWorkflow && (
+                                        {/* 流程阶段预览 */}
                                         <div className="bg-emerald-50 rounded-lg p-3 border border-emerald-200">
-                                            <p className="text-xs text-emerald-700 mb-3">{selectedWorkflow.description}</p>
                                             <div className="flex items-center gap-2 overflow-x-auto pb-2">
                                                 {selectedWorkflow.stages.map((stage, idx) => (
                                                     <div key={stage.id} className="flex items-center gap-2">
@@ -894,7 +874,32 @@
                                                 ))}
                                             </div>
                                         </div>
-                                    )}
+                                    </div>
+                                )}
+
+                                {/* 模拟对话演示 */}
+                                <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <i data-lucide="message-square" className="w-4 h-4 text-emerald-500"></i>
+                                        <h4 className="text-xs font-bold text-gray-600">引导学习演示</h4>
+                                    </div>
+
+                                    {/* AI 消息 */}
+                                    <div className="flex gap-2 mb-3">
+                                        <div className="w-6 h-6 rounded-full bg-emerald-600 flex-shrink-0 flex items-center justify-center">
+                                            <i data-lucide="bot" className="w-3 h-3 text-white"></i>
+                                        </div>
+                                        <div className="bg-gray-100 p-3 rounded-xl rounded-tl-none border border-gray-200 text-xs text-gray-700 flex-1">
+                                            <p>欢迎！今天我们将用{selectedWorkflow?.name || '5E探究法'}来学习水资源知识。首先，请观察左侧的水循环视频，想想：水从哪里来，又会到哪里去呢？</p>
+                                        </div>
+                                    </div>
+
+                                    {/* 学生消息 */}
+                                    <div className="flex gap-2 justify-end">
+                                        <div className="bg-blue-600 p-3 rounded-xl rounded-tr-none text-xs text-white max-w-[80%]">
+                                            <p>我看到水从海洋蒸发变成云，然后降雨回到地面。</p>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 {/* 对话消息区域 */}

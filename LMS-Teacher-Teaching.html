@@ -1,0 +1,2471 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>教师端 - 跨学科学习平台 (跟随模式 v2.0)</title>
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- Babel Standalone for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- 引入 Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 Lucide 图标库 -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Chart.js 用于图表展示 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* 自定义滚动条 */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* 资源选中态 */
+        .resource-item.active { background-color: #eff6ff; border-left-color: #3b82f6; }
+        
+        /* 底部 Dock 动画 */
+        .dock-btn { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        .dock-btn:hover { transform: translateY(-5px); }
+        
+        /* 开关样式优化 */
+        .toggle-checkbox:checked { right: 0; border-color: #3b82f6; }
+        .toggle-checkbox:checked + .toggle-label { background-color: #3b82f6; }
+    </style>
+</head>
+<body class="bg-gray-100 h-screen flex flex-col font-sans text-gray-800 overflow-hidden">
+
+    <!-- 通用导航栏 -->
+    <div id="navbar-root"></div>
+
+    <!-- 1. 顶部极简信息栏 (仅展示状态) -->
+    <header class="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-6 shadow-sm z-30 shrink-0">
+        <!-- 课程信息 -->
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-lg">K</div>
+            <div>
+                <h1 class="font-bold text-sm text-gray-800">跨学科探究：水资源与环境</h1>
+                <div class="flex items-center gap-2 text-xs text-gray-500">
+                    <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                    正在上课 · 28/30 人在线
+                </div>
+            </div>
+        </div>
+
+        <!-- 全局关键状态显示 (只读为主，操作在底部) -->
+        <div class="flex items-center gap-6">
+            <div class="flex flex-col items-end">
+                <span class="text-[10px] text-gray-400 uppercase tracking-wider font-bold">当前模式</span>
+                <span id="header-mode-text" class="text-sm font-bold text-blue-600 flex items-center gap-1">
+                    <i data-lucide="users" class="w-3 h-3"></i> 教师跟随模式
+                </span>
+            </div>
+            <div class="h-8 w-px bg-gray-200"></div>
+            <div class="flex flex-col items-end">
+                <span class="text-[10px] text-gray-400 uppercase tracking-wider font-bold">学生 AI 状态</span>
+                <span id="header-ai-text" class="text-sm font-bold text-green-600 flex items-center gap-1">
+                    <i data-lucide="sparkles" class="w-3 h-3"></i> 已激活 (苏格拉底)
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主体内容区 -->
+    <div class="flex flex-1 overflow-hidden relative">
+
+        <!-- ======================= -->
+        <!-- 2. 左侧资源栏 -->
+        <!-- ======================= -->
+        <aside class="w-64 bg-white border-r border-gray-200 flex flex-col z-20">
+            <div class="p-3 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
+                <span class="text-xs font-bold text-gray-500 uppercase tracking-wider pl-2">课程资源</span>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto py-2 space-y-6">
+                <!-- Group 1 -->
+                <div>
+                    <div class="px-5 py-1 text-xs font-bold text-gray-400 mb-2 flex items-center gap-2">
+                        <span class="w-1.5 h-1.5 rounded-full bg-purple-400"></span> 第一章：引入
+                    </div>
+                    <div class="space-y-1">
+                        <div onclick="switchResource('video')" class="resource-item cursor-pointer px-5 py-3 hover:bg-gray-50 flex items-center gap-3 transition-colors active border-l-4 border-transparent">
+                            <i data-lucide="play-circle" class="w-5 h-5 text-purple-600"></i>
+                            <div class="overflow-hidden">
+                                <p class="text-sm font-medium text-gray-700">视频：水滴的旅行</p>
+                                <p class="text-xs text-gray-400">03:45 · mp4</p>
+                            </div>
+                        </div>
+                        <div onclick="switchResource('ppt')" class="resource-item cursor-pointer px-5 py-3 hover:bg-gray-50 flex items-center gap-3 transition-colors border-l-4 border-transparent">
+                            <i data-lucide="presentation" class="w-5 h-5 text-orange-600"></i>
+                            <div class="overflow-hidden">
+                                <p class="text-sm font-medium text-gray-700">课件：水循环原理</p>
+                                <p class="text-xs text-gray-400">12页 · pptx</p>
+                            </div>
+                        </div>
+                        <div onclick="switchResource('ai-avatar')" class="resource-item cursor-pointer px-5 py-3 hover:bg-gray-50 flex items-center gap-3 transition-colors border-l-4 border-transparent">
+                            <i data-lucide="user-circle" class="w-5 h-5 text-indigo-600"></i>
+                            <div class="overflow-hidden">
+                                <p class="text-sm font-medium text-gray-700">AI数字人：水博士</p>
+                                <p class="text-xs text-gray-400">互动讲解 · 虚拟助教</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Group 2 -->
+                <div>
+                    <div class="px-5 py-1 text-xs font-bold text-gray-400 mb-2 flex items-center gap-2">
+                        <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span> 第二章：互动练习
+                    </div>
+                    <div class="space-y-1">
+                        <div onclick="switchResource('quiz')" class="resource-item cursor-pointer px-5 py-3 hover:bg-gray-50 flex items-center gap-3 transition-colors group border-l-4 border-transparent">
+                            <i data-lucide="zap" class="w-5 h-5 text-green-600 group-hover:scale-110 transition-transform"></i>
+                            <div class="overflow-hidden">
+                                <p class="text-sm font-medium text-gray-700">选择题：阶段检查</p>
+                                <p class="text-xs text-gray-400">3道题 · 即时反馈</p>
+                            </div>
+                        </div>
+                        <div onclick="switchResource('matching')" class="resource-item cursor-pointer px-5 py-3 hover:bg-gray-50 flex items-center gap-3 transition-colors border-l-4 border-transparent">
+                            <i data-lucide="git-merge" class="w-5 h-5 text-pink-600"></i>
+                            <div class="overflow-hidden">
+                                <p class="text-sm font-medium text-gray-700">匹配题：概念配对</p>
+                                <p class="text-xs text-gray-400">5组 · 拖拽互动</p>
+                            </div>
+                        </div>
+                        <div onclick="switchResource('openended')" class="resource-item cursor-pointer px-5 py-3 hover:bg-gray-50 flex items-center gap-3 transition-colors border-l-4 border-transparent">
+                            <i data-lucide="message-square" class="w-5 h-5 text-blue-600"></i>
+                            <div class="overflow-hidden">
+                                <p class="text-sm font-medium text-gray-700">问答题：深度思考</p>
+                                <p class="text-xs text-gray-400">2道题 · 文字输入</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Group 3 -->
+                <div>
+                    <div class="px-5 py-1 text-xs font-bold text-gray-400 mb-2 flex items-center gap-2">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> 第三章：实践探究
+                    </div>
+                    <div class="space-y-1">
+                        <div onclick="switchResource('virtuallab')" class="resource-item cursor-pointer px-5 py-3 hover:bg-gray-50 flex items-center gap-3 transition-colors border-l-4 border-transparent">
+                            <i data-lucide="flask-conical" class="w-5 h-5 text-cyan-600"></i>
+                            <div class="overflow-hidden">
+                                <p class="text-sm font-medium text-gray-700">虚拟实验：水循环模拟</p>
+                                <p class="text-xs text-gray-400">交互式HTML · 3D可视化</p>
+                            </div>
+                        </div>
+                        <div onclick="switchResource('assignment')" class="resource-item cursor-pointer px-5 py-3 hover:bg-gray-50 flex items-center gap-3 transition-colors border-l-4 border-transparent">
+                            <i data-lucide="file-up" class="w-5 h-5 text-amber-600"></i>
+                            <div class="overflow-hidden">
+                                <p class="text-sm font-medium text-gray-700">作业提交：观察日志</p>
+                                <p class="text-xs text-gray-400">上传文件 · 截止24小时</p>
+                            </div>
+                        </div>
+                        <div onclick="switchResource('poll')" class="resource-item cursor-pointer px-5 py-3 hover:bg-gray-50 flex items-center gap-3 transition-colors border-l-4 border-transparent">
+                            <i data-lucide="bar-chart-3" class="w-5 h-5 text-teal-600"></i>
+                            <div class="overflow-hidden">
+                                <p class="text-sm font-medium text-gray-700">投票：方案选择</p>
+                                <p class="text-xs text-gray-400">实时统计 · 匿名</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ======================= -->
+        <!-- 3. 中间主舞台 (下方留出空间给 Dock) -->
+        <!-- ======================= -->
+        <main class="flex-1 flex flex-col bg-gray-100 relative min-w-0 z-10 pb-24">
+            <!-- 顶部 Tab -->
+            <div class="h-10 bg-white/80 backdrop-blur-sm border-b border-gray-200 flex items-center px-4 justify-between sticky top-0 z-20">
+                <div class="flex space-x-4 text-sm font-medium">
+                    <button id="tab-content" onclick="switchTab('content')" class="text-blue-600 border-b-2 border-blue-600 px-2 py-2 transition-colors">内容演示</button>
+                    <button id="tab-result" onclick="switchTab('result')" class="text-gray-500 hover:text-gray-800 px-2 py-2 transition-colors flex items-center gap-2">
+                        实时结果 <span id="badge-result" class="hidden w-1.5 h-1.5 bg-red-500 rounded-full"></span>
+                    </button>
+                </div>
+                <div class="flex items-center gap-2 text-xs text-gray-400">
+                    <i data-lucide="wifi" class="w-3 h-3"></i> 同步延迟: 12ms
+                </div>
+            </div>
+
+            <!-- 内容容器 -->
+            <div class="flex-1 p-6 overflow-hidden relative">
+                <!-- View A: Content -->
+                <div id="view-content" class="w-full h-full bg-white shadow-sm border border-gray-200 rounded-xl overflow-hidden flex flex-col fade-in">
+                    <div id="content-display-area" class="flex-1 bg-gray-900 flex items-center justify-center relative">
+                        <!-- 动态内容 -->
+                        <div class="text-center text-white/80">
+                            <i data-lucide="play" class="w-12 h-12 mx-auto mb-4 opacity-50"></i>
+                            <p>视频资源预览区</p>
+                        </div>
+                    </div>
+                    <!-- 底部操作条 (Context Action) -->
+                    <div class="h-14 bg-white border-t border-gray-100 flex items-center justify-between px-6 shrink-0">
+                        <div class="text-xs text-gray-400" id="action-status">当前预览状态</div>
+                        <button id="action-btn" onclick="handleResourceAction()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-1.5 rounded-lg text-sm font-medium flex items-center gap-2 shadow-sm transition-all active:scale-95">
+                            <i data-lucide="cast" class="w-4 h-4"></i> <span id="action-text">同步给学生</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- View B: Result -->
+                <div id="view-result" class="w-full h-full bg-white shadow-sm border border-gray-200 rounded-xl overflow-hidden flex flex-col hidden fade-in">
+                    <!-- Quiz 专用结构 -->
+                    <div id="quiz-result-container" class="w-full h-full flex-col" style="display: none;">
+                        <div class="p-5 border-b border-gray-100 flex justify-between items-center bg-blue-50/50 shrink-0">
+                            <div>
+                                <h2 class="text-base font-bold text-gray-800 flex items-center gap-2">
+                                    <span class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs">进行中</span>
+                                    选择题：阶段检查
+                                </h2>
+                            </div>
+                            <div class="text-2xl font-bold text-blue-600 font-mono">24<span class="text-sm text-gray-400 font-normal">/28</span></div>
+                        </div>
+                        <div class="flex-1 flex overflow-hidden">
+                            <div class="w-3/5 p-4 flex flex-col justify-center border-r border-gray-100">
+                                <canvas id="quizChart"></canvas>
+                            </div>
+                            <div class="w-2/5 overflow-y-auto bg-gray-50/50">
+                                <table class="w-full text-left text-xs">
+                                    <thead class="bg-gray-100 sticky top-0">
+                                        <tr>
+                                            <th class="px-4 py-2 font-medium text-gray-500">学生</th>
+                                            <th class="px-4 py-2 font-medium text-gray-500">状态</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-100" id="student-list"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 其他互动类型的动态内容容器 -->
+                    <div id="dynamic-result-content" class="w-full h-full"></div>
+                </div>
+            </div>
+        </main>
+
+        <!-- ======================= -->
+        <!-- 4. 右侧 AI 教学副驾驶 (纯净版) -->
+        <!-- ======================= -->
+        <aside class="w-80 bg-white border-l border-gray-200 flex flex-col shadow-xl z-20 pb-24">
+            
+            <div class="p-4 border-b border-gray-100 bg-white">
+                <div class="flex items-center gap-2 text-gray-800 mb-0.5">
+                    <i data-lucide="bot" class="w-5 h-5 text-indigo-600"></i>
+                    <h2 class="font-bold text-sm">AI 教学副驾驶</h2>
+                </div>
+                <p class="text-[10px] text-gray-400 pl-7">实时辅助与策略建议</p>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-4 space-y-6">
+                
+                <!-- 模块 1: 动态洞察卡片 -->
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">当前洞察</h3>
+                        <!-- 数据来源 Badge -->
+                        <span id="insight-source-badge" class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-500 border border-gray-200 flex items-center gap-1">
+                            <i data-lucide="file-video" class="w-3 h-3"></i> 视频内容分析
+                        </span>
+                    </div>
+                    
+                    <!-- 洞察内容容器 -->
+                    <div class="bg-gradient-to-b from-indigo-50/50 to-white rounded-xl p-4 border border-indigo-100 shadow-sm transition-all duration-300" id="ai-card">
+                        <div class="flex items-start gap-3">
+                            <div class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0 mt-0.5">
+                                <i data-lucide="lightbulb" class="w-4 h-4"></i>
+                            </div>
+                            <div>
+                                <div id="ai-insight-text" class="text-sm text-gray-700 leading-relaxed">
+                                    视频即将播放到核心概念段落。
+                                    <br><br>
+                                    <strong>建议：</strong> 2分30秒处暂停，提问学生关于"凝结"的定义。
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 快速生成按钮 -->
+                        <div class="mt-4 pt-3 border-t border-indigo-50 flex gap-2">
+                            <button class="flex-1 text-xs bg-white border border-indigo-200 text-indigo-600 py-1.5 rounded-lg hover:bg-indigo-50 transition-colors shadow-sm">
+                                生成互动题
+                            </button>
+                            <button class="flex-1 text-xs bg-white border border-indigo-200 text-indigo-600 py-1.5 rounded-lg hover:bg-indigo-50 transition-colors shadow-sm">
+                                提取摘要
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            
+            <!-- AI 对话输入 -->
+            <div class="p-3 border-t border-gray-200 bg-gray-50">
+                <input type="text" placeholder="咨询教学策略..." class="w-full text-xs px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white">
+            </div>
+        </aside>
+
+        <!-- ======================= -->
+        <!-- 5. 底部悬浮控制台 (The Dock) -->
+        <!-- ======================= -->
+        <div class="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 flex flex-col items-center gap-2">
+
+            <!-- 提示气泡 (Toast) -->
+            <div id="dock-toast" class="bg-gray-800 text-white text-xs px-3 py-1.5 rounded-full shadow-lg opacity-0 transition-opacity pointer-events-none mb-1">
+                操作成功
+            </div>
+
+            <!-- 主控条 -->
+            <div class="bg-gray-900/95 backdrop-blur-xl text-white px-4 py-2.5 rounded-2xl shadow-2xl border border-white/10 flex items-center gap-2 transition-all hover:shadow-3xl">
+
+                <!-- 模块：模式切换 -->
+                <button class="dock-btn flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl hover:bg-white/10 group" onclick="toggleMode()">
+                    <div id="mode-icon-bg" class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center group-hover:bg-blue-500 transition-colors shadow-lg shadow-blue-900/50">
+                        <i data-lucide="users" class="w-5 h-5" id="mode-icon"></i>
+                    </div>
+                    <span class="text-[10px] text-gray-300 font-medium" id="mode-label">跟随模式</span>
+                </button>
+
+                <!-- 分割线 -->
+                <div class="w-px h-10 bg-white/20 mx-1"></div>
+
+                <!-- 模块：学生端AI 开关 -->
+                <div class="flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl hover:bg-white/5 cursor-pointer" onclick="toggleAI()">
+                    <div class="relative">
+                        <div id="dock-ai-bg" class="w-10 h-10 rounded-full bg-green-600 flex items-center justify-center transition-colors">
+                            <i data-lucide="sparkles" class="w-5 h-5"></i>
+                        </div>
+                        <div id="dock-ai-badge" class="absolute -top-1 -right-1 w-4 h-4 bg-white text-green-600 rounded-full text-[10px] font-bold flex items-center justify-center border border-green-600">ON</div>
+                    </div>
+                    <span class="text-[10px] text-gray-300 font-medium">学生AI</span>
+                </div>
+
+                <!-- 分割线 -->
+                <div class="w-px h-10 bg-white/20 mx-1"></div>
+
+                <!-- 模块：AI人格切换 -->
+                <button class="dock-btn flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl hover:bg-white/10 group" onclick="togglePersonaMenu()">
+                    <div class="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center group-hover:bg-indigo-500 transition-colors relative">
+                        <i data-lucide="brain-circuit" class="w-5 h-5"></i>
+                        <div id="persona-badge" class="absolute -top-1 -right-1 w-4 h-4 bg-white text-indigo-600 rounded-full text-[8px] font-bold flex items-center justify-center border border-indigo-600">苏</div>
+                    </div>
+                    <span class="text-[10px] text-gray-300 font-medium">AI人格</span>
+                </button>
+
+                <!-- 分割线 -->
+                <div class="w-px h-10 bg-white/20 mx-1"></div>
+
+                <!-- 模块：分享链接 -->
+                <button class="dock-btn flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl hover:bg-white/10 group" onclick="showShareModal()">
+                    <div class="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center group-hover:bg-purple-500 transition-colors">
+                        <i data-lucide="share-2" class="w-5 h-5"></i>
+                    </div>
+                    <span class="text-[10px] text-gray-300 font-medium">分享</span>
+                </button>
+
+                <!-- 分割线 -->
+                <div class="w-px h-10 bg-white/20 mx-1"></div>
+
+                <!-- 模块：提醒推送 -->
+                <button class="dock-btn flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl hover:bg-white/10 group" onclick="showNotifyModal()">
+                    <div class="w-10 h-10 rounded-full bg-amber-600 flex items-center justify-center group-hover:bg-amber-500 transition-colors">
+                        <i data-lucide="bell" class="w-5 h-5"></i>
+                    </div>
+                    <span class="text-[10px] text-gray-300 font-medium">提醒</span>
+                </button>
+
+            </div>
+        </div>
+
+        <!-- AI人格切换菜单（悬浮） -->
+        <div id="persona-menu" class="fixed bottom-32 left-1/2 transform -translate-x-1/2 z-40 bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden opacity-0 pointer-events-none transition-all duration-200" style="width: 280px;">
+            <div class="p-3 bg-gradient-to-r from-indigo-50 to-purple-50 border-b border-gray-200">
+                <h3 class="text-sm font-bold text-gray-800 flex items-center gap-2">
+                    <i data-lucide="brain-circuit" class="w-4 h-4 text-indigo-600"></i>
+                    选择AI人格
+                </h3>
+            </div>
+            <div class="p-2 space-y-1 max-h-64 overflow-y-auto">
+                <div onclick="selectPersona('socratic')" id="persona-socratic" class="persona-option group cursor-pointer p-3 rounded-lg hover:bg-indigo-50 transition-colors border-2 border-indigo-500 bg-indigo-50/50">
+                    <div class="flex items-center justify-between mb-1">
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center">
+                                <span class="text-xs font-bold">苏</span>
+                            </div>
+                            <span class="font-bold text-sm text-gray-800">苏格拉底导师</span>
+                        </div>
+                        <i data-lucide="check-circle-2" class="w-4 h-4 text-indigo-600"></i>
+                    </div>
+                    <p class="text-xs text-gray-600 ml-10">引导式提问，不直接给答案</p>
+                </div>
+                <div onclick="selectPersona('metacognition')" id="persona-metacognition" class="persona-option group cursor-pointer p-3 rounded-lg hover:bg-blue-50 transition-colors border-2 border-transparent">
+                    <div class="flex items-center justify-between mb-1">
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
+                                <span class="text-xs font-bold">元</span>
+                            </div>
+                            <span class="font-bold text-sm text-gray-800">元认知导师</span>
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-600 ml-10">帮助学生反思学习过程和策略</p>
+                </div>
+                <div onclick="selectPersona('wiki')" id="persona-wiki" class="persona-option group cursor-pointer p-3 rounded-lg hover:bg-gray-50 transition-colors border-2 border-transparent">
+                    <div class="flex items-center justify-between mb-1">
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center">
+                                <span class="text-xs font-bold">百</span>
+                            </div>
+                            <span class="font-bold text-sm text-gray-800">百科助手</span>
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-600 ml-10">简短回答事实性问题</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 分享链接模态框 -->
+        <div id="share-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-200">
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 transform scale-95 transition-transform duration-200" id="share-modal-content">
+                <div class="p-6 border-b border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                            <i data-lucide="share-2" class="w-6 h-6 text-purple-600"></i>
+                            生成分享链接
+                        </h2>
+                        <button onclick="hideShareModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                            <i data-lucide="x" class="w-6 h-6"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="p-6 space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">选择分享对象</label>
+                        <select id="share-class" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" onchange="updateShareLink()">
+                            <option value="class1">全班（初三1班）</option>
+                            <option value="class2">全班（初三2班）</option>
+                            <option value="groupA">小组A</option>
+                            <option value="groupB">小组B</option>
+                            <option value="specific">指定学生</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">课程随机码</label>
+                        <div class="flex items-center gap-3">
+                            <span id="share-course-code" class="text-2xl font-bold text-purple-600 tracking-widest"></span>
+                            <button onclick="copyShareCode()" class="text-xs text-purple-600 hover:text-purple-700 font-medium flex items-center gap-1">
+                                <i data-lucide="copy" class="w-3 h-3"></i>
+                                复制
+                            </button>
+                        </div>
+                    </div>
+                    <div id="share-link-area" class="bg-gray-50 rounded-lg p-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs text-gray-500">分享链接</span>
+                            <button onclick="copyShareLink()" class="text-xs text-purple-600 hover:text-purple-700 font-medium">复制</button>
+                        </div>
+                        <input id="share-link-input" type="text" readonly class="w-full bg-white border border-gray-200 rounded px-3 py-2 text-sm text-gray-600 font-mono break-all">
+                    </div>
+                </div>
+                <div class="p-6 bg-gray-50 border-t border-gray-200">
+                    <button onclick="hideShareModal()" class="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium">
+                        确定
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 提醒推送模态框 -->
+        <div id="notify-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-200">
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 transform scale-95 transition-transform duration-200" id="notify-modal-content">
+                <div class="p-6 border-b border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                            <i data-lucide="bell" class="w-6 h-6 text-amber-600"></i>
+                            发送提醒
+                        </h2>
+                        <button onclick="hideNotifyModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                            <i data-lucide="x" class="w-6 h-6"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="p-6 space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">推送对象</label>
+                        <select id="notify-recipient" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                            <option value="all">全班学生</option>
+                            <option value="specific">指定学生...</option>
+                            <option value="groupA">小组A</option>
+                            <option value="groupB">小组B</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">提醒类型</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <label class="cursor-pointer">
+                                <input type="radio" name="notify-type" value="attention" checked class="hidden peer">
+                                <div class="px-3 py-2 border-2 border-amber-500 bg-amber-50 text-amber-700 peer-checked:border-amber-500 peer-checked:bg-amber-50 rounded-lg text-sm font-medium hover:bg-amber-50">
+                                    ⏰ 注意力提醒
+                                </div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="notify-type" value="homework" class="hidden peer">
+                                <div class="px-3 py-2 border border-gray-300 text-gray-700 peer-checked:border-blue-500 peer-checked:bg-blue-50 peer-checked:text-blue-700 rounded-lg text-sm hover:bg-gray-50">
+                                    📝 作业提醒
+                                </div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="notify-type" value="tips" class="hidden peer">
+                                <div class="px-3 py-2 border border-gray-300 text-gray-700 peer-checked:border-green-500 peer-checked:bg-green-50 peer-checked:text-green-700 rounded-lg text-sm hover:bg-gray-50">
+                                    💡 重点提示
+                                </div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="notify-type" value="praise" class="hidden peer">
+                                <div class="px-3 py-2 border border-gray-300 text-gray-700 peer-checked:border-purple-500 peer-checked:bg-purple-50 peer-checked:text-purple-700 rounded-lg text-sm hover:bg-gray-50">
+                                    ⭐ 表扬鼓励
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">提醒内容</label>
+                        <textarea id="notify-content" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent resize-none" rows="4" placeholder="请输入提醒内容..."></textarea>
+                    </div>
+                </div>
+                <div class="p-6 bg-gray-50 border-t border-gray-200 flex gap-3">
+                    <button onclick="hideNotifyModal()" class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors font-medium">
+                        取消
+                    </button>
+                    <button onclick="sendNotification()" class="flex-1 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors font-medium">
+                        立即发送
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        // 模拟状态
+        let isLocked = false;
+        let isAiOn = true;
+        let currentMode = 'follow'; // 'follow' or 'self'
+        let currentPersona = 'socratic'; // 当前 AI 人格
+        let currentResource = 'video'; // 当前资源类型
+
+        // 资源数据与洞察逻辑
+        const resources = {
+            'video': {
+                title: '视频：水滴的旅行',
+                source: '视频内容分析',
+                icon: 'file-video',
+                type: 'reading', // 阅读式资源
+                insight: '视频即将播放到核心概念段落。<br><br><strong>建议：</strong> 2分30秒处暂停，提问学生关于"凝结"的定义。',
+                content: `
+                    <div class="relative w-full h-full bg-black">
+                        <video class="w-full h-full object-contain" controls poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='450'%3E%3Crect fill='%23334155' width='800' height='450'/%3E%3Ctext fill='white' font-size='24' font-family='Arial' x='50%25' y='50%25' text-anchor='middle' dy='.3em'%3E视频：水滴的旅行 (模拟)%3C/text%3E%3C/svg%3E">
+                            <!-- 这里通常会有实际视频源 -->
+                        </video>
+                        <div class="absolute top-4 left-4 bg-black/60 text-white px-3 py-1 rounded-full text-xs">03:45</div>
+                        <div class="absolute bottom-4 right-4 bg-red-600 text-white px-3 py-1 rounded-full text-xs animate-pulse">● 直播中</div>
+                    </div>
+                `,
+                result: `
+                    <div class="w-full h-full bg-gray-50 p-6 overflow-auto">
+                        <div class="max-w-5xl mx-auto">
+                            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+                                <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                                    <i data-lucide="activity" class="w-5 h-5 text-blue-600"></i>
+                                    学生观看统计
+                                </h2>
+                                <div class="grid grid-cols-4 gap-4 mb-6">
+                                    <div class="bg-gradient-to-br from-green-50 to-emerald-50 p-4 rounded-lg border border-green-200">
+                                        <div class="text-3xl font-bold text-green-600">28</div>
+                                        <div class="text-xs text-green-700 mt-1">已打开</div>
+                                    </div>
+                                    <div class="bg-gradient-to-br from-blue-50 to-cyan-50 p-4 rounded-lg border border-blue-200">
+                                        <div class="text-3xl font-bold text-blue-600">24</div>
+                                        <div class="text-xs text-blue-700 mt-1">正在观看</div>
+                                    </div>
+                                    <div class="bg-gradient-to-br from-purple-50 to-indigo-50 p-4 rounded-lg border border-purple-200">
+                                        <div class="text-3xl font-bold text-purple-600">86%</div>
+                                        <div class="text-xs text-purple-700 mt-1">平均进度</div>
+                                    </div>
+                                    <div class="bg-gradient-to-br from-amber-50 to-orange-50 p-4 rounded-lg border border-amber-200">
+                                        <div class="text-3xl font-bold text-amber-600">2:18</div>
+                                        <div class="text-xs text-amber-700 mt-1">平均用时</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                                <div class="bg-gray-50 px-6 py-3 border-b border-gray-200">
+                                    <h3 class="font-bold text-gray-700">学生观看详情</h3>
+                                </div>
+                                <div class="overflow-x-auto">
+                                    <table class="w-full text-sm">
+                                        <thead class="bg-gray-50 border-b border-gray-200">
+                                            <tr>
+                                                <th class="px-6 py-3 text-left font-medium text-gray-600">学生</th>
+                                                <th class="px-6 py-3 text-left font-medium text-gray-600">观看状态</th>
+                                                <th class="px-6 py-3 text-left font-medium text-gray-600">观看进度</th>
+                                                <th class="px-6 py-3 text-left font-medium text-gray-600">用时</th>
+                                                <th class="px-6 py-3 text-left font-medium text-gray-600">最后活动</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-gray-100">
+                                            <tr class="hover:bg-gray-50">
+                                                <td class="px-6 py-4">
+                                                    <div class="flex items-center gap-3">
+                                                        <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-sm">张</div>
+                                                        <span class="font-medium text-gray-800">张子轩</span>
+                                                    </div>
+                                                </td>
+                                                <td class="px-6 py-4">
+                                                    <span class="inline-flex items-center gap-1 text-xs bg-green-50 text-green-700 px-2 py-1 rounded-full">
+                                                        <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+                                                        观看中
+                                                    </span>
+                                                </td>
+                                                <td class="px-6 py-4">
+                                                    <div class="flex items-center gap-2">
+                                                        <div class="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                                                            <div class="h-full bg-blue-500 rounded-full" style="width: 95%"></div>
+                                                        </div>
+                                                        <span class="text-xs text-gray-600 font-mono">95%</span>
+                                                    </div>
+                                                </td>
+                                                <td class="px-6 py-4 text-gray-600">3:12</td>
+                                                <td class="px-6 py-4 text-xs text-gray-500">刚刚</td>
+                                            </tr>
+                                            <tr class="hover:bg-gray-50">
+                                                <td class="px-6 py-4">
+                                                    <div class="flex items-center gap-3">
+                                                        <div class="w-8 h-8 bg-pink-100 rounded-full flex items-center justify-center text-pink-600 font-bold text-sm">李</div>
+                                                        <span class="font-medium text-gray-800">李若彤</span>
+                                                    </div>
+                                                </td>
+                                                <td class="px-6 py-4">
+                                                    <span class="inline-flex items-center gap-1 text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded-full">
+                                                        <span class="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
+                                                        已完成
+                                                    </span>
+                                                </td>
+                                                <td class="px-6 py-4">
+                                                    <div class="flex items-center gap-2">
+                                                        <div class="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                                                            <div class="h-full bg-green-500 rounded-full" style="width: 100%"></div>
+                                                        </div>
+                                                        <span class="text-xs text-gray-600 font-mono">100%</span>
+                                                    </div>
+                                                </td>
+                                                <td class="px-6 py-4 text-gray-600">3:45</td>
+                                                <td class="px-6 py-4 text-xs text-gray-500">1分钟前</td>
+                                            </tr>
+                                            <tr class="hover:bg-gray-50">
+                                                <td class="px-6 py-4">
+                                                    <div class="flex items-center gap-3">
+                                                        <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 font-bold text-sm">王</div>
+                                                        <span class="font-medium text-gray-800">王晨阳</span>
+                                                    </div>
+                                                </td>
+                                                <td class="px-6 py-4">
+                                                    <span class="inline-flex items-center gap-1 text-xs bg-green-50 text-green-700 px-2 py-1 rounded-full">
+                                                        <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+                                                        观看中
+                                                    </span>
+                                                </td>
+                                                <td class="px-6 py-4">
+                                                    <div class="flex items-center gap-2">
+                                                        <div class="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                                                            <div class="h-full bg-blue-500 rounded-full" style="width: 72%"></div>
+                                                        </div>
+                                                        <span class="text-xs text-gray-600 font-mono">72%</span>
+                                                    </div>
+                                                </td>
+                                                <td class="px-6 py-4 text-gray-600">2:05</td>
+                                                <td class="px-6 py-4 text-xs text-gray-500">刚刚</td>
+                                            </tr>
+                                            <tr class="hover:bg-gray-50">
+                                                <td class="px-6 py-4">
+                                                    <div class="flex items-center gap-3">
+                                                        <div class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-600 font-bold text-sm">赵</div>
+                                                        <span class="font-medium text-gray-800">赵梓涵</span>
+                                                    </div>
+                                                </td>
+                                                <td class="px-6 py-4">
+                                                    <span class="inline-flex items-center gap-1 text-xs bg-gray-50 text-gray-600 px-2 py-1 rounded-full">
+                                                        未打开
+                                                    </span>
+                                                </td>
+                                                <td class="px-6 py-4">
+                                                    <div class="flex items-center gap-2">
+                                                        <div class="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                                                            <div class="h-full bg-gray-300 rounded-full" style="width: 0%"></div>
+                                                        </div>
+                                                        <span class="text-xs text-gray-400 font-mono">0%</span>
+                                                    </div>
+                                                </td>
+                                                <td class="px-6 py-4 text-gray-400">-</td>
+                                                <td class="px-6 py-4 text-xs text-gray-400">-</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+            'ppt': {
+                title: '课件：水循环原理',
+                source: '课件文本分析',
+                icon: 'presentation',
+                type: 'reading', // 阅读式资源
+                insight: '当前页面包含易混淆概念。<br><br><strong>警示：</strong> 历史数据显示，30%的学生分不清"蒸发"和"沸腾"。建议生成对比表。',
+                content: `
+                    <div class="w-full h-full bg-gradient-to-br from-blue-100 to-cyan-50 flex flex-col p-12">
+                        <div class="mb-4 text-xs text-gray-500">第 5 页 / 共 12 页</div>
+                        <h1 class="text-4xl font-bold text-gray-800 mb-8">水循环的三个主要阶段</h1>
+                        <div class="grid grid-cols-3 gap-6 flex-1">
+                            <div class="bg-white rounded-xl p-6 shadow-lg border-2 border-blue-200">
+                                <div class="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mb-4">
+                                    <svg class="w-8 h-8 text-orange-600" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                                </div>
+                                <h3 class="text-xl font-bold text-gray-800 mb-2">蒸发</h3>
+                                <p class="text-sm text-gray-600">水受热从液态变为气态</p>
+                            </div>
+                            <div class="bg-white rounded-xl p-6 shadow-lg border-2 border-cyan-200">
+                                <div class="w-16 h-16 bg-cyan-100 rounded-full flex items-center justify-center mb-4">
+                                    <svg class="w-8 h-8 text-cyan-600" fill="currentColor" viewBox="0 0 20 20"><path d="M5.5 16a3.5 3.5 0 01-.369-6.98 4 4 0 117.753-1.977A4.5 4.5 0 1113.5 16h-8z"/></svg>
+                                </div>
+                                <h3 class="text-xl font-bold text-gray-800 mb-2">凝结</h3>
+                                <p class="text-sm text-gray-600">水蒸气遇冷形成小水滴</p>
+                            </div>
+                            <div class="bg-white rounded-xl p-6 shadow-lg border-2 border-blue-200">
+                                <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                                    <svg class="w-8 h-8 text-blue-600" fill="currentColor" viewBox="0 0 20 20"><path d="M10 3v2M4.222 4.222l1.414 1.414M2 10h2m.222 5.778l1.414-1.414M10 17v-2m5.778.222l-1.414-1.414M18 10h-2m-.222-5.778l-1.414 1.414M10 7a3 3 0 100 6 3 3 0 000-6z"/></svg>
+                                </div>
+                                <h3 class="text-xl font-bold text-gray-800 mb-2">降水</h3>
+                                <p class="text-sm text-gray-600">云中水滴聚集降落地面</p>
+                            </div>
+                        </div>
+                        <div class="mt-6 flex gap-4">
+                            <button class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors">← 上一页</button>
+                            <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">下一页 →</button>
+                        </div>
+                    </div>
+                `,
+                result: `
+                    <div class="w-full h-full bg-gray-50 p-6 overflow-auto">
+                        <div class="max-w-5xl mx-auto">
+                            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+                                <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                                    <i data-lucide="file-text" class="w-5 h-5 text-orange-600"></i>
+                                    课件阅读统计
+                                </h2>
+                                <div class="grid grid-cols-4 gap-4 mb-6">
+                                    <div class="bg-gradient-to-br from-green-50 to-emerald-50 p-4 rounded-lg border border-green-200">
+                                        <div class="text-3xl font-bold text-green-600">30</div>
+                                        <div class="text-xs text-green-700 mt-1">已打开</div>
+                                    </div>
+                                    <div class="bg-gradient-to-br from-blue-50 to-cyan-50 p-4 rounded-lg border border-blue-200">
+                                        <div class="text-3xl font-bold text-blue-600">5</div>
+                                        <div class="text-xs text-blue-700 mt-1">当前页码</div>
+                                    </div>
+                                    <div class="bg-gradient-to-br from-purple-50 to-indigo-50 p-4 rounded-lg border border-purple-200">
+                                        <div class="text-3xl font-bold text-purple-600">4.2</div>
+                                        <div class="text-xs text-purple-700 mt-1">平均页码</div>
+                                    </div>
+                                    <div class="bg-gradient-to-br from-amber-50 to-orange-50 p-4 rounded-lg border border-amber-200">
+                                        <div class="text-3xl font-bold text-amber-600">3:45</div>
+                                        <div class="text-xs text-amber-700 mt-1">平均用时</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                                <div class="bg-gray-50 px-6 py-3 border-b border-gray-200">
+                                    <h3 class="font-bold text-gray-700">学生阅读详情</h3>
+                                </div>
+                                <div class="overflow-x-auto">
+                                    <table class="w-full text-sm">
+                                        <thead class="bg-gray-50 border-b border-gray-200">
+                                            <tr>
+                                                <th class="px-6 py-3 text-left font-medium text-gray-600">学生</th>
+                                                <th class="px-6 py-3 text-left font-medium text-gray-600">当前页</th>
+                                                <th class="px-6 py-3 text-left font-medium text-gray-600">阅读进度</th>
+                                                <th class="px-6 py-3 text-left font-medium text-gray-600">用时</th>
+                                                <th class="px-6 py-3 text-left font-medium text-gray-600">状态</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-gray-100">
+                                            <tr class="hover:bg-gray-50">
+                                                <td class="px-6 py-4">
+                                                    <div class="flex items-center gap-3">
+                                                        <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-sm">张</div>
+                                                        <span class="font-medium text-gray-800">张子轩</span>
+                                                    </div>
+                                                </td>
+                                                <td class="px-6 py-4 font-mono text-gray-700">第 5 页</td>
+                                                <td class="px-6 py-4">
+                                                    <div class="flex items-center gap-2">
+                                                        <div class="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                                                            <div class="h-full bg-blue-500 rounded-full" style="width: 42%"></div>
+                                                        </div>
+                                                        <span class="text-xs text-gray-600 font-mono">42%</span>
+                                                    </div>
+                                                </td>
+                                                <td class="px-6 py-4 text-gray-600">4:12</td>
+                                                <td class="px-6 py-4">
+                                                    <span class="inline-flex items-center gap-1 text-xs bg-green-50 text-green-700 px-2 py-1 rounded-full">
+                                                        <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+                                                        同步中
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                            <tr class="hover:bg-gray-50">
+                                                <td class="px-6 py-4">
+                                                    <div class="flex items-center gap-3">
+                                                        <div class="w-8 h-8 bg-pink-100 rounded-full flex items-center justify-center text-pink-600 font-bold text-sm">李</div>
+                                                        <span class="font-medium text-gray-800">李若彤</span>
+                                                    </div>
+                                                </td>
+                                                <td class="px-6 py-4 font-mono text-gray-700">第 8 页</td>
+                                                <td class="px-6 py-4">
+                                                    <div class="flex items-center gap-2">
+                                                        <div class="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                                                            <div class="h-full bg-green-500 rounded-full" style="width: 67%"></div>
+                                                        </div>
+                                                        <span class="text-xs text-gray-600 font-mono">67%</span>
+                                                    </div>
+                                                </td>
+                                                <td class="px-6 py-4 text-gray-600">5:30</td>
+                                                <td class="px-6 py-4">
+                                                    <span class="inline-flex items-center gap-1 text-xs bg-green-50 text-green-700 px-2 py-1 rounded-full">
+                                                        <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+                                                        同步中
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                            <tr class="hover:bg-gray-50">
+                                                <td class="px-6 py-4">
+                                                    <div class="flex items-center gap-3">
+                                                        <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 font-bold text-sm">王</div>
+                                                        <span class="font-medium text-gray-800">王晨阳</span>
+                                                    </div>
+                                                </td>
+                                                <td class="px-6 py-4 font-mono text-gray-700">第 3 页</td>
+                                                <td class="px-6 py-4">
+                                                    <div class="flex items-center gap-2">
+                                                        <div class="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                                                            <div class="h-full bg-blue-500 rounded-full" style="width: 25%"></div>
+                                                        </div>
+                                                        <span class="text-xs text-gray-600 font-mono">25%</span>
+                                                    </div>
+                                                </td>
+                                                <td class="px-6 py-4 text-gray-600">2:18</td>
+                                                <td class="px-6 py-4">
+                                                    <span class="inline-flex items-center gap-1 text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded-full">
+                                                        阅读中
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+            'ai-avatar': {
+                title: 'AI数字人：水博士',
+                source: 'AI人格分析',
+                icon: 'user-circle',
+                type: 'reading', // 阅读式资源
+                insight: '<strong>水博士已就绪</strong><br>可随时回答学生提问，建议开启语音交互模式提升沉浸感。',
+                content: `
+                    <div class="w-full h-full bg-gradient-to-b from-indigo-900 to-purple-900 flex items-center justify-center relative overflow-hidden">
+                        <div class="absolute inset-0 opacity-10">
+                            <div class="absolute top-1/4 left-1/4 w-64 h-64 bg-blue-500 rounded-full filter blur-3xl animate-pulse"></div>
+                            <div class="absolute bottom-1/4 right-1/4 w-64 h-64 bg-purple-500 rounded-full filter blur-3xl animate-pulse" style="animation-delay: 1s"></div>
+                        </div>
+                        <div class="relative z-10 text-center">
+                            <div class="w-48 h-48 mx-auto mb-6 bg-gradient-to-br from-blue-400 to-purple-400 rounded-full flex items-center justify-center shadow-2xl border-4 border-white/20">
+                                <svg class="w-32 h-32 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"/></svg>
+                            </div>
+                            <h2 class="text-3xl font-bold text-white mb-2">水博士</h2>
+                            <p class="text-blue-200 mb-6">虚拟助教 · 随时答疑</p>
+                            <div class="flex gap-3 justify-center">
+                                <div class="bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full text-white text-sm flex items-center gap-2">
+                                    <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                                    在线中
+                                </div>
+                                <div class="bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full text-white text-sm">已回答 24 个问题</div>
+                            </div>
+                            <div class="mt-8 text-white/60 text-sm">学生可通过语音或文字与水博士互动</div>
+                        </div>
+                    </div>
+                `,
+                result: `
+                    <div class="w-full h-full bg-gray-50 p-6 overflow-auto">
+                        <div class="max-w-5xl mx-auto">
+                            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+                                <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                                    <i data-lucide="message-circle" class="w-5 h-5 text-indigo-600"></i>
+                                    AI数字人互动统计
+                                </h2>
+                                <div class="grid grid-cols-4 gap-4 mb-6">
+                                    <div class="bg-gradient-to-br from-green-50 to-emerald-50 p-4 rounded-lg border border-green-200">
+                                        <div class="text-3xl font-bold text-green-600">18</div>
+                                        <div class="text-xs text-green-700 mt-1">正在互动</div>
+                                    </div>
+                                    <div class="bg-gradient-to-br from-blue-50 to-cyan-50 p-4 rounded-lg border border-blue-200">
+                                        <div class="text-3xl font-bold text-blue-600">42</div>
+                                        <div class="text-xs text-blue-700 mt-1">总提问数</div>
+                                    </div>
+                                    <div class="bg-gradient-to-br from-purple-50 to-indigo-50 p-4 rounded-lg border border-purple-200">
+                                        <div class="text-3xl font-bold text-purple-600">2.3</div>
+                                        <div class="text-xs text-purple-700 mt-1">平均问题数</div>
+                                    </div>
+                                    <div class="bg-gradient-to-br from-amber-50 to-orange-50 p-4 rounded-lg border border-amber-200">
+                                        <div class="text-3xl font-bold text-amber-600">95%</div>
+                                        <div class="text-xs text-amber-700 mt-1">满意度</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                                <div class="bg-gray-50 px-6 py-3 border-b border-gray-200">
+                                    <h3 class="font-bold text-gray-700">学生互动详情</h3>
+                                </div>
+                                <div class="overflow-x-auto">
+                                    <table class="w-full text-sm">
+                                        <thead class="bg-gray-50 border-b border-gray-200">
+                                            <tr>
+                                                <th class="px-6 py-3 text-left font-medium text-gray-600">学生</th>
+                                                <th class="px-6 py-3 text-left font-medium text-gray-600">提问次数</th>
+                                                <th class="px-6 py-3 text-left font-medium text-gray-600">最新问题</th>
+                                                <th class="px-6 py-3 text-left font-medium text-gray-600">状态</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-gray-100">
+                                            <tr class="hover:bg-gray-50">
+                                                <td class="px-6 py-4">
+                                                    <div class="flex items-center gap-3">
+                                                        <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-sm">张</div>
+                                                        <span class="font-medium text-gray-800">张子轩</span>
+                                                    </div>
+                                                </td>
+                                                <td class="px-6 py-4 font-mono text-gray-700">5 次</td>
+                                                <td class="px-6 py-4 text-gray-600 max-w-xs truncate">水蒸气是怎么变成云的？</td>
+                                                <td class="px-6 py-4">
+                                                    <span class="inline-flex items-center gap-1 text-xs bg-green-50 text-green-700 px-2 py-1 rounded-full">
+                                                        <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+                                                        对话中
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                            <tr class="hover:bg-gray-50">
+                                                <td class="px-6 py-4">
+                                                    <div class="flex items-center gap-3">
+                                                        <div class="w-8 h-8 bg-pink-100 rounded-full flex items-center justify-center text-pink-600 font-bold text-sm">李</div>
+                                                        <span class="font-medium text-gray-800">李若彤</span>
+                                                    </div>
+                                                </td>
+                                                <td class="px-6 py-4 font-mono text-gray-700">3 次</td>
+                                                <td class="px-6 py-4 text-gray-600 max-w-xs truncate">为什么会下雨？</td>
+                                                <td class="px-6 py-4">
+                                                    <span class="inline-flex items-center gap-1 text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded-full">
+                                                        已完成
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                            <tr class="hover:bg-gray-50">
+                                                <td class="px-6 py-4">
+                                                    <div class="flex items-center gap-3">
+                                                        <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 font-bold text-sm">王</div>
+                                                        <span class="font-medium text-gray-800">王晨阳</span>
+                                                    </div>
+                                                </td>
+                                                <td class="px-6 py-4 font-mono text-gray-700">2 次</td>
+                                                <td class="px-6 py-4 text-gray-600 max-w-xs truncate">海水能不能变成淡水？</td>
+                                                <td class="px-6 py-4">
+                                                    <span class="inline-flex items-center gap-1 text-xs bg-green-50 text-green-700 px-2 py-1 rounded-full">
+                                                        <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+                                                        对话中
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+            'quiz': {
+                title: '选择题：阶段检查',
+                source: '实时答题流',
+                icon: 'bar-chart-2',
+                type: 'interactive-objective', // 互动式-客观题
+                insight: '<strong>正在接收数据...</strong><br>目前第2题错误率激增(45%)，请准备针对性讲解。',
+                content: `
+                    <div class="w-full h-full bg-gray-50 p-6 overflow-auto">
+                        <div class="max-w-3xl mx-auto">
+                            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+                                <h2 class="text-2xl font-bold text-gray-800 mb-6">选择题：阶段检查</h2>
+                                <div class="space-y-6">
+                                    <div class="border-l-4 border-blue-500 pl-4 py-2">
+                                        <div class="font-bold text-gray-800 mb-2">1. 水循环的三个主要阶段是什么？</div>
+                                        <div class="space-y-2 text-sm text-gray-600">
+                                            <div>A. 蒸发、凝结、降水</div>
+                                            <div>B. 蒸发、沸腾、降水</div>
+                                            <div>C. 蒸腾、凝结、径流</div>
+                                            <div>D. 蒸发、升华、降水</div>
+                                        </div>
+                                        <div class="mt-2 text-xs text-green-600">✓ 正确答案：A</div>
+                                    </div>
+                                    <div class="border-l-4 border-blue-500 pl-4 py-2">
+                                        <div class="font-bold text-gray-800 mb-2">2. 以下哪个不是水循环的驱动力？</div>
+                                        <div class="space-y-2 text-sm text-gray-600">
+                                            <div>A. 太阳辐射</div>
+                                            <div>B. 重力</div>
+                                            <div>C. 风力</div>
+                                            <div>D. 月球引力</div>
+                                        </div>
+                                        <div class="mt-2 text-xs text-green-600">✓ 正确答案：D</div>
+                                    </div>
+                                    <div class="border-l-4 border-blue-500 pl-4 py-2">
+                                        <div class="font-bold text-gray-800 mb-2">3. 云的形成主要与哪个过程相关？</div>
+                                        <div class="space-y-2 text-sm text-gray-600">
+                                            <div>A. 蒸发</div>
+                                            <div>B. 凝结</div>
+                                            <div>C. 降水</div>
+                                            <div>D. 渗透</div>
+                                        </div>
+                                        <div class="mt-2 text-xs text-green-600">✓ 正确答案：B</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `,
+                result: '' // quiz使用原有的图表展示
+            },
+            'matching': {
+                title: '匹配题：概念配对',
+                source: '匹配题数据',
+                icon: 'git-merge',
+                type: 'interactive-objective', // 互动式-客观题
+                insight: '<strong>拖拽式互动</strong><br>建议限时3分钟，观察学生对概念关系的理解程度。',
+                content: `
+                    <div class="w-full h-full bg-gradient-to-br from-pink-50 to-purple-50 p-8 overflow-auto">
+                        <div class="max-w-4xl mx-auto">
+                            <h2 class="text-2xl font-bold text-gray-800 mb-6">匹配题：水循环概念配对</h2>
+                            <p class="text-sm text-gray-600 mb-8">拖动右侧选项到对应的左侧概念</p>
+                            <div class="grid grid-cols-2 gap-8">
+                                <!-- 左侧：概念 -->
+                                <div class="space-y-4">
+                                    <div class="bg-white p-4 rounded-lg shadow border-2 border-dashed border-pink-200 min-h-20 flex items-center">
+                                        <span class="text-gray-700 font-medium">蒸发</span>
+                                    </div>
+                                    <div class="bg-white p-4 rounded-lg shadow border-2 border-dashed border-pink-200 min-h-20 flex items-center">
+                                        <span class="text-gray-700 font-medium">凝结</span>
+                                    </div>
+                                    <div class="bg-white p-4 rounded-lg shadow border-2 border-dashed border-pink-200 min-h-20 flex items-center">
+                                        <span class="text-gray-700 font-medium">降水</span>
+                                    </div>
+                                    <div class="bg-white p-4 rounded-lg shadow border-2 border-dashed border-pink-200 min-h-20 flex items-center">
+                                        <span class="text-gray-700 font-medium">渗透</span>
+                                    </div>
+                                    <div class="bg-white p-4 rounded-lg shadow border-2 border-dashed border-pink-200 min-h-20 flex items-center">
+                                        <span class="text-gray-700 font-medium">径流</span>
+                                    </div>
+                                </div>
+                                <!-- 右侧：定义 -->
+                                <div class="space-y-4">
+                                    <div class="bg-purple-100 p-4 rounded-lg shadow cursor-move hover:shadow-lg transition-shadow">
+                                        <span class="text-gray-700">水蒸气遇冷形成小水滴</span>
+                                    </div>
+                                    <div class="bg-purple-100 p-4 rounded-lg shadow cursor-move hover:shadow-lg transition-shadow">
+                                        <span class="text-gray-700">水在地表流动汇入河流</span>
+                                    </div>
+                                    <div class="bg-purple-100 p-4 rounded-lg shadow cursor-move hover:shadow-lg transition-shadow">
+                                        <span class="text-gray-700">水受热从液态变为气态</span>
+                                    </div>
+                                    <div class="bg-purple-100 p-4 rounded-lg shadow cursor-move hover:shadow-lg transition-shadow">
+                                        <span class="text-gray-700">雨、雪等从云中降落</span>
+                                    </div>
+                                    <div class="bg-purple-100 p-4 rounded-lg shadow cursor-move hover:shadow-lg transition-shadow">
+                                        <span class="text-gray-700">水渗入土壤和地下</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-6 text-center text-sm text-gray-500">
+                                已完成: 18/28 学生 · 平均用时: 1分42秒
+                            </div>
+                        </div>
+                    </div>
+                `,
+                result: `
+                    <div class="w-full h-full bg-gray-50 p-6 overflow-auto">
+                        <div class="max-w-5xl mx-auto">
+                            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+                                <h2 class="text-xl font-bold text-gray-800 mb-4">匹配题结果统计</h2>
+                                <div class="grid grid-cols-4 gap-4">
+                                    <div class="bg-gradient-to-br from-green-50 to-emerald-50 p-4 rounded-lg border border-green-200">
+                                        <div class="text-3xl font-bold text-green-600">18</div>
+                                        <div class="text-xs text-green-700 mt-1">已完成</div>
+                                    </div>
+                                    <div class="bg-gradient-to-br from-blue-50 to-cyan-50 p-4 rounded-lg border border-blue-200">
+                                        <div class="text-3xl font-bold text-blue-600">82%</div>
+                                        <div class="text-xs text-blue-700 mt-1">正确率</div>
+                                    </div>
+                                    <div class="bg-gradient-to-br from-purple-50 to-indigo-50 p-4 rounded-lg border border-purple-200">
+                                        <div class="text-3xl font-bold text-purple-600">1:42</div>
+                                        <div class="text-xs text-purple-700 mt-1">平均用时</div>
+                                    </div>
+                                    <div class="bg-gradient-to-br from-amber-50 to-orange-50 p-4 rounded-lg border border-amber-200">
+                                        <div class="text-3xl font-bold text-amber-600">10</div>
+                                        <div class="text-xs text-amber-700 mt-1">答题中</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                                <div class="bg-gray-50 px-6 py-3 border-b border-gray-200">
+                                    <h3 class="font-bold text-gray-700">学生作答详情</h3>
+                                </div>
+                                <div class="overflow-x-auto">
+                                    <table class="w-full text-sm">
+                                        <thead class="bg-gray-50 border-b border-gray-200">
+                                            <tr>
+                                                <th class="px-6 py-3 text-left font-medium text-gray-600">学生</th>
+                                                <th class="px-6 py-3 text-left font-medium text-gray-600">正确数</th>
+                                                <th class="px-6 py-3 text-left font-medium text-gray-600">正确率</th>
+                                                <th class="px-6 py-3 text-left font-medium text-gray-600">用时</th>
+                                                <th class="px-6 py-3 text-left font-medium text-gray-600">状态</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-gray-100">
+                                            <tr class="hover:bg-gray-50">
+                                                <td class="px-6 py-4">
+                                                    <div class="flex items-center gap-3">
+                                                        <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-sm">张</div>
+                                                        <span class="font-medium text-gray-800">张子轩</span>
+                                                    </div>
+                                                </td>
+                                                <td class="px-6 py-4 font-mono text-gray-700">5/5</td>
+                                                <td class="px-6 py-4 font-mono text-green-600 font-bold">100%</td>
+                                                <td class="px-6 py-4 text-gray-600">1:35</td>
+                                                <td class="px-6 py-4">
+                                                    <span class="inline-flex items-center gap-1 text-xs bg-green-50 text-green-700 px-2 py-1 rounded-full">✓ 已提交</span>
+                                                </td>
+                                            </tr>
+                                            <tr class="hover:bg-gray-50">
+                                                <td class="px-6 py-4">
+                                                    <div class="flex items-center gap-3">
+                                                        <div class="w-8 h-8 bg-pink-100 rounded-full flex items-center justify-center text-pink-600 font-bold text-sm">李</div>
+                                                        <span class="font-medium text-gray-800">李若彤</span>
+                                                    </div>
+                                                </td>
+                                                <td class="px-6 py-4 font-mono text-gray-700">4/5</td>
+                                                <td class="px-6 py-4 font-mono text-blue-600 font-bold">80%</td>
+                                                <td class="px-6 py-4 text-gray-600">1:52</td>
+                                                <td class="px-6 py-4">
+                                                    <span class="inline-flex items-center gap-1 text-xs bg-green-50 text-green-700 px-2 py-1 rounded-full">✓ 已提交</span>
+                                                </td>
+                                            </tr>
+                                            <tr class="hover:bg-gray-50">
+                                                <td class="px-6 py-4">
+                                                    <div class="flex items-center gap-3">
+                                                        <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 font-bold text-sm">王</div>
+                                                        <span class="font-medium text-gray-800">王晨阳</span>
+                                                    </div>
+                                                </td>
+                                                <td class="px-6 py-4 font-mono text-gray-400">-</td>
+                                                <td class="px-6 py-4 font-mono text-gray-400">-</td>
+                                                <td class="px-6 py-4 text-gray-600">0:48</td>
+                                                <td class="px-6 py-4">
+                                                    <span class="inline-flex items-center gap-1 text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded-full">
+                                                        <span class="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></span>
+                                                        答题中
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+            'openended': {
+                title: '问答题：深度思考',
+                source: '开放性问题',
+                icon: 'message-square',
+                type: 'interactive-subjective', // 互动式-主观题
+                insight: '<strong>AI辅助评分</strong><br>系统将自动分析学生回答的关键词和逻辑结构，标注需人工复审的答案。',
+                content: `
+                    <div class="w-full h-full bg-gradient-to-br from-blue-50 to-indigo-50 p-8 overflow-auto">
+                        <div class="max-w-3xl mx-auto">
+                            <h2 class="text-2xl font-bold text-gray-800 mb-6">问答题：深度思考</h2>
+                            <div class="space-y-6">
+                                <div class="bg-white rounded-xl shadow-lg p-6">
+                                    <div class="flex items-start gap-4 mb-4">
+                                        <div class="bg-blue-100 text-blue-600 font-bold w-8 h-8 rounded-full flex items-center justify-center shrink-0">1</div>
+                                        <div class="flex-1">
+                                            <h3 class="text-lg font-bold text-gray-800 mb-2">请解释水循环对地球生态系统的重要性</h3>
+                                            <p class="text-sm text-gray-500">要求：至少150字，包含3个要点</p>
+                                        </div>
+                                    </div>
+                                    <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                        <div class="text-xs text-gray-400 mb-2">学生输入框 (多行文本)</div>
+                                        <div class="min-h-32 bg-white rounded border border-gray-300 p-3 text-sm text-gray-400 italic">
+                                            学生在此输入答案...
+                                        </div>
+                                    </div>
+                                    <div class="mt-4 flex items-center gap-4 text-xs">
+                                        <span class="text-green-600 font-medium">✓ 已提交: 22 人</span>
+                                        <span class="text-blue-600 font-medium">✎ 作答中: 4 人</span>
+                                        <span class="text-gray-400">未开始: 2 人</span>
+                                    </div>
+                                </div>
+                                <div class="bg-white rounded-xl shadow-lg p-6">
+                                    <div class="flex items-start gap-4 mb-4">
+                                        <div class="bg-blue-100 text-blue-600 font-bold w-8 h-8 rounded-full flex items-center justify-center shrink-0">2</div>
+                                        <div class="flex-1">
+                                            <h3 class="text-lg font-bold text-gray-800 mb-2">如果没有水循环，地球会变成什么样？</h3>
+                                            <p class="text-sm text-gray-500">要求：发挥想象，结合科学原理</p>
+                                        </div>
+                                    </div>
+                                    <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                        <div class="text-xs text-gray-400 mb-2">学生输入框 (多行文本)</div>
+                                        <div class="min-h-32 bg-white rounded border border-gray-300 p-3 text-sm text-gray-400 italic">
+                                            学生在此输入答案...
+                                        </div>
+                                    </div>
+                                    <div class="mt-4 flex items-center gap-4 text-xs">
+                                        <span class="text-green-600 font-medium">✓ 已提交: 19 人</span>
+                                        <span class="text-blue-600 font-medium">✎ 作答中: 7 人</span>
+                                        <span class="text-gray-400">未开始: 2 人</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `,
+                result: `
+                    <div class="w-full h-full bg-gray-50 p-6 overflow-auto">
+                        <div class="max-w-6xl mx-auto">
+                            <!-- AI 总结卡片 -->
+                            <div class="bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 rounded-xl shadow-sm border border-indigo-200 p-6 mb-6">
+                                <div class="flex items-start gap-4">
+                                    <div class="w-12 h-12 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0">
+                                        <i data-lucide="sparkles" class="w-6 h-6"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <h2 class="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
+                                            AI 答案分析总结
+                                            <span class="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full">基于22份提交</span>
+                                        </h2>
+                                        <div class="space-y-3 text-sm text-gray-700">
+                                            <div class="flex items-start gap-2">
+                                                <span class="text-green-600 font-bold shrink-0">✓ 优秀答案 (8份):</span>
+                                                <span>回答全面且逻辑清晰，涵盖了水循环对气候调节、生态平衡、水资源分配等多个维度的重要性。</span>
+                                            </div>
+                                            <div class="flex items-start gap-2">
+                                                <span class="text-blue-600 font-bold shrink-0">◐ 良好答案 (10份):</span>
+                                                <span>回答基本正确但深度不足，主要关注了水循环的基本功能，缺少对生态系统影响的深入分析。</span>
+                                            </div>
+                                            <div class="flex items-start gap-2">
+                                                <span class="text-amber-600 font-bold shrink-0">⚠ 需改进 (4份):</span>
+                                                <span>回答过于简短或有概念性错误，建议重点辅导：赵梓涵、周思远、吴雨萱、孙浩然。</span>
+                                            </div>
+                                            <div class="mt-4 pt-3 border-t border-indigo-200">
+                                                <span class="font-bold text-indigo-700">关键词频次:</span>
+                                                <div class="flex flex-wrap gap-2 mt-2">
+                                                    <span class="bg-white px-3 py-1 rounded-full text-xs border border-indigo-200">水资源 (18次)</span>
+                                                    <span class="bg-white px-3 py-1 rounded-full text-xs border border-indigo-200">生态平衡 (15次)</span>
+                                                    <span class="bg-white px-3 py-1 rounded-full text-xs border border-indigo-200">气候调节 (12次)</span>
+                                                    <span class="bg-white px-3 py-1 rounded-full text-xs border border-indigo-200">蒸发降水 (9次)</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 学生答案表格 -->
+                            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                                <div class="bg-gray-50 px-6 py-3 border-b border-gray-200 flex justify-between items-center">
+                                    <h3 class="font-bold text-gray-700">学生答案详情</h3>
+                                    <div class="flex gap-2 text-xs">
+                                        <button class="px-3 py-1 bg-green-50 text-green-700 rounded-lg hover:bg-green-100">优秀 (8)</button>
+                                        <button class="px-3 py-1 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100">良好 (10)</button>
+                                        <button class="px-3 py-1 bg-amber-50 text-amber-700 rounded-lg hover:bg-amber-100">需改进 (4)</button>
+                                    </div>
+                                </div>
+                                <div class="overflow-x-auto">
+                                    <table class="w-full text-sm">
+                                        <thead class="bg-gray-50 border-b border-gray-200">
+                                            <tr>
+                                                <th class="px-4 py-3 text-left font-medium text-gray-600 w-32">学生</th>
+                                                <th class="px-4 py-3 text-left font-medium text-gray-600">答案内容</th>
+                                                <th class="px-4 py-3 text-left font-medium text-gray-600 w-24">字数</th>
+                                                <th class="px-4 py-3 text-left font-medium text-gray-600 w-32">AI评级</th>
+                                                <th class="px-4 py-3 text-left font-medium text-gray-600 w-20">操作</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-gray-100">
+                                            <tr class="hover:bg-gray-50">
+                                                <td class="px-4 py-4">
+                                                    <div class="flex items-center gap-2">
+                                                        <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-xs">张</div>
+                                                        <span class="font-medium text-gray-800 text-xs">张子轩</span>
+                                                    </div>
+                                                </td>
+                                                <td class="px-4 py-4">
+                                                    <div class="text-gray-700 text-xs leading-relaxed max-w-2xl">
+                                                        水循环对地球生态系统至关重要。首先，它维持了全球水资源的平衡分配...
+                                                        <button class="text-blue-600 hover:underline ml-2">展开全文</button>
+                                                    </div>
+                                                </td>
+                                                <td class="px-4 py-4 text-gray-600 font-mono">218字</td>
+                                                <td class="px-4 py-4">
+                                                    <span class="inline-flex items-center gap-1 text-xs bg-green-50 text-green-700 px-2 py-1 rounded-full font-medium">
+                                                        <i data-lucide="check-circle" class="w-3 h-3"></i>
+                                                        优秀
+                                                    </span>
+                                                </td>
+                                                <td class="px-4 py-4">
+                                                    <button class="text-blue-600 hover:text-blue-700 text-xs">查看</button>
+                                                </td>
+                                            </tr>
+                                            <tr class="hover:bg-gray-50">
+                                                <td class="px-4 py-4">
+                                                    <div class="flex items-center gap-2">
+                                                        <div class="w-8 h-8 bg-pink-100 rounded-full flex items-center justify-center text-pink-600 font-bold text-xs">李</div>
+                                                        <span class="font-medium text-gray-800 text-xs">李若彤</span>
+                                                    </div>
+                                                </td>
+                                                <td class="px-4 py-4">
+                                                    <div class="text-gray-700 text-xs leading-relaxed max-w-2xl">
+                                                        水循环保证了水资源的循环利用，通过蒸发、凝结、降水等过程...
+                                                        <button class="text-blue-600 hover:underline ml-2">展开全文</button>
+                                                    </div>
+                                                </td>
+                                                <td class="px-4 py-4 text-gray-600 font-mono">165字</td>
+                                                <td class="px-4 py-4">
+                                                    <span class="inline-flex items-center gap-1 text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded-full font-medium">
+                                                        <i data-lucide="circle-dot" class="w-3 h-3"></i>
+                                                        良好
+                                                    </span>
+                                                </td>
+                                                <td class="px-4 py-4">
+                                                    <button class="text-blue-600 hover:text-blue-700 text-xs">查看</button>
+                                                </td>
+                                            </tr>
+                                            <tr class="hover:bg-gray-50">
+                                                <td class="px-4 py-4">
+                                                    <div class="flex items-center gap-2">
+                                                        <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 font-bold text-xs">王</div>
+                                                        <span class="font-medium text-gray-800 text-xs">王晨阳</span>
+                                                    </div>
+                                                </td>
+                                                <td class="px-4 py-4">
+                                                    <div class="text-gray-700 text-xs leading-relaxed max-w-2xl">
+                                                        水循环很重要，因为没有它地球就没有水了。
+                                                        <button class="text-blue-600 hover:underline ml-2">展开全文</button>
+                                                    </div>
+                                                </td>
+                                                <td class="px-4 py-4 text-gray-600 font-mono">28字</td>
+                                                <td class="px-4 py-4">
+                                                    <span class="inline-flex items-center gap-1 text-xs bg-amber-50 text-amber-700 px-2 py-1 rounded-full font-medium">
+                                                        <i data-lucide="alert-circle" class="w-3 h-3"></i>
+                                                        需改进
+                                                    </span>
+                                                </td>
+                                                <td class="px-4 py-4">
+                                                    <button class="text-blue-600 hover:text-blue-700 text-xs">查看</button>
+                                                </td>
+                                            </tr>
+                                            <tr class="hover:bg-gray-50">
+                                                <td class="px-4 py-4">
+                                                    <div class="flex items-center gap-2">
+                                                        <div class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-600 font-bold text-xs">赵</div>
+                                                        <span class="font-medium text-gray-800 text-xs">赵梓涵</span>
+                                                    </div>
+                                                </td>
+                                                <td class="px-4 py-4 text-gray-400 text-xs italic">未提交</td>
+                                                <td class="px-4 py-4 text-gray-400 font-mono">-</td>
+                                                <td class="px-4 py-4">
+                                                    <span class="inline-flex items-center gap-1 text-xs bg-gray-50 text-gray-500 px-2 py-1 rounded-full">
+                                                        未完成
+                                                    </span>
+                                                </td>
+                                                <td class="px-4 py-4 text-gray-400">-</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+            'virtuallab': {
+                title: '虚拟实验：水循环模拟',
+                source: '交互式模拟',
+                icon: 'flask-conical',
+                type: 'interactive-objective', // 互动式-客观题（虚拟实验视为客观评价）
+                insight: '<strong>3D可视化体验</strong><br>学生可调节温度、湿度等参数，观察水循环各阶段的动态变化。',
+                content: `
+                    <div class="w-full h-full bg-gradient-to-b from-sky-400 via-blue-300 to-emerald-200 relative overflow-hidden">
+                        <!-- 模拟的3D场景 -->
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <div class="text-center">
+                                <div class="mb-6">
+                                    <svg class="w-48 h-48 mx-auto animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" class="text-cyan-600"/>
+                                    </svg>
+                                </div>
+                                <h3 class="text-2xl font-bold text-white mb-4 drop-shadow-lg">虚拟实验室</h3>
+                                <p class="text-white/90 mb-6">交互式水循环3D模拟器</p>
+
+                                <!-- 控制面板 -->
+                                <div class="bg-white/20 backdrop-blur-md rounded-xl p-6 mx-auto max-w-md">
+                                    <div class="space-y-4">
+                                        <div>
+                                            <label class="block text-white text-sm font-medium mb-2">温度: 25°C</label>
+                                            <input type="range" min="0" max="50" value="25" class="w-full">
+                                        </div>
+                                        <div>
+                                            <label class="block text-white text-sm font-medium mb-2">湿度: 60%</label>
+                                            <input type="range" min="0" max="100" value="60" class="w-full">
+                                        </div>
+                                        <div>
+                                            <label class="block text-white text-sm font-medium mb-2">风速: 中等</label>
+                                            <input type="range" min="0" max="100" value="50" class="w-full">
+                                        </div>
+                                    </div>
+                                    <div class="mt-6 flex gap-3">
+                                        <button class="flex-1 bg-green-500 hover:bg-green-600 text-white py-2 rounded-lg font-medium transition-colors">
+                                            ▶ 开始模拟
+                                        </button>
+                                        <button class="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-2 rounded-lg font-medium transition-colors">
+                                            ⟲ 重置
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="mt-6 text-white/80 text-sm">
+                                    正在使用: 26 人 · 平均实验时长: 8分钟
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 装饰性云朵 -->
+                        <div class="absolute top-10 left-20 w-32 h-20 bg-white/30 rounded-full blur-xl"></div>
+                        <div class="absolute top-32 right-32 w-40 h-24 bg-white/20 rounded-full blur-xl"></div>
+                        <div class="absolute bottom-20 left-1/3 w-36 h-22 bg-white/25 rounded-full blur-xl"></div>
+                    </div>
+                `,
+                result: '' // virtuallab的result使用content中的统计信息
+            },
+            'assignment': {
+                title: '作业提交：观察日志',
+                source: '作业收集',
+                icon: 'file-up',
+                type: 'reading', // 阅读式（作业提交页面本身就是结果展示）
+                insight: '<strong>提交统计</strong><br>已收到16份作业，2份疑似抄袭需要复查。建议设置相似度检测阈值。',
+                content: `
+                    <div class="w-full h-full bg-gray-50 p-8 overflow-auto">
+                        <div class="max-w-4xl mx-auto">
+                            <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+                                <h2 class="text-2xl font-bold text-gray-800 mb-4">作业：一周水循环观察日志</h2>
+                                <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
+                                    <div class="flex items-start gap-3">
+                                        <svg class="w-5 h-5 text-amber-600 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg>
+                                        <div>
+                                            <div class="font-bold text-amber-800 text-sm mb-1">作业要求</div>
+                                            <ul class="text-sm text-amber-700 space-y-1">
+                                                <li>• 连续观察并记录一周的天气现象</li>
+                                                <li>• 拍摄云的形态照片至少3张</li>
+                                                <li>• 撰写观察日志（文档格式：PDF/Word）</li>
+                                                <li>• 文件大小不超过10MB</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-3 gap-4 mb-6">
+                                    <div class="bg-gradient-to-br from-green-50 to-emerald-50 p-4 rounded-lg border border-green-200">
+                                        <div class="text-2xl font-bold text-green-600">16</div>
+                                        <div class="text-xs text-green-700">已提交</div>
+                                    </div>
+                                    <div class="bg-gradient-to-br from-blue-50 to-cyan-50 p-4 rounded-lg border border-blue-200">
+                                        <div class="text-2xl font-bold text-blue-600">8</div>
+                                        <div class="text-xs text-blue-700">进行中</div>
+                                    </div>
+                                    <div class="bg-gradient-to-br from-gray-50 to-slate-50 p-4 rounded-lg border border-gray-200">
+                                        <div class="text-2xl font-bold text-gray-600">4</div>
+                                        <div class="text-xs text-gray-700">未开始</div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between text-sm">
+                                    <span class="text-gray-600">截止时间：2024-03-25 23:59</span>
+                                    <span class="text-red-600 font-medium">剩余 18 小时</span>
+                                </div>
+                            </div>
+
+                            <!-- 学生提交列表 -->
+                            <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                                <div class="bg-gray-50 px-6 py-3 border-b border-gray-200">
+                                    <h3 class="font-bold text-gray-700">学生提交记录</h3>
+                                </div>
+                                <div class="divide-y divide-gray-100">
+                                    <div class="px-6 py-4 hover:bg-gray-50 transition-colors">
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center gap-4">
+                                                <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold">张</div>
+                                                <div>
+                                                    <div class="font-medium text-gray-800">张子轩</div>
+                                                    <div class="text-xs text-gray-500">观察日志_张子轩.pdf · 2.3 MB</div>
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center gap-4">
+                                                <span class="text-xs text-green-600 bg-green-50 px-3 py-1 rounded-full">已提交</span>
+                                                <button class="text-blue-600 hover:text-blue-700 text-sm font-medium">查看</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="px-6 py-4 hover:bg-gray-50 transition-colors">
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center gap-4">
+                                                <div class="w-10 h-10 bg-pink-100 rounded-full flex items-center justify-center text-pink-600 font-bold">李</div>
+                                                <div>
+                                                    <div class="font-medium text-gray-800">李若彤</div>
+                                                    <div class="text-xs text-gray-500">水循环观察_李若彤.docx · 1.8 MB</div>
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center gap-4">
+                                                <span class="text-xs text-green-600 bg-green-50 px-3 py-1 rounded-full">已提交</span>
+                                                <button class="text-blue-600 hover:text-blue-700 text-sm font-medium">查看</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="px-6 py-4 hover:bg-gray-50 transition-colors">
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center gap-4">
+                                                <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 font-bold">王</div>
+                                                <div>
+                                                    <div class="font-medium text-gray-800">王晨阳</div>
+                                                    <div class="text-xs text-blue-500">正在上传... 45%</div>
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center gap-4">
+                                                <span class="text-xs text-blue-600 bg-blue-50 px-3 py-1 rounded-full">进行中</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="px-6 py-4 hover:bg-gray-50 transition-colors">
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center gap-4">
+                                                <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-600 font-bold">赵</div>
+                                                <div>
+                                                    <div class="font-medium text-gray-800">赵梓涵</div>
+                                                    <div class="text-xs text-gray-400">未开始</div>
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center gap-4">
+                                                <span class="text-xs text-gray-400 bg-gray-50 px-3 py-1 rounded-full">未提交</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `,
+                result: '' // assignment本身就是提交统计页面，content即result
+            },
+            'poll': {
+                title: '投票：方案选择',
+                source: '实时投票',
+                icon: 'bar-chart-3',
+                type: 'interactive-objective', // 互动式-客观题
+                insight: '<strong>即时民意</strong><br>选项B暂时领先，可以实时调整教学方向适应多数学生意愿。',
+                content: `
+                    <div class="w-full h-full bg-gradient-to-br from-teal-50 to-cyan-50 p-8 overflow-auto">
+                        <div class="max-w-3xl mx-auto">
+                            <div class="bg-white rounded-xl shadow-lg p-8">
+                                <div class="flex items-center gap-3 mb-6">
+                                    <div class="w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center">
+                                        <svg class="w-6 h-6 text-teal-600" fill="currentColor" viewBox="0 0 20 20"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/></svg>
+                                    </div>
+                                    <div>
+                                        <h2 class="text-2xl font-bold text-gray-800">下节课实践项目投票</h2>
+                                        <p class="text-sm text-gray-500">请选择你最感兴趣的探究方向（匿名投票）</p>
+                                    </div>
+                                </div>
+
+                                <div class="space-y-4 mb-6">
+                                    <div class="relative">
+                                        <div class="flex items-center justify-between mb-2">
+                                            <span class="font-medium text-gray-700">A. 制作简易净水装置</span>
+                                            <span class="text-sm font-bold text-teal-600">35%</span>
+                                        </div>
+                                        <div class="h-12 bg-gray-100 rounded-lg overflow-hidden">
+                                            <div class="h-full bg-gradient-to-r from-teal-400 to-teal-500 rounded-lg flex items-center px-4 text-white font-medium" style="width: 35%">
+                                                10票
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="relative">
+                                        <div class="flex items-center justify-between mb-2">
+                                            <span class="font-medium text-gray-700">B. 调查社区水资源使用情况</span>
+                                            <span class="text-sm font-bold text-blue-600">46%</span>
+                                        </div>
+                                        <div class="h-12 bg-gray-100 rounded-lg overflow-hidden">
+                                            <div class="h-full bg-gradient-to-r from-blue-400 to-blue-500 rounded-lg flex items-center px-4 text-white font-medium" style="width: 46%">
+                                                13票
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="relative">
+                                        <div class="flex items-center justify-between mb-2">
+                                            <span class="font-medium text-gray-700">C. 设计节水宣传海报</span>
+                                            <span class="text-sm font-bold text-purple-600">11%</span>
+                                        </div>
+                                        <div class="h-12 bg-gray-100 rounded-lg overflow-hidden">
+                                            <div class="h-full bg-gradient-to-r from-purple-400 to-purple-500 rounded-lg flex items-center px-4 text-white font-medium" style="width: 11%">
+                                                3票
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="relative">
+                                        <div class="flex items-center justify-between mb-2">
+                                            <span class="font-medium text-gray-700">D. 参观污水处理厂</span>
+                                            <span class="text-sm font-bold text-orange-600">8%</span>
+                                        </div>
+                                        <div class="h-12 bg-gray-100 rounded-lg overflow-hidden">
+                                            <div class="h-full bg-gradient-to-r from-orange-400 to-orange-500 rounded-lg flex items-center px-4 text-white font-medium" style="width: 8%">
+                                                2票
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center justify-between pt-4 border-t border-gray-200">
+                                    <div class="flex items-center gap-4 text-sm text-gray-600">
+                                        <span>总投票数: <strong class="text-gray-800">28</strong></span>
+                                        <span>参与率: <strong class="text-gray-800">93%</strong></span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                                        <span class="text-sm text-gray-600">实时更新中</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mt-4 text-center text-sm text-gray-500">
+                                投票将在 5 分钟后自动截止
+                            </div>
+                        </div>
+                    </div>
+                `,
+                result: '' // poll本身就是实时投票结果，content即result
+            }
+        };
+
+        // 切换资源
+        function switchResource(type) {
+            // 更新当前资源
+            currentResource = type;
+
+            // 同步到学生端
+            localStorage.setItem('teacher_current_resource', type);
+
+            // UI Update
+            document.querySelectorAll('.resource-item').forEach(el => {
+                el.classList.remove('active', 'bg-blue-50', 'border-blue-500');
+                el.classList.add('border-transparent');
+            });
+            event.currentTarget.classList.remove('border-transparent');
+            event.currentTarget.classList.add('active', 'bg-blue-50', 'border-blue-500');
+
+            // Update AI Insight
+            const data = resources[type];
+            const badge = document.getElementById('insight-source-badge');
+            const text = document.getElementById('ai-insight-text');
+
+            badge.innerHTML = `<i data-lucide="${data.icon}" class="w-3 h-3"></i> ${data.source}`;
+            text.innerHTML = data.insight;
+
+            // Re-init icons inside dynamic HTML
+            lucide.createIcons();
+
+            // 更新两个tab的内容
+            const contentArea = document.getElementById('content-display-area');
+            const quizContainer = document.getElementById('quiz-result-container');
+            const dynamicResultContent = document.getElementById('dynamic-result-content');
+
+            // ===== 更新"内容演示"tab =====
+            if(data.content) {
+                contentArea.innerHTML = data.content;
+            } else {
+                contentArea.innerHTML = `
+                    <div class="text-center text-white/80">
+                        <i data-lucide="file" class="w-12 h-12 mx-auto mb-4 opacity-50"></i>
+                        <p>${data.title}</p>
+                    </div>
+                `;
+            }
+
+            // ===== 更新"实时结果"tab =====
+            if(data.type === 'reading') {
+                // 阅读式资源：显示学生统计数据
+                if(data.result) {
+                    quizContainer.style.display = 'none';
+                    dynamicResultContent.style.display = 'block';
+                    dynamicResultContent.innerHTML = data.result;
+                }
+            } else if(data.type === 'interactive-objective') {
+                // 互动式-客观题
+                if(type === 'quiz') {
+                    // quiz 使用原有的图表展示
+                    quizContainer.style.display = 'flex';
+                    dynamicResultContent.style.display = 'none';
+                    initChart();
+                } else if(data.result) {
+                    // 其他客观题（matching, poll等）使用result内容
+                    quizContainer.style.display = 'none';
+                    dynamicResultContent.style.display = 'block';
+                    dynamicResultContent.innerHTML = data.result;
+                } else {
+                    // 如果没有result，显示content（如virtuallab, assignment, poll本身就是结果页）
+                    quizContainer.style.display = 'none';
+                    dynamicResultContent.style.display = 'block';
+                    dynamicResultContent.innerHTML = data.content;
+                }
+            } else if(data.type === 'interactive-subjective') {
+                // 互动式-主观题：显示表格+AI总结
+                quizContainer.style.display = 'none';
+                dynamicResultContent.style.display = 'block';
+                dynamicResultContent.innerHTML = data.result;
+            }
+
+            // 默认切换到"内容演示"tab
+            switchTab('content');
+
+            // 根据资源类型更新操作按钮
+            updateActionButton(type);
+
+            lucide.createIcons();
+        }
+
+        // 更新操作按钮
+        function updateActionButton(type) {
+            const actionBtn = document.getElementById('action-btn');
+            const actionText = document.getElementById('action-text');
+            const actionStatus = document.getElementById('action-status');
+
+            const actionConfig = {
+                'video': {
+                    text: '同步给学生',
+                    icon: 'cast',
+                    status: '预览模式',
+                    color: 'bg-blue-600 hover:bg-blue-700'
+                },
+                'ppt': {
+                    text: '同步当前页',
+                    icon: 'cast',
+                    status: '第 5 / 12 页',
+                    color: 'bg-blue-600 hover:bg-blue-700'
+                },
+                'ai-avatar': {
+                    text: '推送数字人',
+                    icon: 'send',
+                    status: '待推送',
+                    color: 'bg-indigo-600 hover:bg-indigo-700'
+                },
+                'matching': {
+                    text: '开始匹配题',
+                    icon: 'play',
+                    status: '准备就绪',
+                    color: 'bg-pink-600 hover:bg-pink-700'
+                },
+                'openended': {
+                    text: '推送问答题',
+                    icon: 'send',
+                    status: '准备就绪',
+                    color: 'bg-blue-600 hover:bg-blue-700'
+                },
+                'virtuallab': {
+                    text: '启动虚拟实验',
+                    icon: 'rocket',
+                    status: '等待启动',
+                    color: 'bg-cyan-600 hover:bg-cyan-700'
+                },
+                'assignment': {
+                    text: '发布作业',
+                    icon: 'upload',
+                    status: '16 人已提交',
+                    color: 'bg-amber-600 hover:bg-amber-700'
+                },
+                'poll': {
+                    text: '开始投票',
+                    icon: 'bar-chart',
+                    status: '28 人投票中',
+                    color: 'bg-teal-600 hover:bg-teal-700'
+                }
+            };
+
+            const config = actionConfig[type] || actionConfig['video'];
+
+            actionStatus.textContent = config.status;
+            actionText.textContent = config.text;
+            actionBtn.className = `${config.color} text-white px-5 py-1.5 rounded-lg text-sm font-medium flex items-center gap-2 shadow-sm transition-all active:scale-95`;
+
+            const icon = actionBtn.querySelector('i');
+            icon.setAttribute('data-lucide', config.icon);
+            lucide.createIcons();
+        }
+
+        // 处理资源操作
+        function handleResourceAction() {
+            const messages = {
+                'video': '📹 视频已同步给所有学生',
+                'ppt': '📊 课件第5页已同步给所有学生',
+                'ai-avatar': '🤖 水博士数字人已推送给所有学生',
+                'matching': '🎯 匹配题已发送，学生可以开始作答',
+                'openended': '✍️ 问答题已推送给所有学生',
+                'virtuallab': '🧪 虚拟实验室已为所有学生开启',
+                'assignment': '📝 作业已发布，截止时间：24小时后',
+                'poll': '📊 投票已开始，实时收集中...'
+            };
+
+            const message = messages[currentResource] || '✅ 操作已完成';
+            showToast(message);
+
+            // 同步到学生端
+            if(currentResource === 'quiz' || currentResource === 'matching' || currentResource === 'openended' || currentResource === 'poll') {
+                // 互动类型需要特殊处理
+                pushToStudents();
+            } else {
+                localStorage.setItem('teacher_action', JSON.stringify({
+                    type: currentResource,
+                    timestamp: Date.now()
+                }));
+            }
+        }
+
+        // 底部 Dock 功能：锁定
+        function toggleLock(btn) {
+            isLocked = !isLocked;
+            const icon = btn.querySelector('svg');
+            const bg = btn.querySelector('div');
+
+            // 同步到学生端
+            localStorage.setItem('teacher_lock_screen', isLocked.toString());
+
+            if(isLocked) {
+                bg.classList.remove('bg-gray-700', 'group-hover:bg-red-500');
+                bg.classList.add('bg-red-600');
+                btn.innerHTML = `<div class="w-10 h-10 rounded-full bg-red-600 flex items-center justify-center"><i data-lucide="lock" class="w-5 h-5"></i></div><span class="text-[10px] text-gray-300 font-medium">已锁定</span>`;
+                showToast("🔒 全员屏幕已锁定");
+            } else {
+                btn.innerHTML = `<div class="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center group-hover:bg-red-500 transition-colors"><i data-lucide="unlock" class="w-5 h-5"></i></div><span class="text-[10px] text-gray-300 font-medium">屏幕锁定</span>`;
+                showToast("🔓 已解锁");
+            }
+            lucide.createIcons();
+        }
+
+        // 底部 Dock 功能：AI 开关
+        function toggleAI() {
+            isAiOn = !isAiOn;
+            const bg = document.getElementById('dock-ai-bg');
+            const badge = document.getElementById('dock-ai-badge');
+            const headerText = document.getElementById('header-ai-text');
+
+            // 同步到学生端
+            localStorage.setItem('teacher_ai_enabled', isAiOn.toString());
+            localStorage.setItem('teacher_ai_persona', currentPersona);
+
+            if(isAiOn) {
+                bg.className = "w-10 h-10 rounded-full bg-green-600 flex items-center justify-center transition-colors";
+                badge.innerText = "ON";
+                badge.className = "absolute -top-1 -right-1 w-4 h-4 bg-white text-green-600 rounded-full text-[10px] font-bold flex items-center justify-center border border-green-600";
+
+                // 根据当前人格显示不同文本
+                const personaName = currentPersona === 'socratic' ? '苏格拉底' : '百科';
+                headerText.innerHTML = `<i data-lucide="sparkles" class="w-3 h-3"></i> 已激活 (${personaName})`;
+                headerText.className = "text-sm font-bold text-green-600 flex items-center gap-1";
+                showToast("✨ 学生端 AI 已开启");
+            } else {
+                bg.className = "w-10 h-10 rounded-full bg-gray-600 flex items-center justify-center transition-colors";
+                badge.innerText = "OFF";
+                badge.className = "absolute -top-1 -right-1 w-4 h-4 bg-gray-400 text-white rounded-full text-[10px] font-bold flex items-center justify-center border border-gray-500";
+                headerText.innerHTML = `<i data-lucide="sparkles" class="w-3 h-3"></i> 已禁用`;
+                headerText.className = "text-sm font-bold text-gray-400 flex items-center gap-1";
+                showToast("🚫 学生端 AI 已禁用");
+            }
+            lucide.createIcons();
+        }
+
+        // 模式切换 - 控制学生端在跟随模式和自学模式之间切换
+        function toggleMode() {
+            const modeBtn = event.currentTarget;
+            if(currentMode === 'follow') {
+                if(confirm("确定切换到【自学模式】？\n\n学生将获得控制权，可自由浏览资料。AI 助手将进入全功能辅导模式。")) {
+                    currentMode = 'self';
+                    document.getElementById('header-mode-text').innerHTML = `<i data-lucide="compass" class="w-3 h-3"></i> 学生自学模式`;
+                    document.getElementById('header-mode-text').classList.replace('text-blue-600', 'text-orange-500');
+
+                    // 更新 Dock 按钮显示
+                    modeBtn.innerHTML = `
+                        <div class="w-10 h-10 rounded-full bg-orange-600 flex items-center justify-center">
+                            <i data-lucide="compass" class="w-5 h-5"></i>
+                        </div>
+                        <span class="text-[10px] text-gray-300 font-medium">自学模式</span>
+                    `;
+
+                    // 通知学生端切换到自学模式页面
+                    localStorage.setItem('teacher_learning_mode', 'workbench');
+                    localStorage.setItem('teacher_mode_change_timestamp', Date.now().toString());
+
+                    showToast("🚀 已切换至自学模式，学生端正在跳转...");
+                    lucide.createIcons();
+                }
+            } else {
+                currentMode = 'follow';
+                document.getElementById('header-mode-text').innerHTML = `<i data-lucide="users" class="w-3 h-3"></i> 教师跟随模式`;
+                document.getElementById('header-mode-text').classList.replace('text-orange-500', 'text-blue-600');
+
+                // 更新 Dock 按钮显示
+                modeBtn.innerHTML = `
+                    <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center">
+                        <i data-lucide="users" class="w-5 h-5"></i>
+                    </div>
+                    <span class="text-[10px] text-gray-300 font-medium">跟随模式</span>
+                `;
+
+                // 通知学生端切换回跟随模式页面
+                localStorage.setItem('teacher_learning_mode', 'theater');
+                localStorage.setItem('teacher_mode_change_timestamp', Date.now().toString());
+
+                showToast("📢 已收回控制权，学生端正在跳转...");
+                lucide.createIcons();
+            }
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('dock-toast');
+            toast.innerText = msg;
+            toast.style.opacity = '1';
+            toast.style.transform = 'translateY(0)';
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(10px)';
+            }, 2000);
+        }
+
+        // 推送互动内容给学生（测验、问答等）
+        function pushToStudents() {
+            const interactiveData = {
+                type: 'quiz',
+                title: '随堂测验：阶段检查',
+                questions: [
+                    {
+                        id: 1,
+                        question: '水循环的三个主要阶段是什么？',
+                        options: ['A. 蒸发、凝结、降水', 'B. 蒸发、沸腾、降水', 'C. 蒸腾、凝结、径流', 'D. 蒸发、升华、降水'],
+                        correctAnswer: 'A'
+                    },
+                    {
+                        id: 2,
+                        question: '以下哪个不是水循环的驱动力？',
+                        options: ['A. 太阳辐射', 'B. 重力', 'C. 风力', 'D. 月球引力'],
+                        correctAnswer: 'D'
+                    },
+                    {
+                        id: 3,
+                        question: '云的形成主要与哪个过程相关？',
+                        options: ['A. 蒸发', 'B. 凝结', 'C. 降水', 'D. 渗透'],
+                        correctAnswer: 'B'
+                    }
+                ],
+                timestamp: Date.now()
+            };
+
+            // 同步到学生端
+            localStorage.setItem('teacher_push_interactive', JSON.stringify(interactiveData));
+
+            // 显示反馈
+            showToast('📝 测验已推送到所有学生');
+
+            // 模拟学生端响应数据（实际应该从学生端接收）
+            setTimeout(() => {
+                document.getElementById('badge-result').classList.remove('hidden');
+                showToast('✅ 已有学生开始作答');
+            }, 1500);
+        }
+
+        // 选择 Agent (旧函数，保留兼容性)
+        function selectAgent(type) {
+            selectPersona(type);
+        }
+
+        // 切换人格选择菜单
+        function togglePersonaMenu() {
+            const menu = document.getElementById('persona-menu');
+            const isVisible = menu.style.opacity !== '0' && menu.style.opacity !== '';
+
+            if(isVisible) {
+                menu.style.opacity = '0';
+                menu.style.pointerEvents = 'none';
+                menu.style.transform = 'translateY(10px)';
+            } else {
+                menu.style.opacity = '1';
+                menu.style.pointerEvents = 'auto';
+                menu.style.transform = 'translateY(0)';
+            }
+        }
+
+        // 选择 AI 人格
+        function selectPersona(type) {
+            // 更新当前人格并同步到学生端
+            currentPersona = type;
+            localStorage.setItem('teacher_ai_persona', type);
+
+            // 更新菜单中的选中状态
+            const personaItems = ['socratic', 'metacognition', 'wiki'];
+            personaItems.forEach(item => {
+                const el = document.getElementById(`persona-${item}`);
+                if(el) {
+                    if(item === type) {
+                        el.className = "flex items-center gap-3 px-3 py-2.5 rounded-lg bg-indigo-50 border border-indigo-200 cursor-pointer transition-all";
+                    } else {
+                        el.className = "flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 cursor-pointer transition-all";
+                    }
+                }
+            });
+
+            // 更新 Dock 按钮的徽章文字（单字符显示）
+            const personaBadge = document.getElementById('persona-badge');
+            const personaBadgeText = {
+                'socratic': '苏',
+                'metacognition': '元',
+                'wiki': '百'
+            };
+            const personaNames = {
+                'socratic': '苏格拉底',
+                'metacognition': '元认知',
+                'wiki': '百科'
+            };
+            if(personaBadge) {
+                personaBadge.textContent = personaBadgeText[type] || '苏';
+            }
+
+            // 更新头部显示
+            const headerText = document.getElementById('header-ai-text');
+            if(headerText && isAiOn) {
+                headerText.innerHTML = `<i data-lucide="sparkles" class="w-3 h-3"></i> 已激活 (${personaNames[type]})`;
+            }
+
+            // 关闭菜单
+            togglePersonaMenu();
+
+            lucide.createIcons();
+            showToast(`🤖 学生 AI 人格已切换至 ${personaNames[type]}`);
+        }
+
+        // 生成课程随机码
+        function generateCourseCode() {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+            let code = '';
+            for (let i = 0; i < 6; i++) {
+                code += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return code;
+        }
+
+        // 当前课程随机码
+        let currentCourseCode = '';
+
+        // 显示分享链接弹窗
+        function showShareModal() {
+            const modal = document.getElementById('share-modal');
+            modal.classList.remove('hidden', 'pointer-events-none');
+            modal.classList.add('pointer-events-auto');
+
+            // 生成课程随机码
+            currentCourseCode = generateCourseCode();
+            document.getElementById('share-course-code').textContent = currentCourseCode;
+
+            // 直接生成链接
+            updateShareLink();
+
+            // 刷新图标
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+
+            setTimeout(() => {
+                modal.style.opacity = '1';
+                modal.querySelector('.bg-white').style.transform = 'scale(1)';
+            }, 10);
+        }
+
+        // 更新分享链接
+        function updateShareLink() {
+            const classSelect = document.getElementById('share-class');
+            const selectedClass = classSelect.value;
+
+            // 使用云端部署的完整URL
+            const baseUrl = 'https://firstproject0828-3f693lla940029f-1259189743.tcloudbaseapp.com/cocolearn';
+            const shareUrl = `${baseUrl}/LMS-Student-Theater.html?class=${selectedClass}&code=${currentCourseCode}`;
+
+            const linkInput = document.getElementById('share-link-input');
+            linkInput.value = shareUrl;
+        }
+
+        // 复制课程随机码
+        function copyShareCode() {
+            navigator.clipboard.writeText(currentCourseCode).then(() => {
+                showToast('课程随机码已复制', 'success');
+            }).catch(() => {
+                showToast('复制失败', 'error');
+            });
+        }
+
+        // 隐藏分享链接弹窗
+        function hideShareModal() {
+            const modal = document.getElementById('share-modal');
+            modal.style.opacity = '0';
+            modal.querySelector('.bg-white').style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                modal.classList.add('hidden', 'pointer-events-none');
+                modal.classList.remove('pointer-events-auto');
+            }, 200);
+        }
+
+        // 复制分享链接
+        function copyShareLink() {
+            const linkInput = document.getElementById('share-link-input');
+            linkInput.select();
+            document.execCommand('copy');
+
+            showToast("📋 链接已复制到剪贴板");
+        }
+
+        // 显示通知弹窗
+        function showNotifyModal() {
+            const modal = document.getElementById('notify-modal');
+            modal.classList.remove('hidden', 'pointer-events-none');
+            modal.classList.add('pointer-events-auto');
+            setTimeout(() => {
+                modal.style.opacity = '1';
+                modal.querySelector('.bg-white').style.transform = 'scale(1)';
+            }, 10);
+        }
+
+        // 隐藏通知弹窗
+        function hideNotifyModal() {
+            const modal = document.getElementById('notify-modal');
+            modal.style.opacity = '0';
+            modal.querySelector('.bg-white').style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                modal.classList.add('hidden', 'pointer-events-none');
+                modal.classList.remove('pointer-events-auto');
+            }, 200);
+        }
+
+        // 发送通知
+        function sendNotification() {
+            const recipientSelect = document.getElementById('notify-recipient');
+            const typeRadios = document.querySelectorAll('input[name="notify-type"]:checked');
+            const contentTextarea = document.getElementById('notify-content');
+
+            const recipient = recipientSelect.value;
+            const type = typeRadios.length > 0 ? typeRadios[0].value : 'attention';
+            const content = contentTextarea.value.trim();
+
+            if(!content) {
+                alert('请输入通知内容');
+                return;
+            }
+
+            // 模拟发送通知
+            const notifyData = {
+                recipient: recipient,
+                type: type,
+                content: content,
+                timestamp: Date.now()
+            };
+
+            // 同步到学生端
+            localStorage.setItem('teacher_notification', JSON.stringify(notifyData));
+
+            // 显示成功提示
+            const typeNames = {
+                'attention': '⚠️ 注意提醒',
+                'homework': '📝 作业通知',
+                'tips': '💡 学习建议',
+                'praise': '👏 表扬鼓励'
+            };
+            const recipientName = recipient === 'all' ? '全班' : '选定学生';
+
+            showToast(`${typeNames[type]} 已发送给 ${recipientName}`);
+
+            // 清空表单并关闭弹窗
+            contentTextarea.value = '';
+            hideNotifyModal();
+        }
+
+        // Tab 和 图表逻辑保持简化版
+        function switchTab(tab) {
+            const content = document.getElementById('view-content');
+            const result = document.getElementById('view-result');
+            const tabC = document.getElementById('tab-content');
+            const tabR = document.getElementById('tab-result');
+            
+            if(tab === 'content') {
+                content.classList.remove('hidden');
+                result.classList.add('hidden');
+                tabC.classList.add('text-blue-600', 'border-b-2', 'border-blue-600');
+                tabC.classList.remove('text-gray-500');
+                tabR.classList.remove('text-blue-600', 'border-b-2', 'border-blue-600');
+                tabR.classList.add('text-gray-500');
+            } else {
+                content.classList.add('hidden');
+                result.classList.remove('hidden');
+                tabR.classList.add('text-blue-600', 'border-b-2', 'border-blue-600');
+                tabR.classList.remove('text-gray-500');
+                tabC.classList.remove('text-blue-600', 'border-b-2', 'border-blue-600');
+                tabC.classList.add('text-gray-500');
+            }
+        }
+
+        let chartInstance = null;
+        function initChart() {
+            if(chartInstance) return;
+            const ctx = document.getElementById('quizChart').getContext('2d');
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['A', 'B', 'C', 'D'],
+                    datasets: [{
+                        label: '人数',
+                        data: [4, 2, 16, 6],
+                        backgroundColor: '#3b82f6',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { display: false }, x: { grid: { display: false } } }
+                }
+            });
+            // 渲染列表
+            document.getElementById('student-list').innerHTML = `
+                <tr><td class="px-4 py-2">张子轩</td><td class="px-4 py-2 text-green-600">已提交</td></tr>
+                <tr><td class="px-4 py-2">李若彤</td><td class="px-4 py-2 text-blue-500 animate-pulse">答题中...</td></tr>
+            `;
+        }
+
+        // 初始化页面（页面加载时）
+        window.addEventListener('load', () => {
+            localStorage.setItem('teacher_ai_enabled', isAiOn.toString());
+            localStorage.setItem('teacher_ai_persona', currentPersona);
+            localStorage.setItem('teacher_current_resource', 'video');
+            localStorage.setItem('teacher_lock_screen', isLocked.toString());
+
+            // 初始化视频内容显示
+            const contentArea = document.getElementById('content-display-area');
+            const videoData = resources['video'];
+            if(videoData.content) {
+                contentArea.innerHTML = videoData.content;
+            }
+
+            // 初始化操作按钮
+            updateActionButton('video');
+
+            // 添加点击外部关闭人格菜单的事件监听
+            document.addEventListener('click', (e) => {
+                const personaMenu = document.getElementById('persona-menu');
+                const isMenuVisible = personaMenu.style.opacity === '1';
+
+                // 如果菜单是可见的，且点击的不是菜单本身也不是触发按钮
+                if(isMenuVisible && !personaMenu.contains(e.target) && !e.target.closest('[onclick*="togglePersonaMenu"]')) {
+                    personaMenu.style.opacity = '0';
+                    personaMenu.style.pointerEvents = 'none';
+                    personaMenu.style.transform = 'translateY(10px)';
+                }
+            });
+
+            // 添加模态框背景点击关闭事件
+            const shareModal = document.getElementById('share-modal');
+            const notifyModal = document.getElementById('notify-modal');
+
+            if(shareModal) {
+                shareModal.addEventListener('click', (e) => {
+                    if(e.target === shareModal) {
+                        hideShareModal();
+                    }
+                });
+            }
+
+            if(notifyModal) {
+                notifyModal.addEventListener('click', (e) => {
+                    if(e.target === notifyModal) {
+                        hideNotifyModal();
+                    }
+                });
+            }
+
+            lucide.createIcons();
+        });
+    </script>
+
+    <!-- 渲染导航栏 -->
+    <script type="text/babel">
+        const { useState, useRef, useEffect } = React;
+
+        // ===== TeacherNavBar Component (Inline) =====
+        const GraduationCap = ({ className }) => (
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+            <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
+            <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
+          </svg>
+        );
+
+        // 平铺导航配置
+        const navigationItems = [
+          { id: 'admin', label: '管理中心', icon: 'Settings', href: 'Admin-Dashboard.html' },
+          { id: 'teacher', label: '教师中心', icon: 'User', href: 'LMS-Teacher-Home.html' },
+          { id: 'course', label: '课程中心', icon: 'LayoutGrid', href: 'LMS-Teacher-CourseCenter.html' },
+          { id: 'resource', label: '资源库', icon: 'FileText', href: 'PD-Teacher-Resource-Hub.html' },
+          { id: 'workshop', label: '工作坊', icon: 'Clock', href: 'PD-Teacher-Workshop.html' },
+        ];
+
+        // 导航图标组件
+        const NavIcon = ({ name, className }) => {
+          const icons = {
+            Settings: (
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+            ),
+            User: (
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+            ),
+            LayoutGrid: (
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                <rect width="7" height="7" x="3" y="3" rx="1"></rect>
+                <rect width="7" height="7" x="14" y="3" rx="1"></rect>
+                <rect width="7" height="7" x="14" y="14" rx="1"></rect>
+                <rect width="7" height="7" x="3" y="14" rx="1"></rect>
+              </svg>
+            ),
+            FileText: (
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" x2="8" y1="13" y2="13"></line>
+                <line x1="16" x2="8" y1="17" y2="17"></line>
+                <line x1="10" x2="8" y1="9" y2="9"></line>
+              </svg>
+            ),
+            Clock: (
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+            ),
+          };
+          return icons[name] || null;
+        };
+
+        const TeacherNavBar = ({
+          currentPage = 'course',
+          onLogoClick = () => {
+            console.log('Logo clicked - navigate to platform home');
+          }
+        }) => {
+          return (
+            <nav className="h-14 bg-white border-b border-gray-200 sticky top-0 z-50">
+              <div className="h-full max-w-7xl mx-auto px-6 flex items-center justify-between">
+                {/* Logo */}
+                <button
+                  onClick={onLogoClick}
+                  className="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer"
+                >
+                  <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
+                    <GraduationCap className="w-5 h-5 text-white" />
+                  </div>
+                  <span className="font-bold text-gray-900">CocoLearn</span>
+                </button>
+
+                {/* 平铺导航菜单 */}
+                <div className="flex items-center gap-8">
+                  {navigationItems.map((item) => {
+                    const isActive = currentPage === item.id;
+                    return (
+                      <a
+                        key={item.id}
+                        href={item.href}
+                        className={`flex items-center gap-2 py-1 text-sm font-medium transition-colors ${
+                          isActive
+                            ? 'text-indigo-600'
+                            : 'text-gray-500 hover:text-gray-900'
+                        }`}
+                      >
+                        <NavIcon name={item.icon} className={isActive ? 'text-indigo-600' : 'text-gray-400'} />
+                        <span>{item.label}</span>
+                      </a>
+                    );
+                  })}
+                </div>
+
+                {/* 用户信息 */}
+                <div className="flex items-center gap-3">
+                  <div className="text-right">
+                    <p className="text-sm font-medium text-gray-900">Mo老师</p>
+                    <p className="text-xs text-gray-500">AI · 高级教师</p>
+                  </div>
+                  <div className="w-9 h-9 bg-purple-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                    Mo
+                  </div>
+                </div>
+              </div>
+            </nav>
+          );
+        };
+        // ===== End of TeacherNavBar Component =====
+
+        const navbarRoot = ReactDOM.createRoot(document.getElementById('navbar-root'));
+        navbarRoot.render(<TeacherNavBar currentPage="course" />);
+    </script>
+</body>
+</html>
