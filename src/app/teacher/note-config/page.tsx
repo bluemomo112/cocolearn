@@ -292,8 +292,8 @@ export default function NoteConfigPage() {
     return 'edit';
   };
   const [viewPerspective, setViewPerspective] = useState<'edit' | 'use' | 'results'>(getInitialViewPerspective());
-  const [leftWidth, setLeftWidth] = useState(20);
-  const [rightWidth, setRightWidth] = useState(30);
+  const [leftWidth, setLeftWidth] = useState(25);
+  const [rightWidth, setRightWidth] = useState(25);
 
   // 配置数据
   const [config, setConfig] = useState<NoteConfig>({
@@ -356,7 +356,7 @@ export default function NoteConfigPage() {
   // Use视角：学生使用界面预览
   if (viewPerspective === 'use') {
     return (
-      <div className="h-screen flex flex-col bg-slate-50">
+      <div className="h-screen flex flex-col bg-gray-50">
         <UseViewHeader
           config={config}
           onBack={() => setViewPerspective('edit')}
@@ -370,7 +370,7 @@ export default function NoteConfigPage() {
   // Results视角：学习数据统计
   if (viewPerspective === 'results') {
     return (
-      <div className="h-screen flex flex-col bg-slate-100">
+      <div className="h-screen flex flex-col bg-gray-100">
         <ResultsViewHeader
           config={config}
           onBack={() => setViewPerspective('edit')}
@@ -382,32 +382,32 @@ export default function NoteConfigPage() {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-slate-50">
+    <div className="h-screen flex flex-col bg-gray-50">
       {/* 顶部工具栏 - Edit视角 */}
-      <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 shrink-0">
+      <header className="sticky top-0 z-30 h-16 bg-white/80 backdrop-blur-xl border-b border-gray-100 flex items-center justify-between px-6 shrink-0">
         <div>
-          <h1 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+          <h1 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
             笔记配置
-            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">编辑视角</span>
+            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-xl">编辑视角</span>
           </h1>
-          <p className="text-sm text-slate-500">{config.noteInfo.title}</p>
+          <p className="text-sm text-gray-500">{config.noteInfo.title}</p>
         </div>
         <div className="flex items-center gap-3">
           <button
             onClick={() => setViewPerspective('use')}
-            className="flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white text-sm font-medium rounded-xl hover:bg-emerald-600 transition-colors"
           >
             <Eye size={16} />
             使用视角
           </button>
           <button
             onClick={() => setViewPerspective('results')}
-            className="flex items-center gap-2 px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-purple-500 text-white text-sm font-medium rounded-xl hover:bg-purple-600 transition-colors"
           >
             <Activity size={16} />
             结果视角
           </button>
-          <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+          <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 transition-colors">
             <Save size={16} />
             保存配置
           </button>
@@ -430,7 +430,7 @@ export default function NoteConfigPage() {
         <Resizer
           position="left"
           onResize={(delta) => {
-            const newLeftWidth = Math.max(15, Math.min(40, leftWidth + delta));
+            const newLeftWidth = Math.max(18, Math.min(35, leftWidth + delta));
             setLeftWidth(newLeftWidth);
           }}
         />
@@ -450,13 +450,19 @@ export default function NoteConfigPage() {
         <Resizer
           position="right"
           onResize={(delta) => {
-            const newRightWidth = Math.max(15, Math.min(40, rightWidth - delta));
+            const newRightWidth = Math.max(18, Math.min(35, rightWidth - delta));
             setRightWidth(newRightWidth);
           }}
         />
 
-        {/* 右侧：帮助和说明 */}
-        <RightPanel width={rightWidth} />
+        {/* 右侧：学习工作室 */}
+        <RightPanel
+          width={rightWidth}
+          config={config}
+          setConfig={setConfig}
+          onOpenNotesConfig={() => setActiveModal('notes')}
+          onOpenMetaConfig={() => setActiveModal('meta')}
+        />
       </div>
 
       {/* 模态框 */}
@@ -623,11 +629,11 @@ function LeftPanel({ config, setConfig, onResourceClick, onTaskClick, onOpenLibr
   };
 
   return (
-    <div style={{ width: `${width}%` }} className="bg-white border-r border-slate-200 flex flex-col flex-shrink-0">
+    <div style={{ width: `${width}%` }} className="bg-white border-r border-gray-200 flex flex-col flex-shrink-0">
       {/* 资源列表 */}
-      <div className="p-4 border-b border-slate-100">
+      <div className="p-4 border-b border-gray-100">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="font-bold text-slate-700 flex items-center gap-2">
+          <h3 className="font-bold text-gray-700 flex items-center gap-2">
             <FolderOpen size={16} className="text-blue-500" />
             学习资源
           </h3>
@@ -647,12 +653,12 @@ function LeftPanel({ config, setConfig, onResourceClick, onTaskClick, onOpenLibr
               onDragOver={(e) => handleResourceDragOver(e, index)}
               onDragEnd={handleResourceDragEnd}
               onClick={() => onResourceClick(resource)}
-              className={`flex items-center gap-3 p-2 bg-slate-50 rounded-lg hover:bg-blue-50 cursor-move transition-all group ${
+              className={`flex items-center gap-3 p-2 bg-gray-50 rounded-xl hover:bg-blue-50 cursor-move transition-all group ${
                 draggedResourceIndex === index ? 'opacity-50 scale-95' : ''
               }`}
             >
               <div className="cursor-grab active:cursor-grabbing p-1 flex-shrink-0">
-                <GripVertical size={14} className="text-slate-400" />
+                <GripVertical size={14} className="text-gray-400" />
               </div>
               <div className={`w-10 h-10 rounded-lg bg-${resource.color}-100 flex items-center justify-center flex-shrink-0`}>
                 {resource.type === 'video' && <Video size={16} className={`text-${resource.color}-600`} />}
@@ -661,8 +667,8 @@ function LeftPanel({ config, setConfig, onResourceClick, onTaskClick, onOpenLibr
                 {resource.type === 'web' && <Globe size={16} className={`text-${resource.color}-600`} />}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-slate-700 truncate">{resource.title}</p>
-                <p className="text-xs text-slate-400">{resource.duration || `${resource.pages}页`}</p>
+                <p className="text-sm font-medium text-gray-700 truncate">{resource.title}</p>
+                <p className="text-xs text-gray-400">{resource.duration || `${resource.pages}页`}</p>
               </div>
               <button
                 onClick={(e) => {
@@ -684,7 +690,7 @@ function LeftPanel({ config, setConfig, onResourceClick, onTaskClick, onOpenLibr
       {/* 任务列表 */}
       <div className="p-4 flex-1 overflow-y-auto">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="font-bold text-slate-700 flex items-center gap-2">
+          <h3 className="font-bold text-gray-700 flex items-center gap-2">
             <ListChecks size={16} className="text-amber-500" />
             学习任务
           </h3>
@@ -698,25 +704,25 @@ function LeftPanel({ config, setConfig, onResourceClick, onTaskClick, onOpenLibr
               onDragOver={(e) => handleTaskDragOver(e, index)}
               onDragEnd={handleTaskDragEnd}
               onClick={() => onTaskClick(task)}
-              className={`flex items-center gap-2 p-3 bg-slate-50 rounded-lg hover:bg-amber-50 cursor-move transition-all group ${
+              className={`flex items-center gap-2 p-3 bg-gray-50 rounded-xl hover:bg-amber-50 cursor-move transition-all group ${
                 draggedTaskIndex === index ? 'opacity-50 scale-95' : ''
               }`}
             >
               <div className="cursor-grab active:cursor-grabbing p-1 flex-shrink-0">
-                <GripVertical size={14} className="text-slate-400" />
+                <GripVertical size={14} className="text-gray-400" />
               </div>
               <div className={`w-8 h-8 rounded flex items-center justify-center flex-shrink-0 ${
-                task.status === 'required' ? 'bg-red-100' : 'bg-slate-100'
+                task.status === 'required' ? 'bg-red-100' : 'bg-gray-100'
               }`}>
                 {task.type === 'quiz' ? (
-                  <Zap size={14} className={task.status === 'required' ? 'text-red-600' : 'text-slate-500'} />
+                  <Zap size={14} className={task.status === 'required' ? 'text-red-600' : 'text-gray-500'} />
                 ) : (
-                  <FileEdit size={14} className={task.status === 'required' ? 'text-red-600' : 'text-slate-500'} />
+                  <FileEdit size={14} className={task.status === 'required' ? 'text-red-600' : 'text-gray-500'} />
                 )}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-slate-700 truncate">{task.title}</p>
-                <p className="text-xs text-slate-400">{task.type === 'quiz' ? '测验' : '作业'}</p>
+                <p className="text-sm font-medium text-gray-700 truncate">{task.title}</p>
+                <p className="text-xs text-gray-400">{task.type === 'quiz' ? '测验' : '作业'}</p>
               </div>
               {task.status === 'required' && (
                 <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded">必修</span>
@@ -740,14 +746,14 @@ function LeftPanel({ config, setConfig, onResourceClick, onTaskClick, onOpenLibr
         <div className="grid grid-cols-2 gap-2">
           <button
             onClick={() => addTask('quiz')}
-            className="py-2 border border-dashed border-green-300 rounded-lg text-green-600 hover:bg-green-50 text-xs flex items-center justify-center gap-1"
+            className="py-2 border border-dashed border-green-300 rounded-xl text-green-600 hover:bg-green-50 text-xs flex items-center justify-center gap-1 transition-colors"
           >
             <Plus size={12} />
             添加测验
           </button>
           <button
             onClick={() => addTask('assignment')}
-            className="py-2 border border-dashed border-blue-300 rounded-lg text-blue-600 hover:bg-blue-50 text-xs flex items-center justify-center gap-1"
+            className="py-2 border border-dashed border-blue-300 rounded-xl text-blue-600 hover:bg-blue-50 text-xs flex items-center justify-center gap-1 transition-colors"
           >
             <Plus size={12} />
             添加作业
@@ -772,11 +778,11 @@ function CenterPanel({
     <div className="flex-1 overflow-y-auto p-6">
       <div className="max-w-3xl mx-auto space-y-6">
         {/* 基本信息 */}
-        <section className="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
-          <h2 className="text-lg font-bold text-slate-800 mb-4">基本信息</h2>
+        <section className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+          <h2 className="text-lg font-bold text-gray-800 mb-4">基本信息</h2>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">笔记标题</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">笔记标题</label>
               <input
                 type="text"
                 value={config.noteInfo.title}
@@ -786,11 +792,11 @@ function CenterPanel({
                     noteInfo: { ...config.noteInfo, title: e.target.value },
                   })
                 }
-                className="w-full bg-slate-50 border border-slate-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">描述</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">描述</label>
               <textarea
                 value={config.noteInfo.description}
                 onChange={(e) =>
@@ -799,7 +805,7 @@ function CenterPanel({
                     noteInfo: { ...config.noteInfo, description: e.target.value },
                   })
                 }
-                className="w-full bg-slate-50 border border-slate-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none resize-none"
+                className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none resize-none transition-all"
                 rows={3}
               />
             </div>
@@ -809,10 +815,10 @@ function CenterPanel({
               config.noteInfo.grade ||
               config.noteInfo.bindClasses?.length > 0 ||
               config.noteInfo.knowledgePoints?.length > 0) && (
-              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-200 space-y-2">
+              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-200 space-y-2">
                 {config.noteInfo.subjects?.length > 0 && (
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-xs font-medium text-slate-600">学科:</span>
+                    <span className="text-xs font-medium text-gray-600">学科:</span>
                     {config.noteInfo.subjects.map((subject: string) => (
                       <span
                         key={subject}
@@ -825,7 +831,7 @@ function CenterPanel({
                 )}
                 {config.noteInfo.grade && (
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-slate-600">年级:</span>
+                    <span className="text-xs font-medium text-gray-600">年级:</span>
                     <span className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded text-xs font-medium">
                       {config.noteInfo.grade}
                     </span>
@@ -833,7 +839,7 @@ function CenterPanel({
                 )}
                 {config.noteInfo.bindClasses?.length > 0 && (
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-xs font-medium text-slate-600">班级:</span>
+                    <span className="text-xs font-medium text-gray-600">班级:</span>
                     {config.noteInfo.bindClasses.map((cls: string) => (
                       <span
                         key={cls}
@@ -846,7 +852,7 @@ function CenterPanel({
                 )}
                 {config.noteInfo.knowledgePoints?.length > 0 && (
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-slate-600">知识点:</span>
+                    <span className="text-xs font-medium text-gray-600">知识点:</span>
                     <span className="px-2 py-1 bg-amber-100 text-amber-700 rounded text-xs font-medium">
                       已配置 {config.noteInfo.knowledgePoints.length} 个
                     </span>
@@ -857,7 +863,7 @@ function CenterPanel({
 
             <button
               onClick={onOpenNoteInfo}
-              className="w-full bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 border-2 border-blue-200 rounded-lg px-4 py-3 text-sm font-medium text-blue-700 transition-all flex items-center justify-center gap-2"
+              className="w-full bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 border-2 border-blue-200 rounded-xl px-4 py-3 text-sm font-medium text-blue-700 transition-all flex items-center justify-center gap-2"
             >
               <Settings size={16} />
               高级配置（学科、年级、知识点）
@@ -866,25 +872,25 @@ function CenterPanel({
         </section>
 
         {/* 交互策略 */}
-        <section className="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
-          <h2 className="text-lg font-bold text-slate-800 mb-4">交互策略</h2>
+        <section className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+          <h2 className="text-lg font-bold text-gray-800 mb-4">交互策略</h2>
           <div className="grid grid-cols-2 gap-4">
             <button
               onClick={() => {
                 setConfig({ ...config, interactionMode: 'free' });
                 onOpenFreeConfig();
               }}
-              className={`p-6 rounded-xl border-2 transition-all ${
+              className={`p-6 rounded-2xl border-2 transition-all ${
                 config.interactionMode === 'free'
                   ? 'border-blue-500 bg-blue-50'
-                  : 'border-slate-200 hover:border-blue-300'
+                  : 'border-gray-200 hover:border-blue-300'
               }`}
             >
-              <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center mx-auto mb-3">
+              <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center mx-auto mb-3">
                 <MessageCircle size={24} className="text-blue-600" />
               </div>
-              <h3 className="font-bold text-slate-800 mb-2">自由对话</h3>
-              <p className="text-xs text-slate-500">学生可自由提问，AI灵活回答</p>
+              <h3 className="font-bold text-gray-800 mb-2">自由对话</h3>
+              <p className="text-xs text-gray-500">学生可自由提问，AI灵活回答</p>
               <div className="mt-4">
                 <button
                   onClick={(e) => {
@@ -904,17 +910,17 @@ function CenterPanel({
                 setConfig({ ...config, interactionMode: 'guided' });
                 onOpenGuidedConfig();
               }}
-              className={`p-6 rounded-xl border-2 transition-all ${
+              className={`p-6 rounded-2xl border-2 transition-all ${
                 config.interactionMode === 'guided'
                   ? 'border-emerald-500 bg-emerald-50'
-                  : 'border-slate-200 hover:border-emerald-300'
+                  : 'border-gray-200 hover:border-emerald-300'
               }`}
             >
-              <div className="w-12 h-12 rounded-lg bg-emerald-100 flex items-center justify-center mx-auto mb-3">
+              <div className="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center mx-auto mb-3">
                 <GitBranch size={24} className="text-emerald-600" />
               </div>
-              <h3 className="font-bold text-slate-800 mb-2">引导学习</h3>
-              <p className="text-xs text-slate-500">按教学法流程逐步引导</p>
+              <h3 className="font-bold text-gray-800 mb-2">引导学习</h3>
+              <p className="text-xs text-gray-500">按教学法流程逐步引导</p>
               <div className="mt-4">
                 <button
                   onClick={(e) => {
@@ -930,97 +936,132 @@ function CenterPanel({
             </button>
           </div>
         </section>
-
-        {/* 产出与监控 */}
-        <section className="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
-          <h2 className="text-lg font-bold text-slate-800 mb-4">产出与监控</h2>
-          <div className="grid grid-cols-2 gap-4">
-            <button
-              onClick={onOpenNotesConfig}
-              className="p-4 rounded-xl border-2 border-slate-200 hover:border-blue-300 transition-all text-left"
-            >
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                  <FileEdit size={18} className="text-blue-600" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-bold text-slate-800 mb-1">笔记配置</h3>
-                  <p className="text-xs text-slate-500 mb-2">
-                    当前模板: {NOTE_TEMPLATES.find((t) => t.id === config.outputConfig.noteTemplate)?.name}
-                  </p>
-                  <span className="text-xs text-blue-600 flex items-center gap-1">
-                    <Settings size={10} />
-                    修改
-                  </span>
-                </div>
-              </div>
-            </button>
-
-            <button
-              onClick={onOpenMetaConfig}
-              className="p-4 rounded-xl border-2 border-slate-200 hover:border-purple-300 transition-all text-left"
-            >
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
-                  <Activity size={18} className="text-purple-600" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-bold text-slate-800 mb-1">学情监控</h3>
-                  <p className="text-xs text-slate-500 mb-2">
-                    当前策略: {META_STRATEGIES.find((s) => s.id === config.outputConfig.metacognitionStrategy)?.name}
-                  </p>
-                  <span className="text-xs text-purple-600 flex items-center gap-1">
-                    <Settings size={10} />
-                    修改
-                  </span>
-                </div>
-              </div>
-            </button>
-          </div>
-        </section>
       </div>
     </div>
   );
 }
 
-// 右侧帮助面板
-function RightPanel({ width }: any) {
+// 右侧面板 - 学习工作室
+function RightPanel({ width, config, setConfig, onOpenNotesConfig, onOpenMetaConfig }: any) {
   return (
-    <div style={{ width: `${width}%` }} className="bg-gradient-to-br from-slate-50 to-blue-50 border-l border-slate-200 p-6 overflow-y-auto flex-shrink-0">
-      <div className="space-y-6">
-        <div>
-          <h3 className="font-bold text-slate-800 mb-3 flex items-center gap-2">
-            <Info size={16} className="text-blue-500" />
-            配置指南
+    <div style={{ width: `${width}%` }} className="bg-white border-l border-gray-200 flex flex-col flex-shrink-0">
+      <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-emerald-50 to-teal-50">
+        <h2 className="font-bold text-gray-700 flex items-center gap-2">
+          <Layout size={18} className="text-emerald-600" />
+          学习工作室
+        </h2>
+        <p className="text-xs text-gray-500 mt-1">笔记模板 & 学情监控</p>
+      </div>
+
+      <div className="flex-1 overflow-y-auto">
+        {/* 笔记模板配置 */}
+        <div className="p-4 border-b border-gray-100">
+          <h3 className="text-sm font-bold text-gray-600 flex items-center gap-2 mb-3">
+            <FileEdit size={14} className="text-blue-500" />
+            笔记模板
           </h3>
-          <div className="space-y-3 text-sm text-slate-600">
-            <div className="p-3 bg-white rounded-lg border border-blue-100">
-              <p className="font-medium text-blue-700 mb-1">1. 添加学习资源</p>
-              <p className="text-xs text-slate-500">从资源库选择视频、文档等材料</p>
+
+          <div className="flex items-center gap-2 mb-3">
+            <select
+              value={config.outputConfig.noteTemplate}
+              onChange={(e) =>
+                setConfig({
+                  ...config,
+                  outputConfig: { ...config.outputConfig, noteTemplate: e.target.value },
+                })
+              }
+              className="flex-1 px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {NOTE_TEMPLATES.map((template) => (
+                <option key={template.id} value={template.id}>
+                  {template.name}
+                </option>
+              ))}
+            </select>
+            <button
+              onClick={onOpenNotesConfig}
+              className="p-2 bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white rounded-lg transition-colors"
+              title="模板设置"
+            >
+              <Settings size={16} />
+            </button>
+          </div>
+
+          {NOTE_TEMPLATES.find((t) => t.id === config.outputConfig.noteTemplate)?.structure.length > 0 && (
+            <div className="flex flex-wrap gap-1 mb-3">
+              {NOTE_TEMPLATES.find((t) => t.id === config.outputConfig.noteTemplate)?.structure.map((s: string, i: number) => (
+                <span key={i} className="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded border border-blue-200">
+                  {s}
+                </span>
+              ))}
             </div>
-            <div className="p-3 bg-white rounded-lg border border-blue-100">
-              <p className="font-medium text-blue-700 mb-1">2. 配置交互策略</p>
-              <p className="text-xs text-slate-500">选择自由对话或引导学习模式</p>
+          )}
+
+          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+            <div className="flex items-center gap-2">
+              <Send size={12} className="text-gray-500" />
+              <span className="text-xs text-gray-600">启用一键提交给老师</span>
             </div>
-            <div className="p-3 bg-white rounded-lg border border-blue-100">
-              <p className="font-medium text-blue-700 mb-1">3. 设置任务</p>
-              <p className="text-xs text-slate-500">添加测验或作业任务</p>
-            </div>
-            <div className="p-3 bg-white rounded-lg border border-blue-100">
-              <p className="font-medium text-blue-700 mb-1">4. 预览效果</p>
-              <p className="text-xs text-slate-500">点击"学生预览"查看学生端界面</p>
-            </div>
+            <button
+              onClick={() =>
+                setConfig({
+                  ...config,
+                  outputConfig: { ...config.outputConfig, enableSubmit: !config.outputConfig.enableSubmit },
+                })
+              }
+              className={`w-10 h-5 rounded-full transition-colors relative ${
+                config.outputConfig.enableSubmit ? 'bg-blue-600' : 'bg-gray-300'
+              }`}
+            >
+              <div
+                className={`w-4 h-4 bg-white rounded-full shadow transition-transform absolute top-0.5 ${
+                  config.outputConfig.enableSubmit ? 'translate-x-5' : 'translate-x-0.5'
+                }`}
+              />
+            </button>
           </div>
         </div>
 
-        <div className="p-4 bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl border border-amber-200">
-          <div className="flex items-start gap-2 mb-2">
-            <Lightbulb size={16} className="text-amber-600 mt-0.5" />
-            <p className="text-sm font-bold text-amber-800">小提示</p>
+        {/* 学情监控配置 */}
+        <div className="p-4">
+          <h3 className="text-sm font-bold text-gray-600 flex items-center gap-2 mb-3">
+            <Activity size={14} className="text-purple-500" />
+            学情监控
+          </h3>
+
+          <div className="flex items-center gap-2 mb-3">
+            <select
+              value={config.outputConfig.metacognitionStrategy}
+              onChange={(e) =>
+                setConfig({
+                  ...config,
+                  outputConfig: { ...config.outputConfig, metacognitionStrategy: e.target.value },
+                })
+              }
+              className="flex-1 px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+            >
+              {META_STRATEGIES.map((strategy) => (
+                <option key={strategy.id} value={strategy.id}>
+                  {strategy.name}
+                </option>
+              ))}
+            </select>
+            <button
+              onClick={onOpenMetaConfig}
+              className="p-2 bg-gray-100 text-gray-600 hover:bg-purple-600 hover:text-white rounded-lg transition-colors"
+              title="监控设置"
+            >
+              <Settings size={16} />
+            </button>
           </div>
-          <p className="text-xs text-amber-700 leading-relaxed">
-            建议为每个笔记配置2-3个核心资源，1-2个必修任务，这样能保证学习效果又不会让学生感到负担过重。
-          </p>
+
+          {META_STRATEGIES.find((s) => s.id === config.outputConfig.metacognitionStrategy) && (
+            <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
+              <p className="text-xs text-purple-700">
+                {META_STRATEGIES.find((s) => s.id === config.outputConfig.metacognitionStrategy)?.description}
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -1043,7 +1084,7 @@ function ResourceLibraryModal({ onSelect, onClose }: any) {
           </h2>
         </div>
 
-        <div className="px-5 py-3 border-b border-slate-200 flex gap-2">
+        <div className="px-5 py-3 border-b border-gray-200 flex gap-2">
           {Object.keys(RESOURCE_LIBRARY).map((category) => (
             <button
               key={category}
@@ -1051,7 +1092,7 @@ function ResourceLibraryModal({ onSelect, onClose }: any) {
               className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
                 selectedCategory === category
                   ? 'bg-emerald-600 text-white'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
             >
               {category}
@@ -1068,7 +1109,7 @@ function ResourceLibraryModal({ onSelect, onClose }: any) {
                   onSelect(item);
                   onClose();
                 }}
-                className="p-4 bg-slate-50 rounded-xl border border-slate-200 hover:border-emerald-400 hover:bg-emerald-50 cursor-pointer transition-all"
+                className="p-4 bg-gray-50 rounded-xl border border-gray-200 hover:border-emerald-400 hover:bg-emerald-50 cursor-pointer transition-all"
               >
                 <div className="flex items-start gap-3">
                   <div className={`w-12 h-12 rounded-xl bg-${item.color}-100 flex items-center justify-center`}>
@@ -1078,8 +1119,8 @@ function ResourceLibraryModal({ onSelect, onClose }: any) {
                     {item.type === 'web' && <Globe size={20} className={`text-${item.color}-600`} />}
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-slate-700">{item.title}</p>
-                    <p className="text-xs text-slate-500 mt-0.5">{item.description}</p>
+                    <p className="text-sm font-medium text-gray-700">{item.title}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">{item.description}</p>
                   </div>
                 </div>
               </div>
@@ -1087,8 +1128,8 @@ function ResourceLibraryModal({ onSelect, onClose }: any) {
           </div>
         </div>
 
-        <div className="p-4 border-t border-slate-200 flex justify-end">
-          <button onClick={onClose} className="px-4 py-2 text-slate-600 hover:text-slate-800">
+        <div className="p-4 border-t border-gray-200 flex justify-end">
+          <button onClick={onClose} className="px-4 py-2 text-gray-600 hover:text-gray-800">
             关闭
           </button>
         </div>

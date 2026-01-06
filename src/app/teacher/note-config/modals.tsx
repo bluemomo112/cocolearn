@@ -78,7 +78,7 @@ export function Resizer({ onResize, position }: { onResize: (delta: number) => v
   return (
     <div
       onMouseDown={handleMouseDown}
-      className="w-1 bg-slate-200 hover:bg-blue-400 cursor-col-resize transition-colors relative group flex-shrink-0"
+      className="w-1 bg-gray-200 hover:bg-blue-400 cursor-col-resize transition-colors relative group flex-shrink-0"
     >
       <div className="absolute inset-y-0 -left-1 -right-1 flex items-center justify-center">
         <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-blue-500 text-white rounded-full p-1">
@@ -161,21 +161,21 @@ export function NoteInfoModal({ config, onSave, onClose, knowledgeLibrary, grade
             {/* 标题和描述 */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">笔记标题 *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">笔记标题 *</label>
                 <input
                   type="text"
                   value={localConfig.title}
                   onChange={(e) => setLocalConfig({ ...localConfig, title: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
                   placeholder="例如：水循环与水资源"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">年级</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">年级</label>
                 <select
                   value={localConfig.grade}
                   onChange={(e) => setLocalConfig({ ...localConfig, grade: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
                 >
                   <option value="">请选择年级</option>
                   {grades.map((grade: string) => (
@@ -186,11 +186,11 @@ export function NoteInfoModal({ config, onSave, onClose, knowledgeLibrary, grade
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">描述</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">描述</label>
               <textarea
                 value={localConfig.description}
                 onChange={(e) => setLocalConfig({ ...localConfig, description: e.target.value })}
-                className="w-full bg-slate-50 border border-slate-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none resize-none"
+                className="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none resize-none"
                 rows={3}
                 placeholder="简要描述本笔记的学习目标和内容"
               />
@@ -198,7 +198,7 @@ export function NoteInfoModal({ config, onSave, onClose, knowledgeLibrary, grade
 
             {/* 跨学科选择 */}
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2 flex items-center gap-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
                 <Network size={16} className="text-blue-500" />
                 涉及学科（可多选）
               </label>
@@ -210,7 +210,7 @@ export function NoteInfoModal({ config, onSave, onClose, knowledgeLibrary, grade
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                       localConfig.subjects.includes(subject)
                         ? 'bg-blue-500 text-white'
-                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                     }`}
                   >
                     {subject}
@@ -221,7 +221,7 @@ export function NoteInfoModal({ config, onSave, onClose, knowledgeLibrary, grade
 
             {/* 绑定班级 */}
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2 flex items-center gap-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
                 <Users size={16} className="text-emerald-500" />
                 绑定班级（可多选）
               </label>
@@ -233,7 +233,7 @@ export function NoteInfoModal({ config, onSave, onClose, knowledgeLibrary, grade
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                       localConfig.bindClasses.includes(className)
                         ? 'bg-emerald-500 text-white'
-                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                     }`}
                   >
                     {className}
@@ -245,7 +245,7 @@ export function NoteInfoModal({ config, onSave, onClose, knowledgeLibrary, grade
             {/* 知识点配置 */}
             <div>
               <div className="flex items-center justify-between mb-3">
-                <label className="text-sm font-medium text-slate-700 flex items-center gap-2">
+                <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
                   <Target size={16} className="text-purple-500" />
                   核心知识点
                 </label>
@@ -269,7 +269,7 @@ export function NoteInfoModal({ config, onSave, onClose, knowledgeLibrary, grade
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
                         <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded">{kp.subject}</span>
-                        <span className="text-sm font-medium text-slate-800">{kp.point}</span>
+                        <span className="text-sm font-medium text-gray-800">{kp.point}</span>
                         {kp.difficulty && (
                           <span className={`text-xs px-2 py-0.5 rounded ${
                             kp.difficulty === '基础' ? 'bg-green-100 text-green-700' :
@@ -279,7 +279,7 @@ export function NoteInfoModal({ config, onSave, onClose, knowledgeLibrary, grade
                             {kp.difficulty}
                           </span>
                         )}
-                        <span className="text-xs text-slate-400">
+                        <span className="text-xs text-gray-400">
                           {kp.source === 'library' ? '来自知识库' : '自定义'}
                         </span>
                       </div>
@@ -293,7 +293,7 @@ export function NoteInfoModal({ config, onSave, onClose, knowledgeLibrary, grade
                   </div>
                 ))}
                 {localConfig.knowledgePoints.length === 0 && (
-                  <p className="text-sm text-slate-400 text-center py-4">暂未添加知识点</p>
+                  <p className="text-sm text-gray-400 text-center py-4">暂未添加知识点</p>
                 )}
               </div>
 
@@ -301,11 +301,11 @@ export function NoteInfoModal({ config, onSave, onClose, knowledgeLibrary, grade
               {showKnowledgeLibrary && (
                 <div className="border-2 border-purple-200 rounded-xl p-4 bg-purple-50/50">
                   <div className="flex items-center gap-2 mb-3">
-                    <label className="text-sm font-medium text-slate-700">选择学科：</label>
+                    <label className="text-sm font-medium text-gray-700">选择学科：</label>
                     <select
                       value={selectedSubjectForKP}
                       onChange={(e) => setSelectedSubjectForKP(e.target.value)}
-                      className="bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-purple-500 outline-none"
+                      className="bg-white border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-purple-500 outline-none"
                     >
                       <option value="">全部学科</option>
                       {localConfig.subjects.map((subject: string) => (
@@ -332,8 +332,8 @@ export function NoteInfoModal({ config, onSave, onClose, knowledgeLibrary, grade
                             disabled={localConfig.knowledgePoints.some((item: any) => item.id === kp.id)}
                             className="w-full text-left flex items-center gap-3 p-2 bg-white rounded-lg hover:bg-purple-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                           >
-                            <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded">{subject}</span>
-                            <span className="text-sm text-slate-700 flex-1">{kp.point}</span>
+                            <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">{subject}</span>
+                            <span className="text-sm text-gray-700 flex-1">{kp.point}</span>
                             <span className={`text-xs px-2 py-0.5 rounded ${
                               kp.difficulty === '基础' ? 'bg-green-100 text-green-700' :
                               kp.difficulty === '中级' ? 'bg-yellow-100 text-yellow-700' :
@@ -351,8 +351,8 @@ export function NoteInfoModal({ config, onSave, onClose, knowledgeLibrary, grade
           </div>
         </div>
 
-        <div className="p-4 border-t border-slate-200 flex justify-end gap-3">
-          <button onClick={onClose} className="px-5 py-2 text-slate-600 hover:text-slate-800 font-medium">
+        <div className="p-4 border-t border-gray-200 flex justify-end gap-3">
+          <button onClick={onClose} className="px-5 py-2 text-gray-600 hover:text-gray-800 font-medium">
             取消
           </button>
           <button
@@ -360,7 +360,7 @@ export function NoteInfoModal({ config, onSave, onClose, knowledgeLibrary, grade
               onSave(localConfig);
               onClose();
             }}
-            className="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors"
+            className="px-5 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-medium transition-colors"
           >
             保存配置
           </button>
@@ -390,8 +390,8 @@ export function FreeModeModal({ config, inheritedAgents, onSave, onClose }: any)
 
         <div className="p-6 space-y-5">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-3">
-              选择 AI 助手 <span className="text-slate-400 font-normal">(继承自通用版)</span>
+            <label className="block text-sm font-medium text-gray-700 mb-3">
+              选择 AI 助手 <span className="text-gray-400 font-normal">(继承自通用版)</span>
             </label>
             <div className="space-y-2">
               {inheritedAgents.map((agent: any) => (
@@ -400,7 +400,7 @@ export function FreeModeModal({ config, inheritedAgents, onSave, onClose }: any)
                   className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all border ${
                     localConfig.selectedAgentId === agent.id
                       ? 'bg-blue-50 border-blue-300'
-                      : 'bg-white border-slate-200 hover:border-blue-200'
+                      : 'bg-white border-gray-200 hover:border-blue-200'
                   }`}
                 >
                   <input
@@ -410,12 +410,12 @@ export function FreeModeModal({ config, inheritedAgents, onSave, onClose }: any)
                     onChange={() => setLocalConfig({ ...localConfig, selectedAgentId: agent.id })}
                     className="w-4 h-4 text-blue-600"
                   />
-                  <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-xl bg-blue-100 flex items-center justify-center">
                     <Bot size={14} className="text-blue-600" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-slate-700">{agent.name}</p>
-                    <p className="text-xs text-slate-500">{agent.description}</p>
+                    <p className="text-sm font-medium text-gray-700">{agent.name}</p>
+                    <p className="text-xs text-gray-500">{agent.description}</p>
                   </div>
                 </label>
               ))}
@@ -423,26 +423,26 @@ export function FreeModeModal({ config, inheritedAgents, onSave, onClose }: any)
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              教师追加指令 <span className="text-slate-400 font-normal">(user_prompt)</span>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              教师追加指令 <span className="text-gray-400 font-normal">(user_prompt)</span>
             </label>
             <textarea
               value={localConfig.teacherPrompt}
               onChange={(e) => setLocalConfig({ ...localConfig, teacherPrompt: e.target.value })}
               placeholder="例如：请用幽默的口吻回答，所有比喻都和「水」有关..."
-              className="w-full bg-slate-50 border border-slate-300 rounded-lg px-4 py-3 text-sm text-slate-700 focus:ring-2 focus:ring-blue-500 outline-none min-h-[80px] resize-none"
+              className="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-sm text-gray-700 focus:ring-2 focus:ring-blue-500 outline-none min-h-[80px] resize-none"
             />
           </div>
 
-          <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200">
+          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
             <div>
-              <span className="text-sm font-medium text-slate-700">启用知识围栏</span>
-              <p className="text-xs text-slate-500">只允许回答与课程资料相关的问题</p>
+              <span className="text-sm font-medium text-gray-700">启用知识围栏</span>
+              <p className="text-xs text-gray-500">只允许回答与课程资料相关的问题</p>
             </div>
             <button
               onClick={() => setLocalConfig({ ...localConfig, enableFence: !localConfig.enableFence })}
               className={`w-12 h-6 rounded-full transition-colors relative ${
-                localConfig.enableFence ? 'bg-blue-500' : 'bg-slate-300'
+                localConfig.enableFence ? 'bg-blue-500' : 'bg-gray-300'
               }`}
             >
               <div
@@ -454,13 +454,13 @@ export function FreeModeModal({ config, inheritedAgents, onSave, onClose }: any)
           </div>
         </div>
 
-        <div className="p-4 border-t border-slate-200 flex justify-end gap-3 bg-slate-50">
-          <button onClick={onClose} className="px-4 py-2 text-slate-600 hover:text-slate-800">
+        <div className="p-4 border-t border-gray-200 flex justify-end gap-3 bg-gray-50">
+          <button onClick={onClose} className="px-4 py-2 text-gray-600 hover:text-gray-800">
             取消
           </button>
           <button
             onClick={() => onSave(localConfig)}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium shadow-sm"
+            className="px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-medium shadow-sm"
           >
             保存
           </button>
@@ -502,8 +502,8 @@ export function GuidedModeModal({ config, inheritedWorkflows, onSave, onClose }:
 
         <div className="p-6 max-h-[65vh] overflow-y-auto space-y-5">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-3">
-              选择教学法 <span className="text-slate-400 font-normal">(继承自通用版)</span>
+            <label className="block text-sm font-medium text-gray-700 mb-3">
+              选择教学法 <span className="text-gray-400 font-normal">(继承自通用版)</span>
             </label>
             <div className="space-y-2">
               {inheritedWorkflows.map((workflow: any) => (
@@ -512,7 +512,7 @@ export function GuidedModeModal({ config, inheritedWorkflows, onSave, onClose }:
                   className={`flex items-center gap-3 p-4 rounded-xl cursor-pointer transition-all border ${
                     localConfig.selectedWorkflowId === workflow.id
                       ? 'bg-emerald-50 border-emerald-300'
-                      : 'bg-white border-slate-200 hover:border-emerald-200'
+                      : 'bg-white border-gray-200 hover:border-emerald-200'
                   }`}
                 >
                   <input
@@ -522,17 +522,17 @@ export function GuidedModeModal({ config, inheritedWorkflows, onSave, onClose }:
                     onChange={() => setLocalConfig({ ...localConfig, selectedWorkflowId: workflow.id, stagePrompts: {} })}
                     className="w-4 h-4 text-emerald-600"
                   />
-                  <div className="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center">
                     <Route size={18} className="text-emerald-600" />
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <p className="font-medium text-slate-700">{workflow.name}</p>
-                      <span className="text-xs bg-slate-100 text-slate-500 px-2 py-0.5 rounded">
+                      <p className="font-medium text-gray-700">{workflow.name}</p>
+                      <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded">
                         {workflow.stages?.length || 0} 阶段
                       </span>
                     </div>
-                    <p className="text-xs text-slate-500 mt-0.5">{workflow.description}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">{workflow.description}</p>
                   </div>
                 </label>
               ))}
@@ -540,13 +540,13 @@ export function GuidedModeModal({ config, inheritedWorkflows, onSave, onClose }:
           </div>
 
           {selectedWorkflow && selectedWorkflow.stages && (
-            <div className="border-t border-slate-200 pt-5">
+            <div className="border-t border-gray-200 pt-5">
               <div className="mb-4">
-                <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                <h3 className="text-sm font-bold text-gray-700 flex items-center gap-2">
                   <Sliders size={14} />
                   各阶段提示词微调
                 </h3>
-                <p className="text-xs text-slate-500 mt-1">可根据课程内容自定义每个阶段的AI指导方式</p>
+                <p className="text-xs text-gray-500 mt-1">可根据课程内容自定义每个阶段的AI指导方式</p>
               </div>
 
               <div className="space-y-3">
@@ -558,7 +558,7 @@ export function GuidedModeModal({ config, inheritedWorkflows, onSave, onClose }:
                     <div
                       key={stage.id}
                       className={`rounded-xl border transition-all ${
-                        customPrompt ? 'bg-amber-50/50 border-amber-200' : 'bg-slate-50 border-slate-200'
+                        customPrompt ? 'bg-amber-50/50 border-amber-200' : 'bg-gray-50 border-gray-200'
                       }`}
                     >
                       <div
@@ -574,7 +574,7 @@ export function GuidedModeModal({ config, inheritedWorkflows, onSave, onClose }:
                         </div>
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium text-slate-700">{stage.name}</span>
+                            <span className="text-sm font-medium text-gray-700">{stage.name}</span>
                             {customPrompt && (
                               <span className="text-xs bg-amber-100 text-amber-600 px-2 py-0.5 rounded flex items-center gap-1">
                                 <Pencil size={10} />
@@ -582,34 +582,34 @@ export function GuidedModeModal({ config, inheritedWorkflows, onSave, onClose }:
                               </span>
                             )}
                           </div>
-                          <p className="text-xs text-slate-400 mt-0.5 truncate">{stage.defaultPrompt}</p>
+                          <p className="text-xs text-gray-400 mt-0.5 truncate">{stage.defaultPrompt}</p>
                         </div>
                         {isExpanded ? (
-                          <ChevronUp size={16} className="text-slate-400" />
+                          <ChevronUp size={16} className="text-gray-400" />
                         ) : (
-                          <ChevronDown size={16} className="text-slate-400" />
+                          <ChevronDown size={16} className="text-gray-400" />
                         )}
                       </div>
 
                       {isExpanded && (
                         <div className="px-4 pb-4 space-y-3">
-                          <div className="p-3 bg-white rounded-lg border border-slate-200">
+                          <div className="p-3 bg-white rounded-lg border border-gray-200">
                             <div className="flex items-center gap-2 mb-2">
-                              <Info size={12} className="text-slate-400" />
-                              <span className="text-xs text-slate-500">默认提示词</span>
+                              <Info size={12} className="text-gray-400" />
+                              <span className="text-xs text-gray-500">默认提示词</span>
                             </div>
-                            <p className="text-sm text-slate-600">{stage.defaultPrompt}</p>
+                            <p className="text-sm text-gray-600">{stage.defaultPrompt}</p>
                           </div>
 
                           <div>
-                            <label className="block text-xs font-medium text-slate-600 mb-1">
-                              自定义提示词 <span className="text-slate-400 font-normal">(可选，会追加到默认提示词之后)</span>
+                            <label className="block text-xs font-medium text-gray-600 mb-1">
+                              自定义提示词 <span className="text-gray-400 font-normal">(可选，会追加到默认提示词之后)</span>
                             </label>
                             <textarea
                               value={customPrompt}
                               onChange={(e) => updateStagePrompt(stage.id, e.target.value)}
                               placeholder={`例如：针对"水资源"主题，${stage.name.split(' ')[0]}阶段可以...`}
-                              className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none resize-none"
+                              className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none resize-none"
                               rows={3}
                             />
                           </div>
@@ -633,8 +633,8 @@ export function GuidedModeModal({ config, inheritedWorkflows, onSave, onClose }:
           )}
         </div>
 
-        <div className="p-4 border-t border-slate-200 flex justify-end gap-3 bg-slate-50">
-          <button onClick={onClose} className="px-4 py-2 text-slate-600 hover:text-slate-800">
+        <div className="p-4 border-t border-gray-200 flex justify-end gap-3 bg-gray-50">
+          <button onClick={onClose} className="px-4 py-2 text-gray-600 hover:text-gray-800">
             取消
           </button>
           <button
@@ -669,7 +669,7 @@ export function NotesModal({ config, inheritedTemplates, onSave, onClose }: any)
         </div>
 
         <div className="flex h-[55vh]">
-          <div className="w-64 border-r border-slate-200 bg-slate-50 overflow-y-auto p-3 space-y-2">
+          <div className="w-64 border-r border-gray-200 bg-gray-50 overflow-y-auto p-3 space-y-2">
             {inheritedTemplates.map((tpl: any) => (
               <div
                 key={tpl.id}
@@ -677,25 +677,25 @@ export function NotesModal({ config, inheritedTemplates, onSave, onClose }: any)
                 className={`p-3 rounded-xl cursor-pointer transition-all ${
                   selectedTemplate === tpl.id
                     ? 'bg-white border-2 border-blue-400 shadow-sm'
-                    : 'bg-white border border-slate-200 hover:border-blue-300'
+                    : 'bg-white border border-gray-200 hover:border-blue-300'
                 }`}
               >
                 <div className="flex items-center gap-3">
                   <div
-                    className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                      selectedTemplate === tpl.id ? 'bg-blue-100' : 'bg-slate-100'
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                      selectedTemplate === tpl.id ? 'bg-blue-100' : 'bg-gray-100'
                     }`}
                   >
-                    <FileText size={18} className={selectedTemplate === tpl.id ? 'text-blue-600' : 'text-slate-500'} />
+                    <FileText size={18} className={selectedTemplate === tpl.id ? 'text-blue-600' : 'text-gray-500'} />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-slate-700">{tpl.name}</p>
+                    <p className="text-sm font-medium text-gray-700">{tpl.name}</p>
                   </div>
                 </div>
                 {tpl.structure.length > 0 && (
                   <div className="flex flex-wrap gap-1 mt-2">
                     {tpl.structure.map((s: string, i: number) => (
-                      <span key={i} className="text-xs bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded">
+                      <span key={i} className="text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">
                         {s}
                       </span>
                     ))}
@@ -707,31 +707,31 @@ export function NotesModal({ config, inheritedTemplates, onSave, onClose }: any)
 
           <div className="flex-1 overflow-y-auto p-5">
             <div className="mb-5">
-              <h3 className="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
+              <h3 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
                 <Eye size={14} />
                 模板预览
               </h3>
-              <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
-                <div className="h-32 bg-white border border-slate-200 rounded-lg p-3 flex flex-col">
-                  <div className="flex-1 border border-dashed border-slate-300 rounded bg-slate-50 p-2">
-                    <p className="text-xs text-slate-400">学生在这里记录笔记...</p>
+              <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                <div className="h-32 bg-white border border-gray-200 rounded-lg p-3 flex flex-col">
+                  <div className="flex-1 border border-dashed border-gray-300 rounded bg-gray-50 p-2">
+                    <p className="text-xs text-gray-400">学生在这里记录笔记...</p>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-200">
+            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-200">
               <div>
-                <span className="text-sm font-medium text-slate-700 flex items-center gap-2">
+                <span className="text-sm font-medium text-gray-700 flex items-center gap-2">
                   <Send size={14} className="text-green-600" />
                   启用提交功能
                 </span>
-                <p className="text-xs text-slate-500 mt-1">学生可一键提交笔记给老师批阅</p>
+                <p className="text-xs text-gray-500 mt-1">学生可一键提交笔记给老师批阅</p>
               </div>
               <button
                 onClick={() => setEnableSubmit(!enableSubmit)}
                 className={`w-12 h-6 rounded-full transition-colors relative ${
-                  enableSubmit ? 'bg-green-500' : 'bg-slate-300'
+                  enableSubmit ? 'bg-green-500' : 'bg-gray-300'
                 }`}
               >
                 <div
@@ -744,13 +744,13 @@ export function NotesModal({ config, inheritedTemplates, onSave, onClose }: any)
           </div>
         </div>
 
-        <div className="p-4 border-t border-slate-200 flex justify-end gap-3 bg-slate-50">
-          <button onClick={onClose} className="px-4 py-2 text-slate-600 hover:text-slate-800">
+        <div className="p-4 border-t border-gray-200 flex justify-end gap-3 bg-gray-50">
+          <button onClick={onClose} className="px-4 py-2 text-gray-600 hover:text-gray-800">
             取消
           </button>
           <button
             onClick={() => onSave({ noteTemplate: selectedTemplate, enableSubmit })}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium shadow-sm"
+            className="px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-medium shadow-sm"
           >
             保存
           </button>
@@ -780,7 +780,7 @@ export function MetaModal({ config, inheritedStrategies, onSave, onClose }: any)
 
         <div className="p-6 space-y-5">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-3">选择监控策略</label>
+            <label className="block text-sm font-medium text-gray-700 mb-3">选择监控策略</label>
             <div className="space-y-2">
               {inheritedStrategies.map((strategy: any) => (
                 <label
@@ -788,7 +788,7 @@ export function MetaModal({ config, inheritedStrategies, onSave, onClose }: any)
                   className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all border ${
                     selectedStrategy === strategy.id
                       ? 'bg-purple-50 border-purple-300'
-                      : 'bg-white border-slate-200 hover:border-purple-200'
+                      : 'bg-white border-gray-200 hover:border-purple-200'
                   }`}
                 >
                   <input
@@ -802,8 +802,8 @@ export function MetaModal({ config, inheritedStrategies, onSave, onClose }: any)
                     <Brain size={14} className="text-purple-600" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-slate-700">{strategy.name}</p>
-                    <p className="text-xs text-slate-500">{strategy.description}</p>
+                    <p className="text-sm font-medium text-gray-700">{strategy.name}</p>
+                    <p className="text-xs text-gray-500">{strategy.description}</p>
                   </div>
                 </label>
               ))}
@@ -811,20 +811,20 @@ export function MetaModal({ config, inheritedStrategies, onSave, onClose }: any)
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              教师追加指令 <span className="text-slate-400 font-normal">(user_prompt)</span>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              教师追加指令 <span className="text-gray-400 font-normal">(user_prompt)</span>
             </label>
             <textarea
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               placeholder="例如：当学生在视频资源上停留超过5分钟未操作时，提醒他们..."
-              className="w-full bg-slate-50 border border-slate-300 rounded-lg px-4 py-3 text-sm text-slate-700 focus:ring-2 focus:ring-purple-500 outline-none min-h-[80px] resize-none"
+              className="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-sm text-gray-700 focus:ring-2 focus:ring-purple-500 outline-none min-h-[80px] resize-none"
             />
           </div>
         </div>
 
-        <div className="p-4 border-t border-slate-200 flex justify-end gap-3 bg-slate-50">
-          <button onClick={onClose} className="px-4 py-2 text-slate-600 hover:text-slate-800">
+        <div className="p-4 border-t border-gray-200 flex justify-end gap-3 bg-gray-50">
+          <button onClick={onClose} className="px-4 py-2 text-gray-600 hover:text-gray-800">
             取消
           </button>
           <button
@@ -869,7 +869,7 @@ export function ResourcePreviewModal({ resource, onClose }: any) {
           </button>
         </div>
 
-        <div className="p-8 bg-slate-50">
+        <div className="p-8 bg-gray-50">
           {resource.type === 'video' && (
             <div className="bg-black rounded-xl overflow-hidden aspect-video flex items-center justify-center">
               <div className="text-white text-center">
@@ -877,30 +877,30 @@ export function ResourcePreviewModal({ resource, onClose }: any) {
                   <Play size={40} className="text-white ml-1" />
                 </div>
                 <p className="text-lg font-medium">{resource.title}</p>
-                <p className="text-sm text-slate-400 mt-2">时长: {resource.duration}</p>
+                <p className="text-sm text-gray-400 mt-2">时长: {resource.duration}</p>
               </div>
             </div>
           )}
 
           {(resource.type === 'pdf' || resource.type === 'ppt') && (
-            <div className="bg-white rounded-xl border-2 border-slate-200 p-12">
+            <div className="bg-white rounded-xl border-2 border-gray-200 p-12">
               <div className="text-center">
                 <div className={`w-20 h-20 rounded-2xl bg-${resource.color}-100 flex items-center justify-center mx-auto mb-4`}>
                   {resource.type === 'pdf' && <FileText size={40} className={`text-${resource.color}-600`} />}
                   {resource.type === 'ppt' && <FileSpreadsheet size={40} className={`text-${resource.color}-600`} />}
                 </div>
-                <p className="text-xl font-bold text-slate-700">{resource.title}</p>
-                {resource.description && <p className="text-sm text-slate-500 mt-2">{resource.description}</p>}
-                <div className="mt-6 inline-flex items-center gap-2 bg-slate-100 px-4 py-2 rounded-lg">
-                  <FileText size={16} className="text-slate-600" />
-                  <span className="text-sm text-slate-700">共 {resource.pages} 页</span>
+                <p className="text-xl font-bold text-gray-700">{resource.title}</p>
+                {resource.description && <p className="text-sm text-gray-500 mt-2">{resource.description}</p>}
+                <div className="mt-6 inline-flex items-center gap-2 bg-gray-100 px-4 py-2 rounded-lg">
+                  <FileText size={16} className="text-gray-600" />
+                  <span className="text-sm text-gray-700">共 {resource.pages} 页</span>
                 </div>
                 <div className="mt-6 flex justify-center gap-3">
-                  <button className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors flex items-center gap-2">
+                  <button className="px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors flex items-center gap-2">
                     <Eye size={14} />
                     查看文档
                   </button>
-                  <button className="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-300 transition-colors flex items-center gap-2">
+                  <button className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300 transition-colors flex items-center gap-2">
                     <Download size={14} />
                     下载
                   </button>
@@ -910,13 +910,13 @@ export function ResourcePreviewModal({ resource, onClose }: any) {
           )}
 
           {resource.type === 'web' && (
-            <div className="bg-white rounded-xl border-2 border-slate-200 p-12">
+            <div className="bg-white rounded-xl border-2 border-gray-200 p-12">
               <div className="text-center">
                 <div className="w-20 h-20 rounded-2xl bg-green-100 flex items-center justify-center mx-auto mb-4">
                   <Globe size={40} className="text-green-600" />
                 </div>
-                <p className="text-xl font-bold text-slate-700">{resource.title}</p>
-                {resource.description && <p className="text-sm text-slate-500 mt-2">{resource.description}</p>}
+                <p className="text-xl font-bold text-gray-700">{resource.title}</p>
+                {resource.description && <p className="text-sm text-gray-500 mt-2">{resource.description}</p>}
                 <div className="mt-6 inline-flex items-center gap-2 bg-green-50 px-4 py-2 rounded-lg border border-green-200">
                   <ExternalLink size={16} className="text-green-600" />
                   <span className="text-sm text-green-700 font-mono">{resource.url}</span>
@@ -1064,12 +1064,12 @@ export function TaskEditModal({ task, onSave, onClose }: any) {
         <div className="p-5 max-h-[60vh] overflow-y-auto">
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">任务标题</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">任务标题</label>
               <input
                 type="text"
                 value={localTask.title}
                 onChange={(e) => updateField('title', e.target.value)}
-                className="w-full bg-slate-50 border border-slate-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                className="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
               />
             </div>
 
@@ -1081,16 +1081,16 @@ export function TaskEditModal({ task, onSave, onClose }: any) {
                   onChange={(e) => updateField('status', e.target.checked ? 'required' : 'optional')}
                   className="w-4 h-4 text-red-600 rounded"
                 />
-                <span className="text-sm text-slate-600">必修任务</span>
+                <span className="text-sm text-gray-600">必修任务</span>
               </label>
               {localTask.type === 'quiz' && (
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-slate-500">及格分:</span>
+                  <span className="text-sm text-gray-500">及格分:</span>
                   <input
                     type="number"
                     value={localTask.passScore}
                     onChange={(e) => updateField('passScore', parseInt(e.target.value))}
-                    className="w-16 bg-slate-50 border border-slate-300 rounded px-2 py-1 text-sm text-center"
+                    className="w-16 bg-gray-50 border border-gray-300 rounded px-2 py-1 text-sm text-center"
                   />
                 </div>
               )}
@@ -1099,11 +1099,11 @@ export function TaskEditModal({ task, onSave, onClose }: any) {
             {localTask.type === 'quiz' && (
               <div className="mt-6">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-bold text-slate-700">测验题目</h3>
+                  <h3 className="text-sm font-bold text-gray-700">测验题目</h3>
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => setShowAIConfig(!showAIConfig)}
-                      className="px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg text-xs font-medium hover:bg-slate-200 transition-all flex items-center gap-1"
+                      className="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg text-xs font-medium hover:bg-gray-200 transition-all flex items-center gap-1"
                     >
                       <Settings size={12} />
                       {showAIConfig ? '隐藏配置' : '生成配置'}
@@ -1133,7 +1133,7 @@ export function TaskEditModal({ task, onSave, onClose }: any) {
                   <div className="mb-4 p-4 bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl border border-purple-200 space-y-4">
                     {/* 题型选择 */}
                     <div>
-                      <label className="block text-xs font-medium text-slate-700 mb-2">题型选择（可多选）</label>
+                      <label className="block text-xs font-medium text-gray-700 mb-2">题型选择（可多选）</label>
                       <div className="flex flex-wrap gap-2">
                         {[
                           { value: 'choice', label: '单选题' },
@@ -1155,7 +1155,7 @@ export function TaskEditModal({ task, onSave, onClose }: any) {
                             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                               aiGenConfig.questionTypes.includes(type.value)
                                 ? 'bg-purple-600 text-white'
-                                : 'bg-white text-slate-600 border border-slate-200'
+                                : 'bg-white text-gray-600 border border-gray-200'
                             }`}
                           >
                             {type.label}
@@ -1167,7 +1167,7 @@ export function TaskEditModal({ task, onSave, onClose }: any) {
                     {/* 题目数量 */}
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-xs font-medium text-slate-700 mb-2">题目数量</label>
+                        <label className="block text-xs font-medium text-gray-700 mb-2">题目数量</label>
                         <input
                           type="number"
                           min="1"
@@ -1176,19 +1176,19 @@ export function TaskEditModal({ task, onSave, onClose }: any) {
                           onChange={(e) =>
                             setAiGenConfig({ ...aiGenConfig, questionCount: parseInt(e.target.value) || 1 })
                           }
-                          className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 outline-none"
+                          className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 outline-none"
                         />
                       </div>
 
                       {/* 难度级别 */}
                       <div>
-                        <label className="block text-xs font-medium text-slate-700 mb-2">难度级别</label>
+                        <label className="block text-xs font-medium text-gray-700 mb-2">难度级别</label>
                         <select
                           value={aiGenConfig.difficulty}
                           onChange={(e) =>
                             setAiGenConfig({ ...aiGenConfig, difficulty: e.target.value as 'easy' | 'medium' | 'hard' })
                           }
-                          className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 outline-none"
+                          className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 outline-none"
                         >
                           <option value="easy">基础</option>
                           <option value="medium">中等</option>
@@ -1199,21 +1199,21 @@ export function TaskEditModal({ task, onSave, onClose }: any) {
 
                     {/* 自定义提示词 */}
                     <div>
-                      <label className="block text-xs font-medium text-slate-700 mb-2">
+                      <label className="block text-xs font-medium text-gray-700 mb-2">
                         自定义生成提示词（可选）
                       </label>
                       <textarea
                         value={aiGenConfig.customPrompt}
                         onChange={(e) => setAiGenConfig({ ...aiGenConfig, customPrompt: e.target.value })}
                         placeholder="例如：请围绕水循环主题，生成适合四年级学生的题目..."
-                        className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 outline-none resize-none"
+                        className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 outline-none resize-none"
                         rows={2}
                       />
                     </div>
 
                     {/* 配置摘要 */}
                     <div className="bg-white/80 rounded-lg p-3 border border-purple-100">
-                      <p className="text-xs text-slate-600">
+                      <p className="text-xs text-gray-600">
                         将生成 <span className="font-bold text-purple-600">{aiGenConfig.questionCount}</span> 道题目，
                         题型：
                         <span className="font-bold text-purple-600">
@@ -1230,7 +1230,7 @@ export function TaskEditModal({ task, onSave, onClose }: any) {
                   </div>
                 )}
 
-                <div className="text-center py-6 text-slate-400">
+                <div className="text-center py-6 text-gray-400">
                   <ListChecks size={24} className="mx-auto mb-2" />
                   <p className="text-xs">配置参数后点击"AI生成题目"，或手动添加题目</p>
                 </div>
@@ -1240,11 +1240,11 @@ export function TaskEditModal({ task, onSave, onClose }: any) {
             {localTask.type === 'assignment' && (
               <div className="mt-6 space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">作业要求/提示</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">作业要求/提示</label>
                   <textarea
                     value={localTask.teacherHint || ''}
                     onChange={(e) => updateField('teacherHint', e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none h-24 resize-none"
+                    className="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none h-24 resize-none"
                     placeholder="请输入作业要求，例如：请结合生活实际，提出至少3条节水建议..."
                   />
                 </div>
@@ -1263,7 +1263,7 @@ export function TaskEditModal({ task, onSave, onClose }: any) {
                         })
                       }
                       className={`w-12 h-6 rounded-full transition-colors relative ${
-                        localTask.aiGrading?.enabled ? 'bg-purple-600' : 'bg-slate-300'
+                        localTask.aiGrading?.enabled ? 'bg-purple-600' : 'bg-gray-300'
                       }`}
                     >
                       <div
@@ -1289,12 +1289,12 @@ export function TaskEditModal({ task, onSave, onClose }: any) {
                                 className={`w-full text-left p-3 rounded-lg border-2 transition-all ${
                                   isSelected
                                     ? 'border-purple-500 bg-purple-50'
-                                    : 'border-slate-200 bg-white hover:border-purple-300 hover:bg-purple-50/50'
+                                    : 'border-gray-200 bg-white hover:border-purple-300 hover:bg-purple-50/50'
                                 }`}
                               >
                                 <div className="flex items-start justify-between gap-2 mb-1">
                                   <div className="flex items-center gap-2">
-                                    <h5 className="font-bold text-sm text-slate-800">{agent.name}</h5>
+                                    <h5 className="font-bold text-sm text-gray-800">{agent.name}</h5>
                                     {agent.type === 'system' && (
                                       <span className="px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded text-[10px] font-medium">
                                         系统
@@ -1319,10 +1319,10 @@ export function TaskEditModal({ task, onSave, onClose }: any) {
                                     </div>
                                   )}
                                 </div>
-                                <p className="text-xs text-slate-600 leading-relaxed">{agent.description}</p>
+                                <p className="text-xs text-gray-600 leading-relaxed">{agent.description}</p>
                                 {agent.difyConfig && (
-                                  <div className="mt-2 flex items-center gap-2 text-[10px] text-slate-500">
-                                    <span className="px-2 py-0.5 bg-slate-100 rounded font-mono">
+                                  <div className="mt-2 flex items-center gap-2 text-[10px] text-gray-500">
+                                    <span className="px-2 py-0.5 bg-gray-100 rounded font-mono">
                                       Dify: {agent.difyConfig.agentId}
                                     </span>
                                   </div>
@@ -1357,13 +1357,13 @@ export function TaskEditModal({ task, onSave, onClose }: any) {
           </div>
         </div>
 
-        <div className="p-4 border-t border-slate-200 flex justify-end gap-3 bg-slate-50">
-          <button onClick={onClose} className="px-4 py-2 text-slate-600 hover:text-slate-800">
+        <div className="p-4 border-t border-gray-200 flex justify-end gap-3 bg-gray-50">
+          <button onClick={onClose} className="px-4 py-2 text-gray-600 hover:text-gray-800">
             取消
           </button>
           <button
             onClick={() => onSave(localTask)}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium shadow-sm"
+            className="px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-medium shadow-sm"
           >
             保存
           </button>
@@ -1376,15 +1376,15 @@ export function TaskEditModal({ task, onSave, onClose }: any) {
 // 学生预览头部
 export function PreviewHeader({ config, onExit }: any) {
   return (
-    <header className="h-14 bg-slate-800 text-white flex items-center justify-between px-4 shrink-0">
+    <header className="h-14 bg-gray-800 text-white flex items-center justify-between px-4 shrink-0">
       <div className="flex items-center gap-3">
         <div className="bg-emerald-500 px-3 py-1 rounded font-bold text-sm">学生视角预览</div>
-        <span className="text-slate-300">|</span>
-        <span className="text-sm text-slate-300">{config.noteInfo.title}</span>
+        <span className="text-gray-300">|</span>
+        <span className="text-sm text-gray-300">{config.noteInfo.title}</span>
       </div>
       <button
         onClick={onExit}
-        className="flex items-center gap-1 bg-slate-700 hover:bg-slate-600 px-4 py-1.5 rounded-lg text-sm font-medium transition-colors"
+        className="flex items-center gap-1 bg-gray-700 hover:bg-gray-600 px-4 py-1.5 rounded-lg text-sm font-medium transition-colors"
       >
         <X size={14} />
         退出预览
@@ -1400,9 +1400,9 @@ export function StudentPreview({ config, leftWidth, rightWidth }: any) {
   return (
     <div className="flex-1 flex overflow-hidden">
       {/* 左侧：资源列表 */}
-      <div style={{ width: `${leftWidth}%` }} className="bg-white border-r border-slate-200 flex flex-col">
-        <div className="p-4 border-b border-slate-100 bg-gradient-to-r from-blue-50 to-indigo-50">
-          <h2 className="text-sm font-bold text-slate-700 flex items-center gap-2">
+      <div style={{ width: `${leftWidth}%` }} className="bg-white border-r border-gray-200 flex flex-col">
+        <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50">
+          <h2 className="text-sm font-bold text-gray-700 flex items-center gap-2">
             <FolderOpen size={14} className="text-blue-500" />
             学习资料库
           </h2>
@@ -1411,15 +1411,15 @@ export function StudentPreview({ config, leftWidth, rightWidth }: any) {
           {config.resources.map((resource: any) => (
             <div
               key={resource.id}
-              className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg hover:bg-blue-50 cursor-pointer transition-colors"
+              className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-blue-50 cursor-pointer transition-colors"
             >
-              <div className={`w-10 h-10 rounded-lg bg-${resource.color}-100 flex items-center justify-center`}>
+              <div className={`w-10 h-10 rounded-xl bg-${resource.color}-100 flex items-center justify-center`}>
                 {resource.type === 'video' && <Video size={16} className={`text-${resource.color}-600`} />}
                 {resource.type === 'pdf' && <FileText size={16} className={`text-${resource.color}-600`} />}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-slate-700 truncate">{resource.title}</p>
-                <p className="text-xs text-slate-400">{resource.duration || `${resource.pages}页`}</p>
+                <p className="text-sm font-medium text-gray-700 truncate">{resource.title}</p>
+                <p className="text-xs text-gray-400">{resource.duration || `${resource.pages}页`}</p>
               </div>
             </div>
           ))}
@@ -1427,9 +1427,9 @@ export function StudentPreview({ config, leftWidth, rightWidth }: any) {
       </div>
 
       {/* 中间：对话区 */}
-      <div style={{ width: `${100 - leftWidth - rightWidth}%` }} className="flex flex-col bg-slate-50">
-        <div className="p-3 bg-white border-b border-slate-200 flex items-center justify-between">
-          <h2 className="font-bold text-slate-700 flex items-center gap-2">
+      <div style={{ width: `${100 - leftWidth - rightWidth}%` }} className="flex flex-col bg-gray-50">
+        <div className="p-3 bg-white border-b border-gray-200 flex items-center justify-between">
+          <h2 className="font-bold text-gray-700 flex items-center gap-2">
             <MessageSquare size={16} className="text-indigo-600" />
             AI 学习对话
           </h2>
@@ -1444,20 +1444,20 @@ export function StudentPreview({ config, leftWidth, rightWidth }: any) {
             <div className="w-9 h-9 rounded-full bg-indigo-600 flex-shrink-0 flex items-center justify-center">
               <Bot size={14} className="text-white" />
             </div>
-            <div className="bg-white p-4 rounded-2xl rounded-tl-none border border-slate-200 shadow-sm max-w-[80%]">
-              <p className="text-sm text-slate-700 leading-relaxed">
+            <div className="bg-white p-4 rounded-2xl rounded-tl-none border border-gray-200 shadow-sm max-w-[80%]">
+              <p className="text-sm text-gray-700 leading-relaxed">
                 欢迎进入自学模式！今天我们要学习《{config.noteInfo.title}》。有任何问题都可以问我哦！
               </p>
             </div>
           </div>
         </div>
-        <div className="p-3 bg-white border-t border-slate-200">
+        <div className="p-3 bg-white border-t border-gray-200">
           <div className="relative">
             <input
               type="text"
               placeholder="输入你的问题或想法..."
               disabled
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-4 pr-12 py-3 text-sm text-slate-400"
+              className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-4 pr-12 py-3 text-sm text-gray-400"
             />
             <button className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-indigo-600 text-white rounded-lg">
               <Send size={14} />
@@ -1467,18 +1467,18 @@ export function StudentPreview({ config, leftWidth, rightWidth }: any) {
       </div>
 
       {/* 右侧：学习工作室 */}
-      <div style={{ width: `${rightWidth}%` }} className="bg-white border-l border-slate-200 flex flex-col">
-        <div className="p-3 border-b border-slate-200 bg-gradient-to-r from-emerald-50 to-teal-50">
-          <h2 className="font-bold text-slate-700 flex items-center gap-2 text-sm">
+      <div style={{ width: `${rightWidth}%` }} className="bg-white border-l border-gray-200 flex flex-col">
+        <div className="p-3 border-b border-gray-200 bg-gradient-to-r from-emerald-50 to-teal-50">
+          <h2 className="font-bold text-gray-700 flex items-center gap-2 text-sm">
             <Layout size={14} className="text-emerald-600" />
             学习工作室
           </h2>
         </div>
-        <div className="flex border-b border-slate-200 bg-slate-50">
+        <div className="flex border-b border-gray-200 bg-gray-50">
           <button
             onClick={() => setRightTab('workspace')}
             className={`flex-1 px-3 py-2 text-xs font-medium transition-colors ${
-              rightTab === 'workspace' ? 'text-indigo-600 border-b-2 border-indigo-600 bg-white' : 'text-slate-500'
+              rightTab === 'workspace' ? 'text-indigo-600 border-b-2 border-indigo-600 bg-white' : 'text-gray-500'
             }`}
           >
             工作区
@@ -1486,7 +1486,7 @@ export function StudentPreview({ config, leftWidth, rightWidth }: any) {
           <button
             onClick={() => setRightTab('status')}
             className={`flex-1 px-3 py-2 text-xs font-medium transition-colors ${
-              rightTab === 'status' ? 'text-indigo-600 border-b-2 border-indigo-600 bg-white' : 'text-slate-500'
+              rightTab === 'status' ? 'text-indigo-600 border-b-2 border-indigo-600 bg-white' : 'text-gray-500'
             }`}
           >
             学习状态
@@ -1496,9 +1496,9 @@ export function StudentPreview({ config, leftWidth, rightWidth }: any) {
           {rightTab === 'workspace' ? (
             <div className="space-y-4">
               <div>
-                <span className="text-xs font-bold text-slate-600 block mb-2">康奈尔笔记</span>
-                <div className="bg-slate-50 rounded-xl p-3 border border-slate-200 min-h-[180px]">
-                  <p className="text-xs text-slate-400">在这里记录笔记...</p>
+                <span className="text-xs font-bold text-gray-600 block mb-2">康奈尔笔记</span>
+                <div className="bg-gray-50 rounded-xl p-3 border border-gray-200 min-h-[180px]">
+                  <p className="text-xs text-gray-400">在这里记录笔记...</p>
                 </div>
               </div>
             </div>
@@ -1639,80 +1639,80 @@ export function ResultsViewDashboard({ config }: any) {
   }));
 
   return (
-    <div className="flex-1 overflow-y-auto bg-slate-100 p-6">
+    <div className="flex-1 overflow-y-auto bg-gray-100 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* 统计卡片 */}
         <div className="grid grid-cols-4 gap-4">
-          <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-200">
+          <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
             <div className="flex items-center justify-between mb-3">
-              <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center">
+              <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center">
                 <Users size={24} className="text-blue-600" />
               </div>
               <TrendingUp size={16} className="text-green-500" />
             </div>
-            <p className="text-2xl font-bold text-slate-800">45</p>
-            <p className="text-sm text-slate-500 mt-1">绑定学生总数</p>
+            <p className="text-2xl font-bold text-gray-800">45</p>
+            <p className="text-sm text-gray-500 mt-1">绑定学生总数</p>
           </div>
 
-          <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-200">
+          <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
             <div className="flex items-center justify-between mb-3">
-              <div className="w-12 h-12 rounded-lg bg-emerald-100 flex items-center justify-center">
+              <div className="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center">
                 <CheckCircle size={24} className="text-emerald-600" />
               </div>
               <TrendingUp size={16} className="text-green-500" />
             </div>
-            <p className="text-2xl font-bold text-slate-800">68%</p>
-            <p className="text-sm text-slate-500 mt-1">平均完成进度</p>
+            <p className="text-2xl font-bold text-gray-800">68%</p>
+            <p className="text-sm text-gray-500 mt-1">平均完成进度</p>
           </div>
 
-          <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-200">
+          <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
             <div className="flex items-center justify-between mb-3">
-              <div className="w-12 h-12 rounded-lg bg-purple-100 flex items-center justify-center">
+              <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center">
                 <Clock size={24} className="text-purple-600" />
               </div>
               <TrendingUp size={16} className="text-green-500" />
             </div>
-            <p className="text-2xl font-bold text-slate-800">42min</p>
-            <p className="text-sm text-slate-500 mt-1">平均学习时长</p>
+            <p className="text-2xl font-bold text-gray-800">42min</p>
+            <p className="text-sm text-gray-500 mt-1">平均学习时长</p>
           </div>
 
-          <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-200">
+          <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
             <div className="flex items-center justify-between mb-3">
-              <div className="w-12 h-12 rounded-lg bg-amber-100 flex items-center justify-center">
+              <div className="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center">
                 <Target size={24} className="text-amber-600" />
               </div>
               <TrendingUp size={16} className="text-green-500" />
             </div>
-            <p className="text-2xl font-bold text-slate-800">84.5</p>
-            <p className="text-sm text-slate-500 mt-1">平均任务得分</p>
+            <p className="text-2xl font-bold text-gray-800">84.5</p>
+            <p className="text-sm text-gray-500 mt-1">平均任务得分</p>
           </div>
         </div>
 
         {/* 学生列表 */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-          <div className="p-5 border-b border-slate-200 bg-gradient-to-r from-blue-50 to-indigo-50">
-            <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="p-5 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+            <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
               <Users size={18} className="text-blue-600" />
               学生学习进度
             </h3>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-slate-50 border-b border-slate-200">
+              <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th className="text-left px-5 py-3 text-xs font-semibold text-slate-600">学生</th>
-                  <th className="text-left px-5 py-3 text-xs font-semibold text-slate-600">状态</th>
-                  <th className="text-left px-5 py-3 text-xs font-semibold text-slate-600">学习进度</th>
-                  <th className="text-left px-5 py-3 text-xs font-semibold text-slate-600">最后活跃</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-gray-600">学生</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-gray-600">状态</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-gray-600">学习进度</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-gray-600">最后活跃</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-gray-100">
                 {mockStudents.map((student) => (
-                  <tr key={student.id} className="hover:bg-slate-50 transition-colors">
+                  <tr key={student.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
                         <div className="text-2xl">{student.avatar}</div>
-                        <span className="font-medium text-slate-700">{student.name}</span>
+                        <span className="font-medium text-gray-700">{student.name}</span>
                       </div>
                     </td>
                     <td className="px-5 py-4">
@@ -1720,12 +1720,12 @@ export function ResultsViewDashboard({ config }: any) {
                         className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
                           student.status === 'online'
                             ? 'bg-green-100 text-green-700'
-                            : 'bg-slate-100 text-slate-600'
+                            : 'bg-gray-100 text-gray-600'
                         }`}
                       >
                         <span
                           className={`w-1.5 h-1.5 rounded-full ${
-                            student.status === 'online' ? 'bg-green-500' : 'bg-slate-400'
+                            student.status === 'online' ? 'bg-green-500' : 'bg-gray-400'
                           }`}
                         ></span>
                         {student.status === 'online' ? '在线' : '离线'}
@@ -1733,17 +1733,17 @@ export function ResultsViewDashboard({ config }: any) {
                     </td>
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="flex-1 bg-slate-100 rounded-full h-2 max-w-[120px]">
+                        <div className="flex-1 bg-gray-100 rounded-full h-2 max-w-[120px]">
                           <div
                             className="bg-gradient-to-r from-blue-500 to-indigo-500 h-2 rounded-full transition-all"
                             style={{ width: `${student.progress}%` }}
                           ></div>
                         </div>
-                        <span className="text-sm font-semibold text-slate-700">{student.progress}%</span>
+                        <span className="text-sm font-semibold text-gray-700">{student.progress}%</span>
                       </div>
                     </td>
                     <td className="px-5 py-4">
-                      <span className="text-sm text-slate-500">{student.lastActive}</span>
+                      <span className="text-sm text-gray-500">{student.lastActive}</span>
                     </td>
                   </tr>
                 ))}
@@ -1753,43 +1753,43 @@ export function ResultsViewDashboard({ config }: any) {
         </div>
 
         {/* 资源查看统计 */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-          <div className="p-5 border-b border-slate-200 bg-gradient-to-r from-emerald-50 to-teal-50">
-            <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="p-5 border-b border-gray-200 bg-gradient-to-r from-emerald-50 to-teal-50">
+            <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
               <Eye size={18} className="text-emerald-600" />
               资源查看统计
             </h3>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-slate-50 border-b border-slate-200">
+              <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th className="text-left px-5 py-3 text-xs font-semibold text-slate-600">资源名称</th>
-                  <th className="text-left px-5 py-3 text-xs font-semibold text-slate-600">查看人数</th>
-                  <th className="text-left px-5 py-3 text-xs font-semibold text-slate-600">平均时长</th>
-                  <th className="text-left px-5 py-3 text-xs font-semibold text-slate-600">完成率</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-gray-600">资源名称</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-gray-600">查看人数</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-gray-600">平均时长</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-gray-600">完成率</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-gray-100">
                 {mockResourceViews.map((resource: any) => (
-                  <tr key={resource.id} className="hover:bg-slate-50 transition-colors">
+                  <tr key={resource.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-lg bg-${resource.color}-100 flex items-center justify-center`}>
+                        <div className={`w-10 h-10 rounded-xl bg-${resource.color}-100 flex items-center justify-center`}>
                           {resource.type === 'video' && <Video size={16} className={`text-${resource.color}-600`} />}
                           {resource.type === 'pdf' && <FileText size={16} className={`text-${resource.color}-600`} />}
                           {resource.type === 'ppt' && (
                             <FileSpreadsheet size={16} className={`text-${resource.color}-600`} />
                           )}
                         </div>
-                        <span className="font-medium text-slate-700">{resource.title}</span>
+                        <span className="font-medium text-gray-700">{resource.title}</span>
                       </div>
                     </td>
                     <td className="px-5 py-4">
-                      <span className="text-sm font-semibold text-slate-700">{resource.views}/45</span>
+                      <span className="text-sm font-semibold text-gray-700">{resource.views}/45</span>
                     </td>
                     <td className="px-5 py-4">
-                      <span className="text-sm text-slate-600">{resource.avgTime}</span>
+                      <span className="text-sm text-gray-600">{resource.avgTime}</span>
                     </td>
                     <td className="px-5 py-4">
                       <span className="text-sm font-semibold text-emerald-600">{resource.completionRate}%</span>
@@ -1802,31 +1802,31 @@ export function ResultsViewDashboard({ config }: any) {
         </div>
 
         {/* 任务完成统计 */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-          <div className="p-5 border-b border-slate-200 bg-gradient-to-r from-purple-50 to-violet-50">
-            <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="p-5 border-b border-gray-200 bg-gradient-to-r from-purple-50 to-violet-50">
+            <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
               <CheckCircle size={18} className="text-purple-600" />
               任务完成统计
             </h3>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-slate-50 border-b border-slate-200">
+              <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th className="text-left px-5 py-3 text-xs font-semibold text-slate-600">任务名称</th>
-                  <th className="text-left px-5 py-3 text-xs font-semibold text-slate-600">类型</th>
-                  <th className="text-left px-5 py-3 text-xs font-semibold text-slate-600">提交人数</th>
-                  <th className="text-left px-5 py-3 text-xs font-semibold text-slate-600">平均得分</th>
-                  <th className="text-left px-5 py-3 text-xs font-semibold text-slate-600">评级分布</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-gray-600">任务名称</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-gray-600">类型</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-gray-600">提交人数</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-gray-600">平均得分</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-gray-600">评级分布</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-gray-100">
                 {mockTaskCompletions.map((task: any) => (
-                  <tr key={task.id} className="hover:bg-slate-50 transition-colors">
+                  <tr key={task.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
                         <div
-                          className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                          className={`w-10 h-10 rounded-xl flex items-center justify-center ${
                             task.type === 'quiz' ? 'bg-green-100' : 'bg-blue-100'
                           }`}
                         >
@@ -1836,7 +1836,7 @@ export function ResultsViewDashboard({ config }: any) {
                             <FileEdit size={16} className="text-blue-600" />
                           )}
                         </div>
-                        <span className="font-medium text-slate-700">{task.title}</span>
+                        <span className="font-medium text-gray-700">{task.title}</span>
                       </div>
                     </td>
                     <td className="px-5 py-4">
@@ -1851,28 +1851,28 @@ export function ResultsViewDashboard({ config }: any) {
                       </span>
                     </td>
                     <td className="px-5 py-4">
-                      <span className="text-sm font-semibold text-slate-700">{task.submitted}/45</span>
+                      <span className="text-sm font-semibold text-gray-700">{task.submitted}/45</span>
                     </td>
                     <td className="px-5 py-4">
                       {task.avgScore !== null ? (
                         <span className="text-sm font-semibold text-emerald-600">{task.avgScore}分</span>
                       ) : (
-                        <span className="text-sm text-slate-400">-</span>
+                        <span className="text-sm text-gray-400">-</span>
                       )}
                     </td>
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-2">
                         <div className="flex items-center gap-1">
                           <span className="text-xs text-green-600">优</span>
-                          <span className="text-xs font-medium text-slate-700">{task.excellent}</span>
+                          <span className="text-xs font-medium text-gray-700">{task.excellent}</span>
                         </div>
                         <div className="flex items-center gap-1">
                           <span className="text-xs text-blue-600">良</span>
-                          <span className="text-xs font-medium text-slate-700">{task.good}</span>
+                          <span className="text-xs font-medium text-gray-700">{task.good}</span>
                         </div>
                         <div className="flex items-center gap-1">
                           <span className="text-xs text-amber-600">中</span>
-                          <span className="text-xs font-medium text-slate-700">{task.fair}</span>
+                          <span className="text-xs font-medium text-gray-700">{task.fair}</span>
                         </div>
                       </div>
                     </td>
