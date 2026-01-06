@@ -57,6 +57,11 @@ import {
   TaskEditModal,
   PreviewHeader,
   StudentPreview,
+  UseViewHeader,
+  ResultsViewHeader,
+  ResultsViewDashboard,
+  Resizer,
+  NoteInfoModal,
 } from './modals';
 
 // 类型定义
@@ -98,10 +103,22 @@ interface Question {
   aiGenerated?: boolean;
 }
 
+interface KnowledgePoint {
+  id: string;
+  subject: string;
+  point: string;
+  difficulty?: '基础' | '中级' | '高级';
+  source: 'library' | 'custom';
+}
+
 interface NoteConfig {
   noteInfo: {
     title: string;
     description: string;
+    subjects?: string[];
+    grade?: string;
+    bindClasses?: string[];
+    knowledgePoints?: KnowledgePoint[];
   };
   resources: Resource[];
   tasks: Task[];
@@ -230,8 +247,51 @@ const RESOURCE_LIBRARY = {
   ],
 };
 
+const KNOWLEDGE_POINTS_LIBRARY: Record<string, KnowledgePoint[]> = {
+  科学: [
+    { id: 'sci_001', subject: '科学', point: '水的三态变化', difficulty: '基础', source: 'library' },
+    { id: 'sci_002', subject: '科学', point: '水循环过程', difficulty: '中级', source: 'library' },
+    { id: 'sci_003', subject: '科学', point: '蒸发与凝结', difficulty: '基础', source: 'library' },
+    { id: 'sci_004', subject: '科学', point: '水资源分布规律', difficulty: '高级', source: 'library' },
+  ],
+  地理: [
+    { id: 'geo_001', subject: '地理', point: '水文特征', difficulty: '中级', source: 'library' },
+    { id: 'geo_002', subject: '地理', point: '流域与水系', difficulty: '中级', source: 'library' },
+    { id: 'geo_003', subject: '地理', point: '气候对水资源的影响', difficulty: '高级', source: 'library' },
+  ],
+  环境教育: [
+    { id: 'env_001', subject: '环境教育', point: '水资源保护意识', difficulty: '基础', source: 'library' },
+    { id: 'env_002', subject: '环境教育', point: '节约用水方法', difficulty: '基础', source: 'library' },
+    { id: 'env_003', subject: '环境教育', point: '水污染防治', difficulty: '中级', source: 'library' },
+  ],
+  数学: [
+    { id: 'math_001', subject: '数学', point: '百分比计算', difficulty: '基础', source: 'library' },
+    { id: 'math_002', subject: '数学', point: '统计图表分析', difficulty: '中级', source: 'library' },
+  ],
+};
+
+const GRADES = ['一年级', '二年级', '三年级', '四年级', '五年级', '六年级', '七年级', '八年级', '九年级'];
+
+const MOCK_CLASSES = [
+  '四年级1班',
+  '四年级2班',
+  '四年级3班',
+  '五年级1班',
+  '五年级2班',
+];
+
 export default function NoteConfigPage() {
-  const [isPreviewMode, setIsPreviewMode] = useState(false);
+  // 视角状态：'edit' | 'use' | 'results'
+  const getInitialViewPerspective = () => {
+    if (typeof window === 'undefined') return 'edit';
+    const urlParams = new URLSearchParams(window.location.search);
+    const viewParam = urlParams.get('view');
+    if (viewParam === 'use' || viewParam === 'results' || viewParam === 'edit') {
+      return viewParam as 'edit' | 'use' | 'results';
+    }
+    return 'edit';
+  };
+  const [viewPerspective, setViewPerspective] = useState<'edit' | 'use' | 'results'>(getInitialViewPerspective());
   const [leftWidth, setLeftWidth] = useState(20);
   const [rightWidth, setRightWidth] = useState(30);
 
@@ -240,6 +300,14 @@ export default function NoteConfigPage() {
     noteInfo: {
       title: '水循环与水资源',
       description: '探索水的循环过程，理解水资源的重要性',
+      subjects: ['科学', '地理', '环境教育'],
+      grade: '四年级',
+      bindClasses: ['四年级1班', '四年级2班'],
+      knowledgePoints: [
+        { id: 'kp1', subject: '科学', point: '水循环过程', difficulty: '中级', source: 'library' },
+        { id: 'kp2', subject: '地理', point: '水文特征', difficulty: '中级', source: 'library' },
+        { id: 'kp3', subject: '环境教育', point: '水资源保护意识', difficulty: '基础', source: 'library' },
+      ],
     },
     resources: [
       {
@@ -285,30 +353,59 @@ export default function NoteConfigPage() {
   const [selectedResource, setSelectedResource] = useState<Resource | null>(null);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
-  if (isPreviewMode) {
+  // Use视角：学生使用界面预览
+  if (viewPerspective === 'use') {
     return (
       <div className="h-screen flex flex-col bg-slate-50">
-        <PreviewHeader config={config} onExit={() => setIsPreviewMode(false)} />
+        <UseViewHeader
+          config={config}
+          onBack={() => setViewPerspective('edit')}
+          onSwitchToResults={() => setViewPerspective('results')}
+        />
         <StudentPreview config={config} leftWidth={leftWidth} rightWidth={rightWidth} />
+      </div>
+    );
+  }
+
+  // Results视角：学习数据统计
+  if (viewPerspective === 'results') {
+    return (
+      <div className="h-screen flex flex-col bg-slate-100">
+        <ResultsViewHeader
+          config={config}
+          onBack={() => setViewPerspective('edit')}
+          onSwitchToUse={() => setViewPerspective('use')}
+        />
+        <ResultsViewDashboard config={config} />
       </div>
     );
   }
 
   return (
     <div className="h-screen flex flex-col bg-slate-50">
-      {/* 顶部工具栏 */}
+      {/* 顶部工具栏 - Edit视角 */}
       <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 shrink-0">
         <div>
-          <h1 className="text-xl font-bold text-slate-800">笔记配置</h1>
+          <h1 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+            笔记配置
+            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">编辑视角</span>
+          </h1>
           <p className="text-sm text-slate-500">{config.noteInfo.title}</p>
         </div>
         <div className="flex items-center gap-3">
           <button
-            onClick={() => setIsPreviewMode(true)}
+            onClick={() => setViewPerspective('use')}
             className="flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors"
           >
             <Eye size={16} />
-            学生预览
+            使用视角
+          </button>
+          <button
+            onClick={() => setViewPerspective('results')}
+            className="flex items-center gap-2 px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors"
+          >
+            <Activity size={16} />
+            结果视角
           </button>
           <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
             <Save size={16} />
@@ -326,26 +423,46 @@ export default function NoteConfigPage() {
           onResourceClick={setSelectedResource}
           onTaskClick={setSelectedTask}
           onOpenLibrary={() => setActiveModal('library')}
+          width={leftWidth}
+        />
+
+        {/* 左侧调整器 */}
+        <Resizer
+          position="left"
+          onResize={(delta) => {
+            const newLeftWidth = Math.max(15, Math.min(40, leftWidth + delta));
+            setLeftWidth(newLeftWidth);
+          }}
         />
 
         {/* 中间：配置面板 */}
         <CenterPanel
           config={config}
           setConfig={setConfig}
+          onOpenNoteInfo={() => setActiveModal('noteInfo')}
           onOpenFreeConfig={() => setActiveModal('free')}
           onOpenGuidedConfig={() => setActiveModal('guided')}
           onOpenNotesConfig={() => setActiveModal('notes')}
           onOpenMetaConfig={() => setActiveModal('meta')}
         />
 
+        {/* 右侧调整器 */}
+        <Resizer
+          position="right"
+          onResize={(delta) => {
+            const newRightWidth = Math.max(15, Math.min(40, rightWidth - delta));
+            setRightWidth(newRightWidth);
+          }}
+        />
+
         {/* 右侧：帮助和说明 */}
-        <RightPanel />
+        <RightPanel width={rightWidth} />
       </div>
 
       {/* 模态框 */}
       {activeModal === 'library' && (
         <ResourceLibraryModal
-          onSelect={(resource) => {
+          onSelect={(resource: any) => {
             setConfig({
               ...config,
               resources: [...config.resources, { ...resource, id: `r_${Date.now()}` }],
@@ -355,11 +472,25 @@ export default function NoteConfigPage() {
         />
       )}
 
+      {activeModal === 'noteInfo' && (
+        <NoteInfoModal
+          config={config.noteInfo}
+          knowledgeLibrary={KNOWLEDGE_POINTS_LIBRARY}
+          grades={GRADES}
+          classes={MOCK_CLASSES}
+          onSave={(newNoteInfo: any) => {
+            setConfig({ ...config, noteInfo: newNoteInfo });
+            setActiveModal(null);
+          }}
+          onClose={() => setActiveModal(null)}
+        />
+      )}
+
       {activeModal === 'free' && (
         <FreeModeModal
           config={config.freeConfig}
           inheritedAgents={MOCK_AGENTS}
-          onSave={(newConfig) => {
+          onSave={(newConfig: any) => {
             setConfig({ ...config, freeConfig: newConfig });
             setActiveModal(null);
           }}
@@ -371,7 +502,7 @@ export default function NoteConfigPage() {
         <GuidedModeModal
           config={config.guidedConfig}
           inheritedWorkflows={MOCK_WORKFLOWS}
-          onSave={(newConfig) => {
+          onSave={(newConfig: any) => {
             setConfig({ ...config, guidedConfig: newConfig });
             setActiveModal(null);
           }}
@@ -383,7 +514,7 @@ export default function NoteConfigPage() {
         <NotesModal
           config={config.outputConfig}
           inheritedTemplates={NOTE_TEMPLATES}
-          onSave={(newConfig) => {
+          onSave={(newConfig: any) => {
             setConfig({
               ...config,
               outputConfig: { ...config.outputConfig, ...newConfig },
@@ -398,7 +529,7 @@ export default function NoteConfigPage() {
         <MetaModal
           config={config.outputConfig}
           inheritedStrategies={META_STRATEGIES}
-          onSave={(newConfig) => {
+          onSave={(newConfig: any) => {
             setConfig({
               ...config,
               outputConfig: { ...config.outputConfig, ...newConfig },
@@ -419,7 +550,7 @@ export default function NoteConfigPage() {
       {selectedTask && (
         <TaskEditModal
           task={selectedTask}
-          onSave={(updatedTask) => {
+          onSave={(updatedTask: any) => {
             setConfig({
               ...config,
               tasks: config.tasks.map((t) => (t.id === updatedTask.id ? updatedTask : t)),
@@ -434,7 +565,10 @@ export default function NoteConfigPage() {
 }
 
 // 左侧面板组件
-function LeftPanel({ config, setConfig, onResourceClick, onTaskClick, onOpenLibrary }: any) {
+function LeftPanel({ config, setConfig, onResourceClick, onTaskClick, onOpenLibrary, width }: any) {
+  const [draggedResourceIndex, setDraggedResourceIndex] = useState<number | null>(null);
+  const [draggedTaskIndex, setDraggedTaskIndex] = useState<number | null>(null);
+
   const addTask = (type: 'quiz' | 'assignment') => {
     const newTask: Task = {
       id: `t_${Date.now()}`,
@@ -446,8 +580,50 @@ function LeftPanel({ config, setConfig, onResourceClick, onTaskClick, onOpenLibr
     setConfig({ ...config, tasks: [...config.tasks, newTask] });
   };
 
+  const handleResourceDragStart = (index: number) => {
+    setDraggedResourceIndex(index);
+  };
+
+  const handleResourceDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (draggedResourceIndex === null || draggedResourceIndex === index) return;
+
+    const newResources = [...config.resources];
+    const draggedItem = newResources[draggedResourceIndex];
+    newResources.splice(draggedResourceIndex, 1);
+    newResources.splice(index, 0, draggedItem);
+
+    setConfig({ ...config, resources: newResources });
+    setDraggedResourceIndex(index);
+  };
+
+  const handleResourceDragEnd = () => {
+    setDraggedResourceIndex(null);
+  };
+
+  const handleTaskDragStart = (index: number) => {
+    setDraggedTaskIndex(index);
+  };
+
+  const handleTaskDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (draggedTaskIndex === null || draggedTaskIndex === index) return;
+
+    const newTasks = [...config.tasks];
+    const draggedItem = newTasks[draggedTaskIndex];
+    newTasks.splice(draggedTaskIndex, 1);
+    newTasks.splice(index, 0, draggedItem);
+
+    setConfig({ ...config, tasks: newTasks });
+    setDraggedTaskIndex(index);
+  };
+
+  const handleTaskDragEnd = () => {
+    setDraggedTaskIndex(null);
+  };
+
   return (
-    <div style={{ width: '300px' }} className="bg-white border-r border-slate-200 flex flex-col">
+    <div style={{ width: `${width}%` }} className="bg-white border-r border-slate-200 flex flex-col flex-shrink-0">
       {/* 资源列表 */}
       <div className="p-4 border-b border-slate-100">
         <div className="flex items-center justify-between mb-3">
@@ -463,13 +639,22 @@ function LeftPanel({ config, setConfig, onResourceClick, onTaskClick, onOpenLibr
           </button>
         </div>
         <div className="space-y-2 max-h-60 overflow-y-auto">
-          {config.resources.map((resource: Resource) => (
+          {config.resources.map((resource: Resource, index: number) => (
             <div
               key={resource.id}
+              draggable
+              onDragStart={() => handleResourceDragStart(index)}
+              onDragOver={(e) => handleResourceDragOver(e, index)}
+              onDragEnd={handleResourceDragEnd}
               onClick={() => onResourceClick(resource)}
-              className="flex items-center gap-3 p-2 bg-slate-50 rounded-lg hover:bg-blue-50 cursor-pointer transition-colors group"
+              className={`flex items-center gap-3 p-2 bg-slate-50 rounded-lg hover:bg-blue-50 cursor-move transition-all group ${
+                draggedResourceIndex === index ? 'opacity-50 scale-95' : ''
+              }`}
             >
-              <div className={`w-10 h-10 rounded-lg bg-${resource.color}-100 flex items-center justify-center`}>
+              <div className="cursor-grab active:cursor-grabbing p-1 flex-shrink-0">
+                <GripVertical size={14} className="text-slate-400" />
+              </div>
+              <div className={`w-10 h-10 rounded-lg bg-${resource.color}-100 flex items-center justify-center flex-shrink-0`}>
                 {resource.type === 'video' && <Video size={16} className={`text-${resource.color}-600`} />}
                 {resource.type === 'pdf' && <FileText size={16} className={`text-${resource.color}-600`} />}
                 {resource.type === 'ppt' && <FileSpreadsheet size={16} className={`text-${resource.color}-600`} />}
@@ -487,7 +672,7 @@ function LeftPanel({ config, setConfig, onResourceClick, onTaskClick, onOpenLibr
                     resources: config.resources.filter((r: Resource) => r.id !== resource.id),
                   });
                 }}
-                className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-50 rounded transition-all"
+                className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-50 rounded transition-all flex-shrink-0"
               >
                 <Trash2 size={14} className="text-red-500" />
               </button>
@@ -505,13 +690,22 @@ function LeftPanel({ config, setConfig, onResourceClick, onTaskClick, onOpenLibr
           </h3>
         </div>
         <div className="space-y-2 mb-4">
-          {config.tasks.map((task: Task) => (
+          {config.tasks.map((task: Task, index: number) => (
             <div
               key={task.id}
+              draggable
+              onDragStart={() => handleTaskDragStart(index)}
+              onDragOver={(e) => handleTaskDragOver(e, index)}
+              onDragEnd={handleTaskDragEnd}
               onClick={() => onTaskClick(task)}
-              className="flex items-center gap-2 p-3 bg-slate-50 rounded-lg hover:bg-amber-50 cursor-pointer transition-colors group"
+              className={`flex items-center gap-2 p-3 bg-slate-50 rounded-lg hover:bg-amber-50 cursor-move transition-all group ${
+                draggedTaskIndex === index ? 'opacity-50 scale-95' : ''
+              }`}
             >
-              <div className={`w-8 h-8 rounded flex items-center justify-center ${
+              <div className="cursor-grab active:cursor-grabbing p-1 flex-shrink-0">
+                <GripVertical size={14} className="text-slate-400" />
+              </div>
+              <div className={`w-8 h-8 rounded flex items-center justify-center flex-shrink-0 ${
                 task.status === 'required' ? 'bg-red-100' : 'bg-slate-100'
               }`}>
                 {task.type === 'quiz' ? (
@@ -535,7 +729,7 @@ function LeftPanel({ config, setConfig, onResourceClick, onTaskClick, onOpenLibr
                     tasks: config.tasks.filter((t: Task) => t.id !== task.id),
                   });
                 }}
-                className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-50 rounded transition-all"
+                className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-50 rounded transition-all flex-shrink-0"
               >
                 <Trash2 size={14} className="text-red-500" />
               </button>
@@ -568,6 +762,7 @@ function LeftPanel({ config, setConfig, onResourceClick, onTaskClick, onOpenLibr
 function CenterPanel({
   config,
   setConfig,
+  onOpenNoteInfo,
   onOpenFreeConfig,
   onOpenGuidedConfig,
   onOpenNotesConfig,
@@ -608,6 +803,65 @@ function CenterPanel({
                 rows={3}
               />
             </div>
+
+            {/* 跨学科配置概览 */}
+            {(config.noteInfo.subjects?.length > 0 ||
+              config.noteInfo.grade ||
+              config.noteInfo.bindClasses?.length > 0 ||
+              config.noteInfo.knowledgePoints?.length > 0) && (
+              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-200 space-y-2">
+                {config.noteInfo.subjects?.length > 0 && (
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs font-medium text-slate-600">学科:</span>
+                    {config.noteInfo.subjects.map((subject: string) => (
+                      <span
+                        key={subject}
+                        className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium"
+                      >
+                        {subject}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {config.noteInfo.grade && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-medium text-slate-600">年级:</span>
+                    <span className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded text-xs font-medium">
+                      {config.noteInfo.grade}
+                    </span>
+                  </div>
+                )}
+                {config.noteInfo.bindClasses?.length > 0 && (
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs font-medium text-slate-600">班级:</span>
+                    {config.noteInfo.bindClasses.map((cls: string) => (
+                      <span
+                        key={cls}
+                        className="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs font-medium"
+                      >
+                        {cls}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {config.noteInfo.knowledgePoints?.length > 0 && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-medium text-slate-600">知识点:</span>
+                    <span className="px-2 py-1 bg-amber-100 text-amber-700 rounded text-xs font-medium">
+                      已配置 {config.noteInfo.knowledgePoints.length} 个
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <button
+              onClick={onOpenNoteInfo}
+              className="w-full bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 border-2 border-blue-200 rounded-lg px-4 py-3 text-sm font-medium text-blue-700 transition-all flex items-center justify-center gap-2"
+            >
+              <Settings size={16} />
+              高级配置（学科、年级、知识点）
+            </button>
           </div>
         </section>
 
@@ -730,9 +984,9 @@ function CenterPanel({
 }
 
 // 右侧帮助面板
-function RightPanel() {
+function RightPanel({ width }: any) {
   return (
-    <div style={{ width: '280px' }} className="bg-gradient-to-br from-slate-50 to-blue-50 border-l border-slate-200 p-6 overflow-y-auto">
+    <div style={{ width: `${width}%` }} className="bg-gradient-to-br from-slate-50 to-blue-50 border-l border-slate-200 p-6 overflow-y-auto flex-shrink-0">
       <div className="space-y-6">
         <div>
           <h3 className="font-bold text-slate-800 mb-3 flex items-center gap-2">

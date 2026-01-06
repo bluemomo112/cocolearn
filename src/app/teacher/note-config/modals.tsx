@@ -32,7 +32,343 @@ import {
   Plus,
   Key,
   Loader2,
+  ArrowLeft,
+  Users,
+  CheckCircle,
+  Calendar,
+  Clock,
+  Target,
+  FolderOpen,
+  MessageSquare,
+  Layout,
+  BarChart3,
+  TrendingUp,
+  GripVertical,
+  Network,
+  Settings,
+  Database,
 } from 'lucide-react';
+
+// 可调整大小的分隔条组件
+export function Resizer({ onResize, position }: { onResize: (delta: number) => void; position: 'left' | 'right' }) {
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const startX = e.clientX;
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const delta = moveEvent.clientX - startX;
+      const viewportWidth = window.innerWidth;
+      const deltaPercent = (delta / viewportWidth) * 100;
+      onResize(deltaPercent);
+    };
+
+    const handleMouseUp = () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  };
+
+  return (
+    <div
+      onMouseDown={handleMouseDown}
+      className="w-1 bg-slate-200 hover:bg-blue-400 cursor-col-resize transition-colors relative group flex-shrink-0"
+    >
+      <div className="absolute inset-y-0 -left-1 -right-1 flex items-center justify-center">
+        <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-blue-500 text-white rounded-full p-1">
+          <GripVertical size={12} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// NoteInfoModal - 跨学科配置模态框
+export function NoteInfoModal({ config, onSave, onClose, knowledgeLibrary, grades, classes }: any) {
+  const [localConfig, setLocalConfig] = useState({
+    title: config.title || '',
+    description: config.description || '',
+    subjects: config.subjects || [],
+    grade: config.grade || '',
+    bindClasses: config.bindClasses || [],
+    knowledgePoints: config.knowledgePoints || [],
+  });
+  const [showKnowledgeLibrary, setShowKnowledgeLibrary] = useState(false);
+  const [selectedSubjectForKP, setSelectedSubjectForKP] = useState('');
+
+  const allSubjects = Object.keys(knowledgeLibrary);
+
+  const toggleSubject = (subject: string) => {
+    setLocalConfig((prev: any) => ({
+      ...prev,
+      subjects: prev.subjects.includes(subject)
+        ? prev.subjects.filter((s: string) => s !== subject)
+        : [...prev.subjects, subject],
+    }));
+  };
+
+  const toggleClass = (className: string) => {
+    setLocalConfig((prev: any) => ({
+      ...prev,
+      bindClasses: prev.bindClasses.includes(className)
+        ? prev.bindClasses.filter((c: string) => c !== className)
+        : [...prev.bindClasses, className],
+    }));
+  };
+
+  const addKnowledgePoint = (kp: any) => {
+    setLocalConfig((prev: any) => ({
+      ...prev,
+      knowledgePoints: [...prev.knowledgePoints, { ...kp, id: `kp_${Date.now()}` }],
+    }));
+  };
+
+  const removeKnowledgePoint = (id: string) => {
+    setLocalConfig((prev: any) => ({
+      ...prev,
+      knowledgePoints: prev.knowledgePoints.filter((kp: any) => kp.id !== id),
+    }));
+  };
+
+  const addCustomKnowledgePoint = () => {
+    const customKP = {
+      id: `kp_custom_${Date.now()}`,
+      subject: selectedSubjectForKP || localConfig.subjects[0] || '自定义',
+      point: '新知识点',
+      source: 'custom' as const,
+    };
+    addKnowledgePoint(customKP);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center backdrop-blur-sm" onClick={onClose}>
+      <div className="bg-white w-[800px] max-h-[85vh] rounded-2xl shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-5">
+          <h2 className="text-lg font-bold flex items-center gap-2">
+            <Settings size={20} />
+            笔记基本信息配置
+          </h2>
+        </div>
+
+        <div className="p-6 max-h-[calc(85vh-140px)] overflow-y-auto">
+          <div className="space-y-6">
+            {/* 标题和描述 */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">笔记标题 *</label>
+                <input
+                  type="text"
+                  value={localConfig.title}
+                  onChange={(e) => setLocalConfig({ ...localConfig, title: e.target.value })}
+                  className="w-full bg-slate-50 border border-slate-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                  placeholder="例如：水循环与水资源"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">年级</label>
+                <select
+                  value={localConfig.grade}
+                  onChange={(e) => setLocalConfig({ ...localConfig, grade: e.target.value })}
+                  className="w-full bg-slate-50 border border-slate-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                >
+                  <option value="">请选择年级</option>
+                  {grades.map((grade: string) => (
+                    <option key={grade} value={grade}>{grade}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">描述</label>
+              <textarea
+                value={localConfig.description}
+                onChange={(e) => setLocalConfig({ ...localConfig, description: e.target.value })}
+                className="w-full bg-slate-50 border border-slate-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none resize-none"
+                rows={3}
+                placeholder="简要描述本笔记的学习目标和内容"
+              />
+            </div>
+
+            {/* 跨学科选择 */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2 flex items-center gap-2">
+                <Network size={16} className="text-blue-500" />
+                涉及学科（可多选）
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {allSubjects.map((subject) => (
+                  <button
+                    key={subject}
+                    onClick={() => toggleSubject(subject)}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      localConfig.subjects.includes(subject)
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    {subject}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* 绑定班级 */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2 flex items-center gap-2">
+                <Users size={16} className="text-emerald-500" />
+                绑定班级（可多选）
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {classes.map((className: string) => (
+                  <button
+                    key={className}
+                    onClick={() => toggleClass(className)}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      localConfig.bindClasses.includes(className)
+                        ? 'bg-emerald-500 text-white'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    {className}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* 知识点配置 */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <label className="text-sm font-medium text-slate-700 flex items-center gap-2">
+                  <Target size={16} className="text-purple-500" />
+                  核心知识点
+                </label>
+                <button
+                  onClick={() => setShowKnowledgeLibrary(!showKnowledgeLibrary)}
+                  className="flex items-center gap-2 px-3 py-1.5 bg-purple-50 text-purple-600 rounded-lg hover:bg-purple-100 text-sm transition-colors"
+                >
+                  <Database size={14} />
+                  {showKnowledgeLibrary ? '隐藏' : '从知识库添加'}
+                </button>
+              </div>
+
+              {/* 已选知识点列表 */}
+              <div className="space-y-2 mb-3">
+                {localConfig.knowledgePoints.map((kp: any) => (
+                  <div
+                    key={kp.id}
+                    className="flex items-center gap-3 p-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-200"
+                  >
+                    <div className="w-2 h-2 rounded-full bg-purple-500"></div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded">{kp.subject}</span>
+                        <span className="text-sm font-medium text-slate-800">{kp.point}</span>
+                        {kp.difficulty && (
+                          <span className={`text-xs px-2 py-0.5 rounded ${
+                            kp.difficulty === '基础' ? 'bg-green-100 text-green-700' :
+                            kp.difficulty === '中级' ? 'bg-yellow-100 text-yellow-700' :
+                            'bg-red-100 text-red-700'
+                          }`}>
+                            {kp.difficulty}
+                          </span>
+                        )}
+                        <span className="text-xs text-slate-400">
+                          {kp.source === 'library' ? '来自知识库' : '自定义'}
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => removeKnowledgePoint(kp.id)}
+                      className="p-1 hover:bg-red-100 rounded transition-colors"
+                    >
+                      <X size={14} className="text-red-500" />
+                    </button>
+                  </div>
+                ))}
+                {localConfig.knowledgePoints.length === 0 && (
+                  <p className="text-sm text-slate-400 text-center py-4">暂未添加知识点</p>
+                )}
+              </div>
+
+              {/* 知识库面板 */}
+              {showKnowledgeLibrary && (
+                <div className="border-2 border-purple-200 rounded-xl p-4 bg-purple-50/50">
+                  <div className="flex items-center gap-2 mb-3">
+                    <label className="text-sm font-medium text-slate-700">选择学科：</label>
+                    <select
+                      value={selectedSubjectForKP}
+                      onChange={(e) => setSelectedSubjectForKP(e.target.value)}
+                      className="bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-purple-500 outline-none"
+                    >
+                      <option value="">全部学科</option>
+                      {localConfig.subjects.map((subject: string) => (
+                        <option key={subject} value={subject}>{subject}</option>
+                      ))}
+                    </select>
+                    <button
+                      onClick={addCustomKnowledgePoint}
+                      className="ml-auto flex items-center gap-1 px-3 py-1.5 bg-white border border-dashed border-purple-300 text-purple-600 rounded-lg hover:bg-purple-100 text-sm transition-colors"
+                    >
+                      <Plus size={14} />
+                      添加自定义知识点
+                    </button>
+                  </div>
+
+                  <div className="max-h-48 overflow-y-auto space-y-2">
+                    {Object.entries(knowledgeLibrary)
+                      .filter(([subject]) => !selectedSubjectForKP || subject === selectedSubjectForKP)
+                      .flatMap(([subject, points]) =>
+                        (points as any[]).map((kp) => (
+                          <button
+                            key={kp.id}
+                            onClick={() => addKnowledgePoint(kp)}
+                            disabled={localConfig.knowledgePoints.some((item: any) => item.id === kp.id)}
+                            className="w-full text-left flex items-center gap-3 p-2 bg-white rounded-lg hover:bg-purple-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          >
+                            <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded">{subject}</span>
+                            <span className="text-sm text-slate-700 flex-1">{kp.point}</span>
+                            <span className={`text-xs px-2 py-0.5 rounded ${
+                              kp.difficulty === '基础' ? 'bg-green-100 text-green-700' :
+                              kp.difficulty === '中级' ? 'bg-yellow-100 text-yellow-700' :
+                              'bg-red-100 text-red-700'
+                            }`}>
+                              {kp.difficulty}
+                            </span>
+                          </button>
+                        ))
+                      )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="p-4 border-t border-slate-200 flex justify-end gap-3">
+          <button onClick={onClose} className="px-5 py-2 text-slate-600 hover:text-slate-800 font-medium">
+            取消
+          </button>
+          <button
+            onClick={() => {
+              onSave(localConfig);
+              onClose();
+            }}
+            className="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors"
+          >
+            保存配置
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // 自由对话模式配置弹窗
 export function FreeModeModal({ config, inheritedAgents, onSave, onClose }: any) {
@@ -604,6 +940,13 @@ export function ResourcePreviewModal({ resource, onClose }: any) {
 export function TaskEditModal({ task, onSave, onClose }: any) {
   const [localTask, setLocalTask] = useState({ ...task });
   const [isGenerating, setIsGenerating] = useState(false);
+  const [showAIConfig, setShowAIConfig] = useState(false);
+  const [aiGenConfig, setAiGenConfig] = useState({
+    questionTypes: ['choice'] as string[],
+    questionCount: 5,
+    difficulty: 'medium' as 'easy' | 'medium' | 'hard',
+    customPrompt: '',
+  });
 
   if (!task) return null;
 
@@ -613,33 +956,82 @@ export function TaskEditModal({ task, onSave, onClose }: any) {
 
   const generateQuestions = async () => {
     setIsGenerating(true);
-    await new Promise((resolve) => setTimeout(resolve, 1200));
-    const generatedQuestions = [
-      {
-        id: `q_${Date.now()}_1`,
-        type: 'choice',
-        content: 'AI生成的选择题 1',
-        options: ['选项A', '选项B', '选项C'],
-        answer: 0,
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+
+    const generatedQuestions = [];
+    const typeMap: Record<string, string> = {
+      choice: '单选题',
+      multipleChoice: '多选题',
+      fillBlank: '填空题',
+      trueFalse: '判断题',
+      shortAnswer: '简答题',
+    };
+
+    for (let i = 0; i < aiGenConfig.questionCount; i++) {
+      const randomType = aiGenConfig.questionTypes[Math.floor(Math.random() * aiGenConfig.questionTypes.length)];
+      const difficultyLabel = aiGenConfig.difficulty === 'easy' ? '基础' : aiGenConfig.difficulty === 'medium' ? '中等' : '困难';
+
+      generatedQuestions.push({
+        id: `q_${Date.now()}_${i}`,
+        type: randomType,
+        content: `AI生成的${typeMap[randomType]} ${i + 1} (难度: ${difficultyLabel})`,
+        options: randomType.includes('choice') || randomType.includes('Choice')
+          ? ['选项A', '选项B', '选项C', randomType === 'multipleChoice' ? '选项D' : null].filter(Boolean)
+          : undefined,
+        answer: randomType === 'choice' ? 0 : randomType === 'multipleChoice' ? [0, 1] : randomType === 'trueFalse' ? true : '',
         aiGenerated: true,
-      },
-      {
-        id: `q_${Date.now()}_2`,
-        type: 'choice',
-        content: 'AI生成的选择题 2',
-        options: ['选项A', '选项B', '选项C'],
-        answer: 1,
-        aiGenerated: true,
-      },
-    ];
+        difficulty: aiGenConfig.difficulty,
+        generatedAt: new Date().toISOString(),
+      });
+    }
+
     updateField('questions', generatedQuestions);
     setIsGenerating(false);
   };
 
   const GRADING_AGENTS = [
-    { id: 'grading_default', name: '通用批改Agent', description: '适用于大多数作业类型' },
-    { id: 'grading_creative', name: '创意批改Agent', description: '侧重创新性和独特性评价' },
-    { id: 'grading_analytical', name: '分析批改Agent', description: '注重逻辑和论证质量' },
+    {
+      id: 'agent_default',
+      name: '通用作业批改助手',
+      description: '适用于各学科的通用批改，提供客观评价和建议',
+      type: 'system',
+      difyConfig: { agentId: 'dify_grading_001', apiKey: 'sk-xxx' },
+    },
+    {
+      id: 'agent_creative_writing',
+      name: '创意写作批改专家',
+      description: '专注于创意写作、作文批改，评价文笔、修辞和创意',
+      type: 'system',
+      difyConfig: { agentId: 'dify_grading_002', apiKey: 'sk-xxx' },
+    },
+    {
+      id: 'agent_science_lab',
+      name: '科学实验报告批改',
+      description: '针对科学实验报告，评估实验设计、数据分析和结论',
+      type: 'system',
+      difyConfig: { agentId: 'dify_grading_003', apiKey: 'sk-xxx' },
+    },
+    {
+      id: 'agent_math_problem',
+      name: '数学解题过程批改',
+      description: '评价数学解题步骤、逻辑严密性和答案准确性',
+      type: 'system',
+      difyConfig: { agentId: 'dify_grading_004', apiKey: 'sk-xxx' },
+    },
+    {
+      id: 'agent_analytical',
+      name: '批判性思维评估',
+      description: '评估论证质量、逻辑推理和批判性分析能力',
+      type: 'system',
+      difyConfig: { agentId: 'dify_grading_005', apiKey: 'sk-xxx' },
+    },
+    {
+      id: 'agent_quick_feedback',
+      name: '快速反馈助手',
+      description: '提供简洁快速的批改反馈，适合日常练习',
+      type: 'system',
+      difyConfig: { agentId: 'dify_grading_006', apiKey: 'sk-xxx' },
+    },
   ];
 
   return (
@@ -708,27 +1100,139 @@ export function TaskEditModal({ task, onSave, onClose }: any) {
               <div className="mt-6">
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-sm font-bold text-slate-700">测验题目</h3>
-                  <button
-                    onClick={generateQuestions}
-                    disabled={isGenerating}
-                    className="px-3 py-1.5 bg-gradient-to-r from-purple-500 to-indigo-500 text-white rounded-lg text-xs font-medium hover:from-purple-600 hover:to-indigo-600 transition-all flex items-center gap-1 disabled:opacity-50"
-                  >
-                    {isGenerating ? (
-                      <>
-                        <Loader2 size={12} className="animate-spin" />
-                        生成中...
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles size={12} />
-                        AI生成题目
-                      </>
-                    )}
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setShowAIConfig(!showAIConfig)}
+                      className="px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg text-xs font-medium hover:bg-slate-200 transition-all flex items-center gap-1"
+                    >
+                      <Settings size={12} />
+                      {showAIConfig ? '隐藏配置' : '生成配置'}
+                    </button>
+                    <button
+                      onClick={generateQuestions}
+                      disabled={isGenerating}
+                      className="px-3 py-1.5 bg-gradient-to-r from-purple-500 to-indigo-500 text-white rounded-lg text-xs font-medium hover:from-purple-600 hover:to-indigo-600 transition-all flex items-center gap-1 disabled:opacity-50"
+                    >
+                      {isGenerating ? (
+                        <>
+                          <Loader2 size={12} className="animate-spin" />
+                          生成中...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles size={12} />
+                          AI生成题目
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
+
+                {/* AI生成配置面板 */}
+                {showAIConfig && (
+                  <div className="mb-4 p-4 bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl border border-purple-200 space-y-4">
+                    {/* 题型选择 */}
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700 mb-2">题型选择（可多选）</label>
+                      <div className="flex flex-wrap gap-2">
+                        {[
+                          { value: 'choice', label: '单选题' },
+                          { value: 'multipleChoice', label: '多选题' },
+                          { value: 'fillBlank', label: '填空题' },
+                          { value: 'trueFalse', label: '判断题' },
+                          { value: 'shortAnswer', label: '简答题' },
+                        ].map((type) => (
+                          <button
+                            key={type.value}
+                            onClick={() => {
+                              const types = aiGenConfig.questionTypes.includes(type.value)
+                                ? aiGenConfig.questionTypes.filter((t) => t !== type.value)
+                                : [...aiGenConfig.questionTypes, type.value];
+                              if (types.length > 0) {
+                                setAiGenConfig({ ...aiGenConfig, questionTypes: types });
+                              }
+                            }}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                              aiGenConfig.questionTypes.includes(type.value)
+                                ? 'bg-purple-600 text-white'
+                                : 'bg-white text-slate-600 border border-slate-200'
+                            }`}
+                          >
+                            {type.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* 题目数量 */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-medium text-slate-700 mb-2">题目数量</label>
+                        <input
+                          type="number"
+                          min="1"
+                          max="20"
+                          value={aiGenConfig.questionCount}
+                          onChange={(e) =>
+                            setAiGenConfig({ ...aiGenConfig, questionCount: parseInt(e.target.value) || 1 })
+                          }
+                          className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 outline-none"
+                        />
+                      </div>
+
+                      {/* 难度级别 */}
+                      <div>
+                        <label className="block text-xs font-medium text-slate-700 mb-2">难度级别</label>
+                        <select
+                          value={aiGenConfig.difficulty}
+                          onChange={(e) =>
+                            setAiGenConfig({ ...aiGenConfig, difficulty: e.target.value as 'easy' | 'medium' | 'hard' })
+                          }
+                          className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 outline-none"
+                        >
+                          <option value="easy">基础</option>
+                          <option value="medium">中等</option>
+                          <option value="hard">困难</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* 自定义提示词 */}
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700 mb-2">
+                        自定义生成提示词（可选）
+                      </label>
+                      <textarea
+                        value={aiGenConfig.customPrompt}
+                        onChange={(e) => setAiGenConfig({ ...aiGenConfig, customPrompt: e.target.value })}
+                        placeholder="例如：请围绕水循环主题，生成适合四年级学生的题目..."
+                        className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 outline-none resize-none"
+                        rows={2}
+                      />
+                    </div>
+
+                    {/* 配置摘要 */}
+                    <div className="bg-white/80 rounded-lg p-3 border border-purple-100">
+                      <p className="text-xs text-slate-600">
+                        将生成 <span className="font-bold text-purple-600">{aiGenConfig.questionCount}</span> 道题目，
+                        题型：
+                        <span className="font-bold text-purple-600">
+                          {aiGenConfig.questionTypes
+                            .map((t) => ({ choice: '单选', multipleChoice: '多选', fillBlank: '填空', trueFalse: '判断', shortAnswer: '简答' }[t]))
+                            .join('、')}
+                        </span>
+                        ，难度：
+                        <span className="font-bold text-purple-600">
+                          {aiGenConfig.difficulty === 'easy' ? '基础' : aiGenConfig.difficulty === 'medium' ? '中等' : '困难'}
+                        </span>
+                      </p>
+                    </div>
+                  </div>
+                )}
+
                 <div className="text-center py-6 text-slate-400">
                   <ListChecks size={24} className="mx-auto mb-2" />
-                  <p className="text-xs">点击"AI生成题目"或手动添加题目</p>
+                  <p className="text-xs">配置参数后点击"AI生成题目"，或手动添加题目</p>
                 </div>
               </div>
             )}
@@ -772,20 +1276,78 @@ export function TaskEditModal({ task, onSave, onClose }: any) {
                   {localTask.aiGrading?.enabled && (
                     <div className="space-y-3">
                       <div>
-                        <label className="block text-xs font-medium text-purple-600 mb-1">批改Agent</label>
-                        <select
-                          value={localTask.aiGrading?.agentId || 'grading_default'}
+                        <label className="block text-xs font-medium text-purple-600 mb-2">选择批改Agent</label>
+                        <div className="space-y-2 max-h-80 overflow-y-auto">
+                          {GRADING_AGENTS.map((agent) => {
+                            const isSelected = (localTask.aiGrading?.agentId || 'agent_default') === agent.id;
+                            return (
+                              <button
+                                key={agent.id}
+                                onClick={() =>
+                                  updateField('aiGrading', { ...localTask.aiGrading, agentId: agent.id })
+                                }
+                                className={`w-full text-left p-3 rounded-lg border-2 transition-all ${
+                                  isSelected
+                                    ? 'border-purple-500 bg-purple-50'
+                                    : 'border-slate-200 bg-white hover:border-purple-300 hover:bg-purple-50/50'
+                                }`}
+                              >
+                                <div className="flex items-start justify-between gap-2 mb-1">
+                                  <div className="flex items-center gap-2">
+                                    <h5 className="font-bold text-sm text-slate-800">{agent.name}</h5>
+                                    {agent.type === 'system' && (
+                                      <span className="px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded text-[10px] font-medium">
+                                        系统
+                                      </span>
+                                    )}
+                                  </div>
+                                  {isSelected && (
+                                    <div className="w-5 h-5 bg-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
+                                      <svg
+                                        className="w-3 h-3 text-white"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={3}
+                                          d="M5 13l4 4L19 7"
+                                        />
+                                      </svg>
+                                    </div>
+                                  )}
+                                </div>
+                                <p className="text-xs text-slate-600 leading-relaxed">{agent.description}</p>
+                                {agent.difyConfig && (
+                                  <div className="mt-2 flex items-center gap-2 text-[10px] text-slate-500">
+                                    <span className="px-2 py-0.5 bg-slate-100 rounded font-mono">
+                                      Dify: {agent.difyConfig.agentId}
+                                    </span>
+                                  </div>
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-purple-600 mb-2">
+                          批改标准（可选）
+                        </label>
+                        <textarea
+                          value={localTask.aiGrading?.customCriteria || ''}
                           onChange={(e) =>
-                            updateField('aiGrading', { ...localTask.aiGrading, agentId: e.target.value })
+                            updateField('aiGrading', {
+                              ...localTask.aiGrading,
+                              customCriteria: e.target.value,
+                            })
                           }
-                          className="w-full bg-white border border-purple-200 rounded-lg px-3 py-2 text-sm"
-                        >
-                          {GRADING_AGENTS.map((agent) => (
-                            <option key={agent.id} value={agent.id}>
-                              {agent.name}
-                            </option>
-                          ))}
-                        </select>
+                          placeholder="例如：重点关注学生的思维过程和实际应用能力..."
+                          className="w-full bg-white border border-purple-200 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-purple-500 outline-none resize-none"
+                          rows={3}
+                        />
                       </div>
                     </div>
                   )}
@@ -960,6 +1522,365 @@ export function StudentPreview({ config, leftWidth, rightWidth }: any) {
               </div>
             </div>
           )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Use视角头部 - 学生使用界面预览
+export function UseViewHeader({ config, onBack, onSwitchToResults }: any) {
+  return (
+    <header className="h-16 bg-gradient-to-r from-emerald-600 to-teal-600 text-white flex items-center justify-between px-6 shrink-0 shadow-lg">
+      <div className="flex items-center gap-4">
+        <button
+          onClick={onBack}
+          className="flex items-center gap-2 px-3 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors"
+        >
+          <ArrowLeft size={16} />
+          <span className="text-sm font-medium">返回编辑</span>
+        </button>
+        <div className="w-px h-8 bg-white/20"></div>
+        <div>
+          <div className="flex items-center gap-2">
+            <Eye size={18} />
+            <h1 className="text-lg font-bold">使用视角</h1>
+            <span className="text-xs bg-white/20 px-2 py-1 rounded">学生体验预览</span>
+          </div>
+          <p className="text-sm text-emerald-100 mt-0.5">{config.noteInfo.title}</p>
+        </div>
+      </div>
+      <div className="flex items-center gap-3">
+        <button
+          onClick={onSwitchToResults}
+          className="flex items-center gap-2 px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition-colors"
+        >
+          <BarChart3 size={16} />
+          查看学习数据
+        </button>
+      </div>
+    </header>
+  );
+}
+
+// Results视角头部 - 学习数据统计
+export function ResultsViewHeader({ config, onBack, onSwitchToUse }: any) {
+  return (
+    <header className="h-16 bg-gradient-to-r from-purple-600 to-violet-600 text-white flex items-center justify-between px-6 shrink-0 shadow-lg">
+      <div className="flex items-center gap-4">
+        <button
+          onClick={onBack}
+          className="flex items-center gap-2 px-3 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors"
+        >
+          <ArrowLeft size={16} />
+          <span className="text-sm font-medium">返回编辑</span>
+        </button>
+        <div className="w-px h-8 bg-white/20"></div>
+        <div>
+          <div className="flex items-center gap-2">
+            <Activity size={18} />
+            <h1 className="text-lg font-bold">结果视角</h1>
+            <span className="text-xs bg-white/20 px-2 py-1 rounded">学习数据分析</span>
+          </div>
+          <p className="text-sm text-purple-100 mt-0.5">{config.noteInfo.title}</p>
+        </div>
+      </div>
+      <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4 mr-4">
+          <div className="text-right">
+            <p className="text-xs text-purple-100">绑定学生</p>
+            <p className="text-lg font-bold">45人</p>
+          </div>
+          <div className="text-right">
+            <p className="text-xs text-purple-100">平均进度</p>
+            <p className="text-lg font-bold">68%</p>
+          </div>
+        </div>
+        <button
+          onClick={onSwitchToUse}
+          className="flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg transition-colors"
+        >
+          <Eye size={16} />
+          切换到使用视角
+        </button>
+      </div>
+    </header>
+  );
+}
+
+// Results视角仪表板 - 学习数据展示
+export function ResultsViewDashboard({ config }: any) {
+  // 模拟学生列表数据
+  const mockStudents = [
+    { id: 1, name: '张晓明', avatar: '👦', status: 'online', progress: 85, lastActive: '2分钟前' },
+    { id: 2, name: '李思琪', avatar: '👧', status: 'online', progress: 92, lastActive: '刚刚' },
+    { id: 3, name: '王浩宇', avatar: '👦', status: 'offline', progress: 45, lastActive: '1小时前' },
+    { id: 4, name: '刘雨欣', avatar: '👧', status: 'online', progress: 78, lastActive: '5分钟前' },
+    { id: 5, name: '陈思远', avatar: '👦', status: 'offline', progress: 60, lastActive: '30分钟前' },
+    { id: 6, name: '赵梓涵', avatar: '👧', status: 'online', progress: 95, lastActive: '1分钟前' },
+  ];
+
+  // 模拟资源查看统计
+  const mockResourceViews = config.resources.map((resource: any, idx: number) => ({
+    ...resource,
+    views: [42, 38, 35, 40, 45, 41][idx] || 30,
+    avgTime: ['12分35秒', '8分20秒', '15分10秒', '6分45秒', '18分30秒', '10分15秒'][idx] || '10分钟',
+    completionRate: [95, 88, 78, 92, 85, 90][idx] || 80,
+  }));
+
+  // 模拟任务完成统计
+  const mockTaskCompletions = config.tasks.map((task: any, idx: number) => ({
+    ...task,
+    submitted: [38, 35, 40, 42][idx] || 35,
+    avgScore: task.type === 'quiz' ? [85, 78, 92, 88][idx] || 80 : null,
+    excellent: [15, 12, 18, 20][idx] || 15,
+    good: [18, 20, 16, 15][idx] || 18,
+    fair: [5, 3, 6, 7][idx] || 5,
+  }));
+
+  return (
+    <div className="flex-1 overflow-y-auto bg-slate-100 p-6">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* 统计卡片 */}
+        <div className="grid grid-cols-4 gap-4">
+          <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-200">
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center">
+                <Users size={24} className="text-blue-600" />
+              </div>
+              <TrendingUp size={16} className="text-green-500" />
+            </div>
+            <p className="text-2xl font-bold text-slate-800">45</p>
+            <p className="text-sm text-slate-500 mt-1">绑定学生总数</p>
+          </div>
+
+          <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-200">
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-12 h-12 rounded-lg bg-emerald-100 flex items-center justify-center">
+                <CheckCircle size={24} className="text-emerald-600" />
+              </div>
+              <TrendingUp size={16} className="text-green-500" />
+            </div>
+            <p className="text-2xl font-bold text-slate-800">68%</p>
+            <p className="text-sm text-slate-500 mt-1">平均完成进度</p>
+          </div>
+
+          <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-200">
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-12 h-12 rounded-lg bg-purple-100 flex items-center justify-center">
+                <Clock size={24} className="text-purple-600" />
+              </div>
+              <TrendingUp size={16} className="text-green-500" />
+            </div>
+            <p className="text-2xl font-bold text-slate-800">42min</p>
+            <p className="text-sm text-slate-500 mt-1">平均学习时长</p>
+          </div>
+
+          <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-200">
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-12 h-12 rounded-lg bg-amber-100 flex items-center justify-center">
+                <Target size={24} className="text-amber-600" />
+              </div>
+              <TrendingUp size={16} className="text-green-500" />
+            </div>
+            <p className="text-2xl font-bold text-slate-800">84.5</p>
+            <p className="text-sm text-slate-500 mt-1">平均任务得分</p>
+          </div>
+        </div>
+
+        {/* 学生列表 */}
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+          <div className="p-5 border-b border-slate-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+            <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+              <Users size={18} className="text-blue-600" />
+              学生学习进度
+            </h3>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-slate-50 border-b border-slate-200">
+                <tr>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-slate-600">学生</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-slate-600">状态</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-slate-600">学习进度</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-slate-600">最后活跃</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {mockStudents.map((student) => (
+                  <tr key={student.id} className="hover:bg-slate-50 transition-colors">
+                    <td className="px-5 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="text-2xl">{student.avatar}</div>
+                        <span className="font-medium text-slate-700">{student.name}</span>
+                      </div>
+                    </td>
+                    <td className="px-5 py-4">
+                      <span
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
+                          student.status === 'online'
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-slate-100 text-slate-600'
+                        }`}
+                      >
+                        <span
+                          className={`w-1.5 h-1.5 rounded-full ${
+                            student.status === 'online' ? 'bg-green-500' : 'bg-slate-400'
+                          }`}
+                        ></span>
+                        {student.status === 'online' ? '在线' : '离线'}
+                      </span>
+                    </td>
+                    <td className="px-5 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="flex-1 bg-slate-100 rounded-full h-2 max-w-[120px]">
+                          <div
+                            className="bg-gradient-to-r from-blue-500 to-indigo-500 h-2 rounded-full transition-all"
+                            style={{ width: `${student.progress}%` }}
+                          ></div>
+                        </div>
+                        <span className="text-sm font-semibold text-slate-700">{student.progress}%</span>
+                      </div>
+                    </td>
+                    <td className="px-5 py-4">
+                      <span className="text-sm text-slate-500">{student.lastActive}</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* 资源查看统计 */}
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+          <div className="p-5 border-b border-slate-200 bg-gradient-to-r from-emerald-50 to-teal-50">
+            <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+              <Eye size={18} className="text-emerald-600" />
+              资源查看统计
+            </h3>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-slate-50 border-b border-slate-200">
+                <tr>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-slate-600">资源名称</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-slate-600">查看人数</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-slate-600">平均时长</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-slate-600">完成率</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {mockResourceViews.map((resource: any) => (
+                  <tr key={resource.id} className="hover:bg-slate-50 transition-colors">
+                    <td className="px-5 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-10 h-10 rounded-lg bg-${resource.color}-100 flex items-center justify-center`}>
+                          {resource.type === 'video' && <Video size={16} className={`text-${resource.color}-600`} />}
+                          {resource.type === 'pdf' && <FileText size={16} className={`text-${resource.color}-600`} />}
+                          {resource.type === 'ppt' && (
+                            <FileSpreadsheet size={16} className={`text-${resource.color}-600`} />
+                          )}
+                        </div>
+                        <span className="font-medium text-slate-700">{resource.title}</span>
+                      </div>
+                    </td>
+                    <td className="px-5 py-4">
+                      <span className="text-sm font-semibold text-slate-700">{resource.views}/45</span>
+                    </td>
+                    <td className="px-5 py-4">
+                      <span className="text-sm text-slate-600">{resource.avgTime}</span>
+                    </td>
+                    <td className="px-5 py-4">
+                      <span className="text-sm font-semibold text-emerald-600">{resource.completionRate}%</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* 任务完成统计 */}
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+          <div className="p-5 border-b border-slate-200 bg-gradient-to-r from-purple-50 to-violet-50">
+            <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+              <CheckCircle size={18} className="text-purple-600" />
+              任务完成统计
+            </h3>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-slate-50 border-b border-slate-200">
+                <tr>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-slate-600">任务名称</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-slate-600">类型</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-slate-600">提交人数</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-slate-600">平均得分</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-slate-600">评级分布</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {mockTaskCompletions.map((task: any) => (
+                  <tr key={task.id} className="hover:bg-slate-50 transition-colors">
+                    <td className="px-5 py-4">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                            task.type === 'quiz' ? 'bg-green-100' : 'bg-blue-100'
+                          }`}
+                        >
+                          {task.type === 'quiz' ? (
+                            <Zap size={16} className="text-green-600" />
+                          ) : (
+                            <FileEdit size={16} className="text-blue-600" />
+                          )}
+                        </div>
+                        <span className="font-medium text-slate-700">{task.title}</span>
+                      </div>
+                    </td>
+                    <td className="px-5 py-4">
+                      <span
+                        className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${
+                          task.type === 'quiz'
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-blue-100 text-blue-700'
+                        }`}
+                      >
+                        {task.type === 'quiz' ? '测验' : '作业'}
+                      </span>
+                    </td>
+                    <td className="px-5 py-4">
+                      <span className="text-sm font-semibold text-slate-700">{task.submitted}/45</span>
+                    </td>
+                    <td className="px-5 py-4">
+                      {task.avgScore !== null ? (
+                        <span className="text-sm font-semibold text-emerald-600">{task.avgScore}分</span>
+                      ) : (
+                        <span className="text-sm text-slate-400">-</span>
+                      )}
+                    </td>
+                    <td className="px-5 py-4">
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1">
+                          <span className="text-xs text-green-600">优</span>
+                          <span className="text-xs font-medium text-slate-700">{task.excellent}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span className="text-xs text-blue-600">良</span>
+                          <span className="text-xs font-medium text-slate-700">{task.good}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span className="text-xs text-amber-600">中</span>
+                          <span className="text-xs font-medium text-slate-700">{task.fair}</span>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
