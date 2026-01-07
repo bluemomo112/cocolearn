@@ -806,10 +806,10 @@ export default function CourseCenter() {
     setShowTeachingModal(false)
     if (mode === 'teacher-centered') {
       // 讲授模式 - 跳转到讲授页面
-      window.location.href = '/LMS-Teacher-Teaching.html'
+      window.open('/LMS-Teacher-Teaching.html', '_blank')
     } else {
       // 自学模式 - 跳转到使用视角
-      window.location.href = '/LMS-Teacher-NoteConfig.html?view=use'
+      window.open('/teacher/note-config?view=use', '_blank')
     }
   }
 

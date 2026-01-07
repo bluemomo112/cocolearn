@@ -478,9 +478,9 @@ export default function TeacherDashboard() {
               </a>
 
               {/* 以学生为中心的课堂 */}
-              <a
-                href="/LMS-Teacher-NoteConfig.html?view=use"
-                className="group relative bg-gradient-to-br from-emerald-50 to-teal-50 border-2 border-emerald-100 rounded-2xl p-6 hover:border-emerald-300 hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+              <button
+                onClick={() => window.open('/teacher/note-config?view=edit', '_blank')}
+                className="group relative w-full bg-gradient-to-br from-emerald-50 to-teal-50 border-2 border-emerald-100 rounded-2xl p-6 hover:border-emerald-300 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 text-left"
               >
                 <div className="flex flex-col items-center text-center">
                   {/* 图标 */}
@@ -512,7 +512,7 @@ export default function TeacherDashboard() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
                 </div>
-              </a>
+              </button>
             </div>
 
             {/* 底部提示 */}

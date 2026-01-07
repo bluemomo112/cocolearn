@@ -1538,41 +1538,44 @@ export function StudentPreview({ config, leftWidth, rightWidth }: any) {
 // Use视角头部 - 学生使用界面预览
 export function UseViewHeader({ config, onBack, onSwitchToResults }: any) {
   return (
-    <header className="h-16 bg-white/80 backdrop-blur-xl border-b border-gray-100 flex items-center justify-between px-6 shrink-0">
-      <div className="flex items-center gap-4">
-        <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 rounded-lg">
-          <span className="text-sm font-medium text-emerald-700">CocoLearn Teacher</span>
+    <header className="h-10 bg-white/80 backdrop-blur-xl border-b border-gray-100 flex items-center justify-between px-4 shrink-0">
+      <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 px-2 py-0.5 bg-emerald-50 rounded">
+          <span className="text-xs font-medium text-emerald-700">CocoLearn Teacher</span>
         </div>
-        <div className="w-px h-8 bg-gray-200"></div>
-        <div className="flex items-center gap-2">
-          <h1 className="text-base font-semibold text-gray-900">{config.noteInfo.title}</h1>
+        <div className="w-px h-5 bg-gray-200"></div>
+        <div className="flex items-center gap-1.5">
+          <h1 className="text-sm font-semibold text-gray-900">{config.noteInfo.title}</h1>
           <span className="text-xs text-gray-400">{config.noteInfo.grade || '未设置年级'}</span>
         </div>
       </div>
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
         <button
           onClick={onBack}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-xl text-gray-600 hover:bg-gray-100 transition-all"
+          className="flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-lg text-gray-600 hover:bg-gray-100 transition-all"
         >
-          <ArrowLeft size={16} />
+          <ArrowLeft size={14} />
           编辑视角
         </button>
         <button
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-xl bg-emerald-100 text-emerald-700 shadow-sm"
+          className="flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-lg bg-emerald-100 text-emerald-700"
         >
-          <Eye size={16} />
+          <Eye size={14} />
           使用视角
         </button>
         <button
           onClick={onSwitchToResults}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-xl text-gray-600 hover:bg-gray-100 transition-all"
+          className="flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-lg text-gray-600 hover:bg-gray-100 transition-all"
         >
-          <Activity size={16} />
+          <Activity size={14} />
           结果视角
         </button>
-        <div className="w-px h-8 bg-gray-200"></div>
-        <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 transition-colors shadow-sm">
-          <Send size={16} />
+        <div className="w-px h-5 bg-gray-200"></div>
+        <button
+          onClick={() => window.open('/student/workbench', '_blank')}
+          className="flex items-center gap-1.5 px-3 py-1 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          <Send size={14} />
           发布到班级
         </button>
       </div>
@@ -1583,41 +1586,44 @@ export function UseViewHeader({ config, onBack, onSwitchToResults }: any) {
 // Results视角头部 - 学习数据统计
 export function ResultsViewHeader({ config, onBack, onSwitchToUse }: any) {
   return (
-    <header className="h-16 bg-white/80 backdrop-blur-xl border-b border-gray-100 flex items-center justify-between px-6 shrink-0">
-      <div className="flex items-center gap-4">
-        <div className="flex items-center gap-2 px-3 py-1.5 bg-purple-50 rounded-lg">
-          <span className="text-sm font-medium text-purple-700">CocoLearn Teacher</span>
+    <header className="h-10 bg-white/80 backdrop-blur-xl border-b border-gray-100 flex items-center justify-between px-4 shrink-0">
+      <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 px-2 py-0.5 bg-purple-50 rounded">
+          <span className="text-xs font-medium text-purple-700">CocoLearn Teacher</span>
         </div>
-        <div className="w-px h-8 bg-gray-200"></div>
-        <div className="flex items-center gap-2">
-          <h1 className="text-base font-semibold text-gray-900">{config.noteInfo.title}</h1>
+        <div className="w-px h-5 bg-gray-200"></div>
+        <div className="flex items-center gap-1.5">
+          <h1 className="text-sm font-semibold text-gray-900">{config.noteInfo.title}</h1>
           <span className="text-xs text-gray-400">{config.noteInfo.grade || '未设置年级'}</span>
         </div>
       </div>
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
         <button
           onClick={onBack}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-xl text-gray-600 hover:bg-gray-100 transition-all"
+          className="flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-lg text-gray-600 hover:bg-gray-100 transition-all"
         >
-          <Pencil size={16} />
+          <Pencil size={14} />
           编辑视角
         </button>
         <button
           onClick={onSwitchToUse}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-xl text-gray-600 hover:bg-gray-100 transition-all"
+          className="flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-lg text-gray-600 hover:bg-gray-100 transition-all"
         >
-          <Eye size={16} />
+          <Eye size={14} />
           使用视角
         </button>
         <button
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-xl bg-purple-100 text-purple-700 shadow-sm"
+          className="flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-lg bg-purple-100 text-purple-700"
         >
-          <Activity size={16} />
+          <Activity size={14} />
           结果视角
         </button>
-        <div className="w-px h-8 bg-gray-200"></div>
-        <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 transition-colors shadow-sm">
-          <Send size={16} />
+        <div className="w-px h-5 bg-gray-200"></div>
+        <button
+          onClick={() => window.open('/student/workbench', '_blank')}
+          className="flex items-center gap-1.5 px-3 py-1 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          <Send size={14} />
           发布到班级
         </button>
       </div>

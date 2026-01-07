@@ -39,6 +39,12 @@ import {
   Award,
   ChevronDown,
   ChevronUp,
+  Plus,
+  Edit,
+  Sidebar,
+  Image as ImageIcon,
+  Mic,
+  Trash2,
 } from 'lucide-react';
 import CompetencyRadarChart from '../components/CompetencyRadarChart';
 import {
@@ -153,9 +159,11 @@ export default function StudentWorkbenchPage() {
   const [isTimerRunning, setIsTimerRunning] = useState(true);
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // 模态框状态
+  // 左侧内容状态
   const [selectedResource, setSelectedResource] = useState<Resource | null>(null);
+  const [isResourceFullscreen, setIsResourceFullscreen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [completedTasks, setCompletedTasks] = useState<Set<string>>(new Set());
 
   // 模拟配置数据
   const config: NoteConfig = {
@@ -222,6 +230,19 @@ export default function StudentWorkbenchPage() {
       };
       setMessages((prev) => [...prev, aiReply]);
     }, 1000);
+  };
+
+  // 切换任务完成状态
+  const toggleTaskCompletion = (taskId: string) => {
+    setCompletedTasks((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(taskId)) {
+        newSet.delete(taskId);
+      } else {
+        newSet.add(taskId);
+      }
+      return newSet;
+    });
   };
 
   // 计时器管理
@@ -308,8 +329,14 @@ export default function StudentWorkbenchPage() {
         <LeftPanel
           config={config}
           width={leftWidth}
-          onResourceClick={setSelectedResource}
-          onTaskClick={setSelectedTask}
+          selectedResource={selectedResource}
+          isResourceFullscreen={isResourceFullscreen}
+          setSelectedResource={setSelectedResource}
+          setIsResourceFullscreen={setIsResourceFullscreen}
+          selectedTask={selectedTask}
+          setSelectedTask={setSelectedTask}
+          completedTasks={completedTasks}
+          toggleTaskCompletion={toggleTaskCompletion}
         />
 
         {/* 左侧调整器 */}
@@ -352,102 +379,375 @@ export default function StudentWorkbenchPage() {
           tasks={config.tasks}
         />
       </div>
+    </div>
+  );
+}
 
-      {/* 模态框 */}
-      {selectedResource && (
-        <ResourcePreviewModal
+// 左侧面板 - 学习资料库（嵌入式显示）
+function LeftPanel({
+  config,
+  width,
+  selectedResource,
+  isResourceFullscreen,
+  setSelectedResource,
+  setIsResourceFullscreen,
+  selectedTask,
+  setSelectedTask,
+  completedTasks,
+  toggleTaskCompletion,
+}: {
+  config: NoteConfig;
+  width: number;
+  selectedResource: Resource | null;
+  isResourceFullscreen: boolean;
+  setSelectedResource: (resource: Resource | null) => void;
+  setIsResourceFullscreen: (fullscreen: boolean) => void;
+  selectedTask: Task | null;
+  setSelectedTask: (task: Task | null) => void;
+  completedTasks: Set<string>;
+  toggleTaskCompletion: (taskId: string) => void;
+}) {
+  const [activeView, setActiveView] = useState<'list' | 'resource' | 'task'>('list');
+
+  const handleResourceClick = (resource: Resource) => {
+    setSelectedResource(resource);
+    setActiveView('resource');
+  };
+
+  const handleTaskClick = (task: Task) => {
+    setSelectedTask(task);
+    setActiveView('task');
+  };
+
+  const handleBackToList = () => {
+    setActiveView('list');
+    setSelectedResource(null);
+    setSelectedTask(null);
+    setIsResourceFullscreen(false);
+  };
+
+  return (
+    <div style={{ width: `${width}%` }} className="bg-white border-r border-gray-200 flex flex-col flex-shrink-0">
+      {/* 资源列表视图 */}
+      {activeView === 'list' && (
+        <>
+          {/* 资源列表头部 */}
+          <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50">
+            <h2 className="text-sm font-bold text-gray-700 flex items-center gap-2">
+              <FolderOpen size={16} className="text-blue-500" />
+              学习资料库
+            </h2>
+            <p className="text-xs text-gray-500 mt-1">点击资源开始学习</p>
+          </div>
+
+          {/* 资源列表 */}
+          <div className="flex-1 overflow-y-auto p-3 space-y-2">
+            {config.resources.map((resource) => (
+              <div
+                key={resource.id}
+                onClick={() => handleResourceClick(resource)}
+                className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-blue-50 cursor-pointer transition-colors group"
+              >
+                <div className={`w-10 h-10 rounded-xl bg-${resource.color}-100 flex items-center justify-center`}>
+                  {resource.type === 'video' && <Video size={16} className={`text-${resource.color}-600`} />}
+                  {resource.type === 'pdf' && <FileText size={16} className={`text-${resource.color}-600`} />}
+                  {resource.type === 'ppt' && <FileSpreadsheet size={16} className={`text-${resource.color}-600`} />}
+                  {resource.type === 'web' && <Globe size={16} className={`text-${resource.color}-600`} />}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-700 truncate">{resource.title}</p>
+                  <p className="text-xs text-gray-400">{resource.duration || `${resource.pages}页`}</p>
+                </div>
+                <ChevronRight size={16} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </div>
+            ))}
+          </div>
+
+          {/* 任务列表 */}
+          <div className="p-4 border-t border-gray-100 bg-gray-50">
+            <h3 className="text-sm font-bold text-gray-700 flex items-center gap-2 mb-3">
+              <ListChecks size={16} className="text-amber-500" />
+              学习任务
+            </h3>
+            <div className="space-y-2">
+              {config.tasks.map((task) => {
+                const isCompleted = completedTasks.has(task.id);
+                return (
+                  <div
+                    key={task.id}
+                    onClick={() => handleTaskClick(task)}
+                    className={`flex items-center gap-2 p-3 bg-white rounded-lg hover:bg-amber-50 cursor-pointer transition-colors border ${
+                      isCompleted ? 'border-green-300 bg-green-50' : 'border-gray-200'
+                    }`}
+                  >
+                    <div className={`w-8 h-8 rounded flex items-center justify-center ${
+                      isCompleted
+                        ? 'bg-green-100'
+                        : task.status === 'required' ? 'bg-red-100' : 'bg-gray-100'
+                    }`}>
+                      {isCompleted ? (
+                        <Check size={14} className="text-green-600" />
+                      ) : task.type === 'quiz' ? (
+                        <Zap size={14} className={task.status === 'required' ? 'text-red-600' : 'text-gray-500'} />
+                      ) : (
+                        <FileEdit size={14} className={task.status === 'required' ? 'text-red-600' : 'text-gray-500'} />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-sm font-medium truncate ${isCompleted ? 'text-green-700 line-through' : 'text-gray-700'}`}>
+                        {task.title}
+                      </p>
+                      <p className="text-xs text-gray-400">{task.type === 'quiz' ? '测验' : '作业'}</p>
+                    </div>
+                    {!isCompleted && task.status === 'required' && (
+                      <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded">必修</span>
+                    )}
+                    {isCompleted && (
+                      <span className="text-xs bg-green-100 text-green-600 px-2 py-0.5 rounded">已完成</span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* 资源查看视图 */}
+      {activeView === 'resource' && selectedResource && (
+        <ResourceViewer
           resource={selectedResource}
-          onClose={() => setSelectedResource(null)}
+          isFullscreen={isResourceFullscreen}
+          setIsFullscreen={setIsResourceFullscreen}
+          onBack={handleBackToList}
         />
       )}
-      {selectedTask && (
-        <TaskDetailModal
+
+      {/* 任务查看视图 */}
+      {activeView === 'task' && selectedTask && (
+        <TaskViewer
           task={selectedTask}
-          onClose={() => setSelectedTask(null)}
+          isCompleted={completedTasks.has(selectedTask.id)}
+          onBack={handleBackToList}
+          onToggleComplete={toggleTaskCompletion}
         />
       )}
     </div>
   );
 }
 
-// 左侧面板 - 学习资料库
-function LeftPanel({
-  config,
-  width,
-  onResourceClick,
-  onTaskClick,
+// 资源查看器（嵌入式，支持全屏）
+function ResourceViewer({
+  resource,
+  isFullscreen,
+  setIsFullscreen,
+  onBack,
 }: {
-  config: NoteConfig;
-  width: number;
-  onResourceClick: (resource: Resource) => void;
-  onTaskClick: (task: Task) => void;
+  resource: Resource;
+  isFullscreen: boolean;
+  setIsFullscreen: (fullscreen: boolean) => void;
+  onBack: () => void;
 }) {
   return (
-    <div style={{ width: `${width}%` }} className="bg-white border-r border-gray-200 flex flex-col flex-shrink-0">
-      {/* 资源列表头部 */}
-      <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50">
-        <h2 className="text-sm font-bold text-gray-700 flex items-center gap-2">
-          <FolderOpen size={16} className="text-blue-500" />
-          学习资料库
-        </h2>
-        <p className="text-xs text-gray-500 mt-1">点击资源开始学习</p>
-      </div>
-
-      {/* 资源列表 */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-2">
-        {config.resources.map((resource) => (
-          <div
-            key={resource.id}
-            onClick={() => onResourceClick(resource)}
-            className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-blue-50 cursor-pointer transition-colors group"
+    <div className={`flex flex-col h-full ${isFullscreen ? 'fixed inset-0 z-50 bg-white' : ''}`}>
+      {/* 头部导航 */}
+      <div className={`p-4 border-b border-gray-200 bg-gradient-to-r from-${resource.color}-500 to-${resource.color}-600 text-white flex items-center justify-between`}>
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          <button
+            onClick={onBack}
+            className="w-8 h-8 bg-white/20 hover:bg-white/30 rounded-lg flex items-center justify-center transition-colors flex-shrink-0"
           >
-            <div className={`w-10 h-10 rounded-xl bg-${resource.color}-100 flex items-center justify-center`}>
-              {resource.type === 'video' && <Video size={16} className={`text-${resource.color}-600`} />}
-              {resource.type === 'pdf' && <FileText size={16} className={`text-${resource.color}-600`} />}
-              {resource.type === 'ppt' && <FileSpreadsheet size={16} className={`text-${resource.color}-600`} />}
-              {resource.type === 'web' && <Globe size={16} className={`text-${resource.color}-600`} />}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-700 truncate">{resource.title}</p>
-              <p className="text-xs text-gray-400">{resource.duration || `${resource.pages}页`}</p>
-            </div>
-            <ChevronRight size={16} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <ChevronRight size={16} className="rotate-180" />
+          </button>
+          <div className="min-w-0">
+            <h3 className="text-sm font-bold truncate">{resource.title}</h3>
+            <p className="text-xs text-white/80">{resource.description}</p>
           </div>
-        ))}
+        </div>
+        <button
+          onClick={() => setIsFullscreen(!isFullscreen)}
+          className="w-8 h-8 bg-white/20 hover:bg-white/30 rounded-lg flex items-center justify-center transition-colors flex-shrink-0 ml-2"
+          title={isFullscreen ? '退出全屏' : '全屏'}
+        >
+          {isFullscreen ? <X size={16} /> : <Eye size={16} />}
+        </button>
       </div>
 
-      {/* 任务列表 */}
-      <div className="p-4 border-t border-gray-100 bg-gray-50">
-        <h3 className="text-sm font-bold text-gray-700 flex items-center gap-2 mb-3">
-          <ListChecks size={16} className="text-amber-500" />
-          学习任务
-        </h3>
-        <div className="space-y-2">
-          {config.tasks.map((task) => (
-            <div
-              key={task.id}
-              onClick={() => onTaskClick(task)}
-              className="flex items-center gap-2 p-3 bg-white rounded-lg hover:bg-amber-50 cursor-pointer transition-colors border border-gray-200"
-            >
-              <div className={`w-8 h-8 rounded flex items-center justify-center ${
-                task.status === 'required' ? 'bg-red-100' : 'bg-gray-100'
-              }`}>
-                {task.type === 'quiz' ? (
-                  <Zap size={14} className={task.status === 'required' ? 'text-red-600' : 'text-gray-500'} />
-                ) : (
-                  <FileEdit size={14} className={task.status === 'required' ? 'text-red-600' : 'text-gray-500'} />
-                )}
+      {/* 内容区 */}
+      <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
+        {resource.type === 'video' && (
+          <div className="space-y-4">
+            <div className="aspect-video bg-gray-900 rounded-xl flex items-center justify-center">
+              <div className="text-center text-white">
+                <Video size={48} className="mx-auto mb-2 opacity-50" />
+                <p className="text-sm opacity-70">视频播放器</p>
+                <p className="text-xs opacity-50 mt-1">时长: {resource.duration}</p>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-700 truncate">{task.title}</p>
-                <p className="text-xs text-gray-400">{task.type === 'quiz' ? '测验' : '作业'}</p>
-              </div>
-              {task.status === 'required' && (
-                <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded">必修</span>
-              )}
             </div>
-          ))}
+          </div>
+        )}
+
+        {resource.type === 'pdf' && (
+          <div className="space-y-4">
+            <div className="bg-white rounded-xl p-8 text-center border-2 border-dashed border-gray-300 min-h-[400px] flex flex-col items-center justify-center">
+              <FileText size={48} className="mx-auto mb-3 text-gray-400" />
+              <p className="text-sm text-gray-600">PDF 文档阅读器</p>
+              <p className="text-xs text-gray-400 mt-1">共 {resource.pages} 页</p>
+            </div>
+          </div>
+        )}
+
+        {resource.type === 'ppt' && (
+          <div className="space-y-4">
+            <div className="bg-white rounded-xl p-8 text-center border-2 border-dashed border-gray-300 min-h-[400px] flex flex-col items-center justify-center">
+              <FileSpreadsheet size={48} className="mx-auto mb-3 text-gray-400" />
+              <p className="text-sm text-gray-600">PPT 演示文稿</p>
+              <p className="text-xs text-gray-400 mt-1">共 {resource.pages} 页</p>
+            </div>
+          </div>
+        )}
+
+        {resource.type === 'web' && (
+          <div className="space-y-4">
+            <div className="bg-white rounded-xl p-8 text-center border-2 border-dashed border-gray-300 min-h-[400px] flex flex-col items-center justify-center">
+              <Globe size={48} className="mx-auto mb-3 text-gray-400" />
+              <p className="text-sm text-gray-600">外部网页</p>
+              <p className="text-xs text-gray-400 mt-2 break-all">{resource.url}</p>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// 任务查看器（嵌入式）
+function TaskViewer({
+  task,
+  isCompleted,
+  onBack,
+  onToggleComplete,
+}: {
+  task: Task;
+  isCompleted: boolean;
+  onBack: () => void;
+  onToggleComplete: (taskId: string) => void;
+}) {
+  return (
+    <div className="flex flex-col h-full">
+      {/* 头部导航 */}
+      <div className={`p-4 border-b border-gray-200 bg-gradient-to-r ${task.type === 'quiz' ? 'from-amber-500 to-orange-600' : 'from-purple-500 to-pink-600'} text-white`}>
+        <div className="flex items-center gap-3 mb-2">
+          <button
+            onClick={onBack}
+            className="w-8 h-8 bg-white/20 hover:bg-white/30 rounded-lg flex items-center justify-center transition-colors flex-shrink-0"
+          >
+            <ChevronRight size={16} className="rotate-180" />
+          </button>
+          <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
+            {task.type === 'quiz' ? <Zap size={20} /> : <FileEdit size={20} />}
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-sm font-bold">{task.title}</h3>
+            <p className="text-xs text-white/80">{task.type === 'quiz' ? '知识测验' : '实践作业'}</p>
+          </div>
         </div>
+        {isCompleted && (
+          <div className="flex items-center gap-2 mt-2 bg-white/20 rounded-lg px-3 py-2">
+            <Check size={14} />
+            <span className="text-xs">已完成该任务</span>
+          </div>
+        )}
+      </div>
+
+      {/* 内容区 */}
+      <div className="flex-1 overflow-y-auto p-4">
+        {task.type === 'quiz' && (
+          <div className="space-y-4">
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+              <div className="flex items-start gap-2">
+                <AlertCircle size={18} className="text-blue-600 mt-0.5" />
+                <div className="text-sm text-blue-800">
+                  <p className="font-medium mb-1">测验说明</p>
+                  <p className="text-xs">本测验包含多道选择题，用于检验你对学习内容的掌握程度。</p>
+                </div>
+              </div>
+            </div>
+
+            {/* 模拟测验题目 */}
+            <div className="bg-white rounded-xl p-4 border border-gray-200">
+              <h4 className="font-medium text-gray-900 mb-3">1. 水循环的三个主要阶段是什么？</h4>
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-blue-50">
+                  <input type="radio" name="q1" className="text-blue-600" />
+                  <span className="text-sm">蒸发、凝结、降水</span>
+                </label>
+                <label className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-blue-50">
+                  <input type="radio" name="q1" className="text-blue-600" />
+                  <span className="text-sm">蒸发、沸腾、下雨</span>
+                </label>
+                <label className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-blue-50">
+                  <input type="radio" name="q1" className="text-blue-600" />
+                  <span className="text-sm">蒸发、液化、融化</span>
+                </label>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-center justify-between text-sm text-gray-600">
+                <span>题目数量: 10 题</span>
+                <span>预计时间: 15 分钟</span>
+              </div>
+              <button
+                onClick={() => onToggleComplete(task.id)}
+                className={`w-full py-3 rounded-lg font-medium transition-colors ${
+                  isCompleted
+                    ? 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                    : 'bg-amber-500 hover:bg-amber-600 text-white'
+                }`}
+              >
+                {isCompleted ? '标记为未完成' : '提交任务'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {task.type === 'assignment' && (
+          <div className="space-y-4">
+            <div className="bg-purple-50 border border-purple-200 rounded-xl p-4">
+              <div className="flex items-start gap-2">
+                <AlertCircle size={18} className="text-purple-600 mt-0.5" />
+                <div className="text-sm text-purple-800">
+                  <p className="font-medium mb-1">作业说明</p>
+                  <p className="text-xs">请根据所学知识完成以下实践任务，并提交你的成果。</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-xl p-4 border border-gray-200">
+              <p className="text-sm text-gray-700 leading-relaxed mb-4">
+                任务要求：请设计一个节约用水的方案，说明具体措施和预期效果。可以采用文字、图片或视频等形式提交。
+              </p>
+              <textarea
+                placeholder="请在此输入你的节水方案..."
+                className="w-full min-h-[200px] p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-purple-500"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <button
+                onClick={() => onToggleComplete(task.id)}
+                className={`w-full py-3 rounded-lg font-medium transition-colors ${
+                  isCompleted
+                    ? 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                    : 'bg-purple-500 hover:bg-purple-600 text-white'
+                }`}
+              >
+                {isCompleted ? '标记为未完成' : '提交作业'}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -776,6 +1076,345 @@ function CompetencyGrowthPanel() {
   );
 }
 
+// 增强笔记面板组件
+interface Note {
+  id: string;
+  title: string;
+  content: string;
+  createdAt: Date;
+  updatedAt: Date;
+  images: string[];
+  voiceRecordings: VoiceRecording[];
+}
+
+interface VoiceRecording {
+  id: string;
+  url: string;
+  duration: number;
+  timestamp: Date;
+}
+
+function EnhancedNotesPanel() {
+  const [notes, setNotes] = useState<Note[]>([
+    {
+      id: '1',
+      title: '我的学习笔记',
+      content: '# 欢迎使用增强笔记\n\n你可以：\n- 记录Markdown格式的笔记\n- 上传图片\n- 录制语音笔记\n\n开始你的学习之旅吧！',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      images: [],
+      voiceRecordings: []
+    }
+  ]);
+  const [activeNoteId, setActiveNoteId] = useState('1');
+  const [isPreviewMode, setIsPreviewMode] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const [showNoteList, setShowNoteList] = useState(true);
+
+  const activeNote = notes.find(n => n.id === activeNoteId) || notes[0];
+
+  // 创建新笔记
+  const createNote = () => {
+    const newNote: Note = {
+      id: Date.now().toString(),
+      title: `笔记 ${notes.length + 1}`,
+      content: '',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      images: [],
+      voiceRecordings: []
+    };
+    setNotes([newNote, ...notes]);
+    setActiveNoteId(newNote.id);
+  };
+
+  // 删除笔记
+  const deleteNote = (noteId: string) => {
+    if (notes.length === 1) {
+      alert('至少需要保留一个笔记');
+      return;
+    }
+    const newNotes = notes.filter(n => n.id !== noteId);
+    setNotes(newNotes);
+    if (activeNoteId === noteId) {
+      setActiveNoteId(newNotes[0].id);
+    }
+  };
+
+  // 更新笔记内容
+  const updateNote = (updates: Partial<Note>) => {
+    setNotes(notes.map(n =>
+      n.id === activeNoteId
+        ? { ...n, ...updates, updatedAt: new Date() }
+        : n
+    ));
+  };
+
+  // 图片上传处理
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const newImages: string[] = [];
+    Array.from(files).forEach(file => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          newImages.push(event.target.result as string);
+          if (newImages.length === files.length) {
+            updateNote({ images: [...activeNote.images, ...newImages] });
+          }
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  // 录音计时器
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isRecording) {
+      interval = setInterval(() => {
+        setRecordingTime(prev => prev + 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [isRecording]);
+
+  // 开始/停止录音
+  const toggleRecording = () => {
+    if (isRecording) {
+      // 停止录音（这里需要集成实际的录音API）
+      setIsRecording(false);
+      setRecordingTime(0);
+      // 模拟保存录音
+      const newRecording: VoiceRecording = {
+        id: Date.now().toString(),
+        url: '',
+        duration: recordingTime,
+        timestamp: new Date()
+      };
+      updateNote({
+        voiceRecordings: [...activeNote.voiceRecordings, newRecording]
+      });
+    } else {
+      // 开始录音
+      setIsRecording(true);
+      setRecordingTime(0);
+      // 这里需要请求麦克风权限并开始录音
+    }
+  };
+
+  // 格式化录音时间
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // 简单的Markdown渲染（仅用于演示，生产环境建议使用react-markdown等库）
+  const renderMarkdown = (text: string) => {
+    return text
+      .replace(/^### (.*$)/gim, '<h3 class="text-lg font-bold text-gray-800 my-2">$1</h3>')
+      .replace(/^## (.*$)/gim, '<h2 class="text-xl font-bold text-gray-800 my-3">$1</h2>')
+      .replace(/^# (.*$)/gim, '<h1 class="text-2xl font-bold text-gray-800 my-4">$1</h1>')
+      .replace(/\*\*(.*)\*\*/gim, '<strong class="font-bold text-gray-800">$1</strong>')
+      .replace(/\*(.*)\*/gim, '<em class="italic text-gray-700">$1</em>')
+      .replace(/\n/gim, '<br />');
+  };
+
+  return (
+    <div className="flex h-full">
+      {/* 笔记列表侧边栏 */}
+      {showNoteList && (
+        <div className="w-48 border-r border-gray-200 bg-gray-50 flex flex-col">
+          <div className="p-3 border-b border-gray-200">
+            <button
+              onClick={createNote}
+              className="w-full px-3 py-2 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-1.5"
+            >
+              <Plus size={14} />
+              新建笔记
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto p-2 space-y-1">
+            {notes.map(note => (
+              <div
+                key={note.id}
+                onClick={() => setActiveNoteId(note.id)}
+                className={`p-2 rounded-lg cursor-pointer transition-colors ${
+                  activeNoteId === note.id
+                    ? 'bg-blue-100 border border-blue-200'
+                    : 'hover:bg-gray-100 border border-transparent'
+                }`}
+              >
+                <div className="text-xs font-medium text-gray-800 truncate">
+                  {note.title}
+                </div>
+                <div className="text-xs text-gray-500 mt-1 truncate">
+                  {note.content.slice(0, 30) || '空笔记'}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 主编辑区 */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* 工具栏 */}
+        <div className="p-2 border-b border-gray-200 bg-white flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setShowNoteList(!showNoteList)}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              title="切换笔记列表"
+            >
+              <Sidebar size={16} className="text-gray-600" />
+            </button>
+            <div className="h-4 w-px bg-gray-300" />
+            <button
+              onClick={() => setIsPreviewMode(!isPreviewMode)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                isPreviewMode
+                  ? 'bg-gray-100 text-gray-700'
+                  : 'bg-blue-600 text-white'
+              }`}
+            >
+              {isPreviewMode ? <Eye size={14} className="inline mr-1" /> : <Edit size={14} className="inline mr-1" />}
+              {isPreviewMode ? '预览' : '编辑'}
+            </button>
+          </div>
+
+          <div className="flex items-center gap-1">
+            <label className="cursor-pointer">
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={handleImageUpload}
+              />
+              <button
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                title="上传图片"
+              >
+                <ImageIcon size={16} className="text-gray-600" />
+              </button>
+            </label>
+            <button
+              onClick={toggleRecording}
+              className={`p-2 hover:bg-gray-100 rounded-lg transition-colors ${
+                isRecording ? 'animate-pulse' : ''
+              }`}
+              title={isRecording ? '停止录音' : '开始录音'}
+            >
+              <Mic size={16} className={isRecording ? 'text-red-600' : 'text-gray-600'} />
+            </button>
+            {isRecording && (
+              <span className="text-xs font-mono text-red-600">
+                {formatTime(recordingTime)}
+              </span>
+            )}
+            <div className="h-4 w-px bg-gray-300" />
+            <button
+              onClick={() => deleteNote(activeNoteId)}
+              className="p-2 hover:bg-red-50 rounded-lg transition-colors"
+              title="删除笔记"
+            >
+              <Trash2 size={16} className="text-gray-600 hover:text-red-600" />
+            </button>
+          </div>
+        </div>
+
+        {/* 编辑/预览区 */}
+        <div className="flex-1 overflow-y-auto p-3 bg-white">
+          <input
+            type="text"
+            value={activeNote.title}
+            onChange={(e) => updateNote({ title: e.target.value })}
+            className="w-full text-lg font-bold text-gray-800 border-none outline-none mb-3 bg-transparent"
+            placeholder="笔记标题"
+          />
+
+          {isPreviewMode ? (
+            <div
+              className="prose prose-sm max-w-none text-gray-700 leading-relaxed"
+              dangerouslySetInnerHTML={{ __html: renderMarkdown(activeNote.content) }}
+            />
+          ) : (
+            <textarea
+              value={activeNote.content}
+              onChange={(e) => updateNote({ content: e.target.value })}
+              className="w-full h-full min-h-[400px] bg-transparent border-none outline-none resize-none text-sm text-gray-700 leading-relaxed font-mono"
+              placeholder="# 开始记录你的学习笔记...\n\n支持Markdown格式：\n- **粗体**\n- *斜体*\n- # 标题\n\n你也可以上传图片和录制语音笔记"
+            />
+          )}
+
+          {/* 图片列表 */}
+          {activeNote.images.length > 0 && (
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <div className="text-xs font-bold text-gray-600 mb-2">
+                图片 ({activeNote.images.length})
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                {activeNote.images.map((img, idx) => (
+                  <div key={idx} className="relative group">
+                    <img
+                      src={img}
+                      alt={`uploaded-${idx}`}
+                      className="w-full h-20 object-cover rounded-lg border border-gray-200"
+                    />
+                    <button
+                      onClick={() => {
+                        const newImages = activeNote.images.filter((_, i) => i !== idx);
+                        updateNote({ images: newImages });
+                      }}
+                      className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 语音录音列表 */}
+          {activeNote.voiceRecordings.length > 0 && (
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <div className="text-xs font-bold text-gray-600 mb-2">
+                语音笔记 ({activeNote.voiceRecordings.length})
+              </div>
+              <div className="space-y-2">
+                {activeNote.voiceRecordings.map((recording) => (
+                  <div
+                    key={recording.id}
+                    className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg border border-gray-200"
+                  >
+                    <button className="p-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                      <Play size={12} />
+                    </button>
+                    <div className="flex-1">
+                      <div className="text-xs text-gray-700">
+                        语音笔记 {new Date(recording.timestamp).toLocaleString('zh-CN')}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        时长: {formatTime(recording.duration)}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // 右侧面板 - 学习工作室
 function RightPanel({ config, rightTab, setRightTab, width, elapsedTime, tasks }: any) {
   const formatMinutes = (seconds: number) => {
@@ -825,249 +1464,14 @@ function RightPanel({ config, rightTab, setRightTab, width, elapsedTime, tasks }
       </div>
 
       {/* 内容区 */}
-      <div className="flex-1 overflow-y-auto p-3">
+      <div className="flex-1 overflow-hidden flex flex-col">
         {rightTab === 'workspace' ? (
-          <div className="space-y-4">
-            {/* 笔记区 */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold text-gray-600">康奈尔笔记</span>
-                <button className="text-xs text-blue-600 hover:text-blue-700">
-                  <Eye size={12} className="inline mr-1" />
-                  模板说明
-                </button>
-              </div>
-              <div className="bg-gray-50 rounded-xl p-3 border border-gray-200 min-h-[200px]">
-                <textarea
-                  placeholder="在这里记录笔记..."
-                  className="w-full h-full bg-transparent border-none outline-none resize-none text-sm text-gray-700"
-                />
-              </div>
-            </div>
-
-            {/* 快捷工具 */}
-            <div className="grid grid-cols-2 gap-2">
-              <button className="p-2 bg-blue-50 text-blue-700 rounded-lg text-xs font-medium hover:bg-blue-100 transition-colors">
-                <Sparkles size={12} className="inline mr-1" />
-                AI总结
-              </button>
-              <button className="p-2 bg-purple-50 text-purple-700 rounded-lg text-xs font-medium hover:bg-purple-100 transition-colors">
-                <Brain size={12} className="inline mr-1" />
-                知识图谱
-              </button>
-            </div>
-          </div>
+          <EnhancedNotesPanel />
         ) : (
-          <CompetencyGrowthPanel />
+          <div className="flex-1 overflow-y-auto p-3">
+            <CompetencyGrowthPanel />
+          </div>
         )}
-      </div>
-    </div>
-  );
-}
-
-// 资源预览模态框
-function ResourcePreviewModal({ resource, onClose }: { resource: Resource; onClose: () => void }) {
-  return (
-    <div
-      className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center backdrop-blur-sm"
-      onClick={onClose}
-    >
-      <div
-        className="bg-white w-[700px] max-h-[80vh] rounded-2xl shadow-2xl overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* 模态框头部 */}
-        <div className={`bg-gradient-to-r from-${resource.color}-500 to-${resource.color}-600 text-white p-5 flex items-center justify-between`}>
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-              {resource.type === 'video' && <Video size={24} className="text-white" />}
-              {resource.type === 'pdf' && <FileText size={24} className="text-white" />}
-              {resource.type === 'ppt' && <FileSpreadsheet size={24} className="text-white" />}
-              {resource.type === 'web' && <Globe size={24} className="text-white" />}
-            </div>
-            <div>
-              <h3 className="text-lg font-bold">{resource.title}</h3>
-              <p className="text-sm text-white/80">{resource.description}</p>
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 bg-white/20 hover:bg-white/30 rounded-lg flex items-center justify-center transition-colors"
-          >
-            <X size={18} />
-          </button>
-        </div>
-
-        {/* 模态框内容 */}
-        <div className="p-6">
-          {resource.type === 'video' && (
-            <div className="space-y-4">
-              <div className="aspect-video bg-gray-900 rounded-xl flex items-center justify-center">
-                <div className="text-center text-white">
-                  <Video size={48} className="mx-auto mb-2 opacity-50" />
-                  <p className="text-sm opacity-70">视频播放器占位</p>
-                  <p className="text-xs opacity-50 mt-1">时长: {resource.duration}</p>
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <button className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors">
-                  开始播放
-                </button>
-                <button className="px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
-                  <Download size={16} />
-                </button>
-              </div>
-            </div>
-          )}
-
-          {resource.type === 'pdf' && (
-            <div className="space-y-4">
-              <div className="bg-gray-50 rounded-xl p-8 text-center border-2 border-dashed border-gray-300">
-                <FileText size={48} className="mx-auto mb-3 text-gray-400" />
-                <p className="text-sm text-gray-600">PDF 文档预览</p>
-                <p className="text-xs text-gray-400 mt-1">共 {resource.pages} 页</p>
-              </div>
-              <div className="flex gap-2">
-                <button className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors">
-                  打开阅读
-                </button>
-                <button className="px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
-                  <Download size={16} />
-                </button>
-              </div>
-            </div>
-          )}
-
-          {resource.type === 'ppt' && (
-            <div className="space-y-4">
-              <div className="bg-gray-50 rounded-xl p-8 text-center border-2 border-dashed border-gray-300">
-                <FileSpreadsheet size={48} className="mx-auto mb-3 text-gray-400" />
-                <p className="text-sm text-gray-600">PPT 演示文稿预览</p>
-                <p className="text-xs text-gray-400 mt-1">共 {resource.pages} 页</p>
-              </div>
-              <div className="flex gap-2">
-                <button className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors">
-                  打开查看
-                </button>
-                <button className="px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
-                  <Download size={16} />
-                </button>
-              </div>
-            </div>
-          )}
-
-          {resource.type === 'web' && (
-            <div className="space-y-4">
-              <div className="bg-gray-50 rounded-xl p-8 text-center border-2 border-dashed border-gray-300">
-                <Globe size={48} className="mx-auto mb-3 text-gray-400" />
-                <p className="text-sm text-gray-600">外部网页链接</p>
-                <p className="text-xs text-gray-400 mt-1">{resource.url}</p>
-              </div>
-              <button className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors">
-                在新窗口打开
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// 任务详情模态框
-function TaskDetailModal({ task, onClose }: { task: Task; onClose: () => void }) {
-  return (
-    <div
-      className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center backdrop-blur-sm"
-      onClick={onClose}
-    >
-      <div
-        className="bg-white w-[600px] max-h-[80vh] rounded-2xl shadow-2xl overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* 模态框头部 */}
-        <div className={`bg-gradient-to-r ${task.type === 'quiz' ? 'from-amber-500 to-orange-600' : 'from-purple-500 to-pink-600'} text-white p-5 flex items-center justify-between`}>
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-              {task.type === 'quiz' ? <Zap size={24} /> : <FileEdit size={24} />}
-            </div>
-            <div>
-              <h3 className="text-lg font-bold">{task.title}</h3>
-              <p className="text-sm text-white/80">{task.type === 'quiz' ? '知识测验' : '实践作业'}</p>
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 bg-white/20 hover:bg-white/30 rounded-lg flex items-center justify-center transition-colors"
-          >
-            <X size={18} />
-          </button>
-        </div>
-
-        {/* 模态框内容 */}
-        <div className="p-6">
-          {task.type === 'quiz' && (
-            <div className="space-y-4">
-              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-                <div className="flex items-start gap-2">
-                  <AlertCircle size={18} className="text-blue-600 mt-0.5" />
-                  <div className="text-sm text-blue-800">
-                    <p className="font-medium mb-1">测验说明</p>
-                    <p className="text-xs">本测验包含多道选择题，用于检验你对学习内容的掌握程度。</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-600">题目数量</span>
-                  <span className="font-medium text-gray-900">10 题</span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-600">预计时间</span>
-                  <span className="font-medium text-gray-900">15 分钟</span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-600">及格分数</span>
-                  <span className="font-medium text-gray-900">60 分</span>
-                </div>
-              </div>
-
-              <button className="w-full bg-amber-500 hover:bg-amber-600 text-white py-3 rounded-lg font-medium transition-colors">
-                开始测验
-              </button>
-            </div>
-          )}
-
-          {task.type === 'assignment' && (
-            <div className="space-y-4">
-              <div className="bg-purple-50 border border-purple-200 rounded-xl p-4">
-                <div className="flex items-start gap-2">
-                  <AlertCircle size={18} className="text-purple-600 mt-0.5" />
-                  <div className="text-sm text-purple-800">
-                    <p className="font-medium mb-1">作业说明</p>
-                    <p className="text-xs">请根据所学知识完成以下实践任务，并提交你的成果。</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-gray-50 rounded-xl p-4 min-h-[120px]">
-                <p className="text-sm text-gray-700 leading-relaxed">
-                  任务要求：请设计一个节约用水的方案，说明具体措施和预期效果。可以采用文字、图片或视频等形式提交。
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <button className="w-full bg-purple-500 hover:bg-purple-600 text-white py-3 rounded-lg font-medium transition-colors">
-                  开始作业
-                </button>
-                <button className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 rounded-lg font-medium transition-colors">
-                  查看已提交内容
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
       </div>
     </div>
   );

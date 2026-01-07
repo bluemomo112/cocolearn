@@ -376,7 +376,7 @@ export default function NoteConfigPage() {
   // Use视角：学生使用界面预览
   if (viewPerspective === 'use') {
     return (
-      <div className={`h-screen flex flex-col bg-gray-50 transition-opacity duration-150 ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}>
+      <div className={`h-[calc(100vh-4rem)] flex flex-col bg-gray-50 transition-opacity duration-150 ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}>
         <UseViewHeader
           config={config}
           onBack={() => handleViewSwitch('edit')}
@@ -390,7 +390,7 @@ export default function NoteConfigPage() {
   // Results视角：学习数据统计
   if (viewPerspective === 'results') {
     return (
-      <div className={`h-screen flex flex-col bg-gray-100 transition-opacity duration-150 ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}>
+      <div className={`h-[calc(100vh-4rem)] flex flex-col bg-gray-100 transition-opacity duration-150 ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}>
         <ResultsViewHeader
           config={config}
           onBack={() => handleViewSwitch('edit')}
@@ -402,50 +402,50 @@ export default function NoteConfigPage() {
   }
 
   return (
-    <div className={`h-screen flex flex-col bg-gray-50 transition-opacity duration-150 ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}>
+    <div className={`h-[calc(100vh-4rem)] flex flex-col bg-gray-50 transition-opacity duration-150 ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}>
       {/* 顶部工具栏 - Edit视角 */}
-      <header className="h-16 bg-white/80 backdrop-blur-xl border-b border-gray-100 flex items-center justify-between px-6 shrink-0">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 rounded-lg">
-            <span className="text-sm font-medium text-blue-700">CocoLearn Teacher</span>
+      <header className="h-10 bg-white/80 backdrop-blur-xl border-b border-gray-100 flex items-center justify-between px-4 shrink-0">
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 px-2 py-0.5 bg-blue-50 rounded">
+            <span className="text-xs font-medium text-blue-700">CocoLearn Teacher</span>
           </div>
-          <div className="w-px h-8 bg-gray-200"></div>
+          <div className="w-px h-5 bg-gray-200"></div>
           <button
             onClick={() => setActiveModal('noteInfo')}
-            className="group flex items-center gap-2 hover:bg-gray-50 px-3 py-1.5 rounded-lg transition-colors"
+            className="group flex items-center gap-1.5 hover:bg-gray-50 px-2 py-0.5 rounded transition-colors"
           >
-            <h1 className="text-base font-semibold text-gray-900">{config.noteInfo.title}</h1>
+            <h1 className="text-sm font-semibold text-gray-900">{config.noteInfo.title}</h1>
             <span className="text-xs text-gray-400 group-hover:text-blue-600 transition-colors">
               {config.noteInfo.grade || '未设置年级'}
             </span>
-            <ChevronDown size={14} className="text-gray-400 group-hover:text-blue-600 transition-colors" />
+            <ChevronDown size={12} className="text-gray-400 group-hover:text-blue-600 transition-colors" />
           </button>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <button
             onClick={() => handleViewSwitch('edit')}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-xl transition-all bg-blue-100 text-blue-700 shadow-sm"
+            className="flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-lg transition-all bg-blue-100 text-blue-700"
           >
-            <Pencil size={16} />
+            <Pencil size={14} />
             编辑视角
           </button>
           <button
             onClick={() => handleViewSwitch('use')}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-xl transition-all text-gray-600 hover:bg-gray-100"
+            className="flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-lg transition-all text-gray-600 hover:bg-gray-100"
           >
-            <Eye size={16} />
+            <Eye size={14} />
             使用视角
           </button>
           <button
             onClick={() => handleViewSwitch('results')}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-xl transition-all text-gray-600 hover:bg-gray-100"
+            className="flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-lg transition-all text-gray-600 hover:bg-gray-100"
           >
-            <Activity size={16} />
+            <Activity size={14} />
             结果视角
           </button>
-          <div className="w-px h-8 bg-gray-200"></div>
-          <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 transition-colors shadow-sm">
-            <Save size={16} />
+          <div className="w-px h-5 bg-gray-200"></div>
+          <button className="flex items-center gap-1.5 px-3 py-1 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors">
+            <Save size={14} />
             发布到班级
           </button>
         </div>
