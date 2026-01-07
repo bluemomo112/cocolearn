@@ -35,7 +35,23 @@ import {
   AlertCircle,
   X,
   Lightbulb,
+  TrendingUp,
+  Award,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
+import CompetencyRadarChart from '../components/CompetencyRadarChart';
+import {
+  mockLearnerProfile,
+  mockCourseCompetencyReport,
+  mockAIObservations,
+  mockCompetencyGuidedMessages,
+  getCompetencyStars,
+  getTrendIcon,
+  COMPETENCY_METADATA,
+  CompetencyType,
+  CompetencyRating,
+} from '@/data/mockCompetencyData';
 
 // 类型定义
 interface Resource {
@@ -128,8 +144,8 @@ export default function StudentWorkbenchPage() {
   // 右侧工作室标签
   const [rightTab, setRightTab] = useState<'workspace' | 'status'>('workspace');
 
-  // 聊天消息
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  // 聊天消息 - 使用能力培养引导演示对话
+  const [messages, setMessages] = useState<ChatMessage[]>(mockCompetencyGuidedMessages as ChatMessage[]);
   const [inputMessage, setInputMessage] = useState('');
 
   // 计时器状态
@@ -504,7 +520,7 @@ function CenterPanel({
           </div>
         )}
 
-        {messages.map((message) => (
+        {messages.map((message: ChatMessage) => (
           <div key={message.id} className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : ''}`}>
             {message.role === 'assistant' && (
               <div className="w-9 h-9 rounded-full bg-indigo-600 flex-shrink-0 flex items-center justify-center">
@@ -512,18 +528,79 @@ function CenterPanel({
               </div>
             )}
             <div
-              className={`max-w-[80%] p-4 rounded-2xl ${
+              className={`max-w-[80%] ${
                 message.role === 'user'
-                  ? 'bg-blue-600 text-white rounded-tr-none'
-                  : 'bg-white border border-gray-200 rounded-tl-none'
+                  ? ''
+                  : 'flex flex-col gap-2'
               }`}
             >
-              <p className={`text-sm leading-relaxed ${message.role === 'user' ? 'text-white' : 'text-gray-700'}`}>
-                {message.content}
-              </p>
+              {/* 能力培养提示标签 (仅AI消息) */}
+              {message.role === 'assistant' && (message as any).competencyHint && (
+                <div className="flex items-center gap-1.5 px-2 py-1 bg-purple-50 border border-purple-200 rounded-lg w-fit">
+                  <Target size={12} className="text-purple-600" />
+                  <span className="text-xs font-medium text-purple-700">
+                    培养 {COMPETENCY_METADATA[(message as any).competencyHint.type as CompetencyType]?.name}
+                  </span>
+                  <span className="text-xs text-purple-500">• {(message as any).competencyHint.strategy}</span>
+                </div>
+              )}
+
+              {/* 消息内容 */}
+              <div
+                className={`p-4 rounded-2xl ${
+                  message.role === 'user'
+                    ? 'bg-blue-600 text-white rounded-tr-none'
+                    : 'bg-white border border-gray-200 rounded-tl-none'
+                }`}
+              >
+                <p className={`text-sm leading-relaxed whitespace-pre-line ${message.role === 'user' ? 'text-white' : 'text-gray-700'}`}>
+                  {message.content}
+                </p>
+              </div>
             </div>
           </div>
         ))}
+
+        {/* 阶段性反思引导卡片 */}
+        {messages.length >= 6 && (
+          <div className="mt-4 bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 rounded-xl p-4 shadow-sm">
+            <div className="flex items-start gap-3">
+              <div className="w-9 h-9 rounded-full bg-amber-100 flex-shrink-0 flex items-center justify-center">
+                <Lightbulb size={18} className="text-amber-600" />
+              </div>
+              <div className="flex-1">
+                <h4 className="text-sm font-semibold text-amber-900 mb-2">💭 阶段性反思时间</h4>
+                <p className="text-xs text-amber-700 mb-3">
+                  你已经学习了一段时间，让我们暂停一下，回顾总结学到的内容。
+                </p>
+                <div className="space-y-2">
+                  <div className="flex items-start gap-2">
+                    <div className="w-5 h-5 rounded-full bg-amber-200 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="text-xs font-bold text-amber-700">1</span>
+                    </div>
+                    <p className="text-xs text-amber-800">今天学习的最重要的三个知识点是什么？</p>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <div className="w-5 h-5 rounded-full bg-amber-200 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="text-xs font-bold text-amber-700">2</span>
+                    </div>
+                    <p className="text-xs text-amber-800">你遇到了哪些困难？是如何解决的？</p>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <div className="w-5 h-5 rounded-full bg-amber-200 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="text-xs font-bold text-amber-700">3</span>
+                    </div>
+                    <p className="text-xs text-amber-800">这些知识可以在生活中的哪些地方应用？</p>
+                  </div>
+                </div>
+                <button className="mt-3 w-full px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white text-xs font-medium rounded-lg transition-colors flex items-center justify-center gap-1.5">
+                  <MessageCircle size={14} />
+                  开始反思
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* 输入框 */}
@@ -543,6 +620,156 @@ function CenterPanel({
           >
             <Send size={16} />
           </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// 能力成长面板组件
+function CompetencyGrowthPanel() {
+  const [showCrossCoursProfile, setShowCrossCoursProfile] = useState(false);
+
+  // 获取当前课程的能力评估（合并教师指定和AI检测的能力）
+  const currentCompetencies: Partial<Record<CompetencyType, CompetencyRating>> = {};
+
+  // 从assignedCompetencies提取
+  Object.entries(mockCourseCompetencyReport.assignedCompetencies).forEach(([type, assessment]) => {
+    if (assessment) {
+      currentCompetencies[type as CompetencyType] = assessment.rating as CompetencyRating;
+    }
+  });
+
+  // 从detectedCompetencies提取（如果没有在assigned中）
+  Object.entries(mockCourseCompetencyReport.detectedCompetencies).forEach(([type, assessment]) => {
+    if (assessment && !currentCompetencies[type as CompetencyType]) {
+      currentCompetencies[type as CompetencyType] = assessment.rating as CompetencyRating;
+    }
+  });
+
+  return (
+    <div className="space-y-4">
+      {/* 当前课程能力雷达图 */}
+      <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-100">
+        <div className="flex items-center gap-2 mb-3">
+          <Award size={14} className="text-blue-600" />
+          <span className="text-xs font-bold text-blue-700">本课程能力画像</span>
+        </div>
+        <CompetencyRadarChart
+          competencies={currentCompetencies}
+          size="small"
+          showLegend={false}
+        />
+      </div>
+
+      {/* AI实时观察 */}
+      <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-4 border border-purple-200">
+        <div className="flex items-center gap-2 mb-3">
+          <Sparkles size={14} className="text-purple-600" />
+          <span className="text-xs font-bold text-purple-700">AI实时观察</span>
+        </div>
+        <div className="space-y-3">
+          {mockAIObservations.slice(0, 2).map((obs) => {
+            return (
+              <div key={obs.id} className="bg-white/80 rounded-lg p-3 border border-purple-100">
+                <div className="flex items-start gap-2 mb-2">
+                  <div className="text-lg mt-0.5 flex-shrink-0">{obs.icon}</div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xs font-medium text-gray-700 capitalize">
+                        {obs.type === 'praise' ? '赞赏' : obs.type === 'suggestion' ? '建议' : '洞察'}
+                      </span>
+                      <span className="text-xs text-gray-400">
+                        {new Date(obs.timestamp).toLocaleTimeString('zh-CN', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-600 leading-relaxed line-clamp-2">
+                      {obs.message}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 跨课程能力画像 (可折叠) */}
+      <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl border border-emerald-200 overflow-hidden">
+        <button
+          onClick={() => setShowCrossCoursProfile(!showCrossCoursProfile)}
+          className="w-full p-4 flex items-center justify-between hover:bg-emerald-100/50 transition-colors"
+        >
+          <div className="flex items-center gap-2">
+            <TrendingUp size={14} className="text-emerald-600" />
+            <span className="text-xs font-bold text-emerald-700">我的跨课程能力画像</span>
+          </div>
+          {showCrossCoursProfile ? (
+            <ChevronUp size={14} className="text-emerald-600" />
+          ) : (
+            <ChevronDown size={14} className="text-emerald-600" />
+          )}
+        </button>
+
+        {showCrossCoursProfile && (
+          <div className="p-4 pt-0 space-y-3">
+            {/* 全局能力趋势 */}
+            {Object.entries(mockLearnerProfile.globalCompetencies).map(([type, comp]: [string, any]) => {
+              const metadata = COMPETENCY_METADATA[type as keyof typeof COMPETENCY_METADATA];
+              if (!comp || !metadata) return null;
+
+              return (
+                <div key={type} className="bg-white/80 rounded-lg p-3 border border-emerald-100">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="w-3 h-3 rounded-full"
+                        style={{ backgroundColor: metadata.color }}
+                      />
+                      <span className="text-xs font-medium text-gray-700">{metadata.name}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-gray-500">
+                        {getCompetencyStars(comp.overallRating)}
+                      </span>
+                      <span className="text-xs">{getTrendIcon(comp.trend)}</span>
+                    </div>
+                  </div>
+                  <div className="text-xs text-gray-500 mb-2">
+                    涉及课程: {comp.history.length} 门
+                  </div>
+                  <p className="text-xs text-gray-600 leading-relaxed line-clamp-2">
+                    {comp.latestObservation}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* 学习元数据 */}
+      <div className="grid grid-cols-2 gap-2">
+        <div className="bg-blue-50 rounded-lg p-2 border border-blue-100">
+          <div className="flex items-center gap-1 mb-1">
+            <Layers size={10} className="text-blue-600" />
+            <span className="text-xs text-blue-700">已完成课程</span>
+          </div>
+          <p className="text-sm font-bold text-blue-600">
+            {mockLearnerProfile.metadata.totalCoursesCompleted} 门
+          </p>
+        </div>
+        <div className="bg-emerald-50 rounded-lg p-2 border border-emerald-100">
+          <div className="flex items-center gap-1 mb-1">
+            <Clock size={10} className="text-emerald-600" />
+            <span className="text-xs text-emerald-700">累计学习</span>
+          </div>
+          <p className="text-sm font-bold text-emerald-600">
+            {mockLearnerProfile.metadata.totalLearningTime} 小时
+          </p>
         </div>
       </div>
     </div>
@@ -593,7 +820,7 @@ function RightPanel({ config, rightTab, setRightTab, width, elapsedTime, tasks }
           }`}
         >
           <Activity size={12} className="inline mr-1" />
-          学习状态
+          我的能力成长
         </button>
       </div>
 
@@ -631,36 +858,7 @@ function RightPanel({ config, rightTab, setRightTab, width, elapsedTime, tasks }
             </div>
           </div>
         ) : (
-          <div className="space-y-4">
-            {/* 学习统计 */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="bg-blue-50 rounded-xl p-3 border border-blue-100">
-                <div className="flex items-center gap-1.5 mb-1">
-                  <Clock size={12} className="text-blue-600" />
-                  <span className="text-xs text-blue-700">专注时长</span>
-                </div>
-                <p className="text-lg font-bold text-blue-600">{formatMinutes(elapsedTime)}</p>
-              </div>
-              <div className="bg-emerald-50 rounded-xl p-3 border border-emerald-100">
-                <div className="flex items-center gap-1.5 mb-1">
-                  <Target size={12} className="text-emerald-600" />
-                  <span className="text-xs text-emerald-700">完成进度</span>
-                </div>
-                <p className="text-lg font-bold text-emerald-600">{completionRate}%</p>
-              </div>
-            </div>
-
-            {/* 学习建议 */}
-            <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-4 border border-purple-200">
-              <div className="flex items-center gap-2 mb-2">
-                <Lightbulb size={14} className="text-purple-600" />
-                <span className="text-xs font-bold text-purple-700">AI学习建议</span>
-              </div>
-              <p className="text-xs text-gray-600 leading-relaxed">
-                开始你的学习之旅吧！建议先浏览左侧的学习资料，有疑问随时向我提问。
-              </p>
-            </div>
-          </div>
+          <CompetencyGrowthPanel />
         )}
       </div>
     </div>

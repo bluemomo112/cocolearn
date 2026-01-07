@@ -47,6 +47,7 @@ import {
   ChevronUp,
   HelpCircle,
   Download,
+  Upload,
 } from 'lucide-react';
 import {
   FreeModeModal,
@@ -65,6 +66,49 @@ import {
 } from './modals';
 
 // 类型定义
+// 能力维度类型定义
+type CompetencyType =
+  | 'critical_thinking'      // 批判性思维
+  | 'information_synthesis'  // 信息整合
+  | 'metacognition'          // 元认知
+  | 'question_quality'       // 提问质量
+  | 'creativity'             // 创造性
+  | 'persistence';           // 坚持性
+
+// 能力维度定义（用于UI展示）
+const COMPETENCY_DEFINITIONS: Record<CompetencyType, { name: string; description: string; icon: string }> = {
+  critical_thinking: {
+    name: '批判性思维',
+    description: '评估信息、识别假设、分析论证的能力',
+    icon: 'Brain',
+  },
+  information_synthesis: {
+    name: '信息整合',
+    description: '从多个来源整合信息、建立联系的能力',
+    icon: 'Network',
+  },
+  metacognition: {
+    name: '元认知',
+    description: '反思学习过程、调整学习策略的能力',
+    icon: 'Eye',
+  },
+  question_quality: {
+    name: '提问质量',
+    description: '提出有深度、有洞察力问题的能力',
+    icon: 'HelpCircle',
+  },
+  creativity: {
+    name: '创造性',
+    description: '产生新颖想法、解决方案的能力',
+    icon: 'Lightbulb',
+  },
+  persistence: {
+    name: '坚持性',
+    description: '面对挑战持续努力、不轻易放弃的品质',
+    icon: 'Target',
+  },
+};
+
 interface Resource {
   id: string;
   type: 'video' | 'pdf' | 'ppt' | 'web';
@@ -85,6 +129,7 @@ interface Task {
   questions?: Question[];
   teacherHint?: string;
   wordLimit?: { min: number; max: number };
+  assignedCompetencies?: CompetencyType[]; // 教师指定的能力维度（仅用于作业类任务）
   aiGrading?: {
     enabled: boolean;
     agentId?: string;
@@ -103,14 +148,6 @@ interface Question {
   aiGenerated?: boolean;
 }
 
-interface KnowledgePoint {
-  id: string;
-  subject: string;
-  point: string;
-  difficulty?: '基础' | '中级' | '高级';
-  source: 'library' | 'custom';
-}
-
 interface NoteConfig {
   noteInfo: {
     title: string;
@@ -118,7 +155,6 @@ interface NoteConfig {
     subjects?: string[];
     grade?: string;
     bindClasses?: string[];
-    knowledgePoints?: KnowledgePoint[];
   };
   resources: Resource[];
   tasks: Task[];
@@ -247,29 +283,6 @@ const RESOURCE_LIBRARY = {
   ],
 };
 
-const KNOWLEDGE_POINTS_LIBRARY: Record<string, KnowledgePoint[]> = {
-  科学: [
-    { id: 'sci_001', subject: '科学', point: '水的三态变化', difficulty: '基础', source: 'library' },
-    { id: 'sci_002', subject: '科学', point: '水循环过程', difficulty: '中级', source: 'library' },
-    { id: 'sci_003', subject: '科学', point: '蒸发与凝结', difficulty: '基础', source: 'library' },
-    { id: 'sci_004', subject: '科学', point: '水资源分布规律', difficulty: '高级', source: 'library' },
-  ],
-  地理: [
-    { id: 'geo_001', subject: '地理', point: '水文特征', difficulty: '中级', source: 'library' },
-    { id: 'geo_002', subject: '地理', point: '流域与水系', difficulty: '中级', source: 'library' },
-    { id: 'geo_003', subject: '地理', point: '气候对水资源的影响', difficulty: '高级', source: 'library' },
-  ],
-  环境教育: [
-    { id: 'env_001', subject: '环境教育', point: '水资源保护意识', difficulty: '基础', source: 'library' },
-    { id: 'env_002', subject: '环境教育', point: '节约用水方法', difficulty: '基础', source: 'library' },
-    { id: 'env_003', subject: '环境教育', point: '水污染防治', difficulty: '中级', source: 'library' },
-  ],
-  数学: [
-    { id: 'math_001', subject: '数学', point: '百分比计算', difficulty: '基础', source: 'library' },
-    { id: 'math_002', subject: '数学', point: '统计图表分析', difficulty: '中级', source: 'library' },
-  ],
-};
-
 const GRADES = ['一年级', '二年级', '三年级', '四年级', '五年级', '六年级', '七年级', '八年级', '九年级'];
 
 const MOCK_CLASSES = [
@@ -282,7 +295,7 @@ const MOCK_CLASSES = [
 
 export default function NoteConfigPage() {
   // 视角状态：'edit' | 'use' | 'results'
-  const getInitialViewPerspective = () => {
+  const getInitialViewPerspective = (): 'edit' | 'use' | 'results' => {
     if (typeof window === 'undefined') return 'edit';
     const urlParams = new URLSearchParams(window.location.search);
     const viewParam = urlParams.get('view');
@@ -304,11 +317,6 @@ export default function NoteConfigPage() {
       subjects: ['科学', '地理', '环境教育'],
       grade: '四年级',
       bindClasses: ['四年级1班', '四年级2班'],
-      knowledgePoints: [
-        { id: 'kp1', subject: '科学', point: '水循环过程', difficulty: '中级', source: 'library' },
-        { id: 'kp2', subject: '地理', point: '水文特征', difficulty: '中级', source: 'library' },
-        { id: 'kp3', subject: '环境教育', point: '水资源保护意识', difficulty: '基础', source: 'library' },
-      ],
     },
     resources: [
       {
@@ -416,33 +424,21 @@ export default function NoteConfigPage() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => handleViewSwitch('edit')}
-            className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-xl transition-all ${
-              viewPerspective === 'edit'
-                ? 'bg-blue-100 text-blue-700 shadow-sm'
-                : 'text-gray-600 hover:bg-gray-100'
-            }`}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-xl transition-all bg-blue-100 text-blue-700 shadow-sm"
           >
             <Pencil size={16} />
             编辑视角
           </button>
           <button
             onClick={() => handleViewSwitch('use')}
-            className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-xl transition-all ${
-              viewPerspective === 'use'
-                ? 'bg-emerald-100 text-emerald-700 shadow-sm'
-                : 'text-gray-600 hover:bg-gray-100'
-            }`}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-xl transition-all text-gray-600 hover:bg-gray-100"
           >
             <Eye size={16} />
             使用视角
           </button>
           <button
             onClick={() => handleViewSwitch('results')}
-            className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-xl transition-all ${
-              viewPerspective === 'results'
-                ? 'bg-purple-100 text-purple-700 shadow-sm'
-                : 'text-gray-600 hover:bg-gray-100'
-            }`}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-xl transition-all text-gray-600 hover:bg-gray-100"
           >
             <Activity size={16} />
             结果视角
@@ -1085,23 +1081,6 @@ function RightPanel({ width, config, setConfig, onOpenNotesConfig, onOpenMetaCon
               ))}
             </select>
 
-            {/* 模板结构标签 */}
-            {selectedTemplate?.structure.length > 0 && (
-              <div className="bg-blue-50/50 rounded-lg p-3 border border-blue-100">
-                <div className="flex items-center gap-2 mb-2">
-                  <Layers size={12} className="text-blue-600" />
-                  <span className="text-xs font-medium text-blue-700">模板结构</span>
-                </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {selectedTemplate.structure.map((s: string, i: number) => (
-                    <span key={i} className="text-xs bg-white text-blue-700 px-2 py-1 rounded border border-blue-200 font-medium">
-                      {i + 1}. {s}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
             {/* 笔记预览 */}
             {showNotePreview && (
               <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
@@ -1110,7 +1089,7 @@ function RightPanel({ width, config, setConfig, onOpenNotesConfig, onOpenMetaCon
                   <span className="text-xs font-medium text-gray-600">学生端效果预览</span>
                 </div>
                 <div className="bg-white rounded-lg p-3 border border-gray-200 min-h-[120px]">
-                  {selectedTemplate?.structure.length > 0 ? (
+                  {selectedTemplate?.structure?.length && selectedTemplate.structure.length > 0 ? (
                     <div className="space-y-2">
                       {selectedTemplate.structure.map((section: string, i: number) => (
                         <div key={i} className="border-b border-gray-100 pb-2 last:border-0">
@@ -1127,48 +1106,10 @@ function RightPanel({ width, config, setConfig, onOpenNotesConfig, onOpenMetaCon
                 </div>
               </div>
             )}
-
-            {/* 提交功能开关 */}
-            <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-3 border border-green-200">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Send size={14} className="text-green-600" />
-                  <div>
-                    <span className="text-sm font-medium text-gray-700 block">一键提交</span>
-                    <span className="text-xs text-gray-500">学生可提交笔记给老师</span>
-                  </div>
-                </div>
-                <button
-                  onClick={() =>
-                    setConfig({
-                      ...config,
-                      outputConfig: { ...config.outputConfig, enableSubmit: !config.outputConfig.enableSubmit },
-                    })
-                  }
-                  className={`w-11 h-6 rounded-full transition-colors relative flex-shrink-0 ${
-                    config.outputConfig.enableSubmit ? 'bg-green-600' : 'bg-gray-300'
-                  }`}
-                >
-                  <div
-                    className={`w-5 h-5 bg-white rounded-full shadow transition-transform absolute top-0.5 ${
-                      config.outputConfig.enableSubmit ? 'translate-x-5' : 'translate-x-0.5'
-                    }`}
-                  />
-                </button>
-              </div>
-            </div>
-
-            <button
-              onClick={onOpenNotesConfig}
-              className="w-full bg-white hover:bg-blue-50 border-2 border-blue-200 rounded-lg px-3 py-2 text-xs font-medium text-blue-700 transition-all flex items-center justify-center gap-2"
-            >
-              <Settings size={12} />
-              高级模板设置
-            </button>
           </div>
         </div>
 
-        {/* 学情监控配置 */}
+        {/* 学情监控配置 - 展开所有配置 */}
         <div className="p-4">
           <h3 className="text-sm font-bold text-gray-600 flex items-center gap-2 mb-3">
             <Activity size={14} className="text-purple-500" />
@@ -1176,24 +1117,29 @@ function RightPanel({ width, config, setConfig, onOpenNotesConfig, onOpenMetaCon
             <span className="text-xs text-gray-400 font-normal">(继承自通用版)</span>
           </h3>
 
-          <div className="space-y-3">
-            <select
-              value={config.outputConfig.metacognitionStrategy}
-              onChange={(e) =>
-                setConfig({
-                  ...config,
-                  outputConfig: { ...config.outputConfig, metacognitionStrategy: e.target.value },
-                })
-              }
-              className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-            >
-              {META_STRATEGIES.map((strategy) => (
-                <option key={strategy.id} value={strategy.id}>
-                  {strategy.name}
-                </option>
-              ))}
-            </select>
+          <div className="space-y-4">
+            {/* 策略选择 */}
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-2">监控策略</label>
+              <select
+                value={config.outputConfig.metacognitionStrategy}
+                onChange={(e) =>
+                  setConfig({
+                    ...config,
+                    outputConfig: { ...config.outputConfig, metacognitionStrategy: e.target.value },
+                  })
+                }
+                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+              >
+                {META_STRATEGIES.map((strategy) => (
+                  <option key={strategy.id} value={strategy.id}>
+                    {strategy.name}
+                  </option>
+                ))}
+              </select>
+            </div>
 
+            {/* 策略说明 */}
             {META_STRATEGIES.find((s) => s.id === config.outputConfig.metacognitionStrategy) && (
               <div className="bg-purple-50 rounded-lg p-3 border border-purple-200">
                 <div className="flex items-center gap-2 mb-2">
@@ -1206,13 +1152,72 @@ function RightPanel({ width, config, setConfig, onOpenNotesConfig, onOpenMetaCon
               </div>
             )}
 
-            <button
-              onClick={onOpenMetaConfig}
-              className="w-full bg-white hover:bg-purple-50 border-2 border-purple-200 rounded-lg px-3 py-2 text-xs font-medium text-purple-700 transition-all flex items-center justify-center gap-2"
-            >
-              <Settings size={12} />
-              微调监控提示词
-            </button>
+            {/* 教师追加指令 */}
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-2">
+                教师追加指令 <span className="text-gray-400 font-normal">(user_prompt)</span>
+              </label>
+              <textarea
+                value={config.outputConfig.metacognitionPrompt || ''}
+                onChange={(e) =>
+                  setConfig({
+                    ...config,
+                    outputConfig: { ...config.outputConfig, metacognitionPrompt: e.target.value },
+                  })
+                }
+                placeholder="例如：当学生在视频资源上停留超过5分钟未操作时，提醒他们..."
+                className="w-full bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-700 focus:ring-2 focus:ring-purple-500 outline-none min-h-[80px] resize-none"
+              />
+            </div>
+
+            {/* 能力评估预览 */}
+            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-3 border border-blue-200">
+              <div className="flex items-center gap-2 mb-2">
+                <Target size={14} className="text-blue-600" />
+                <h4 className="text-xs font-bold text-gray-800">能力评估预览</h4>
+              </div>
+              <p className="text-xs text-gray-600 mb-3">
+                AI将在学习过程中监控以下能力的发展情况，并在元认知监控中提供针对性反馈
+              </p>
+
+              {/* 能力标签展示 */}
+              <div className="flex flex-wrap gap-2">
+                {config.tasks && config.tasks.length > 0 ? (
+                  (() => {
+                    // 收集所有已配置的能力维度
+                    const allCompetencies = new Set<CompetencyType>();
+                    config.tasks.forEach((task: any) => {
+                      if (task.assignedCompetencies) {
+                        task.assignedCompetencies.forEach((comp: CompetencyType) => allCompetencies.add(comp));
+                      }
+                    });
+
+                    return allCompetencies.size > 0 ? (
+                      Array.from(allCompetencies).map((competency) => {
+                        const def = COMPETENCY_DEFINITIONS[competency];
+                        return (
+                          <div
+                            key={competency}
+                            className="flex items-center gap-1.5 px-2 py-1 bg-white rounded-lg text-xs font-medium text-blue-700 border border-blue-300 shadow-sm"
+                            title={def.description}
+                          >
+                            {def.name}
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <div className="text-xs text-gray-500 italic bg-white/60 px-3 py-2 rounded-lg w-full">
+                        当前暂无配置能力维度，请在"任务区"的作业任务中添加能力维度标记
+                      </div>
+                    );
+                  })()
+                ) : (
+                  <div className="text-xs text-gray-500 italic bg-white/60 px-3 py-2 rounded-lg w-full">
+                    当前暂无任务，请先在"任务区"添加作业任务
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -1225,6 +1230,42 @@ function RightPanel({ width, config, setConfig, onOpenNotesConfig, onOpenMetaCon
 
 function ResourceLibraryModal({ onSelect, onClose }: any) {
   const [selectedCategory, setSelectedCategory] = useState('视频');
+  const [uploadMode, setUploadMode] = useState<'library' | 'local'>('library');
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    Array.from(files).forEach((file) => {
+      const fileExtension = file.name.split('.').pop()?.toLowerCase();
+      let type: 'video' | 'pdf' | 'ppt' | 'web' = 'pdf';
+      let color = 'blue';
+
+      if (['mp4', 'avi', 'mov', 'wmv'].includes(fileExtension || '')) {
+        type = 'video';
+        color = 'red';
+      } else if (fileExtension === 'pdf') {
+        type = 'pdf';
+        color = 'blue';
+      } else if (['ppt', 'pptx'].includes(fileExtension || '')) {
+        type = 'ppt';
+        color = 'orange';
+      }
+
+      const newResource: Resource = {
+        id: `local_${Date.now()}_${Math.random()}`,
+        type,
+        title: file.name,
+        description: `本地上传 - ${(file.size / 1024 / 1024).toFixed(2)}MB`,
+        icon: type === 'video' ? 'Video' : type === 'pdf' ? 'FileText' : 'FileSpreadsheet',
+        color,
+      };
+
+      onSelect(newResource);
+    });
+
+    onClose();
+  };
 
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center backdrop-blur-sm" onClick={onClose}>
@@ -1232,53 +1273,111 @@ function ResourceLibraryModal({ onSelect, onClose }: any) {
         <div className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white p-5">
           <h2 className="text-lg font-bold flex items-center gap-2">
             <Database size={20} />
-            知识库资源选择
+            添加学习资源
           </h2>
         </div>
 
-        <div className="px-5 py-3 border-b border-gray-200 flex gap-2">
-          {Object.keys(RESOURCE_LIBRARY).map((category) => (
+        {/* 切换模式 */}
+        <div className="px-5 py-3 border-b border-gray-200">
+          <div className="flex gap-2">
             <button
-              key={category}
-              onClick={() => setSelectedCategory(category)}
-              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
-                selectedCategory === category
+              onClick={() => setUploadMode('library')}
+              className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
+                uploadMode === 'library'
                   ? 'bg-emerald-600 text-white'
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
             >
-              {category}
+              从知识库选择
             </button>
-          ))}
-        </div>
-
-        <div className="p-5 max-h-[50vh] overflow-y-auto">
-          <div className="grid grid-cols-2 gap-3">
-            {RESOURCE_LIBRARY[selectedCategory as keyof typeof RESOURCE_LIBRARY]?.map((item) => (
-              <div
-                key={item.id}
-                onClick={() => {
-                  onSelect(item);
-                  onClose();
-                }}
-                className="p-4 bg-gray-50 rounded-xl border border-gray-200 hover:border-emerald-400 hover:bg-emerald-50 cursor-pointer transition-all"
-              >
-                <div className="flex items-start gap-3">
-                  <div className={`w-12 h-12 rounded-xl bg-${item.color}-100 flex items-center justify-center`}>
-                    {item.type === 'video' && <Video size={20} className={`text-${item.color}-600`} />}
-                    {item.type === 'pdf' && <FileText size={20} className={`text-${item.color}-600`} />}
-                    {item.type === 'ppt' && <FileSpreadsheet size={20} className={`text-${item.color}-600`} />}
-                    {item.type === 'web' && <Globe size={20} className={`text-${item.color}-600`} />}
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-700">{item.title}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">{item.description}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
+            <button
+              onClick={() => setUploadMode('local')}
+              className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
+                uploadMode === 'local'
+                  ? 'bg-emerald-600 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              本地上传
+            </button>
           </div>
         </div>
+
+        {uploadMode === 'library' ? (
+          <>
+            {/* 知识库分类选择 */}
+            <div className="px-5 py-3 border-b border-gray-200 flex gap-2">
+              {Object.keys(RESOURCE_LIBRARY).map((category) => (
+                <button
+                  key={category}
+                  onClick={() => setSelectedCategory(category)}
+                  className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
+                    selectedCategory === category
+                      ? 'bg-emerald-600 text-white'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  {category}
+                </button>
+              ))}
+            </div>
+
+            {/* 知识库资源列表 */}
+            <div className="p-5 max-h-[50vh] overflow-y-auto">
+              <div className="grid grid-cols-2 gap-3">
+                {RESOURCE_LIBRARY[selectedCategory as keyof typeof RESOURCE_LIBRARY]?.map((item) => (
+                  <div
+                    key={item.id}
+                    onClick={() => {
+                      onSelect(item);
+                      onClose();
+                    }}
+                    className="p-4 bg-gray-50 rounded-xl border border-gray-200 hover:border-emerald-400 hover:bg-emerald-50 cursor-pointer transition-all"
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className={`w-12 h-12 rounded-xl bg-${item.color}-100 flex items-center justify-center`}>
+                        {item.type === 'video' && <Video size={20} className={`text-${item.color}-600`} />}
+                        {item.type === 'pdf' && <FileText size={20} className={`text-${item.color}-600`} />}
+                        {item.type === 'ppt' && <FileSpreadsheet size={20} className={`text-${item.color}-600`} />}
+                        {item.type === 'web' && <Globe size={20} className={`text-${item.color}-600`} />}
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-700">{item.title}</p>
+                        <p className="text-xs text-gray-500 mt-0.5">{item.description}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </>
+        ) : (
+          <>
+            {/* 本地上传界面 */}
+            <div className="p-8 max-h-[50vh] overflow-y-auto flex items-center justify-center">
+              <label className="w-full max-w-md cursor-pointer">
+                <div className="border-2 border-dashed border-gray-300 rounded-xl p-12 hover:border-emerald-500 hover:bg-emerald-50 transition-all text-center">
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center">
+                      <Upload size={32} className="text-emerald-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-700 mb-1">点击或拖拽文件到此处上传</p>
+                      <p className="text-xs text-gray-500">支持 MP4, PDF, PPT 等格式</p>
+                    </div>
+                  </div>
+                </div>
+                <input
+                  type="file"
+                  multiple
+                  accept=".mp4,.avi,.mov,.wmv,.pdf,.ppt,.pptx"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
+              </label>
+            </div>
+          </>
+        )}
 
         <div className="p-4 border-t border-gray-200 flex justify-end">
           <button onClick={onClose} className="px-4 py-2 text-gray-600 hover:text-gray-800">
