@@ -294,6 +294,7 @@ export default function NoteConfigPage() {
   const [viewPerspective, setViewPerspective] = useState<'edit' | 'use' | 'results'>(getInitialViewPerspective());
   const [leftWidth, setLeftWidth] = useState(25);
   const [rightWidth, setRightWidth] = useState(25);
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   // 配置数据
   const [config, setConfig] = useState<NoteConfig>({
@@ -353,14 +354,25 @@ export default function NoteConfigPage() {
   const [selectedResource, setSelectedResource] = useState<Resource | null>(null);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
+  // 视角切换处理
+  const handleViewSwitch = (newView: 'edit' | 'use' | 'results') => {
+    if (newView === viewPerspective) return;
+
+    setIsTransitioning(true);
+    setTimeout(() => {
+      setViewPerspective(newView);
+      setIsTransitioning(false);
+    }, 150);
+  };
+
   // Use视角：学生使用界面预览
   if (viewPerspective === 'use') {
     return (
-      <div className="h-screen flex flex-col bg-gray-50">
+      <div className={`h-screen flex flex-col bg-gray-50 transition-opacity duration-150 ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}>
         <UseViewHeader
           config={config}
-          onBack={() => setViewPerspective('edit')}
-          onSwitchToResults={() => setViewPerspective('results')}
+          onBack={() => handleViewSwitch('edit')}
+          onSwitchToResults={() => handleViewSwitch('results')}
         />
         <StudentPreview config={config} leftWidth={leftWidth} rightWidth={rightWidth} />
       </div>
@@ -370,11 +382,11 @@ export default function NoteConfigPage() {
   // Results视角：学习数据统计
   if (viewPerspective === 'results') {
     return (
-      <div className="h-screen flex flex-col bg-gray-100">
+      <div className={`h-screen flex flex-col bg-gray-100 transition-opacity duration-150 ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}>
         <ResultsViewHeader
           config={config}
-          onBack={() => setViewPerspective('edit')}
-          onSwitchToUse={() => setViewPerspective('use')}
+          onBack={() => handleViewSwitch('edit')}
+          onSwitchToUse={() => handleViewSwitch('use')}
         />
         <ResultsViewDashboard config={config} />
       </div>
@@ -382,34 +394,63 @@ export default function NoteConfigPage() {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50">
+    <div className={`h-screen flex flex-col bg-gray-50 transition-opacity duration-150 ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}>
       {/* 顶部工具栏 - Edit视角 */}
       <header className="sticky top-0 z-30 h-16 bg-white/80 backdrop-blur-xl border-b border-gray-100 flex items-center justify-between px-6 shrink-0">
-        <div>
-          <h1 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-            笔记配置
-            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-xl">编辑视角</span>
-          </h1>
-          <p className="text-sm text-gray-500">{config.noteInfo.title}</p>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 rounded-lg">
+            <span className="text-sm font-medium text-blue-700">CocoLearn Teacher</span>
+          </div>
+          <div className="w-px h-8 bg-gray-200"></div>
+          <button
+            onClick={() => setActiveModal('noteInfo')}
+            className="group flex items-center gap-2 hover:bg-gray-50 px-3 py-1.5 rounded-lg transition-colors"
+          >
+            <h1 className="text-base font-semibold text-gray-900">{config.noteInfo.title}</h1>
+            <span className="text-xs text-gray-400 group-hover:text-blue-600 transition-colors">
+              {config.noteInfo.grade || '未设置年级'}
+            </span>
+            <ChevronDown size={14} className="text-gray-400 group-hover:text-blue-600 transition-colors" />
+          </button>
         </div>
         <div className="flex items-center gap-3">
           <button
-            onClick={() => setViewPerspective('use')}
-            className="flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white text-sm font-medium rounded-xl hover:bg-emerald-600 transition-colors"
+            onClick={() => handleViewSwitch('edit')}
+            className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-xl transition-all ${
+              viewPerspective === 'edit'
+                ? 'bg-blue-100 text-blue-700 shadow-sm'
+                : 'text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            <Pencil size={16} />
+            编辑视角
+          </button>
+          <button
+            onClick={() => handleViewSwitch('use')}
+            className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-xl transition-all ${
+              viewPerspective === 'use'
+                ? 'bg-emerald-100 text-emerald-700 shadow-sm'
+                : 'text-gray-600 hover:bg-gray-100'
+            }`}
           >
             <Eye size={16} />
             使用视角
           </button>
           <button
-            onClick={() => setViewPerspective('results')}
-            className="flex items-center gap-2 px-4 py-2 bg-purple-500 text-white text-sm font-medium rounded-xl hover:bg-purple-600 transition-colors"
+            onClick={() => handleViewSwitch('results')}
+            className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-xl transition-all ${
+              viewPerspective === 'results'
+                ? 'bg-purple-100 text-purple-700 shadow-sm'
+                : 'text-gray-600 hover:bg-gray-100'
+            }`}
           >
             <Activity size={16} />
             结果视角
           </button>
-          <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 transition-colors">
+          <div className="w-px h-8 bg-gray-200"></div>
+          <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 transition-colors shadow-sm">
             <Save size={16} />
-            保存配置
+            发布到班级
           </button>
         </div>
       </header>
@@ -774,6 +815,8 @@ function CenterPanel({
   onOpenNotesConfig,
   onOpenMetaConfig,
 }: any) {
+  const [expandedPrompt, setExpandedPrompt] = useState<'free' | 'guided' | null>(null);
+
   return (
     <div className="flex-1 overflow-y-auto p-6">
       <div className="max-w-3xl mx-auto space-y-6">
@@ -871,70 +914,214 @@ function CenterPanel({
           </div>
         </section>
 
-        {/* 交互策略 */}
+        {/* 交互策略 - 所见即所得版本 */}
         <section className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-          <h2 className="text-lg font-bold text-gray-800 mb-4">交互策略</h2>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold text-gray-800">AI 交互策略</h2>
+            <div className="flex items-center gap-2 text-xs text-gray-500">
+              <Info size={14} />
+              <span>学生将看到的AI助手</span>
+            </div>
+          </div>
+
+          {/* 模式切换 */}
+          <div className="grid grid-cols-2 gap-3 mb-6">
             <button
-              onClick={() => {
-                setConfig({ ...config, interactionMode: 'free' });
-                onOpenFreeConfig();
-              }}
-              className={`p-6 rounded-2xl border-2 transition-all ${
+              onClick={() => setConfig({ ...config, interactionMode: 'free' })}
+              className={`p-4 rounded-xl border-2 transition-all ${
                 config.interactionMode === 'free'
-                  ? 'border-blue-500 bg-blue-50'
+                  ? 'border-blue-500 bg-blue-50 shadow-sm'
                   : 'border-gray-200 hover:border-blue-300'
               }`}
             >
-              <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center mx-auto mb-3">
-                <MessageCircle size={24} className="text-blue-600" />
-              </div>
-              <h3 className="font-bold text-gray-800 mb-2">自由对话</h3>
-              <p className="text-xs text-gray-500">学生可自由提问，AI灵活回答</p>
-              <div className="mt-4">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onOpenFreeConfig();
-                  }}
-                  className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1 mx-auto"
-                >
-                  <Settings size={12} />
-                  配置
-                </button>
+              <div className="flex items-center gap-3">
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                  config.interactionMode === 'free' ? 'bg-blue-100' : 'bg-gray-100'
+                }`}>
+                  <MessageCircle size={20} className={config.interactionMode === 'free' ? 'text-blue-600' : 'text-gray-500'} />
+                </div>
+                <div className="text-left">
+                  <h3 className="font-bold text-sm text-gray-800">自由对话</h3>
+                  <p className="text-xs text-gray-500">灵活问答</p>
+                </div>
               </div>
             </button>
 
             <button
-              onClick={() => {
-                setConfig({ ...config, interactionMode: 'guided' });
-                onOpenGuidedConfig();
-              }}
-              className={`p-6 rounded-2xl border-2 transition-all ${
+              onClick={() => setConfig({ ...config, interactionMode: 'guided' })}
+              className={`p-4 rounded-xl border-2 transition-all ${
                 config.interactionMode === 'guided'
-                  ? 'border-emerald-500 bg-emerald-50'
+                  ? 'border-emerald-500 bg-emerald-50 shadow-sm'
                   : 'border-gray-200 hover:border-emerald-300'
               }`}
             >
-              <div className="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center mx-auto mb-3">
-                <GitBranch size={24} className="text-emerald-600" />
-              </div>
-              <h3 className="font-bold text-gray-800 mb-2">引导学习</h3>
-              <p className="text-xs text-gray-500">按教学法流程逐步引导</p>
-              <div className="mt-4">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onOpenGuidedConfig();
-                  }}
-                  className="text-xs text-emerald-600 hover:text-emerald-700 flex items-center gap-1 mx-auto"
-                >
-                  <Settings size={12} />
-                  配置
-                </button>
+              <div className="flex items-center gap-3">
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                  config.interactionMode === 'guided' ? 'bg-emerald-100' : 'bg-gray-100'
+                }`}>
+                  <GitBranch size={20} className={config.interactionMode === 'guided' ? 'text-emerald-600' : 'text-gray-500'} />
+                </div>
+                <div className="text-left">
+                  <h3 className="font-bold text-sm text-gray-800">引导学习</h3>
+                  <p className="text-xs text-gray-500">流程化</p>
+                </div>
               </div>
             </button>
           </div>
+
+          {/* 自由对话配置 */}
+          {config.interactionMode === 'free' && (
+            <div className="space-y-4 p-4 bg-blue-50/50 rounded-xl border border-blue-100">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                  <Bot size={14} className="text-blue-600" />
+                  选择 AI 助手
+                  <span className="text-xs text-gray-400 font-normal">(继承自通用版)</span>
+                </label>
+                <select
+                  value={config.freeConfig.selectedAgentId}
+                  onChange={(e) =>
+                    setConfig({
+                      ...config,
+                      freeConfig: { ...config.freeConfig, selectedAgentId: e.target.value },
+                    })
+                  }
+                  className="w-full bg-white border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                >
+                  {MOCK_AGENTS.map((agent) => (
+                    <option key={agent.id} value={agent.id}>
+                      {agent.name} - {agent.description}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                    <Pencil size={14} className="text-blue-600" />
+                    教师追加指令
+                    <span className="text-xs text-gray-400 font-normal">(user_prompt)</span>
+                  </label>
+                  <button
+                    onClick={() => setExpandedPrompt(expandedPrompt === 'free' ? null : 'free')}
+                    className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                  >
+                    {expandedPrompt === 'free' ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                    {expandedPrompt === 'free' ? '收起' : '展开'}
+                  </button>
+                </div>
+                {expandedPrompt === 'free' && (
+                  <textarea
+                    value={config.freeConfig.teacherPrompt}
+                    onChange={(e) =>
+                      setConfig({
+                        ...config,
+                        freeConfig: { ...config.freeConfig, teacherPrompt: e.target.value },
+                      })
+                    }
+                    placeholder="例如：请用幽默的口吻回答，所有比喻都和「水」有关..."
+                    className="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none resize-none"
+                    rows={4}
+                  />
+                )}
+                {!expandedPrompt && config.freeConfig.teacherPrompt && (
+                  <div className="text-xs text-gray-600 bg-white rounded-lg px-3 py-2 border border-gray-200 truncate">
+                    {config.freeConfig.teacherPrompt}
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
+                <div className="flex items-center gap-2">
+                  <Key size={14} className="text-gray-500" />
+                  <span className="text-sm text-gray-700">启用知识围栏</span>
+                  <span className="text-xs text-gray-400">(仅回答课程相关)</span>
+                </div>
+                <button
+                  onClick={() =>
+                    setConfig({
+                      ...config,
+                      freeConfig: { ...config.freeConfig, enableFence: !config.freeConfig.enableFence },
+                    })
+                  }
+                  className={`w-11 h-6 rounded-full transition-colors relative ${
+                    config.freeConfig.enableFence ? 'bg-blue-600' : 'bg-gray-300'
+                  }`}
+                >
+                  <div
+                    className={`w-5 h-5 bg-white rounded-full shadow transform transition-transform absolute top-0.5 ${
+                      config.freeConfig.enableFence ? 'translate-x-5' : 'translate-x-0.5'
+                    }`}
+                  />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* 引导学习配置 */}
+          {config.interactionMode === 'guided' && (
+            <div className="space-y-4 p-4 bg-emerald-50/50 rounded-xl border border-emerald-100">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                  <Route size={14} className="text-emerald-600" />
+                  选择教学法流程
+                  <span className="text-xs text-gray-400 font-normal">(继承自通用版)</span>
+                </label>
+                <select
+                  value={config.guidedConfig.selectedWorkflowId}
+                  onChange={(e) =>
+                    setConfig({
+                      ...config,
+                      guidedConfig: { ...config.guidedConfig, selectedWorkflowId: e.target.value },
+                    })
+                  }
+                  className="w-full bg-white border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
+                >
+                  {MOCK_WORKFLOWS.map((workflow) => (
+                    <option key={workflow.id} value={workflow.id}>
+                      {workflow.name} - {workflow.description}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* 流程预览 */}
+              {MOCK_WORKFLOWS.find((w) => w.id === config.guidedConfig.selectedWorkflowId) && (
+                <div className="bg-white rounded-lg p-4 border border-emerald-200">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Layers size={14} className="text-emerald-600" />
+                    <span className="text-xs font-medium text-gray-700">流程阶段预览</span>
+                  </div>
+                  <div className="flex items-center gap-2 overflow-x-auto pb-2">
+                    {MOCK_WORKFLOWS.find((w) => w.id === config.guidedConfig.selectedWorkflowId)?.stages.map(
+                      (stage: any, idx: number) => (
+                        <div key={stage.id} className="flex items-center gap-2 flex-shrink-0">
+                          <div className="flex flex-col items-center">
+                            <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-xs font-bold text-emerald-600">
+                              {idx + 1}
+                            </div>
+                            <span className="text-xs text-gray-600 mt-1 whitespace-nowrap">{stage.name.split(' ')[0]}</span>
+                          </div>
+                          {idx < MOCK_WORKFLOWS.find((w) => w.id === config.guidedConfig.selectedWorkflowId)!.stages.length - 1 && (
+                            <ChevronRight size={14} className="text-gray-400" />
+                          )}
+                        </div>
+                      )
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <button
+                onClick={onOpenGuidedConfig}
+                className="w-full bg-white hover:bg-emerald-50 border-2 border-emerald-200 rounded-lg px-4 py-2.5 text-sm font-medium text-emerald-700 transition-all flex items-center justify-center gap-2"
+              >
+                <Sliders size={14} />
+                微调各阶段提示词
+              </button>
+            </div>
+          )}
         </section>
       </div>
     </div>
@@ -943,6 +1130,9 @@ function CenterPanel({
 
 // 右侧面板 - 学习工作室
 function RightPanel({ width, config, setConfig, onOpenNotesConfig, onOpenMetaConfig }: any) {
+  const [showNotePreview, setShowNotePreview] = useState(false);
+  const selectedTemplate = NOTE_TEMPLATES.find((t) => t.id === config.outputConfig.noteTemplate);
+
   return (
     <div style={{ width: `${width}%` }} className="bg-white border-l border-gray-200 flex flex-col flex-shrink-0">
       <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-emerald-50 to-teal-50">
@@ -950,18 +1140,27 @@ function RightPanel({ width, config, setConfig, onOpenNotesConfig, onOpenMetaCon
           <Layout size={18} className="text-emerald-600" />
           学习工作室
         </h2>
-        <p className="text-xs text-gray-500 mt-1">笔记模板 & 学情监控</p>
+        <p className="text-xs text-gray-500 mt-1">学生端的笔记与监控</p>
       </div>
 
       <div className="flex-1 overflow-y-auto">
         {/* 笔记模板配置 */}
         <div className="p-4 border-b border-gray-100">
-          <h3 className="text-sm font-bold text-gray-600 flex items-center gap-2 mb-3">
-            <FileEdit size={14} className="text-blue-500" />
-            笔记模板
-          </h3>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-bold text-gray-600 flex items-center gap-2">
+              <FileEdit size={14} className="text-blue-500" />
+              笔记模板
+            </h3>
+            <button
+              onClick={() => setShowNotePreview(!showNotePreview)}
+              className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1"
+            >
+              <Eye size={12} />
+              {showNotePreview ? '隐藏预览' : '预览'}
+            </button>
+          </div>
 
-          <div className="flex items-center gap-2 mb-3">
+          <div className="space-y-3">
             <select
               value={config.outputConfig.noteTemplate}
               onChange={(e) =>
@@ -970,7 +1169,7 @@ function RightPanel({ width, config, setConfig, onOpenNotesConfig, onOpenMetaCon
                   outputConfig: { ...config.outputConfig, noteTemplate: e.target.value },
                 })
               }
-              className="flex-1 px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               {NOTE_TEMPLATES.map((template) => (
                 <option key={template.id} value={template.id}>
@@ -978,46 +1177,86 @@ function RightPanel({ width, config, setConfig, onOpenNotesConfig, onOpenMetaCon
                 </option>
               ))}
             </select>
+
+            {/* 模板结构标签 */}
+            {selectedTemplate?.structure.length > 0 && (
+              <div className="bg-blue-50/50 rounded-lg p-3 border border-blue-100">
+                <div className="flex items-center gap-2 mb-2">
+                  <Layers size={12} className="text-blue-600" />
+                  <span className="text-xs font-medium text-blue-700">模板结构</span>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {selectedTemplate.structure.map((s: string, i: number) => (
+                    <span key={i} className="text-xs bg-white text-blue-700 px-2 py-1 rounded border border-blue-200 font-medium">
+                      {i + 1}. {s}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 笔记预览 */}
+            {showNotePreview && (
+              <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                <div className="flex items-center gap-2 mb-2">
+                  <Eye size={12} className="text-gray-500" />
+                  <span className="text-xs font-medium text-gray-600">学生端效果预览</span>
+                </div>
+                <div className="bg-white rounded-lg p-3 border border-gray-200 min-h-[120px]">
+                  {selectedTemplate?.structure.length > 0 ? (
+                    <div className="space-y-2">
+                      {selectedTemplate.structure.map((section: string, i: number) => (
+                        <div key={i} className="border-b border-gray-100 pb-2 last:border-0">
+                          <div className="text-xs font-medium text-gray-600 mb-1">{section}</div>
+                          <div className="h-8 bg-gray-50 rounded border border-dashed border-gray-300"></div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="h-full flex items-center justify-center">
+                      <p className="text-xs text-gray-400">空白笔记区域</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* 提交功能开关 */}
+            <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-3 border border-green-200">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Send size={14} className="text-green-600" />
+                  <div>
+                    <span className="text-sm font-medium text-gray-700 block">一键提交</span>
+                    <span className="text-xs text-gray-500">学生可提交笔记给老师</span>
+                  </div>
+                </div>
+                <button
+                  onClick={() =>
+                    setConfig({
+                      ...config,
+                      outputConfig: { ...config.outputConfig, enableSubmit: !config.outputConfig.enableSubmit },
+                    })
+                  }
+                  className={`w-11 h-6 rounded-full transition-colors relative flex-shrink-0 ${
+                    config.outputConfig.enableSubmit ? 'bg-green-600' : 'bg-gray-300'
+                  }`}
+                >
+                  <div
+                    className={`w-5 h-5 bg-white rounded-full shadow transition-transform absolute top-0.5 ${
+                      config.outputConfig.enableSubmit ? 'translate-x-5' : 'translate-x-0.5'
+                    }`}
+                  />
+                </button>
+              </div>
+            </div>
+
             <button
               onClick={onOpenNotesConfig}
-              className="p-2 bg-gray-100 text-gray-600 hover:bg-blue-600 hover:text-white rounded-lg transition-colors"
-              title="模板设置"
+              className="w-full bg-white hover:bg-blue-50 border-2 border-blue-200 rounded-lg px-3 py-2 text-xs font-medium text-blue-700 transition-all flex items-center justify-center gap-2"
             >
-              <Settings size={16} />
-            </button>
-          </div>
-
-          {NOTE_TEMPLATES.find((t) => t.id === config.outputConfig.noteTemplate)?.structure.length > 0 && (
-            <div className="flex flex-wrap gap-1 mb-3">
-              {NOTE_TEMPLATES.find((t) => t.id === config.outputConfig.noteTemplate)?.structure.map((s: string, i: number) => (
-                <span key={i} className="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded border border-blue-200">
-                  {s}
-                </span>
-              ))}
-            </div>
-          )}
-
-          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
-            <div className="flex items-center gap-2">
-              <Send size={12} className="text-gray-500" />
-              <span className="text-xs text-gray-600">启用一键提交给老师</span>
-            </div>
-            <button
-              onClick={() =>
-                setConfig({
-                  ...config,
-                  outputConfig: { ...config.outputConfig, enableSubmit: !config.outputConfig.enableSubmit },
-                })
-              }
-              className={`w-10 h-5 rounded-full transition-colors relative ${
-                config.outputConfig.enableSubmit ? 'bg-blue-600' : 'bg-gray-300'
-              }`}
-            >
-              <div
-                className={`w-4 h-4 bg-white rounded-full shadow transition-transform absolute top-0.5 ${
-                  config.outputConfig.enableSubmit ? 'translate-x-5' : 'translate-x-0.5'
-                }`}
-              />
+              <Settings size={12} />
+              高级模板设置
             </button>
           </div>
         </div>
@@ -1027,9 +1266,10 @@ function RightPanel({ width, config, setConfig, onOpenNotesConfig, onOpenMetaCon
           <h3 className="text-sm font-bold text-gray-600 flex items-center gap-2 mb-3">
             <Activity size={14} className="text-purple-500" />
             学情监控
+            <span className="text-xs text-gray-400 font-normal">(继承自通用版)</span>
           </h3>
 
-          <div className="flex items-center gap-2 mb-3">
+          <div className="space-y-3">
             <select
               value={config.outputConfig.metacognitionStrategy}
               onChange={(e) =>
@@ -1038,7 +1278,7 @@ function RightPanel({ width, config, setConfig, onOpenNotesConfig, onOpenMetaCon
                   outputConfig: { ...config.outputConfig, metacognitionStrategy: e.target.value },
                 })
               }
-              className="flex-1 px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
             >
               {META_STRATEGIES.map((strategy) => (
                 <option key={strategy.id} value={strategy.id}>
@@ -1046,22 +1286,27 @@ function RightPanel({ width, config, setConfig, onOpenNotesConfig, onOpenMetaCon
                 </option>
               ))}
             </select>
+
+            {META_STRATEGIES.find((s) => s.id === config.outputConfig.metacognitionStrategy) && (
+              <div className="bg-purple-50 rounded-lg p-3 border border-purple-200">
+                <div className="flex items-center gap-2 mb-2">
+                  <Brain size={12} className="text-purple-600" />
+                  <span className="text-xs font-medium text-purple-700">策略说明</span>
+                </div>
+                <p className="text-xs text-purple-700 leading-relaxed">
+                  {META_STRATEGIES.find((s) => s.id === config.outputConfig.metacognitionStrategy)?.description}
+                </p>
+              </div>
+            )}
+
             <button
               onClick={onOpenMetaConfig}
-              className="p-2 bg-gray-100 text-gray-600 hover:bg-purple-600 hover:text-white rounded-lg transition-colors"
-              title="监控设置"
+              className="w-full bg-white hover:bg-purple-50 border-2 border-purple-200 rounded-lg px-3 py-2 text-xs font-medium text-purple-700 transition-all flex items-center justify-center gap-2"
             >
-              <Settings size={16} />
+              <Settings size={12} />
+              微调监控提示词
             </button>
           </div>
-
-          {META_STRATEGIES.find((s) => s.id === config.outputConfig.metacognitionStrategy) && (
-            <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
-              <p className="text-xs text-purple-700">
-                {META_STRATEGIES.find((s) => s.id === config.outputConfig.metacognitionStrategy)?.description}
-              </p>
-            </div>
-          )}
         </div>
       </div>
     </div>
