@@ -396,7 +396,7 @@ export default function NoteConfigPage() {
   return (
     <div className={`h-screen flex flex-col bg-gray-50 transition-opacity duration-150 ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}>
       {/* 顶部工具栏 - Edit视角 */}
-      <header className="sticky top-0 z-30 h-16 bg-white/80 backdrop-blur-xl border-b border-gray-100 flex items-center justify-between px-6 shrink-0">
+      <header className="h-16 bg-white/80 backdrop-blur-xl border-b border-gray-100 flex items-center justify-between px-6 shrink-0">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 rounded-lg">
             <span className="text-sm font-medium text-blue-700">CocoLearn Teacher</span>
@@ -820,99 +820,6 @@ function CenterPanel({
   return (
     <div className="flex-1 overflow-y-auto p-6">
       <div className="max-w-3xl mx-auto space-y-6">
-        {/* 基本信息 */}
-        <section className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-          <h2 className="text-lg font-bold text-gray-800 mb-4">基本信息</h2>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">笔记标题</label>
-              <input
-                type="text"
-                value={config.noteInfo.title}
-                onChange={(e) =>
-                  setConfig({
-                    ...config,
-                    noteInfo: { ...config.noteInfo, title: e.target.value },
-                  })
-                }
-                className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">描述</label>
-              <textarea
-                value={config.noteInfo.description}
-                onChange={(e) =>
-                  setConfig({
-                    ...config,
-                    noteInfo: { ...config.noteInfo, description: e.target.value },
-                  })
-                }
-                className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none resize-none transition-all"
-                rows={3}
-              />
-            </div>
-
-            {/* 跨学科配置概览 */}
-            {(config.noteInfo.subjects?.length > 0 ||
-              config.noteInfo.grade ||
-              config.noteInfo.bindClasses?.length > 0 ||
-              config.noteInfo.knowledgePoints?.length > 0) && (
-              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-200 space-y-2">
-                {config.noteInfo.subjects?.length > 0 && (
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-xs font-medium text-gray-600">学科:</span>
-                    {config.noteInfo.subjects.map((subject: string) => (
-                      <span
-                        key={subject}
-                        className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium"
-                      >
-                        {subject}
-                      </span>
-                    ))}
-                  </div>
-                )}
-                {config.noteInfo.grade && (
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-gray-600">年级:</span>
-                    <span className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded text-xs font-medium">
-                      {config.noteInfo.grade}
-                    </span>
-                  </div>
-                )}
-                {config.noteInfo.bindClasses?.length > 0 && (
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-xs font-medium text-gray-600">班级:</span>
-                    {config.noteInfo.bindClasses.map((cls: string) => (
-                      <span
-                        key={cls}
-                        className="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs font-medium"
-                      >
-                        {cls}
-                      </span>
-                    ))}
-                  </div>
-                )}
-                {config.noteInfo.knowledgePoints?.length > 0 && (
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-gray-600">知识点:</span>
-                    <span className="px-2 py-1 bg-amber-100 text-amber-700 rounded text-xs font-medium">
-                      已配置 {config.noteInfo.knowledgePoints.length} 个
-                    </span>
-                  </div>
-                )}
-              </div>
-            )}
-
-            <button
-              onClick={onOpenNoteInfo}
-              className="w-full bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 border-2 border-blue-200 rounded-xl px-4 py-3 text-sm font-medium text-blue-700 transition-all flex items-center justify-center gap-2"
-            >
-              <Settings size={16} />
-              高级配置（学科、年级、知识点）
-            </button>
-          </div>
-        </section>
 
         {/* 交互策略 - 所见即所得版本 */}
         <section className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
