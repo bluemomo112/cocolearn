@@ -78,6 +78,147 @@ interface Task {
   status: 'required' | 'optional';
   completed?: boolean;
   score?: number;
+  description?: string;
+  questions?: TaskQuestion[];
+  submissionPlaceholder?: string;
+}
+
+interface TaskQuestion {
+  id: string;
+  question: string;
+  options?: string[];
+  correctAnswer?: string;
+}
+
+// 任务展开卡片组件 - 在中间聊天区显示
+function TaskExpandedCard({
+  task,
+  onClose,
+  onComplete,
+  isCompleted,
+}: {
+  task: Task;
+  onClose: () => void;
+  onComplete: (taskId: string) => void;
+  isCompleted: boolean;
+}) {
+  const [selectedOption, setSelectedOption] = useState<string | null>(null);
+  const [submissionText, setSubmissionText] = useState('');
+
+  const handleSubmit = () => {
+    onComplete(task.id);
+  };
+
+  return (
+    <div className="bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden mb-4">
+      {/* 卡片头部 */}
+      <div className={`px-4 py-3 flex items-center justify-between ${
+        task.type === 'quiz'
+          ? 'bg-gradient-to-r from-amber-50 to-orange-50 border-b border-amber-100'
+          : 'bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-100'
+      }`}>
+        <div className="flex items-center gap-3">
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+            task.type === 'quiz' ? 'bg-amber-100' : 'bg-blue-100'
+          }`}>
+            {task.type === 'quiz' ? (
+              <Zap size={18} className="text-amber-600" />
+            ) : (
+              <FileEdit size={18} className="text-blue-600" />
+            )}
+          </div>
+          <div>
+            <h3 className="font-semibold text-gray-800">{task.title}</h3>
+            <p className="text-xs text-gray-500">
+              {task.status === 'required' ? '必修任务' : '选修任务'}
+            </p>
+          </div>
+        </div>
+        <button
+          onClick={onClose}
+          className="w-8 h-8 rounded-lg bg-white/80 hover:bg-white flex items-center justify-center transition-colors"
+        >
+          <X size={16} className="text-gray-500" />
+        </button>
+      </div>
+
+      {/* 卡片内容 */}
+      <div className="p-4">
+        {/* 测验类型任务 */}
+        {task.type === 'quiz' && task.questions && (
+          <div className="space-y-4">
+            {task.questions.map((q, idx) => (
+              <div key={q.id} className="space-y-3">
+                <p className="text-sm text-gray-700 font-medium">
+                  {idx + 1}. {q.question}
+                </p>
+                {q.options && (
+                  <div className="space-y-2">
+                    {q.options.map((option, optIdx) => (
+                      <label
+                        key={optIdx}
+                        className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
+                          selectedOption === option
+                            ? 'border-blue-500 bg-blue-50'
+                            : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                        }`}
+                      >
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                          selectedOption === option
+                            ? 'border-blue-500 bg-blue-500'
+                            : 'border-gray-300'
+                        }`}>
+                          {selectedOption === option && (
+                            <div className="w-2 h-2 rounded-full bg-white" />
+                          )}
+                        </div>
+                        <span className="text-sm text-gray-700">{option}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* 作业类型任务 */}
+        {task.type === 'assignment' && (
+          <div className="space-y-3">
+            <textarea
+              value={submissionText}
+              onChange={(e) => setSubmissionText(e.target.value)}
+              placeholder={task.submissionPlaceholder || '请在这里提交你的作业内容...'}
+              className="w-full h-32 p-3 border border-gray-200 rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+        )}
+
+        {/* 提交按钮 */}
+        <button
+          onClick={handleSubmit}
+          disabled={isCompleted}
+          className={`mt-4 w-full py-3 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2 ${
+            isCompleted
+              ? 'bg-green-100 text-green-700 cursor-not-allowed'
+              : 'bg-blue-600 text-white hover:bg-blue-700'
+          }`}
+        >
+          {isCompleted ? (
+            <>
+              <Check size={16} />
+              已完成
+            </>
+          ) : (
+            <>
+              <Check size={16} />
+              提交任务
+            </>
+          )}
+        </button>
+      </div>
+    </div>
+  );
 }
 
 interface ChatMessage {
@@ -167,6 +308,9 @@ export default function StudentWorkbenchPage() {
   // 笔记面板状态
   const [isNotePanelOpen, setIsNotePanelOpen] = useState(false);
 
+  // 当前展开的任务
+  const [expandedTask, setExpandedTask] = useState<Task | null>(null);
+
   // 模拟配置数据
   const config: NoteConfig = {
     title: '水循环与水资源',
@@ -196,12 +340,27 @@ export default function StudentWorkbenchPage() {
         type: 'quiz',
         title: '水循环知识自测',
         status: 'required',
+        questions: [
+          {
+            id: 'q1',
+            question: '水循环的主要驱动力是什么？',
+            options: ['太阳能', '风能', '地热能', '潮汐能'],
+            correctAnswer: '太阳能',
+          },
+          {
+            id: 'q2',
+            question: '以下哪个不是水循环的主要环节？',
+            options: ['蒸发', '降水', '光合作用', '径流'],
+            correctAnswer: '光合作用',
+          },
+        ],
       },
       {
         id: 't2',
         type: 'assignment',
         title: '节水方案设计',
         status: 'optional',
+        submissionPlaceholder: '请描述你的节水方案，包括：\n1. 方案名称\n2. 适用场景\n3. 具体措施\n4. 预期效果',
       },
     ],
     interactionMode: 'free',
@@ -337,6 +496,7 @@ export default function StudentWorkbenchPage() {
           setIsResourceFullscreen={setIsResourceFullscreen}
           completedTasks={completedTasks}
           toggleTaskCompletion={toggleTaskCompletion}
+          onTaskClick={(task: Task) => setExpandedTask(task)}
         />
 
         {/* 左侧调整器 */}
@@ -358,6 +518,10 @@ export default function StudentWorkbenchPage() {
           setInputMessage={setInputMessage}
           onSendMessage={handleSendMessage}
           width={100 - leftWidth - rightWidth}
+          expandedTask={expandedTask}
+          onCloseTask={() => setExpandedTask(null)}
+          onCompleteTask={toggleTaskCompletion}
+          completedTasks={completedTasks}
         />
 
         {/* 右侧调整器 */}
@@ -395,6 +559,7 @@ function LeftPanel({
   setIsResourceFullscreen,
   completedTasks,
   toggleTaskCompletion,
+  onTaskClick,
 }: {
   config: NoteConfig;
   width: number;
@@ -404,6 +569,7 @@ function LeftPanel({
   setIsResourceFullscreen: (fullscreen: boolean) => void;
   completedTasks: Set<string>;
   toggleTaskCompletion: (taskId: string) => void;
+  onTaskClick: (task: Task) => void;
 }) {
   const [activeView, setActiveView] = useState<'list' | 'resource'>('list');
 
@@ -423,82 +589,98 @@ function LeftPanel({
       {/* 资源列表视图 */}
       {activeView === 'list' && (
         <>
-          {/* 资源列表头部 */}
-          <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50">
-            <h2 className="text-sm font-bold text-gray-700 flex items-center gap-2">
-              <FolderOpen size={16} className="text-blue-500" />
-              学习资料库
-            </h2>
-            <p className="text-xs text-gray-500 mt-1">点击资源开始学习</p>
+          {/* 资源区域 - 占50% */}
+          <div className="flex-1 flex flex-col min-h-0" style={{ flex: '1 1 50%' }}>
+            {/* 资源列表头部 */}
+            <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50 flex-shrink-0">
+              <h2 className="text-sm font-bold text-gray-700 flex items-center gap-2">
+                <FolderOpen size={16} className="text-blue-500" />
+                学习资料库
+              </h2>
+              <p className="text-xs text-gray-500 mt-1">点击资源开始学习</p>
+            </div>
+
+            {/* 资源列表 */}
+            <div className="flex-1 overflow-y-auto p-3 space-y-2">
+              {config.resources.map((resource) => (
+                <div
+                  key={resource.id}
+                  onClick={() => handleResourceClick(resource)}
+                  className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-blue-50 cursor-pointer transition-colors group"
+                >
+                  <div className={`w-10 h-10 rounded-xl bg-${resource.color}-100 flex items-center justify-center`}>
+                    {resource.type === 'video' && <Video size={16} className={`text-${resource.color}-600`} />}
+                    {resource.type === 'pdf' && <FileText size={16} className={`text-${resource.color}-600`} />}
+                    {resource.type === 'ppt' && <FileSpreadsheet size={16} className={`text-${resource.color}-600`} />}
+                    {resource.type === 'web' && <Globe size={16} className={`text-${resource.color}-600`} />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-700 truncate">{resource.title}</p>
+                    <p className="text-xs text-gray-400">{resource.duration || `${resource.pages}页`}</p>
+                  </div>
+                  <ChevronRight size={16} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </div>
+              ))}
+            </div>
           </div>
 
-          {/* 资源列表 */}
-          <div className="flex-1 overflow-y-auto p-3 space-y-2">
-            {config.resources.map((resource) => (
-              <div
-                key={resource.id}
-                onClick={() => handleResourceClick(resource)}
-                className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-blue-50 cursor-pointer transition-colors group"
-              >
-                <div className={`w-10 h-10 rounded-xl bg-${resource.color}-100 flex items-center justify-center`}>
-                  {resource.type === 'video' && <Video size={16} className={`text-${resource.color}-600`} />}
-                  {resource.type === 'pdf' && <FileText size={16} className={`text-${resource.color}-600`} />}
-                  {resource.type === 'ppt' && <FileSpreadsheet size={16} className={`text-${resource.color}-600`} />}
-                  {resource.type === 'web' && <Globe size={16} className={`text-${resource.color}-600`} />}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-700 truncate">{resource.title}</p>
-                  <p className="text-xs text-gray-400">{resource.duration || `${resource.pages}页`}</p>
-                </div>
-                <ChevronRight size={16} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-              </div>
-            ))}
-          </div>
+          {/* 任务区域 - 占50% */}
+          <div className="flex-1 flex flex-col min-h-0 border-t border-gray-200" style={{ flex: '1 1 50%' }}>
+            {/* 任务列表头部 */}
+            <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-amber-50 to-orange-50 flex-shrink-0">
+              <h3 className="text-sm font-bold text-gray-700 flex items-center gap-2">
+                <ListChecks size={16} className="text-amber-500" />
+                学习任务
+              </h3>
+              <p className="text-xs text-gray-500 mt-1">点击任务在对话区展开</p>
+            </div>
 
-          {/* 任务列表 */}
-          <div className="p-4 border-t border-gray-100 bg-gray-50">
-            <h3 className="text-sm font-bold text-gray-700 flex items-center gap-2 mb-3">
-              <ListChecks size={16} className="text-amber-500" />
-              学习任务
-            </h3>
-            <div className="space-y-2">
+            {/* 任务列表 */}
+            <div className="flex-1 overflow-y-auto p-3 space-y-2">
               {config.tasks.map((task) => {
                 const isCompleted = completedTasks.has(task.id);
                 return (
                   <div
                     key={task.id}
-                    className={`flex items-center gap-2 p-3 bg-white rounded-lg transition-colors border ${
-                      isCompleted ? 'border-green-300 bg-green-50' : 'border-gray-200'
+                    onClick={() => onTaskClick(task)}
+                    className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all group border-2 ${
+                      isCompleted
+                        ? 'border-green-300 bg-green-50 hover:bg-green-100'
+                        : 'border-gray-200 bg-white hover:border-blue-300 hover:bg-blue-50 hover:shadow-md'
                     }`}
                   >
-                    <button
-                      onClick={() => toggleTaskCompletion(task.id)}
-                      className={`w-8 h-8 rounded flex items-center justify-center flex-shrink-0 ${
+                    <div
+                      className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
                         isCompleted
-                          ? 'bg-green-100 hover:bg-green-200'
-                          : task.status === 'required' ? 'bg-red-100 hover:bg-red-200' : 'bg-gray-100 hover:bg-gray-200'
-                      } transition-colors`}
+                          ? 'bg-green-100'
+                          : task.type === 'quiz'
+                          ? 'bg-amber-100'
+                          : 'bg-blue-100'
+                      }`}
                     >
                       {isCompleted ? (
-                        <Check size={14} className="text-green-600" />
+                        <Check size={18} className="text-green-600" />
                       ) : task.type === 'quiz' ? (
-                        <Zap size={14} className={task.status === 'required' ? 'text-red-600' : 'text-gray-500'} />
+                        <Zap size={18} className="text-amber-600" />
                       ) : (
-                        <FileEdit size={14} className={task.status === 'required' ? 'text-red-600' : 'text-gray-500'} />
+                        <FileEdit size={18} className="text-blue-600" />
                       )}
-                    </button>
+                    </div>
                     <div className="flex-1 min-w-0">
                       <p className={`text-sm font-medium truncate ${isCompleted ? 'text-green-700 line-through' : 'text-gray-700'}`}>
                         {task.title}
                       </p>
                       <p className="text-xs text-gray-400">{task.type === 'quiz' ? '测验' : '作业'}</p>
                     </div>
-                    {!isCompleted && task.status === 'required' && (
-                      <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded">必修</span>
-                    )}
-                    {isCompleted && (
-                      <span className="text-xs bg-green-100 text-green-600 px-2 py-0.5 rounded">已完成</span>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {!isCompleted && task.status === 'required' && (
+                        <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-medium">必修</span>
+                      )}
+                      {isCompleted && (
+                        <span className="text-xs bg-green-100 text-green-600 px-2 py-0.5 rounded-full font-medium">已完成</span>
+                      )}
+                      <ChevronRight size={16} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </div>
                   </div>
                 );
               })}
@@ -615,6 +797,10 @@ function CenterPanel({
   setInputMessage,
   onSendMessage,
   width,
+  expandedTask,
+  onCloseTask,
+  onCompleteTask,
+  completedTasks,
 }: any) {
   return (
     <div style={{ width: `${width}%` }} className="flex flex-col bg-gray-50">
@@ -656,7 +842,17 @@ function CenterPanel({
 
       {/* 消息列表 */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.length === 0 && (
+        {/* 展开的任务卡片 */}
+        {expandedTask && (
+          <TaskExpandedCard
+            task={expandedTask}
+            onClose={onCloseTask}
+            onComplete={onCompleteTask}
+            isCompleted={completedTasks.has(expandedTask.id)}
+          />
+        )}
+
+        {messages.length === 0 && !expandedTask && (
           <div className="text-center py-12">
             <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <Sparkles size={32} className="text-indigo-600" />

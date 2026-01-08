@@ -485,6 +485,7 @@ export function formatDate(date: Date): string {
  */
 export const mockCompetencyGuidedMessages = [
   {
+    id: 'msg-1',
     role: 'assistant' as const,
     content: '你好！我注意到你正在学习"水循环与水资源"。在开始之前，我想了解一下：你觉得水循环和我们的日常生活有什么关系呢？',
     timestamp: new Date(Date.now() - 1000 * 60 * 10),
@@ -494,11 +495,13 @@ export const mockCompetencyGuidedMessages = [
     }
   },
   {
+    id: 'msg-2',
     role: 'user' as const,
     content: '嗯...下雨的时候水会流到地上，然后蒸发？',
     timestamp: new Date(Date.now() - 1000 * 60 * 9)
   },
   {
+    id: 'msg-3',
     role: 'assistant' as const,
     content: '很好的观察！🌟 你提到了蒸发。那我想追问一下：蒸发的水去哪里了？它会消失吗？',
     timestamp: new Date(Date.now() - 1000 * 60 * 8.5),
@@ -508,11 +511,13 @@ export const mockCompetencyGuidedMessages = [
     }
   },
   {
+    id: 'msg-4',
     role: 'user' as const,
     content: '不会消失！水蒸气会变成云，然后又变成雨下来',
     timestamp: new Date(Date.now() - 1000 * 60 * 7)
   },
   {
+    id: 'msg-5',
     role: 'assistant' as const,
     content: '太棒了！💧 你已经描述出了一个完整的循环。现在看看视频资源，注意观察：\n\n1. 视频中还提到了哪些水的形态转换？\n2. 人类活动在水循环中扮演什么角色？\n\n看完后告诉我你的新发现！',
     timestamp: new Date(Date.now() - 1000 * 60 * 6),
@@ -522,11 +527,13 @@ export const mockCompetencyGuidedMessages = [
     }
   },
   {
+    id: 'msg-6',
     role: 'user' as const,
     content: '我看完了！视频里说人类会抽取地下水，还会建水库',
     timestamp: new Date(Date.now() - 1000 * 60 * 2)
   },
   {
+    id: 'msg-7',
     role: 'assistant' as const,
     content: '非常好的观察！🎯 你注意到了人类对水循环的干预。现在我想请你做一个小实验：\n\n**思考挑战**：如果你所在的城市连续一个月不下雨，会发生什么？请从至少三个不同角度考虑这个问题。\n\n提示：可以考虑环境、社会、经济等方面。',
     timestamp: new Date(Date.now() - 1000 * 60 * 1),

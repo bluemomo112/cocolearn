@@ -1633,10 +1633,13 @@ export function ResultsViewHeader({ config, onBack, onSwitchToUse }: any) {
 
 // 学生能力详情弹窗（改造：符合PRD的个体视角）
 function StudentCompetencyModal({ student, competencies, onClose }: any) {
-  if (!student || !competencies || competencies.length === 0) return null;
+  if (!student) return null;
+
+  // 当没有配置能力维度时，显示空状态提示而非返回null
+  const hasCompetencies = competencies && competencies.length > 0;
 
   // 为每个能力生成详细的评估数据
-  const studentCompetencyData = competencies.map((competency: CompetencyType) => {
+  const studentCompetencyData = hasCompetencies ? competencies.map((competency: CompetencyType) => {
     const def = COMPETENCY_DEFINITIONS[competency];
     const stars = 1 + Math.floor(Math.random() * 4); // 1-4星
 
@@ -1660,10 +1663,10 @@ function StudentCompetencyModal({ student, competencies, onClose }: any) {
         '笔记中对比了三份资料的核心观点差异',
       ].slice(0, stars >= 3 ? 3 : 1),
     };
-  });
+  }) : [];
 
   // 跨课程能力画像（模拟数据）
-  const crossCourseProfile = competencies.slice(0, 2).map((comp: CompetencyType) => {
+  const crossCourseProfile = hasCompetencies ? competencies.slice(0, 2).map((comp: CompetencyType) => {
     const def = COMPETENCY_DEFINITIONS[comp];
     return {
       type: comp,
@@ -1675,12 +1678,12 @@ function StudentCompetencyModal({ student, competencies, onClose }: any) {
       ],
       trend: Math.random() > 0.5 ? '上升' : '稳定',
     };
-  });
+  }) : [];
 
   // 计算平均星级
-  const avgStars = (
-    studentCompetencyData.reduce((sum: number, data: any) => sum + data.stars, 0) / studentCompetencyData.length
-  ).toFixed(1);
+  const avgStars = studentCompetencyData.length > 0
+    ? (studentCompetencyData.reduce((sum: number, data: any) => sum + data.stars, 0) / studentCompetencyData.length).toFixed(1)
+    : '--';
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center backdrop-blur-sm" onClick={onClose}>
