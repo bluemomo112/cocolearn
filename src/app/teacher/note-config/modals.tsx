@@ -51,6 +51,18 @@ import {
   AlertCircle,
 } from 'lucide-react';
 
+// 导入重构后的可视化组件
+import {
+  CompetencyDistributionChart,
+  StudentListItem,
+  renderStars,
+  getStarsText,
+  type CompetencyType as ResultsCompetencyType,
+  type ClassCompetencyDistribution,
+  type StudentCompetencyProfile,
+  COMPETENCY_DEFINITIONS as RESULTS_COMPETENCY_DEFINITIONS,
+} from './results-view';
+
 // 能力维度类型定义
 type CompetencyType =
   | 'critical_thinking'      // 批判性思维

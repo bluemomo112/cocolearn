@@ -842,16 +842,6 @@ function CenterPanel({
 
       {/* 消息列表 */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {/* 展开的任务卡片 */}
-        {expandedTask && (
-          <TaskExpandedCard
-            task={expandedTask}
-            onClose={onCloseTask}
-            onComplete={onCompleteTask}
-            isCompleted={completedTasks.has(expandedTask.id)}
-          />
-        )}
-
         {messages.length === 0 && !expandedTask && (
           <div className="text-center py-12">
             <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -948,6 +938,16 @@ function CenterPanel({
               </div>
             </div>
           </div>
+        )}
+
+        {/* 展开的任务卡片 - 在对话最下方 */}
+        {expandedTask && (
+          <TaskExpandedCard
+            task={expandedTask}
+            onClose={onCloseTask}
+            onComplete={onCompleteTask}
+            isCompleted={completedTasks.has(expandedTask.id)}
+          />
         )}
       </div>
 
