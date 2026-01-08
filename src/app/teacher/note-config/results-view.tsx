@@ -218,10 +218,10 @@ export function getStarsText(count: 1 | 2 | 3 | 4): string {
 // 获取星级颜色
 export function getStarLevelColor(stars: 1 | 2 | 3 | 4): string {
   const colors = {
-    4: 'from-blue-500 to-indigo-500',
-    3: 'from-blue-400 to-indigo-400',
-    2: 'from-blue-300 to-indigo-300',
-    1: 'from-blue-200 to-indigo-200',
+    4: 'from-primary-500 to-accent-500',
+    3: 'from-primary-400 to-accent-400',
+    2: 'from-primary-300 to-accent-300',
+    1: 'from-primary-200 to-accent-200',
   };
   return colors[stars];
 }
@@ -432,15 +432,15 @@ export function CompetencyDetailCard({
           </div>
 
           {/* 建议 */}
-          <div className="bg-blue-50 rounded-lg p-4">
-            <h5 className="text-xs font-semibold text-blue-700 mb-2 flex items-center gap-1">
+          <div className="bg-primary-50 rounded-lg p-4">
+            <h5 className="text-xs font-semibold text-primary-700 mb-2 flex items-center gap-1">
               <Lightbulb size={12} />
               建议
             </h5>
             <ul className="space-y-1">
               {assessment.suggestions.map((item, idx) => (
                 <li key={idx} className="text-xs text-gray-600 flex items-start gap-1.5">
-                  <span className="text-blue-500 mt-0.5">•</span>
+                  <span className="text-primary-500 mt-0.5">•</span>
                   <span>{item}</span>
                 </li>
               ))}
@@ -572,7 +572,7 @@ export function CompetencyDistributionChart({
   ];
 
   return (
-    <div className="bg-gradient-to-br from-gray-50 to-blue-50/30 rounded-xl p-5 border border-gray-200 hover:shadow-md transition-shadow">
+    <div className="bg-gradient-to-br from-gray-50 to-primary-50/30 rounded-xl p-5 border border-gray-200 hover:shadow-md transition-shadow">
       {/* 标题和平均值 */}
       <div className="flex items-center gap-3 mb-4">
         <div className={`w-10 h-10 rounded-lg bg-${def.color}-100 flex items-center justify-center`}>
@@ -584,7 +584,7 @@ export function CompetencyDistributionChart({
         </div>
         <div className="text-right">
           <div className="text-sm text-gray-500">班级平均</div>
-          <div className="text-xl font-bold text-blue-600">{distribution.averageStars.toFixed(1)} ★</div>
+          <div className="text-xl font-bold text-primary-600">{distribution.averageStars.toFixed(1)} ★</div>
         </div>
       </div>
 
@@ -641,7 +641,7 @@ export function StudentListItem({
   return (
     <tr
       onClick={onClick}
-      className="hover:bg-blue-50 transition-colors cursor-pointer"
+      className="hover:bg-primary-50 transition-colors cursor-pointer"
     >
       {/* 学生信息 */}
       <td className="px-5 py-4">
@@ -677,7 +677,7 @@ export function StudentListItem({
         <div className="flex items-center gap-2">
           <div className="flex-1 bg-gray-100 rounded-full h-2 w-16">
             <div
-              className="bg-gradient-to-r from-blue-500 to-indigo-500 h-2 rounded-full transition-all"
+              className="bg-gradient-to-r from-primary-500 to-accent-500 h-2 rounded-full transition-all"
               style={{ width: `${profile.progress}%` }}
             />
           </div>
@@ -705,7 +705,7 @@ export function StudentListItem({
       {aiDetectedTypes.length > 0 && (
         <td className="px-3 py-4 text-center">
           {aiDetected ? (
-            <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full">
+            <span className="text-xs bg-accent-100 text-accent-700 px-2 py-1 rounded-full">
               {COMPETENCY_DEFINITIONS[aiDetected.type].name}↑
             </span>
           ) : (
@@ -716,7 +716,7 @@ export function StudentListItem({
 
       {/* 操作 */}
       <td className="px-5 py-4">
-        <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+        <button className="text-sm text-primary-600 hover:text-primary-700 font-medium">
           查看详情
         </button>
       </td>
@@ -751,7 +751,7 @@ export function StudentDetailPanel({
         onClick={(e) => e.stopPropagation()}
       >
         {/* 头部 */}
-        <div className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-6 flex-shrink-0">
+        <div className="bg-gradient-to-r from-primary-500 to-accent-600 text-white p-6 flex-shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="text-5xl">{profile.avatar}</div>
@@ -772,9 +772,9 @@ export function StudentDetailPanel({
         {/* 内容区域 - 可滚动 */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           {/* 1. 本课程能力评估（使用雷达图） */}
-          <div className="bg-gradient-to-br from-gray-50 to-blue-50/30 rounded-xl p-6 border border-gray-200">
+          <div className="bg-gradient-to-br from-gray-50 to-primary-50/30 rounded-xl p-6 border border-gray-200">
             <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-              <Target size={18} className="text-blue-600" />
+              <Target size={18} className="text-primary-600" />
               本课程能力评估
             </h3>
 
@@ -808,7 +808,7 @@ export function StudentDetailPanel({
           {/* 2. 能力详情（使用 CompetencyDetailCard） */}
           <div>
             <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-              <FileText size={18} className="text-blue-600" />
+              <FileText size={18} className="text-primary-600" />
               能力详情
             </h3>
 
@@ -828,9 +828,9 @@ export function StudentDetailPanel({
 
           {/* 3. 跨课程能力画像（使用 CrossCourseTimeline） */}
           {crossCourseProfiles.length > 0 && (
-            <div className="bg-gradient-to-br from-purple-50 to-pink-50/30 rounded-xl p-6 border border-purple-200">
+            <div className="bg-gradient-to-br from-accent-50 to-cyan-50/30 rounded-xl p-6 border border-accent-200">
               <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                <Network size={18} className="text-purple-600" />
+                <Network size={18} className="text-accent-600" />
                 跨课程能力画像
               </h3>
               <CrossCourseTimeline profiles={crossCourseProfiles} />
@@ -842,7 +842,7 @@ export function StudentDetailPanel({
             <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
               <div className="px-5 py-3 border-b border-gray-200">
                 <h3 className="text-base font-bold text-gray-800 flex items-center gap-2">
-                  <CheckCircle size={16} className="text-blue-600" />
+                  <CheckCircle size={16} className="text-primary-600" />
                   任务完成情况
                 </h3>
               </div>
@@ -865,7 +865,7 @@ export function StudentDetailPanel({
                           <span className={`text-xs px-2 py-1 rounded ${
                             task.taskType === 'quiz'
                               ? 'bg-green-100 text-green-700'
-                              : 'bg-blue-100 text-blue-700'
+                              : 'bg-primary-100 text-primary-700'
                           }`}>
                             {task.taskType === 'quiz' ? '客观题' : '主观题'}
                           </span>
@@ -875,7 +875,7 @@ export function StudentDetailPanel({
                           {task.competencyTags.length > 0 ? (
                             <div className="flex flex-wrap gap-1">
                               {task.competencyTags.map((tag) => (
-                                <span key={tag} className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded">
+                                <span key={tag} className="text-xs bg-primary-50 text-primary-700 px-2 py-0.5 rounded">
                                   {COMPETENCY_DEFINITIONS[tag].name}
                                 </span>
                               ))}
@@ -905,9 +905,9 @@ export function StudentDetailPanel({
 
           {/* 5. AI 发现的额外能力 */}
           {profile.aiDetectedCompetencies.length > 0 && (
-            <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl p-4 border border-purple-200">
+            <div className="bg-gradient-to-br from-accent-50 to-primary-50 rounded-xl p-4 border border-accent-200">
               <div className="flex items-center gap-2 mb-3">
-                <Sparkles size={16} className="text-purple-600" />
+                <Sparkles size={16} className="text-accent-600" />
                 <h4 className="text-sm font-bold text-gray-800">AI 发现的额外能力表现</h4>
               </div>
               <div className="space-y-2">
@@ -915,14 +915,14 @@ export function StudentDetailPanel({
                   const def = COMPETENCY_DEFINITIONS[detected.type];
                   const Icon = def.icon;
                   return (
-                    <div key={detected.type} className="flex items-center gap-3 bg-white rounded-lg p-3 border border-purple-100">
+                    <div key={detected.type} className="flex items-center gap-3 bg-white rounded-lg p-3 border border-accent-100">
                       <div className={`w-8 h-8 rounded-lg bg-${def.color}-100 flex items-center justify-center`}>
                         <Icon size={16} className={`text-${def.color}-600`} />
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <span className="text-sm font-medium text-gray-700">{def.name}</span>
-                          <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
+                          <span className="text-xs bg-accent-100 text-accent-700 px-2 py-0.5 rounded-full">
                             置信度 {Math.round(detected.confidence * 100)}%
                           </span>
                         </div>
@@ -936,9 +936,9 @@ export function StudentDetailPanel({
           )}
 
           {/* 6. 学习轨迹提示 */}
-          <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
+          <div className="bg-primary-50 rounded-xl p-4 border border-primary-200">
             <div className="flex items-center gap-2 mb-2">
-              <Route size={16} className="text-blue-600" />
+              <Route size={16} className="text-primary-600" />
               <h4 className="text-sm font-semibold text-gray-800">学习轨迹</h4>
             </div>
             <p className="text-xs text-gray-600">
@@ -957,7 +957,7 @@ export function StudentDetailPanel({
           </button>
           <button
             onClick={onClose}
-            className="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium shadow-sm"
+            className="px-5 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium shadow-sm"
           >
             关闭
           </button>

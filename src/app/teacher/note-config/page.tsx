@@ -431,8 +431,8 @@ export default function NoteConfigPage() {
       {/* 顶部工具栏 - Edit视角 */}
       <header className="h-10 bg-white/80 backdrop-blur-xl border-b border-gray-100 flex items-center justify-between px-4 shrink-0">
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5 px-2 py-0.5 bg-blue-50 rounded">
-            <span className="text-xs font-medium text-blue-700">CocoLearn Teacher</span>
+          <div className="flex items-center gap-1.5 px-2 py-0.5 bg-primary-50 rounded">
+            <span className="text-xs font-medium text-primary-700">CocoLearn Teacher</span>
           </div>
           <div className="w-px h-5 bg-gray-200"></div>
           <button
@@ -440,16 +440,16 @@ export default function NoteConfigPage() {
             className="group flex items-center gap-1.5 hover:bg-gray-50 px-2 py-0.5 rounded transition-colors"
           >
             <h1 className="text-sm font-semibold text-gray-900">{config.noteInfo.title}</h1>
-            <span className="text-xs text-gray-400 group-hover:text-blue-600 transition-colors">
+            <span className="text-xs text-gray-400 group-hover:text-primary-600 transition-colors">
               {config.noteInfo.grade || '未设置年级'}
             </span>
-            <ChevronDown size={12} className="text-gray-400 group-hover:text-blue-600 transition-colors" />
+            <ChevronDown size={12} className="text-gray-400 group-hover:text-primary-600 transition-colors" />
           </button>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => handleViewSwitch('edit')}
-            className="flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-lg transition-all bg-blue-100 text-blue-700"
+            className="flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-lg transition-all bg-primary-100 text-primary-700"
           >
             <Pencil size={14} />
             编辑视角
@@ -469,7 +469,7 @@ export default function NoteConfigPage() {
             结果视角
           </button>
           <div className="w-px h-5 bg-gray-200"></div>
-          <button className="flex items-center gap-1.5 px-3 py-1 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors">
+          <button className="flex items-center gap-1.5 px-3 py-1 bg-primary-600 text-white text-xs font-medium rounded-lg hover:bg-primary-700 transition-colors">
             <Save size={14} />
             发布到班级
           </button>
@@ -696,14 +696,14 @@ function LeftPanel({ config, setConfig, onResourceClick, onTaskClick, onOpenLibr
       <div className="p-4 border-b border-gray-100">
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-bold text-gray-700 flex items-center gap-2">
-            <FolderOpen size={16} className="text-blue-500" />
+            <FolderOpen size={16} className="text-primary-500" />
             学习资源
           </h3>
           <button
             onClick={onOpenLibrary}
-            className="p-1 hover:bg-blue-50 rounded transition-colors"
+            className="p-1 hover:bg-primary-50 rounded transition-colors"
           >
-            <Plus size={16} className="text-blue-600" />
+            <Plus size={16} className="text-primary-600" />
           </button>
         </div>
         <div className="space-y-2 max-h-60 overflow-y-auto">
@@ -715,7 +715,7 @@ function LeftPanel({ config, setConfig, onResourceClick, onTaskClick, onOpenLibr
               onDragOver={(e) => handleResourceDragOver(e, index)}
               onDragEnd={handleResourceDragEnd}
               onClick={() => onResourceClick(resource)}
-              className={`flex items-center gap-3 p-2 bg-gray-50 rounded-xl hover:bg-blue-50 cursor-move transition-all group ${
+              className={`flex items-center gap-3 p-2 bg-gray-50 rounded-xl hover:bg-primary-50 cursor-move transition-all group ${
                 draggedResourceIndex === index ? 'opacity-50 scale-95' : ''
               }`}
             >
@@ -815,7 +815,7 @@ function LeftPanel({ config, setConfig, onResourceClick, onTaskClick, onOpenLibr
           </button>
           <button
             onClick={() => addTask('assignment')}
-            className="py-2 border border-dashed border-blue-300 rounded-xl text-blue-600 hover:bg-blue-50 text-xs flex items-center justify-center gap-1 transition-colors"
+            className="py-2 border border-dashed border-primary-300 rounded-xl text-primary-600 hover:bg-primary-50 text-xs flex items-center justify-center gap-1 transition-colors"
           >
             <Plus size={12} />
             添加作业
@@ -858,15 +858,15 @@ function CenterPanel({
               onClick={() => setConfig({ ...config, interactionMode: 'free' })}
               className={`p-4 rounded-xl border-2 transition-all ${
                 config.interactionMode === 'free'
-                  ? 'border-blue-500 bg-blue-50 shadow-sm'
-                  : 'border-gray-200 hover:border-blue-300'
+                  ? 'border-primary-500 bg-primary-50 shadow-sm'
+                  : 'border-gray-200 hover:border-primary-300'
               }`}
             >
               <div className="flex items-center gap-3">
                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                  config.interactionMode === 'free' ? 'bg-blue-100' : 'bg-gray-100'
+                  config.interactionMode === 'free' ? 'bg-primary-100' : 'bg-gray-100'
                 }`}>
-                  <MessageCircle size={20} className={config.interactionMode === 'free' ? 'text-blue-600' : 'text-gray-500'} />
+                  <MessageCircle size={20} className={config.interactionMode === 'free' ? 'text-primary-600' : 'text-gray-500'} />
                 </div>
                 <div className="text-left">
                   <h3 className="font-bold text-sm text-gray-800">自由对话</h3>
@@ -899,10 +899,10 @@ function CenterPanel({
 
           {/* 自由对话配置 */}
           {config.interactionMode === 'free' && (
-            <div className="space-y-4 p-4 bg-blue-50/50 rounded-xl border border-blue-100">
+            <div className="space-y-4 p-4 bg-primary-50/50 rounded-xl border border-primary-100">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                  <Bot size={14} className="text-blue-600" />
+                  <Bot size={14} className="text-primary-600" />
                   选择 AI 助手
                   <span className="text-xs text-gray-400 font-normal">(继承自通用版)</span>
                 </label>
@@ -914,7 +914,7 @@ function CenterPanel({
                       freeConfig: { ...config.freeConfig, selectedAgentId: e.target.value },
                     })
                   }
-                  className="w-full bg-white border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full bg-white border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary-500 outline-none"
                 >
                   {MOCK_AGENTS.map((agent) => (
                     <option key={agent.id} value={agent.id}>
@@ -927,13 +927,13 @@ function CenterPanel({
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                    <Pencil size={14} className="text-blue-600" />
+                    <Pencil size={14} className="text-primary-600" />
                     教师追加指令
                     <span className="text-xs text-gray-400 font-normal">(user_prompt)</span>
                   </label>
                   <button
                     onClick={() => setExpandedPrompt(expandedPrompt === 'free' ? null : 'free')}
-                    className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                    className="text-xs text-primary-600 hover:text-primary-700 flex items-center gap-1"
                   >
                     {expandedPrompt === 'free' ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
                     {expandedPrompt === 'free' ? '收起' : '展开'}
@@ -949,7 +949,7 @@ function CenterPanel({
                       })
                     }
                     placeholder="例如：请用幽默的口吻回答，所有比喻都和「水」有关..."
-                    className="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none resize-none"
+                    className="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary-500 outline-none resize-none"
                     rows={4}
                   />
                 )}
@@ -974,7 +974,7 @@ function CenterPanel({
                     })
                   }
                   className={`w-11 h-6 rounded-full transition-colors relative ${
-                    config.freeConfig.enableFence ? 'bg-blue-600' : 'bg-gray-300'
+                    config.freeConfig.enableFence ? 'bg-primary-600' : 'bg-gray-300'
                   }`}
                 >
                   <div
@@ -1076,12 +1076,12 @@ function RightPanel({ width, config, setConfig, onOpenNotesConfig, onOpenMetaCon
         <div className="p-4 border-b border-gray-100">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-bold text-gray-600 flex items-center gap-2">
-              <FileEdit size={14} className="text-blue-500" />
+              <FileEdit size={14} className="text-primary-500" />
               笔记模板
             </h3>
             <button
               onClick={() => setShowNotePreview(!showNotePreview)}
-              className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1"
+              className="text-xs text-primary-600 hover:text-primary-700 flex items-center gap-1"
             >
               <Eye size={12} />
               {showNotePreview ? '隐藏预览' : '预览'}
@@ -1097,7 +1097,7 @@ function RightPanel({ width, config, setConfig, onOpenNotesConfig, onOpenMetaCon
                   outputConfig: { ...config.outputConfig, noteTemplate: e.target.value },
                 })
               }
-              className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
             >
               {NOTE_TEMPLATES.map((template) => (
                 <option key={template.id} value={template.id}>
@@ -1137,7 +1137,7 @@ function RightPanel({ width, config, setConfig, onOpenNotesConfig, onOpenMetaCon
         {/* 学情监控配置 - 展开所有配置 */}
         <div className="p-4">
           <h3 className="text-sm font-bold text-gray-600 flex items-center gap-2 mb-3">
-            <Activity size={14} className="text-purple-500" />
+            <Activity size={14} className="text-accent-500" />
             学情监控
             <span className="text-xs text-gray-400 font-normal">(继承自通用版)</span>
           </h3>
@@ -1154,7 +1154,7 @@ function RightPanel({ width, config, setConfig, onOpenNotesConfig, onOpenMetaCon
                     outputConfig: { ...config.outputConfig, metacognitionStrategy: e.target.value },
                   })
                 }
-                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent-500"
               >
                 {META_STRATEGIES.map((strategy) => (
                   <option key={strategy.id} value={strategy.id}>
@@ -1166,12 +1166,12 @@ function RightPanel({ width, config, setConfig, onOpenNotesConfig, onOpenMetaCon
 
             {/* 策略说明 */}
             {META_STRATEGIES.find((s) => s.id === config.outputConfig.metacognitionStrategy) && (
-              <div className="bg-purple-50 rounded-lg p-3 border border-purple-200">
+              <div className="bg-accent-50 rounded-lg p-3 border border-accent-200">
                 <div className="flex items-center gap-2 mb-2">
-                  <Brain size={12} className="text-purple-600" />
-                  <span className="text-xs font-medium text-purple-700">策略说明</span>
+                  <Brain size={12} className="text-accent-600" />
+                  <span className="text-xs font-medium text-accent-700">策略说明</span>
                 </div>
-                <p className="text-xs text-purple-700 leading-relaxed">
+                <p className="text-xs text-accent-700 leading-relaxed">
                   {META_STRATEGIES.find((s) => s.id === config.outputConfig.metacognitionStrategy)?.description}
                 </p>
               </div>
@@ -1191,14 +1191,14 @@ function RightPanel({ width, config, setConfig, onOpenNotesConfig, onOpenMetaCon
                   })
                 }
                 placeholder="例如：当学生在视频资源上停留超过5分钟未操作时，提醒他们..."
-                className="w-full bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-700 focus:ring-2 focus:ring-purple-500 outline-none min-h-[80px] resize-none"
+                className="w-full bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-700 focus:ring-2 focus:ring-accent-500 outline-none min-h-[80px] resize-none"
               />
             </div>
 
             {/* 能力评估预览 */}
-            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-3 border border-blue-200">
+            <div className="bg-gradient-to-br from-primary-50 to-accent-50 rounded-xl p-3 border border-primary-200">
               <div className="flex items-center gap-2 mb-2">
-                <Target size={14} className="text-blue-600" />
+                <Target size={14} className="text-primary-600" />
                 <h4 className="text-xs font-bold text-gray-800">能力评估预览</h4>
               </div>
               <p className="text-xs text-gray-600 mb-3">
@@ -1223,7 +1223,7 @@ function RightPanel({ width, config, setConfig, onOpenNotesConfig, onOpenMetaCon
                         return (
                           <div
                             key={competency}
-                            className="flex items-center gap-1.5 px-2 py-1 bg-white rounded-lg text-xs font-medium text-blue-700 border border-blue-300 shadow-sm"
+                            className="flex items-center gap-1.5 px-2 py-1 bg-white rounded-lg text-xs font-medium text-primary-700 border border-primary-300 shadow-sm"
                             title={def.description}
                           >
                             {def.name}

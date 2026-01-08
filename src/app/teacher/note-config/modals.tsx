@@ -136,10 +136,10 @@ export function Resizer({ onResize, position }: { onResize: (delta: number) => v
   return (
     <div
       onMouseDown={handleMouseDown}
-      className="w-1 bg-gray-200 hover:bg-blue-400 cursor-col-resize transition-colors relative group flex-shrink-0"
+      className="w-1 bg-gray-200 hover:bg-primary-400 cursor-col-resize transition-colors relative group flex-shrink-0"
     >
       <div className="absolute inset-y-0 -left-1 -right-1 flex items-center justify-center">
-        <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-blue-500 text-white rounded-full p-1">
+        <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-primary-500 text-white rounded-full p-1">
           <GripVertical size={12} />
         </div>
       </div>
@@ -180,7 +180,7 @@ export function NoteInfoModal({ config, onSave, onClose, knowledgeLibrary, grade
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center backdrop-blur-sm" onClick={onClose}>
       <div className="bg-white w-[800px] max-h-[85vh] rounded-2xl shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
-        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-5">
+        <div className="bg-gradient-to-r from-primary-600 to-accent-600 text-white p-5">
           <h2 className="text-lg font-bold flex items-center gap-2">
             <Settings size={20} />
             笔记基本信息配置
@@ -197,7 +197,7 @@ export function NoteInfoModal({ config, onSave, onClose, knowledgeLibrary, grade
                   type="text"
                   value={localConfig.title}
                   onChange={(e) => setLocalConfig({ ...localConfig, title: e.target.value })}
-                  className="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary-500 outline-none"
                   placeholder="例如：水循环与水资源"
                 />
               </div>
@@ -206,7 +206,7 @@ export function NoteInfoModal({ config, onSave, onClose, knowledgeLibrary, grade
                 <select
                   value={localConfig.grade}
                   onChange={(e) => setLocalConfig({ ...localConfig, grade: e.target.value })}
-                  className="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary-500 outline-none"
                 >
                   <option value="">请选择年级</option>
                   {grades.map((grade: string) => (
@@ -221,7 +221,7 @@ export function NoteInfoModal({ config, onSave, onClose, knowledgeLibrary, grade
               <textarea
                 value={localConfig.description}
                 onChange={(e) => setLocalConfig({ ...localConfig, description: e.target.value })}
-                className="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none resize-none"
+                className="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary-500 outline-none resize-none"
                 rows={3}
                 placeholder="简要描述本笔记的学习目标和内容"
               />
@@ -230,7 +230,7 @@ export function NoteInfoModal({ config, onSave, onClose, knowledgeLibrary, grade
             {/* 跨学科选择 */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                <Network size={16} className="text-blue-500" />
+                <Network size={16} className="text-primary-500" />
                 涉及学科（可多选）
               </label>
               <div className="flex flex-wrap gap-2">
@@ -240,7 +240,7 @@ export function NoteInfoModal({ config, onSave, onClose, knowledgeLibrary, grade
                     onClick={() => toggleSubject(subject)}
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                       localConfig.subjects.includes(subject)
-                        ? 'bg-blue-500 text-white'
+                        ? 'bg-primary-500 text-white'
                         : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                     }`}
                   >
@@ -284,7 +284,7 @@ export function NoteInfoModal({ config, onSave, onClose, knowledgeLibrary, grade
               onSave(localConfig);
               onClose();
             }}
-            className="px-5 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-medium transition-colors"
+            className="px-5 py-2 bg-primary-600 text-white rounded-xl hover:bg-primary-700 font-medium transition-colors"
           >
             保存配置
           </button>
@@ -304,12 +304,12 @@ export function FreeModeModal({ config, inheritedAgents, onSave, onClose }: any)
         className="bg-white w-[600px] rounded-2xl shadow-2xl overflow-hidden animate-zoomIn"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white p-5">
+        <div className="bg-gradient-to-r from-primary-500 to-accent-500 text-white p-5">
           <h2 className="text-lg font-bold flex items-center gap-2">
             <MessageCircle size={20} />
             自由对话模式配置
           </h2>
-          <p className="text-blue-100 text-sm mt-1">选择 AI 助手并追加教学指令</p>
+          <p className="text-primary-100 text-sm mt-1">选择 AI 助手并追加教学指令</p>
         </div>
 
         <div className="p-6 space-y-5">
@@ -323,8 +323,8 @@ export function FreeModeModal({ config, inheritedAgents, onSave, onClose }: any)
                   key={agent.id}
                   className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all border ${
                     localConfig.selectedAgentId === agent.id
-                      ? 'bg-blue-50 border-blue-300'
-                      : 'bg-white border-gray-200 hover:border-blue-200'
+                      ? 'bg-primary-50 border-primary-300'
+                      : 'bg-white border-gray-200 hover:border-primary-200'
                   }`}
                 >
                   <input
@@ -332,10 +332,10 @@ export function FreeModeModal({ config, inheritedAgents, onSave, onClose }: any)
                     name="agent"
                     checked={localConfig.selectedAgentId === agent.id}
                     onChange={() => setLocalConfig({ ...localConfig, selectedAgentId: agent.id })}
-                    className="w-4 h-4 text-blue-600"
+                    className="w-4 h-4 text-primary-600"
                   />
-                  <div className="w-8 h-8 rounded-xl bg-blue-100 flex items-center justify-center">
-                    <Bot size={14} className="text-blue-600" />
+                  <div className="w-8 h-8 rounded-xl bg-primary-100 flex items-center justify-center">
+                    <Bot size={14} className="text-primary-600" />
                   </div>
                   <div>
                     <p className="text-sm font-medium text-gray-700">{agent.name}</p>
@@ -354,7 +354,7 @@ export function FreeModeModal({ config, inheritedAgents, onSave, onClose }: any)
               value={localConfig.teacherPrompt}
               onChange={(e) => setLocalConfig({ ...localConfig, teacherPrompt: e.target.value })}
               placeholder="例如：请用幽默的口吻回答，所有比喻都和「水」有关..."
-              className="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-sm text-gray-700 focus:ring-2 focus:ring-blue-500 outline-none min-h-[80px] resize-none"
+              className="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-sm text-gray-700 focus:ring-2 focus:ring-primary-500 outline-none min-h-[80px] resize-none"
             />
           </div>
 
@@ -384,7 +384,7 @@ export function FreeModeModal({ config, inheritedAgents, onSave, onClose }: any)
           </button>
           <button
             onClick={() => onSave(localConfig)}
-            className="px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-medium shadow-sm"
+            className="px-6 py-2 bg-primary-600 text-white rounded-xl hover:bg-primary-700 font-medium shadow-sm"
           >
             保存
           </button>
@@ -584,12 +584,12 @@ export function NotesModal({ config, inheritedTemplates, onSave, onClose }: any)
         className="bg-white w-[700px] max-h-[85vh] rounded-2xl shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white p-5">
+        <div className="bg-gradient-to-r from-primary-500 to-accent-500 text-white p-5">
           <h2 className="text-lg font-bold flex items-center gap-2">
             <FileEdit size={20} />
             笔记模板配置
           </h2>
-          <p className="text-blue-100 text-sm mt-1">选择笔记模板，学生将使用该模板记录学习内容</p>
+          <p className="text-primary-100 text-sm mt-1">选择笔记模板，学生将使用该模板记录学习内容</p>
         </div>
 
         <div className="flex h-[55vh]">
@@ -600,8 +600,8 @@ export function NotesModal({ config, inheritedTemplates, onSave, onClose }: any)
                 onClick={() => setSelectedTemplate(tpl.id)}
                 className={`p-3 rounded-xl cursor-pointer transition-all ${
                   selectedTemplate === tpl.id
-                    ? 'bg-white border-2 border-blue-400 shadow-sm'
-                    : 'bg-white border border-gray-200 hover:border-blue-300'
+                    ? 'bg-white border-2 border-primary-400 shadow-sm'
+                    : 'bg-white border border-gray-200 hover:border-primary-300'
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -610,7 +610,7 @@ export function NotesModal({ config, inheritedTemplates, onSave, onClose }: any)
                       selectedTemplate === tpl.id ? 'bg-blue-100' : 'bg-gray-100'
                     }`}
                   >
-                    <FileText size={18} className={selectedTemplate === tpl.id ? 'text-blue-600' : 'text-gray-500'} />
+                    <FileText size={18} className={selectedTemplate === tpl.id ? 'text-primary-600' : 'text-gray-500'} />
                   </div>
                   <div>
                     <p className="text-sm font-medium text-gray-700">{tpl.name}</p>
@@ -674,7 +674,7 @@ export function NotesModal({ config, inheritedTemplates, onSave, onClose }: any)
           </button>
           <button
             onClick={() => onSave({ noteTemplate: selectedTemplate, enableSubmit })}
-            className="px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-medium shadow-sm"
+            className="px-6 py-2 bg-primary-600 text-white rounded-xl hover:bg-primary-700 font-medium shadow-sm"
           >
             保存
           </button>
@@ -695,7 +695,7 @@ export function MetaModal({ config, inheritedStrategies, onSave, onClose }: any)
         className="bg-white w-[500px] rounded-2xl shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="bg-gradient-to-r from-purple-500 to-violet-500 text-white p-5">
+        <div className="bg-gradient-to-r from-accent-500 to-primary-500 text-white p-5">
           <h2 className="text-lg font-bold flex items-center gap-2">
             <Activity size={20} />
             学情监控配置
@@ -711,8 +711,8 @@ export function MetaModal({ config, inheritedStrategies, onSave, onClose }: any)
                   key={strategy.id}
                   className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all border ${
                     selectedStrategy === strategy.id
-                      ? 'bg-purple-50 border-purple-300'
-                      : 'bg-white border-gray-200 hover:border-purple-200'
+                      ? 'bg-accent-50 border-accent-300'
+                      : 'bg-white border-gray-200 hover:border-accent-200'
                   }`}
                 >
                   <input
@@ -720,10 +720,10 @@ export function MetaModal({ config, inheritedStrategies, onSave, onClose }: any)
                     name="strategy"
                     checked={selectedStrategy === strategy.id}
                     onChange={() => setSelectedStrategy(strategy.id)}
-                    className="w-4 h-4 text-purple-600"
+                    className="w-4 h-4 text-accent-600"
                   />
-                  <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center">
-                    <Brain size={14} className="text-purple-600" />
+                  <div className="w-8 h-8 rounded-lg bg-accent-100 flex items-center justify-center">
+                    <Brain size={14} className="text-accent-600" />
                   </div>
                   <div>
                     <p className="text-sm font-medium text-gray-700">{strategy.name}</p>
@@ -742,14 +742,14 @@ export function MetaModal({ config, inheritedStrategies, onSave, onClose }: any)
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               placeholder="例如：当学生在视频资源上停留超过5分钟未操作时，提醒他们..."
-              className="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-sm text-gray-700 focus:ring-2 focus:ring-purple-500 outline-none min-h-[80px] resize-none"
+              className="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-sm text-gray-700 focus:ring-2 focus:ring-accent-500 outline-none min-h-[80px] resize-none"
             />
           </div>
 
           {/* 能力评估预览 */}
-          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-200">
+          <div className="bg-gradient-to-br from-primary-50 to-accent-50 rounded-xl p-4 border border-primary-200">
             <div className="flex items-center gap-2 mb-3">
-              <Target size={16} className="text-blue-600" />
+              <Target size={16} className="text-primary-600" />
               <h3 className="text-sm font-bold text-gray-800">能力评估预览</h3>
             </div>
             <p className="text-xs text-gray-600 mb-3">
@@ -775,7 +775,7 @@ export function MetaModal({ config, inheritedStrategies, onSave, onClose }: any)
                       return (
                         <div
                           key={competency}
-                          className="flex items-center gap-1.5 px-3 py-1.5 bg-white rounded-lg text-xs font-medium text-blue-700 border border-blue-300 shadow-sm"
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-white rounded-lg text-xs font-medium text-primary-700 border border-primary-300 shadow-sm"
                           title={def.description}
                         >
                           <Icon size={12} />
@@ -1017,7 +1017,7 @@ export function TaskEditModal({ task, onSave, onClose }: any) {
       >
         <div
           className={`bg-gradient-to-r ${
-            localTask.type === 'quiz' ? 'from-green-500 to-emerald-500' : 'from-blue-500 to-indigo-500'
+            localTask.type === 'quiz' ? 'from-green-500 to-emerald-500' : 'from-primary-500 to-accent-500'
           } text-white p-5`}
         >
           <div className="flex items-center justify-between">
@@ -1044,7 +1044,7 @@ export function TaskEditModal({ task, onSave, onClose }: any) {
                 type="text"
                 value={localTask.title}
                 onChange={(e) => updateField('title', e.target.value)}
-                className="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                className="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary-500 outline-none"
               />
             </div>
 
@@ -1151,7 +1151,7 @@ export function TaskEditModal({ task, onSave, onClose }: any) {
                           onChange={(e) =>
                             setAiGenConfig({ ...aiGenConfig, questionCount: parseInt(e.target.value) || 1 })
                           }
-                          className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 outline-none"
+                          className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-accent-500 outline-none"
                         />
                       </div>
 
@@ -1163,7 +1163,7 @@ export function TaskEditModal({ task, onSave, onClose }: any) {
                           onChange={(e) =>
                             setAiGenConfig({ ...aiGenConfig, difficulty: e.target.value as 'easy' | 'medium' | 'hard' })
                           }
-                          className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 outline-none"
+                          className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-accent-500 outline-none"
                         >
                           <option value="easy">基础</option>
                           <option value="medium">中等</option>
@@ -1181,7 +1181,7 @@ export function TaskEditModal({ task, onSave, onClose }: any) {
                         value={aiGenConfig.customPrompt}
                         onChange={(e) => setAiGenConfig({ ...aiGenConfig, customPrompt: e.target.value })}
                         placeholder="例如：请围绕水循环主题，生成适合四年级学生的题目..."
-                        className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 outline-none resize-none"
+                        className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-accent-500 outline-none resize-none"
                         rows={2}
                       />
                     </div>
@@ -1189,15 +1189,15 @@ export function TaskEditModal({ task, onSave, onClose }: any) {
                     {/* 配置摘要 */}
                     <div className="bg-white/80 rounded-lg p-3 border border-purple-100">
                       <p className="text-xs text-gray-600">
-                        将生成 <span className="font-bold text-purple-600">{aiGenConfig.questionCount}</span> 道题目，
+                        将生成 <span className="font-bold text-accent-600">{aiGenConfig.questionCount}</span> 道题目，
                         题型：
-                        <span className="font-bold text-purple-600">
+                        <span className="font-bold text-accent-600">
                           {aiGenConfig.questionTypes
                             .map((t) => ({ choice: '单选', multipleChoice: '多选', fillBlank: '填空', trueFalse: '判断', shortAnswer: '简答' }[t]))
                             .join('、')}
                         </span>
                         ，难度：
-                        <span className="font-bold text-purple-600">
+                        <span className="font-bold text-accent-600">
                           {aiGenConfig.difficulty === 'easy' ? '基础' : aiGenConfig.difficulty === 'medium' ? '中等' : '困难'}
                         </span>
                       </p>
@@ -1219,7 +1219,7 @@ export function TaskEditModal({ task, onSave, onClose }: any) {
                   <textarea
                     value={localTask.teacherHint || ''}
                     onChange={(e) => updateField('teacherHint', e.target.value)}
-                    className="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none h-24 resize-none"
+                    className="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary-500 outline-none h-24 resize-none"
                     placeholder="请输入作业要求，例如：请结合生活实际，提出至少3条节水建议..."
                   />
                 </div>
@@ -1227,7 +1227,7 @@ export function TaskEditModal({ task, onSave, onClose }: any) {
                 {/* 能力维度标记 */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-1.5">
-                    <Target size={14} className="text-blue-500" />
+                    <Target size={14} className="text-primary-500" />
                     能力维度标记
                     <span className="text-xs text-gray-500 font-normal ml-1">(可选择多个)</span>
                   </label>
@@ -1252,7 +1252,7 @@ export function TaskEditModal({ task, onSave, onClose }: any) {
                             flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all
                             ${
                               isSelected
-                                ? 'bg-blue-100 text-blue-700 border-2 border-blue-400 shadow-sm'
+                                ? 'bg-blue-100 text-primary-700 border-2 border-primary-400 shadow-sm'
                                 : 'bg-gray-50 text-gray-600 border border-gray-300 hover:bg-gray-100'
                             }
                           `}
@@ -1296,7 +1296,7 @@ export function TaskEditModal({ task, onSave, onClose }: any) {
                   {localTask.aiGrading?.enabled && (
                     <div className="space-y-3">
                       <div>
-                        <label className="block text-xs font-medium text-purple-600 mb-2">选择批改Agent</label>
+                        <label className="block text-xs font-medium text-accent-600 mb-2">选择批改Agent</label>
                         <div className="space-y-2 max-h-80 overflow-y-auto">
                           {GRADING_AGENTS.map((agent) => {
                             const isSelected = (localTask.aiGrading?.agentId || 'agent_default') === agent.id;
@@ -1316,7 +1316,7 @@ export function TaskEditModal({ task, onSave, onClose }: any) {
                                   <div className="flex items-center gap-2">
                                     <h5 className="font-bold text-sm text-gray-800">{agent.name}</h5>
                                     {agent.type === 'system' && (
-                                      <span className="px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded text-[10px] font-medium">
+                                      <span className="px-1.5 py-0.5 bg-blue-100 text-primary-700 rounded text-[10px] font-medium">
                                         系统
                                       </span>
                                     )}
@@ -1353,7 +1353,7 @@ export function TaskEditModal({ task, onSave, onClose }: any) {
                         </div>
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-purple-600 mb-2">
+                        <label className="block text-xs font-medium text-accent-600 mb-2">
                           批改标准（可选）
                         </label>
                         <textarea
@@ -1365,7 +1365,7 @@ export function TaskEditModal({ task, onSave, onClose }: any) {
                             })
                           }
                           placeholder="例如：重点关注学生的思维过程和实际应用能力..."
-                          className="w-full bg-white border border-purple-200 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-purple-500 outline-none resize-none"
+                          className="w-full bg-white border border-purple-200 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-accent-500 outline-none resize-none"
                           rows={3}
                         />
                       </div>
@@ -1383,7 +1383,7 @@ export function TaskEditModal({ task, onSave, onClose }: any) {
           </button>
           <button
             onClick={() => onSave(localTask)}
-            className="px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-medium shadow-sm"
+            className="px-6 py-2 bg-primary-600 text-white rounded-xl hover:bg-primary-700 font-medium shadow-sm"
           >
             保存
           </button>
@@ -1421,9 +1421,9 @@ export function StudentPreview({ config, leftWidth, rightWidth }: any) {
     <div className="flex-1 flex overflow-hidden">
       {/* 左侧：资源列表 */}
       <div style={{ width: `${leftWidth}%` }} className="bg-white border-r border-gray-200 flex flex-col">
-        <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50">
+        <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-primary-50 to-accent-50">
           <h2 className="text-sm font-bold text-gray-700 flex items-center gap-2">
-            <FolderOpen size={14} className="text-blue-500" />
+            <FolderOpen size={14} className="text-primary-500" />
             学习资料库
           </h2>
         </div>
@@ -1527,10 +1527,10 @@ export function StudentPreview({ config, leftWidth, rightWidth }: any) {
               <div className="grid grid-cols-2 gap-2">
                 <div className="bg-blue-50 rounded-xl p-3 border border-blue-100">
                   <div className="flex items-center gap-1.5 mb-1">
-                    <Clock size={12} className="text-blue-600" />
-                    <span className="text-xs text-blue-700">专注时长</span>
+                    <Clock size={12} className="text-primary-600" />
+                    <span className="text-xs text-primary-700">专注时长</span>
                   </div>
-                  <p className="text-lg font-bold text-blue-600">00:00</p>
+                  <p className="text-lg font-bold text-primary-600">00:00</p>
                 </div>
                 <div className="bg-emerald-50 rounded-xl p-3 border border-emerald-100">
                   <div className="flex items-center gap-1.5 mb-1">
@@ -1726,8 +1726,8 @@ export function ResultsViewDashboard({ config }: any) {
         <div className="grid grid-cols-4 gap-4">
           <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
             <div className="flex items-center justify-between mb-3">
-              <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center">
-                <Users size={24} className="text-blue-600" />
+              <div className="w-12 h-12 rounded-xl bg-primary-100 flex items-center justify-center">
+                <Users size={24} className="text-primary-600" />
               </div>
               <TrendingUp size={16} className="text-green-500" />
             </div>
@@ -1748,8 +1748,8 @@ export function ResultsViewDashboard({ config }: any) {
 
           <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
             <div className="flex items-center justify-between mb-3">
-              <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center">
-                <Clock size={24} className="text-purple-600" />
+              <div className="w-12 h-12 rounded-xl bg-accent-100 flex items-center justify-center">
+                <Clock size={24} className="text-accent-600" />
               </div>
               <TrendingUp size={16} className="text-green-500" />
             </div>
@@ -1800,13 +1800,13 @@ export function ResultsViewDashboard({ config }: any) {
 
           return (
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-              <div className="p-5 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+              <div className="p-5 border-b border-gray-200 bg-gradient-to-r from-primary-50 to-accent-50">
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-                    <Target size={18} className="text-blue-600" />
+                    <Target size={18} className="text-primary-600" />
                     能力维度分布（本课程关注的能力）
                   </h3>
-                  <span className="text-xs text-gray-600 bg-white px-3 py-1 rounded-full border border-blue-200">
+                  <span className="text-xs text-gray-600 bg-white px-3 py-1 rounded-full border border-primary-200">
                     跨学科核心能力评估
                   </span>
                 </div>
@@ -1829,10 +1829,10 @@ export function ResultsViewDashboard({ config }: any) {
         {/* AI发现的其他能力表现（新增） */}
         {aiDetectedCompetencies.length > 0 && (
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <div className="p-5 border-b border-gray-200 bg-gradient-to-r from-purple-50 to-pink-50">
+            <div className="p-5 border-b border-gray-200 bg-gradient-to-r from-accent-50 to-cyan-50">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-                  <Sparkles size={18} className="text-purple-600" />
+                  <Sparkles size={18} className="text-accent-600" />
                   AI发现的其他能力表现
                 </h3>
                 <span className="text-xs text-gray-600 bg-white px-3 py-1 rounded-full border border-purple-200">
@@ -1850,11 +1850,11 @@ export function ResultsViewDashboard({ config }: any) {
                 {aiDetectedCompetencies.map((detected) => (
                   <div
                     key={detected.type}
-                    className="bg-gradient-to-br from-purple-50 to-pink-50/30 rounded-xl p-4 border border-purple-200"
+                    className="bg-gradient-to-br from-accent-50 to-cyan-50/30 rounded-xl p-4 border border-purple-200"
                   >
                     <div className="flex items-center gap-2 mb-2">
-                      <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center">
-                        <Brain size={16} className="text-purple-600" />
+                      <div className="w-8 h-8 rounded-lg bg-accent-100 flex items-center justify-center">
+                        <Brain size={16} className="text-accent-600" />
                       </div>
                       <div className="flex-1">
                         <h4 className="text-sm font-bold text-gray-800">{detected.name}</h4>
@@ -1873,9 +1873,9 @@ export function ResultsViewDashboard({ config }: any) {
 
         {/* 学生列表（增强：添加能力维度列） */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          <div className="p-5 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+          <div className="p-5 border-b border-gray-200 bg-gradient-to-r from-primary-50 to-accent-50">
             <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-              <Users size={18} className="text-blue-600" />
+              <Users size={18} className="text-primary-600" />
               学生列表
             </h3>
           </div>
@@ -1895,7 +1895,7 @@ export function ResultsViewDashboard({ config }: any) {
                     );
                   })}
                   {aiDetectedCompetencies.length > 0 && (
-                    <th className="text-center px-3 py-3 text-xs font-semibold text-purple-600">AI发现</th>
+                    <th className="text-center px-3 py-3 text-xs font-semibold text-accent-600">AI发现</th>
                   )}
                   <th className="text-left px-5 py-3 text-xs font-semibold text-gray-600">操作</th>
                 </tr>
@@ -1966,9 +1966,9 @@ export function ResultsViewDashboard({ config }: any) {
 
         {/* 任务完成统计 */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          <div className="p-5 border-b border-gray-200 bg-gradient-to-r from-purple-50 to-violet-50">
+          <div className="p-5 border-b border-gray-200 bg-gradient-to-r from-accent-50 to-primary-50">
             <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-              <CheckCircle size={18} className="text-purple-600" />
+              <CheckCircle size={18} className="text-accent-600" />
               任务完成统计
             </h3>
           </div>
@@ -1996,7 +1996,7 @@ export function ResultsViewDashboard({ config }: any) {
                           {task.type === 'quiz' ? (
                             <Zap size={16} className="text-green-600" />
                           ) : (
-                            <FileEdit size={16} className="text-blue-600" />
+                            <FileEdit size={16} className="text-primary-600" />
                           )}
                         </div>
                         <span className="font-medium text-gray-700">{task.title}</span>
@@ -2007,7 +2007,7 @@ export function ResultsViewDashboard({ config }: any) {
                         className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${
                           task.type === 'quiz'
                             ? 'bg-green-100 text-green-700'
-                            : 'bg-blue-100 text-blue-700'
+                            : 'bg-blue-100 text-primary-700'
                         }`}
                       >
                         {task.type === 'quiz' ? '测验' : '作业'}
@@ -2030,7 +2030,7 @@ export function ResultsViewDashboard({ config }: any) {
                           <span className="text-xs font-medium text-gray-700">{task.excellent}</span>
                         </div>
                         <div className="flex items-center gap-1">
-                          <span className="text-xs text-blue-600">良</span>
+                          <span className="text-xs text-primary-600">良</span>
                           <span className="text-xs font-medium text-gray-700">{task.good}</span>
                         </div>
                         <div className="flex items-center gap-1">
