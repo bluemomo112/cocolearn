@@ -80,7 +80,7 @@ export default function TeacherDashboard() {
         <div className="absolute bottom-20 left-10 w-72 h-72 bg-accent-200/20 rounded-full blur-3xl" />
       </div>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-6 py-8">
+      <div className="relative z-10 max-w-5xl mx-auto px-6 py-8">
         {/* Welcome Section */}
         <div className="mb-8 animate-fade-in">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">欢迎回来，Mo老师 👋</h1>

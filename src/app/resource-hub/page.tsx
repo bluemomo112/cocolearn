@@ -264,7 +264,7 @@ export default function ResourceHub() {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary-100/10 rounded-full blur-3xl" />
       </div>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-6 py-8">
+      <div className="relative z-10 max-w-5xl mx-auto px-6 py-8">
         {/* 页面标题 */}
         <div className="text-center mb-10 animate-fade-in-up">
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">

@@ -3,8 +3,13 @@
 
 :root {
   /* ============================================
-   * 主题色配置 - 绿色主题 (护眼清新)
-   * 切换主题时修改这里的颜色值
+   * 主题配置 - 绿色主题 (护眼清新)
+   *
+   * ⚠️ 修改主题时需要同时更新两个地方：
+   * 1. /src/config/theme.config.ts - TypeScript 配置
+   * 2. /src/app/globals.css (本文件) - CSS 变量
+   *
+   * 当前主题：green (绿色护眼风格)
    * ============================================ */
 
   /* 主色 - Primary (翡翠绿) */
@@ -44,10 +49,10 @@
   --td-brand-color-active: var(--primary-700);
   --td-brand-color-light: var(--primary-50);
 
-  /* 布局 */
-  --max-width-container: 1400px;
-  --max-width-navbar: 1400px;
-  --max-width-content: 1200px;
+  /* 布局 - 与 theme.config.ts 同步修改 */
+  --max-width-container: 1024px;  /* 主容器宽度 */
+  --max-width-navbar: 1024px;     /* 导航栏宽度 */
+  --max-width-content: 896px;     /* 内容区宽度 */
 
   /* 基础色 */
   --background: var(--bg-default);

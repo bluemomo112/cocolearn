@@ -115,7 +115,7 @@ export default function WorkshopPage() {
         <div className="absolute bottom-20 right-10 w-96 h-96 bg-accent-200/20 rounded-full blur-3xl" />
       </div>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-6 py-8">
+      <div className="relative z-10 max-w-5xl mx-auto px-6 py-8">
         {/* 页面标题 */}
         <div className="text-center mb-10 animate-fade-in-up">
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">

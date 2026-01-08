@@ -1721,7 +1721,7 @@ export function ResultsViewDashboard({ config }: any) {
 
   return (
     <div className="flex-1 overflow-y-auto bg-gray-100 p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
+      <div className="max-w-5xl mx-auto space-y-6">
         {/* 统计卡片 */}
         <div className="grid grid-cols-4 gap-4">
           <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-200">

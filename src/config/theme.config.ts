@@ -1,10 +1,15 @@
 /**
  * 统一主题配置文件
- * 修改此文件中的颜色值即可全局切换色系
+ * 修改此文件中的颜色值和布局值即可全局切换
  *
  * 使用方式：
  * 1. 修改 currentTheme 指向的主题预设
- * 2. 或者直接修改预设中的颜色值
+ * 2. 或者直接修改预设中的颜色值/布局值
+ *
+ * ⚠️ 重要：修改布局配置后，需要同步更新 globals.css 中的 CSS 变量：
+ *    - --max-width-container (对应 layout.maxWidth.container)
+ *    - --max-width-navbar (对应 layout.maxWidth.navbar)
+ *    - --max-width-content (对应 layout.maxWidth.content)
  */
 
 // 主题类型定义
@@ -109,9 +114,9 @@ export const greenTheme: Theme = {
   },
   layout: {
     maxWidth: {
-      container: '1400px',
-      navbar: '1400px',
-      content: '1200px',
+      container: '1024px',  // 主容器宽度 (对应 max-w-5xl)
+      navbar: '1024px',     // 导航栏宽度
+      content: '896px',     // 内容区宽度 (对应 max-w-4xl)
     },
     padding: {
       container: 'px-4 sm:px-6 lg:px-8',
@@ -160,9 +165,9 @@ export const blueTheme: Theme = {
   },
   layout: {
     maxWidth: {
-      container: '1400px',
-      navbar: '1400px',
-      content: '1200px',
+      container: '1024px',  // 主容器宽度 (对应 max-w-5xl)
+      navbar: '1024px',     // 导航栏宽度
+      content: '896px',     // 内容区宽度 (对应 max-w-4xl)
     },
     padding: {
       container: 'px-4 sm:px-6 lg:px-8',
@@ -210,9 +215,9 @@ export const purpleTheme: Theme = {
   },
   layout: {
     maxWidth: {
-      container: '1400px',
-      navbar: '1400px',
-      content: '1200px',
+      container: '1024px',  // 主容器宽度 (对应 max-w-5xl)
+      navbar: '1024px',     // 导航栏宽度
+      content: '896px',     // 内容区宽度 (对应 max-w-4xl)
     },
     padding: {
       container: 'px-4 sm:px-6 lg:px-8',
