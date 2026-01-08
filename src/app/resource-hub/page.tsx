@@ -259,9 +259,9 @@ export default function ResourceHub() {
     <div className="min-h-screen bg-gray-50">
       {/* 背景装饰 */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-40 right-20 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl" />
-        <div className="absolute bottom-40 left-20 w-96 h-96 bg-sky-200/20 rounded-full blur-3xl" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-100/10 rounded-full blur-3xl" />
+        <div className="absolute top-40 right-20 w-80 h-80 bg-primary-200/30 rounded-full blur-3xl" />
+        <div className="absolute bottom-40 left-20 w-96 h-96 bg-accent-200/20 rounded-full blur-3xl" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary-100/10 rounded-full blur-3xl" />
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-6 py-8">
@@ -279,8 +279,8 @@ export default function ResourceHub() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
           {[
             { icon: '⭐', title: '名师课堂', desc: '观摩优秀教学案例', count: masterClassrooms.length, unit: '精选课程', color: 'text-yellow-500' },
-            { icon: '🚀', title: '成长计划', desc: '针对性问题解决', count: growthProblems.length, unit: '常见问题', color: 'text-blue-500' },
-            { icon: '📦', title: '能力资源包', desc: '系统性技能提升', count: Object.keys(capabilityResources).length, unit: '核心能力', color: 'text-sky-500' },
+            { icon: '🚀', title: '成长计划', desc: '针对性问题解决', count: growthProblems.length, unit: '常见问题', color: 'text-primary-500' },
+            { icon: '📦', title: '能力资源包', desc: '系统性技能提升', count: Object.keys(capabilityResources).length, unit: '核心能力', color: 'text-accent-500' },
             { icon: '🤖', title: 'AI训练场', desc: '情境模拟练习', count: simulationScenarios.length, unit: '模拟场景', color: 'text-cyan-500' }
           ].map((item, index) => (
             <div
@@ -289,9 +289,9 @@ export default function ResourceHub() {
               style={{ animationDelay: `${0.1 + index * 0.05}s` }}
             >
               <div className={`text-3xl mb-3 ${item.color}`}>{item.icon}</div>
-              <h3 className="text-base font-bold text-gray-800 mb-1 group-hover:text-blue-600 transition-colors">{item.title}</h3>
+              <h3 className="text-base font-bold text-gray-800 mb-1 group-hover:text-primary-600 transition-colors">{item.title}</h3>
               <p className="text-xs text-gray-500 mb-3">{item.desc}</p>
-              <div className="text-2xl font-bold text-blue-600">{item.count}</div>
+              <div className="text-2xl font-bold text-primary-600">{item.count}</div>
               <div className="text-xs text-gray-400">{item.unit}</div>
             </div>
           ))}
@@ -319,10 +319,10 @@ export default function ResourceHub() {
                   placeholder="搜索名师课堂..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 focus:border-blue-500 transition-all duration-200"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50 focus:border-primary-500 transition-all duration-200"
                 />
               </div>
-              <select className="px-4 py-2.5 rounded-xl border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-all">
+              <select className="px-4 py-2.5 rounded-xl border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50 transition-all">
                 <option>全部学科</option>
                 <option>数学</option>
                 <option>物理</option>
@@ -359,7 +359,7 @@ export default function ResourceHub() {
                     className="absolute inset-0 flex items-center justify-center group/play"
                   >
                     <div className="w-14 h-14 bg-white/90 rounded-full flex items-center justify-center transition-all duration-300 group-hover/play:scale-110 group-hover/play:bg-white shadow-lg">
-                      <svg className="w-6 h-6 text-blue-600 ml-1" fill="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-6 h-6 text-primary-600 ml-1" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M8 5v14l11-7z" />
                       </svg>
                     </div>
@@ -381,7 +381,7 @@ export default function ResourceHub() {
 
                 {/* 课堂信息 */}
                 <div className="p-5">
-                  <h3 className="font-bold text-gray-900 text-lg mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors">
+                  <h3 className="font-bold text-gray-900 text-lg mb-2 line-clamp-2 group-hover:text-primary-600 transition-colors">
                     {classroom.title}
                   </h3>
 
@@ -396,7 +396,7 @@ export default function ResourceHub() {
                   {/* 标签 */}
                   <div className="flex flex-wrap gap-2 mb-4">
                     {classroom.tags.slice(0, 2).map((tag) => (
-                      <span key={tag} className="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">
+                      <span key={tag} className="px-3 py-1 bg-primary-100 text-primary-700 text-xs font-medium rounded-full">
                         {tag}
                       </span>
                     ))}
@@ -419,7 +419,7 @@ export default function ResourceHub() {
                       </div>
                     </div>
 
-                    <button className="px-4 py-2 bg-blue-500 text-white text-sm font-medium rounded-xl hover:bg-blue-600 hover:scale-105 active:scale-95 transition-all duration-200 shadow-sm">
+                    <button className="px-4 py-2 bg-primary-500 text-white text-sm font-medium rounded-xl hover:bg-primary-600 hover:scale-105 active:scale-95 transition-all duration-200 shadow-sm">
                       观看学习
                     </button>
                   </div>
@@ -451,12 +451,12 @@ export default function ResourceHub() {
                       onClick={() => setSelectedProblem(problem.id)}
                       className={`w-full p-4 rounded-2xl text-left transition-all duration-300 ${
                         selectedProblem === problem.id
-                          ? 'bg-gradient-to-r from-blue-500 to-sky-500 text-white shadow-lg'
-                          : 'bg-gray-50 text-gray-700 hover:bg-blue-50 hover:text-blue-600'
+                          ? 'bg-gradient-to-r from-primary-500 to-accent-500 text-white shadow-lg'
+                          : 'bg-gray-50 text-gray-700 hover:bg-primary-50 hover:text-primary-600'
                       }`}
                     >
                       <div className="font-semibold mb-1">{problem.problem}</div>
-                      <div className={`text-sm ${selectedProblem === problem.id ? 'text-blue-100' : 'text-gray-500'}`}>
+                      <div className={`text-sm ${selectedProblem === problem.id ? 'text-primary-100' : 'text-gray-500'}`}>
                         {problem.description}
                       </div>
                     </button>
@@ -481,9 +481,9 @@ export default function ResourceHub() {
                               <div className="flex items-start gap-4">
                                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
                                   solution.type === 'video' ? 'bg-red-100' :
-                                  solution.type === 'template' ? 'bg-blue-100' :
-                                  solution.type === 'guide' ? 'bg-blue-100' :
-                                  'bg-sky-100'
+                                  solution.type === 'template' ? 'bg-primary-100' :
+                                  solution.type === 'guide' ? 'bg-primary-100' :
+                                  'bg-accent-100'
                                 }`}>
                                   {solution.type === 'video' && (
                                     <svg className="w-5 h-5 text-red-600" fill="currentColor" viewBox="0 0 24 24">
@@ -491,23 +491,23 @@ export default function ResourceHub() {
                                     </svg>
                                   )}
                                   {solution.type === 'template' && (
-                                    <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg className="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                     </svg>
                                   )}
                                   {(solution.type === 'guide' || solution.type === 'strategy') && (
-                                    <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg className="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                                     </svg>
                                   )}
                                   {(solution.type === 'rubric' || solution.type === 'checklist') && (
-                                    <svg className="w-5 h-5 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg className="w-5 h-5 text-accent-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                                     </svg>
                                   )}
                                 </div>
                                 <div className="flex-1">
-                                  <h5 className="font-bold text-gray-800 mb-1 group-hover:text-blue-600 transition-colors">{solution.title}</h5>
+                                  <h5 className="font-bold text-gray-800 mb-1 group-hover:text-primary-600 transition-colors">{solution.title}</h5>
                                   <div className="text-sm text-gray-500">
                                     {'duration' in solution && <span>时长：{solution.duration}</span>}
                                     {'downloads' in solution && <span>下载：{solution.downloads}次</span>}
@@ -518,7 +518,7 @@ export default function ResourceHub() {
                                   </div>
                                 </div>
                               </div>
-                              <button className="mt-4 w-full py-2 bg-blue-500 text-white text-sm font-medium rounded-xl hover:bg-blue-600 transition-all duration-200">
+                              <button className="mt-4 w-full py-2 bg-primary-500 text-white text-sm font-medium rounded-xl hover:bg-primary-600 transition-all duration-200">
                                 立即获取
                               </button>
                             </div>
@@ -533,8 +533,8 @@ export default function ResourceHub() {
                           {problem.caseStudies.map((caseStudy, index) => (
                             <div key={index} className="bg-gray-50 rounded-2xl p-4 hover:shadow-md hover:bg-white transition-all duration-300 cursor-pointer">
                               <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-sky-100 rounded-full flex items-center justify-center">
-                                  <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <div className="w-10 h-10 bg-gradient-to-br from-primary-100 to-accent-100 rounded-full flex items-center justify-center">
+                                  <svg className="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
                                   </svg>
                                 </div>
@@ -555,8 +555,8 @@ export default function ResourceHub() {
                 })()
               ) : (
                 <div className="bg-white rounded-3xl p-12 shadow-sm border border-gray-100 text-center">
-                  <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-sky-100 rounded-full flex items-center justify-center mx-auto mb-5">
-                    <svg className="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="w-20 h-20 bg-gradient-to-br from-primary-100 to-accent-100 rounded-full flex items-center justify-center mx-auto mb-5">
+                    <svg className="w-10 h-10 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
@@ -591,9 +591,9 @@ export default function ResourceHub() {
                     <h3 className="text-lg font-bold text-gray-900">{capability.name}</h3>
                     <div className="flex items-center gap-2 mt-1">
                       <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${
-                        capability.level === 'beginner' ? 'bg-blue-100 text-blue-700' :
+                        capability.level === 'beginner' ? 'bg-primary-100 text-primary-700' :
                         capability.level === 'intermediate' ? 'bg-yellow-100 text-yellow-700' :
-                        'bg-sky-100 text-sky-700'
+                        'bg-accent-100 text-accent-700'
                       }`}>
                         {capability.level === 'beginner' ? '入门级' :
                          capability.level === 'intermediate' ? '进阶级' : '专家级'}
@@ -601,7 +601,7 @@ export default function ResourceHub() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-2xl font-bold text-blue-600">{capability.progress}%</div>
+                    <div className="text-2xl font-bold text-primary-600">{capability.progress}%</div>
                     <div className="text-xs text-gray-500">掌握度</div>
                   </div>
                 </div>
@@ -610,7 +610,7 @@ export default function ResourceHub() {
                 <div className="mb-5">
                   <div className="w-full bg-gray-100 rounded-full h-2.5">
                     <div
-                      className="bg-gradient-to-r from-blue-500 to-sky-500 h-2.5 rounded-full transition-all duration-500"
+                      className="bg-gradient-to-r from-primary-500 to-accent-500 h-2.5 rounded-full transition-all duration-500"
                       style={{ width: `${capability.progress}%` }}
                     />
                   </div>
@@ -622,19 +622,19 @@ export default function ResourceHub() {
                     <div
                       key={resourceIndex}
                       className={`bg-gray-50 rounded-xl p-4 hover:shadow-md hover:bg-white transition-all duration-300 cursor-pointer ${
-                        resource.featured ? 'ring-2 ring-blue-500/20 bg-blue-50/50' : ''
+                        resource.featured ? 'ring-2 ring-primary-500/20 bg-primary-50/50' : ''
                       }`}
                     >
                       <div className="flex items-center gap-3">
                         <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                          resource.type === 'template' ? 'bg-blue-100' :
+                          resource.type === 'template' ? 'bg-primary-100' :
                           resource.type === 'video' ? 'bg-red-100' :
-                          resource.type === 'course' ? 'bg-sky-100' :
+                          resource.type === 'course' ? 'bg-accent-100' :
                           resource.type === 'tool' ? 'bg-yellow-100' :
                           'bg-gray-100'
                         }`}>
                           {resource.type === 'template' && (
-                            <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-4 h-4 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                             </svg>
                           )}
@@ -644,7 +644,7 @@ export default function ResourceHub() {
                             </svg>
                           )}
                           {resource.type === 'course' && (
-                            <svg className="w-4 h-4 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-4 h-4 text-accent-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                             </svg>
                           )}
@@ -679,7 +679,7 @@ export default function ResourceHub() {
                           </div>
                         </div>
                         {resource.featured && (
-                          <span className="px-2 py-0.5 bg-blue-500 text-white text-xs font-medium rounded-full">
+                          <span className="px-2 py-0.5 bg-primary-500 text-white text-xs font-medium rounded-full">
                             推荐
                           </span>
                         )}
@@ -688,7 +688,7 @@ export default function ResourceHub() {
                   ))}
                 </div>
 
-                <button className="w-full mt-5 py-3 bg-blue-500 text-white font-medium rounded-xl hover:bg-blue-600 hover:shadow-lg transition-all duration-200">
+                <button className="w-full mt-5 py-3 bg-primary-500 text-white font-medium rounded-xl hover:bg-primary-600 hover:shadow-lg transition-all duration-200">
                   制定专属成长计划
                 </button>
               </div>
@@ -716,8 +716,8 @@ export default function ResourceHub() {
                 {/* 场景标题 */}
                 <div className="flex items-center justify-between mb-5">
                   <div className="flex items-center gap-3">
-                    <div className="w-11 h-11 bg-gradient-to-br from-blue-100 to-sky-100 rounded-xl flex items-center justify-center">
-                      <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="w-11 h-11 bg-gradient-to-br from-primary-100 to-accent-100 rounded-xl flex items-center justify-center">
+                      <svg className="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                       </svg>
                     </div>
@@ -725,7 +725,7 @@ export default function ResourceHub() {
                       <h3 className="text-lg font-bold text-gray-900">{scenario.title}</h3>
                       <div className="flex items-center gap-3 mt-1">
                         <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${
-                          scenario.difficulty === 'easy' ? 'bg-blue-100 text-blue-700' :
+                          scenario.difficulty === 'easy' ? 'bg-primary-100 text-primary-700' :
                           scenario.difficulty === 'medium' ? 'bg-yellow-100 text-yellow-700' :
                           'bg-red-100 text-red-700'
                         }`}>
@@ -740,7 +740,7 @@ export default function ResourceHub() {
                       </div>
                     </div>
                   </div>
-                  <button className="px-4 py-2 bg-gradient-to-r from-blue-500 to-sky-500 text-white font-medium rounded-xl hover:shadow-lg hover:scale-105 transition-all duration-200">
+                  <button className="px-4 py-2 bg-gradient-to-r from-primary-500 to-accent-500 text-white font-medium rounded-xl hover:shadow-lg hover:scale-105 transition-all duration-200">
                     开始训练
                   </button>
                 </div>
@@ -761,7 +761,7 @@ export default function ResourceHub() {
                         className="bg-gray-50 rounded-2xl p-5 hover:shadow-md hover:bg-white transition-all duration-300 cursor-pointer group"
                       >
                         <div className="mb-4">
-                          <h5 className="font-bold text-gray-800 group-hover:text-blue-600 transition-colors">
+                          <h5 className="font-bold text-gray-800 group-hover:text-primary-600 transition-colors">
                             {response.title}
                           </h5>
                           <p className="text-sm text-gray-600 mt-2 leading-relaxed line-clamp-2">
@@ -774,11 +774,11 @@ export default function ResourceHub() {
                           <div>
                             <div className="flex justify-between text-xs mb-1">
                               <span className="text-gray-500">有效性</span>
-                              <span className="font-semibold text-blue-600">{response.effectiveness}%</span>
+                              <span className="font-semibold text-primary-600">{response.effectiveness}%</span>
                             </div>
                             <div className="w-full bg-gray-200 rounded-full h-1.5">
                               <div
-                                className="bg-gradient-to-r from-blue-400 to-blue-600 h-1.5 rounded-full transition-all duration-500"
+                                className="bg-gradient-to-r from-primary-400 to-primary-600 h-1.5 rounded-full transition-all duration-500"
                                 style={{ width: `${response.effectiveness}%` }}
                               />
                             </div>
@@ -787,18 +787,18 @@ export default function ResourceHub() {
                           <div>
                             <div className="flex justify-between text-xs mb-1">
                               <span className="text-gray-500">使用率</span>
-                              <span className="font-semibold text-sky-600">{response.usage_rate}%</span>
+                              <span className="font-semibold text-accent-600">{response.usage_rate}%</span>
                             </div>
                             <div className="w-full bg-gray-200 rounded-full h-1.5">
                               <div
-                                className="bg-gradient-to-r from-sky-400 to-sky-600 h-1.5 rounded-full transition-all duration-500"
+                                className="bg-gradient-to-r from-accent-400 to-accent-600 h-1.5 rounded-full transition-all duration-500"
                                 style={{ width: `${response.usage_rate}%` }}
                               />
                             </div>
                           </div>
                         </div>
 
-                        <button className="w-full mt-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-xl hover:bg-blue-50 hover:text-blue-600 transition-all duration-200">
+                        <button className="w-full mt-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-xl hover:bg-primary-50 hover:text-primary-600 transition-all duration-200">
                           练习此策略
                         </button>
                       </div>
@@ -812,8 +812,8 @@ export default function ResourceHub() {
           {/* 话术优化工坊 */}
           <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 mt-6 animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
             <div className="text-center mb-6">
-              <div className="w-14 h-14 bg-gradient-to-br from-blue-100 to-sky-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-7 h-7 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-14 h-14 bg-gradient-to-br from-primary-100 to-accent-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-7 h-7 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                 </svg>
               </div>
@@ -828,9 +828,9 @@ export default function ResourceHub() {
                   <h4 className="font-bold text-gray-800 mb-3">您的原话术</h4>
                   <textarea
                     placeholder="请输入您在跨学科课堂中使用的话术，例如：'这两个概念之间有什么联系？'"
-                    className="w-full h-28 p-4 bg-white rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 focus:border-blue-500 transition-all resize-none"
+                    className="w-full h-28 p-4 bg-white rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50 focus:border-primary-500 transition-all resize-none"
                   />
-                  <button className="w-full mt-4 py-3 bg-blue-500 text-white font-medium rounded-xl hover:bg-blue-600 transition-all duration-200">
+                  <button className="w-full mt-4 py-3 bg-primary-500 text-white font-medium rounded-xl hover:bg-primary-600 transition-all duration-200">
                     AI优化建议
                   </button>
                 </div>
@@ -839,18 +839,18 @@ export default function ResourceHub() {
                 <div className="bg-gray-50 rounded-2xl p-5">
                   <h4 className="font-bold text-gray-800 mb-3">AI优化建议</h4>
                   <div className="space-y-3">
-                    <div className="bg-gradient-to-r from-blue-50 to-sky-50 rounded-xl p-4 border border-blue-200">
-                      <div className="font-semibold text-blue-800 mb-2">升级版本 1</div>
-                      <p className="text-blue-700 text-sm">&ldquo;如果我们把生物课学的生态平衡和地理课学的水循环放在一起看，你能发现什么有趣的联系吗？&rdquo;</p>
-                      <div className="text-xs text-blue-600 mt-2">
+                    <div className="bg-gradient-to-r from-primary-50 to-accent-50 rounded-xl p-4 border border-primary-200">
+                      <div className="font-semibold text-primary-800 mb-2">升级版本 1</div>
+                      <p className="text-primary-700 text-sm">&ldquo;如果我们把生物课学的生态平衡和地理课学的水循环放在一起看，你能发现什么有趣的联系吗？&rdquo;</p>
+                      <div className="text-xs text-primary-600 mt-2">
                         优化点：具体化学科内容，引导学生主动发现联系
                       </div>
                     </div>
 
-                    <div className="bg-gradient-to-r from-sky-50 to-cyan-50 rounded-xl p-4 border border-sky-200">
-                      <div className="font-semibold text-sky-800 mb-2">升级版本 2</div>
-                      <p className="text-sky-700 text-sm">&ldquo;想象一下，如果你是一滴水，你在这个生态系统中会经历怎样的旅程？&rdquo;</p>
-                      <div className="text-xs text-sky-600 mt-2">
+                    <div className="bg-gradient-to-r from-accent-50 to-cyan-50 rounded-xl p-4 border border-accent-200">
+                      <div className="font-semibold text-accent-800 mb-2">升级版本 2</div>
+                      <p className="text-accent-700 text-sm">&ldquo;想象一下，如果你是一滴水，你在这个生态系统中会经历怎样的旅程？&rdquo;</p>
+                      <div className="text-xs text-accent-600 mt-2">
                         优化点：角色代入，激发想象力，促进跨学科思维
                       </div>
                     </div>
@@ -908,8 +908,8 @@ export default function ResourceHub() {
                       >
                         <div className="flex items-center gap-3">
                           <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
-                            highlight.type === 'interaction' ? 'bg-blue-600' :
-                            highlight.type === 'technology' ? 'bg-sky-600' :
+                            highlight.type === 'interaction' ? 'bg-primary-600' :
+                            highlight.type === 'technology' ? 'bg-accent-600' :
                             highlight.type === 'collaboration' ? 'bg-cyan-600' :
                             'bg-gray-600'
                           }`}>
@@ -931,7 +931,7 @@ export default function ResourceHub() {
                     {['教案设计', 'PPT课件', '学习单', '教学反思'].map((resource, index) => (
                       <div key={index} className="flex items-center justify-between p-3 bg-gray-800 rounded-xl">
                         <span className="text-white text-sm">{resource}</span>
-                        <button className="text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors">
+                        <button className="text-primary-400 hover:text-primary-300 text-sm font-medium transition-colors">
                           下载
                         </button>
                       </div>

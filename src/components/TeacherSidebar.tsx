@@ -88,7 +88,7 @@ export default function TeacherSidebar() {
       <div className="flex items-center justify-between h-16 px-4 border-b border-gray-100">
         {!collapsed && (
           <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-sky-500 rounded-xl flex items-center justify-center">
+            <div className="w-8 h-8 gradient-primary rounded-xl flex items-center justify-center">
               <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
@@ -115,10 +115,10 @@ export default function TeacherSidebar() {
       <div className={`p-4 border-b border-gray-100 ${collapsed ? 'px-2' : ''}`}>
         <div className={`flex items-center ${collapsed ? 'justify-center' : 'gap-3'}`}>
           <div className="relative">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-sky-500 flex items-center justify-center text-white font-semibold">
+            <div className="w-10 h-10 rounded-full gradient-primary flex items-center justify-center text-white font-semibold">
               张
             </div>
-            <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-blue-500 rounded-full border-2 border-white"></div>
+            <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-primary-500 rounded-full border-2 border-white"></div>
           </div>
           {!collapsed && (
             <div className="flex-1 min-w-0">
@@ -137,18 +137,18 @@ export default function TeacherSidebar() {
             href={item.href}
             className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group ${
               isActive(item.href)
-                ? 'bg-blue-50 text-blue-600'
+                ? 'bg-primary-50 text-primary-600'
                 : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
             } ${collapsed ? 'justify-center' : ''}`}
           >
-            <span className={isActive(item.href) ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'}>
+            <span className={isActive(item.href) ? 'text-primary-600' : 'text-gray-400 group-hover:text-gray-600'}>
               {item.icon}
             </span>
             {!collapsed && (
               <>
                 <span className="flex-1 font-medium">{item.label}</span>
                 {item.badge && (
-                  <span className="px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-600 rounded-full">
+                  <span className="px-2 py-0.5 text-xs font-medium bg-primary-100 text-primary-600 rounded-full">
                     {item.badge}
                   </span>
                 )}
@@ -161,21 +161,21 @@ export default function TeacherSidebar() {
       {/* Bottom Section */}
       <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-100">
         {!collapsed ? (
-          <div className="p-4 bg-gradient-to-br from-blue-50 to-sky-50 rounded-2xl">
+          <div className="p-4 bg-gradient-to-br from-primary-50 to-accent-50 rounded-2xl">
             <div className="flex items-center gap-2 mb-2">
-              <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
-              <span className="font-semibold text-blue-700">AI 助手</span>
+              <span className="font-semibold text-primary-700">AI 助手</span>
             </div>
             <p className="text-xs text-gray-600 mb-3">智能备课、教案生成、学情分析</p>
-            <button className="w-full px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 transition-colors">
+            <button className="w-full px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-xl hover:bg-primary-700 transition-colors">
               开始使用
             </button>
           </div>
         ) : (
-          <button className="w-full p-2 bg-blue-100 rounded-xl flex items-center justify-center hover:bg-blue-200 transition-colors">
-            <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <button className="w-full p-2 bg-primary-100 rounded-xl flex items-center justify-center hover:bg-primary-200 transition-colors">
+            <svg className="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
           </button>

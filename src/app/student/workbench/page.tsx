@@ -115,16 +115,16 @@ function TaskExpandedCard({
       <div className={`px-4 py-3 flex items-center justify-between ${
         task.type === 'quiz'
           ? 'bg-gradient-to-r from-amber-50 to-orange-50 border-b border-amber-100'
-          : 'bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-100'
+          : 'bg-gradient-to-r from-primary-50 to-accent-50 border-b border-primary-100'
       }`}>
         <div className="flex items-center gap-3">
           <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-            task.type === 'quiz' ? 'bg-amber-100' : 'bg-blue-100'
+            task.type === 'quiz' ? 'bg-amber-100' : 'bg-primary-100'
           }`}>
             {task.type === 'quiz' ? (
               <Zap size={18} className="text-amber-600" />
             ) : (
-              <FileEdit size={18} className="text-blue-600" />
+              <FileEdit size={18} className="text-primary-600" />
             )}
           </div>
           <div>
@@ -159,13 +159,13 @@ function TaskExpandedCard({
                         key={optIdx}
                         className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
                           selectedOption === option
-                            ? 'border-blue-500 bg-blue-50'
+                            ? 'border-primary-500 bg-primary-50'
                             : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                         }`}
                       >
                         <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
                           selectedOption === option
-                            ? 'border-blue-500 bg-blue-500'
+                            ? 'border-primary-500 bg-primary-500'
                             : 'border-gray-300'
                         }`}>
                           {selectedOption === option && (
@@ -189,7 +189,7 @@ function TaskExpandedCard({
               value={submissionText}
               onChange={(e) => setSubmissionText(e.target.value)}
               placeholder={task.submissionPlaceholder || '请在这里提交你的作业内容...'}
-              className="w-full h-32 p-3 border border-gray-200 rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full h-32 p-3 border border-gray-200 rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
           </div>
         )}
@@ -201,7 +201,7 @@ function TaskExpandedCard({
           className={`mt-4 w-full py-3 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2 ${
             isCompleted
               ? 'bg-green-100 text-green-700 cursor-not-allowed'
-              : 'bg-blue-600 text-white hover:bg-blue-700'
+              : 'bg-primary-600 text-white hover:bg-primary-700'
           }`}
         >
           {isCompleted ? (
@@ -268,10 +268,10 @@ function Resizer({ onResize, position }: { onResize: (delta: number) => void; po
   return (
     <div
       onMouseDown={handleMouseDown}
-      className="w-1 bg-gray-200 hover:bg-blue-400 cursor-col-resize transition-colors relative group flex-shrink-0"
+      className="w-1 bg-gray-200 hover:bg-primary-400 cursor-col-resize transition-colors relative group flex-shrink-0"
     >
       <div className="absolute inset-y-0 -left-1 -right-1 flex items-center justify-center">
-        <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-blue-500 text-white rounded-full p-1">
+        <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-primary-500 text-white rounded-full p-1">
           <GripVertical size={12} />
         </div>
       </div>
@@ -448,7 +448,7 @@ export default function StudentWorkbenchPage() {
       <header className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-6 shrink-0">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <Brain size={20} className="text-blue-600" />
+            <Brain size={20} className="text-primary-600" />
             <h1 className="text-base font-semibold text-gray-900">{config.title}</h1>
           </div>
           <div className="w-px h-6 bg-gray-200"></div>
@@ -459,9 +459,9 @@ export default function StudentWorkbenchPage() {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 rounded-lg">
-            <Clock size={14} className="text-blue-600" />
-            <span className="text-sm font-medium text-blue-700">{formatTime(elapsedTime)}</span>
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-primary-50 rounded-lg">
+            <Clock size={14} className="text-primary-600" />
+            <span className="text-sm font-medium text-primary-700">{formatTime(elapsedTime)}</span>
           </div>
           <button
             onClick={toggleTimer}
@@ -477,7 +477,7 @@ export default function StudentWorkbenchPage() {
           >
             <RotateCcw size={16} className="text-gray-700" />
           </button>
-          <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors">
+          <button className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 transition-colors">
             <Save size={16} />
             保存进度
           </button>
@@ -592,9 +592,9 @@ function LeftPanel({
           {/* 资源区域 - 占50% */}
           <div className="flex-1 flex flex-col min-h-0" style={{ flex: '1 1 50%' }}>
             {/* 资源列表头部 */}
-            <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50 flex-shrink-0">
+            <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-primary-50 to-accent-50 flex-shrink-0">
               <h2 className="text-sm font-bold text-gray-700 flex items-center gap-2">
-                <FolderOpen size={16} className="text-blue-500" />
+                <FolderOpen size={16} className="text-primary-500" />
                 学习资料库
               </h2>
               <p className="text-xs text-gray-500 mt-1">点击资源开始学习</p>
@@ -606,7 +606,7 @@ function LeftPanel({
                 <div
                   key={resource.id}
                   onClick={() => handleResourceClick(resource)}
-                  className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-blue-50 cursor-pointer transition-colors group"
+                  className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-primary-50 cursor-pointer transition-colors group"
                 >
                   <div className={`w-10 h-10 rounded-xl bg-${resource.color}-100 flex items-center justify-center`}>
                     {resource.type === 'video' && <Video size={16} className={`text-${resource.color}-600`} />}
@@ -646,7 +646,7 @@ function LeftPanel({
                     className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all group border-2 ${
                       isCompleted
                         ? 'border-green-300 bg-green-50 hover:bg-green-100'
-                        : 'border-gray-200 bg-white hover:border-blue-300 hover:bg-blue-50 hover:shadow-md'
+                        : 'border-gray-200 bg-white hover:border-primary-300 hover:bg-primary-50 hover:shadow-md'
                     }`}
                   >
                     <div
@@ -655,7 +655,7 @@ function LeftPanel({
                           ? 'bg-green-100'
                           : task.type === 'quiz'
                           ? 'bg-amber-100'
-                          : 'bg-blue-100'
+                          : 'bg-primary-100'
                       }`}
                     >
                       {isCompleted ? (
@@ -663,7 +663,7 @@ function LeftPanel({
                       ) : task.type === 'quiz' ? (
                         <Zap size={18} className="text-amber-600" />
                       ) : (
-                        <FileEdit size={18} className="text-blue-600" />
+                        <FileEdit size={18} className="text-primary-600" />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -808,7 +808,7 @@ function CenterPanel({
       <div className="p-3 bg-white border-b border-gray-200">
         <div className="flex items-center justify-between mb-3">
           <h2 className="font-bold text-gray-700 flex items-center gap-2">
-            <MessageSquare size={18} className="text-indigo-600" />
+            <MessageSquare size={18} className="text-accent-600" />
             AI 学习对话
           </h2>
         </div>
@@ -819,7 +819,7 @@ function CenterPanel({
             onClick={() => setChatMode('free')}
             className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
               chatMode === 'free'
-                ? 'bg-blue-500 text-white shadow-sm'
+                ? 'bg-primary-500 text-white shadow-sm'
                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
             }`}
           >
@@ -844,8 +844,8 @@ function CenterPanel({
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.length === 0 && !expandedTask && (
           <div className="text-center py-12">
-            <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Sparkles size={32} className="text-indigo-600" />
+            <div className="w-16 h-16 bg-accent-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Sparkles size={32} className="text-accent-600" />
             </div>
             <h3 className="text-lg font-bold text-gray-700 mb-2">
               {chatMode === 'free' ? '自由对话模式' : '引导学习模式'}
@@ -861,7 +861,7 @@ function CenterPanel({
         {messages.map((message: ChatMessage) => (
           <div key={message.id} className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : ''}`}>
             {message.role === 'assistant' && (
-              <div className="w-9 h-9 rounded-full bg-indigo-600 flex-shrink-0 flex items-center justify-center">
+              <div className="w-9 h-9 rounded-full bg-accent-600 flex-shrink-0 flex items-center justify-center">
                 <Bot size={16} className="text-white" />
               </div>
             )}
@@ -874,12 +874,12 @@ function CenterPanel({
             >
               {/* 能力培养提示标签 (仅AI消息) */}
               {message.role === 'assistant' && (message as any).competencyHint && (
-                <div className="flex items-center gap-1.5 px-2 py-1 bg-purple-50 border border-purple-200 rounded-lg w-fit">
-                  <Target size={12} className="text-purple-600" />
-                  <span className="text-xs font-medium text-purple-700">
+                <div className="flex items-center gap-1.5 px-2 py-1 bg-accent-50 border border-accent-200 rounded-lg w-fit">
+                  <Target size={12} className="text-accent-600" />
+                  <span className="text-xs font-medium text-accent-700">
                     培养 {COMPETENCY_METADATA[(message as any).competencyHint.type as CompetencyType]?.name}
                   </span>
-                  <span className="text-xs text-purple-500">• {(message as any).competencyHint.strategy}</span>
+                  <span className="text-xs text-accent-500">• {(message as any).competencyHint.strategy}</span>
                 </div>
               )}
 
@@ -887,7 +887,7 @@ function CenterPanel({
               <div
                 className={`p-4 rounded-2xl ${
                   message.role === 'user'
-                    ? 'bg-blue-600 text-white rounded-tr-none'
+                    ? 'bg-primary-600 text-white rounded-tr-none'
                     : 'bg-white border border-gray-200 rounded-tl-none'
                 }`}
               >
@@ -960,11 +960,11 @@ function CenterPanel({
             onChange={(e) => setInputMessage(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && onSendMessage()}
             placeholder="输入你的问题或想法..."
-            className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-4 pr-12 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-4 pr-12 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
           />
           <button
             onClick={onSendMessage}
-            className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
           >
             <Send size={16} />
           </button>
@@ -998,10 +998,10 @@ function CompetencyGrowthPanel() {
   return (
     <div className="space-y-4">
       {/* 当前课程能力雷达图 */}
-      <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-100">
+      <div className="bg-gradient-to-br from-primary-50 to-accent-50 rounded-xl p-4 border border-primary-100">
         <div className="flex items-center gap-2 mb-3">
-          <Award size={14} className="text-blue-600" />
-          <span className="text-xs font-bold text-blue-700">本课程能力画像</span>
+          <Award size={14} className="text-primary-600" />
+          <span className="text-xs font-bold text-primary-700">本课程能力画像</span>
         </div>
         <CompetencyRadarChart
           competencies={currentCompetencies}
@@ -1011,15 +1011,15 @@ function CompetencyGrowthPanel() {
       </div>
 
       {/* AI实时观察 */}
-      <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-4 border border-purple-200">
+      <div className="bg-gradient-to-br from-accent-50 to-primary-50 rounded-xl p-4 border border-accent-200">
         <div className="flex items-center gap-2 mb-3">
-          <Sparkles size={14} className="text-purple-600" />
-          <span className="text-xs font-bold text-purple-700">AI实时观察</span>
+          <Sparkles size={14} className="text-accent-600" />
+          <span className="text-xs font-bold text-accent-700">AI实时观察</span>
         </div>
         <div className="space-y-3">
           {mockAIObservations.slice(0, 2).map((obs) => {
             return (
-              <div key={obs.id} className="bg-white/80 rounded-lg p-3 border border-purple-100">
+              <div key={obs.id} className="bg-white/80 rounded-lg p-3 border border-accent-100">
                 <div className="flex items-start gap-2 mb-2">
                   <div className="text-lg mt-0.5 flex-shrink-0">{obs.icon}</div>
                   <div className="flex-1 min-w-0">
@@ -1101,12 +1101,12 @@ function CompetencyGrowthPanel() {
 
       {/* 学习元数据 */}
       <div className="grid grid-cols-2 gap-2">
-        <div className="bg-blue-50 rounded-lg p-2 border border-blue-100">
+        <div className="bg-primary-50 rounded-lg p-2 border border-primary-100">
           <div className="flex items-center gap-1 mb-1">
-            <Layers size={10} className="text-blue-600" />
-            <span className="text-xs text-blue-700">已完成课程</span>
+            <Layers size={10} className="text-primary-600" />
+            <span className="text-xs text-primary-700">已完成课程</span>
           </div>
-          <p className="text-sm font-bold text-blue-600">
+          <p className="text-sm font-bold text-primary-600">
             {mockLearnerProfile.metadata.totalCoursesCompleted} 门
           </p>
         </div>
@@ -1281,7 +1281,7 @@ function EnhancedNotesPanel() {
         <div className="p-4 border-b border-gray-200">
           <button
             onClick={createNote}
-            className="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-medium rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+            className="w-full px-4 py-3 bg-gradient-to-r from-primary-600 to-accent-600 text-white text-sm font-medium rounded-xl hover:from-primary-700 hover:to-accent-700 transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
           >
             <Plus size={18} />
             添加笔记
@@ -1297,7 +1297,7 @@ function EnhancedNotesPanel() {
                 setActiveNoteId(note.id);
                 setShowNoteEditor(true);
               }}
-              className="p-3 bg-white border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-md cursor-pointer transition-all"
+              className="p-3 bg-white border border-gray-200 rounded-lg hover:border-primary-300 hover:shadow-md cursor-pointer transition-all"
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="flex-1 min-w-0">
@@ -1339,7 +1339,7 @@ function EnhancedNotesPanel() {
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
               isPreviewMode
                 ? 'bg-gray-100 text-gray-700'
-                : 'bg-blue-600 text-white'
+                : 'bg-primary-600 text-white'
             }`}
           >
             {isPreviewMode ? <Eye size={14} className="inline mr-1" /> : <Edit size={14} className="inline mr-1" />}
@@ -1453,7 +1453,7 @@ function EnhancedNotesPanel() {
                   key={recording.id}
                   className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg border border-gray-200"
                 >
-                  <button className="p-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                  <button className="p-1.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors">
                     <Play size={12} />
                   </button>
                   <div className="flex-1">
@@ -1502,7 +1502,7 @@ function RightPanel({ config, rightTab, setRightTab, width, elapsedTime, tasks, 
           onClick={() => setRightTab('workspace')}
           className={`flex-1 px-3 py-2 text-xs font-medium transition-colors ${
             rightTab === 'workspace'
-              ? 'text-indigo-600 border-b-2 border-indigo-600 bg-white'
+              ? 'text-accent-600 border-b-2 border-accent-600 bg-white'
               : 'text-gray-500 hover:text-gray-700'
           }`}
         >
@@ -1513,7 +1513,7 @@ function RightPanel({ config, rightTab, setRightTab, width, elapsedTime, tasks, 
           onClick={() => setRightTab('status')}
           className={`flex-1 px-3 py-2 text-xs font-medium transition-colors ${
             rightTab === 'status'
-              ? 'text-indigo-600 border-b-2 border-indigo-600 bg-white'
+              ? 'text-accent-600 border-b-2 border-accent-600 bg-white'
               : 'text-gray-500 hover:text-gray-700'
           }`}
         >

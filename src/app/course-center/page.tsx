@@ -742,10 +742,10 @@ function TeachingModeModal({
           {/* 讲授模式 */}
           <button
             onClick={() => onSelect('teacher-centered')}
-            className="w-full p-6 rounded-2xl border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50/50 transition-all duration-300 text-left group"
+            className="w-full p-6 rounded-2xl border-2 border-gray-200 hover:border-primary-500 hover:bg-primary-50/50 transition-all duration-300 text-left group"
           >
             <div className="flex items-start gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-2xl flex-shrink-0 group-hover:scale-110 transition-transform">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white text-2xl flex-shrink-0 group-hover:scale-110 transition-transform">
                 👨‍🏫
               </div>
               <div className="flex-1">
@@ -758,10 +758,10 @@ function TeachingModeModal({
           {/* 自学模式 */}
           <button
             onClick={() => onSelect('student-centered')}
-            className="w-full p-6 rounded-2xl border-2 border-gray-200 hover:border-purple-500 hover:bg-purple-50/50 transition-all duration-300 text-left group"
+            className="w-full p-6 rounded-2xl border-2 border-gray-200 hover:border-accent-500 hover:bg-accent-50/50 transition-all duration-300 text-left group"
           >
             <div className="flex items-start gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center text-white text-2xl flex-shrink-0 group-hover:scale-110 transition-transform">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-accent-500 to-accent-600 flex items-center justify-center text-white text-2xl flex-shrink-0 group-hover:scale-110 transition-transform">
                 🎯
               </div>
               <div className="flex-1">
@@ -828,16 +828,16 @@ export default function CourseCenter() {
     <div className="min-h-screen bg-gray-50">
       {/* 背景装饰 */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-20 right-10 w-96 h-96 bg-blue-200/20 rounded-full blur-3xl" />
-        <div className="absolute bottom-20 left-10 w-72 h-72 bg-blue-200/20 rounded-full blur-3xl" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-purple-200/10 rounded-full blur-3xl" />
+        <div className="absolute top-20 right-10 w-96 h-96 bg-primary-200/20 rounded-full blur-3xl" />
+        <div className="absolute bottom-20 left-10 w-72 h-72 bg-primary-200/20 rounded-full blur-3xl" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-accent-200/10 rounded-full blur-3xl" />
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-6 py-8">
         {/* Hero 区域 */}
         <div className="text-center mb-8 animate-fade-in-up">
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-            <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-primary-600 via-accent-600 to-primary-600 bg-clip-text text-transparent">
               跨学科课程中心
             </span>
           </h1>
@@ -850,7 +850,7 @@ export default function CourseCenter() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-xl">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white text-xl">
                 📚
               </div>
               <div>
@@ -861,7 +861,7 @@ export default function CourseCenter() {
           </div>
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center text-white text-xl">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-accent-500 to-accent-600 flex items-center justify-center text-white text-xl">
                 📖
               </div>
               <div>
@@ -872,7 +872,7 @@ export default function CourseCenter() {
           </div>
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-xl">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white text-xl">
                 👨‍🏫
               </div>
               <div>
@@ -936,7 +936,7 @@ export default function CourseCenter() {
               <select
                 value={selectedSubject}
                 onChange={(e) => setSelectedSubject(e.target.value)}
-                className="px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                className="px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all"
               >
                 {subjects.map((subject) => (
                   <option key={subject} value={subject}>{subject === '全部' ? '全部学科' : subject}</option>
@@ -946,7 +946,7 @@ export default function CourseCenter() {
               <select
                 value={selectedSource}
                 onChange={(e) => setSelectedSource(e.target.value)}
-                className="px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                className="px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all"
               >
                 {sources.map((source) => (
                   <option key={source} value={source}>{source === '全部' ? '全部来源' : source}</option>
@@ -959,7 +959,7 @@ export default function CourseCenter() {
                   placeholder="搜索课程或知识点..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-56 transition-all"
+                  className="pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 w-56 transition-all"
                 />
                 <svg
                   className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
@@ -1037,8 +1037,8 @@ function CourseGridView({ courses, onTeach }: { courses: Course[]; onTeach: (cou
             <div className="absolute top-3 right-3">
               <span className={`px-2.5 py-1 text-xs font-medium rounded-lg ${
                 course.source === 'official'
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-purple-500 text-white'
+                  ? 'bg-primary-500 text-white'
+                  : 'bg-accent-500 text-white'
               }`}>
                 {course.source === 'official' ? '官方' : '组织'}
               </span>
@@ -1048,7 +1048,7 @@ function CourseGridView({ courses, onTeach }: { courses: Course[]; onTeach: (cou
           {/* 内容 */}
           <div className="p-5">
             {/* 课程标题 */}
-            <h3 className="font-bold text-gray-900 text-lg mb-3 line-clamp-2 group-hover:text-blue-600 transition-colors">
+            <h3 className="font-bold text-gray-900 text-lg mb-3 line-clamp-2 group-hover:text-primary-600 transition-colors">
               {course.title}
             </h3>
 
@@ -1097,7 +1097,7 @@ function CourseGridView({ courses, onTeach }: { courses: Course[]; onTeach: (cou
               </div>
               <button
                 onClick={() => onTeach(course)}
-                className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-sm font-medium rounded-xl hover:shadow-lg hover:shadow-blue-500/25 transition-all duration-300"
+                className="px-4 py-2 bg-gradient-to-r from-primary-600 to-accent-600 text-white text-sm font-medium rounded-xl hover:shadow-lg hover:shadow-primary-500/25 transition-all duration-300"
               >
                 去授课
               </button>
@@ -1347,7 +1347,7 @@ function KnowledgeGraphView({
       <div className="lg:col-span-1 space-y-4 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
         <div className="bg-white/90 backdrop-blur-sm rounded-2xl border border-gray-100 p-5 shadow-sm">
           <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
             </svg>
             可视化控制
@@ -1359,7 +1359,7 @@ function KnowledgeGraphView({
             <select
               value={selectedSubject}
               onChange={(e) => onSelectSubject(e.target.value)}
-              className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
             >
               {subjects.map((subject) => (
                 <option key={subject} value={subject}>{subject === '全部' ? '全部学科' : subject}</option>
@@ -1370,7 +1370,7 @@ function KnowledgeGraphView({
           {/* 关联强度滑块 */}
           <div className="mb-5">
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              关联强度阈值: <span className="text-blue-600">{(linkStrength * 100).toFixed(0)}%</span>
+              关联强度阈值: <span className="text-primary-600">{(linkStrength * 100).toFixed(0)}%</span>
             </label>
             <input
               type="range"
@@ -1379,7 +1379,7 @@ function KnowledgeGraphView({
               step="0.1"
               value={linkStrength}
               onChange={(e) => setLinkStrength(parseFloat(e.target.value))}
-              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-500"
+              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary-500"
             />
           </div>
 
@@ -1390,7 +1390,7 @@ function KnowledgeGraphView({
               <button
                 onClick={() => setShowLabels(!showLabels)}
                 className={`relative w-11 h-6 rounded-full transition-colors ${
-                  showLabels ? 'bg-blue-500' : 'bg-gray-300'
+                  showLabels ? 'bg-primary-500' : 'bg-gray-300'
                 }`}
               >
                 <span
@@ -1405,7 +1405,7 @@ function KnowledgeGraphView({
               <button
                 onClick={() => setShowLinks(!showLinks)}
                 className={`relative w-11 h-6 rounded-full transition-colors ${
-                  showLinks ? 'bg-blue-500' : 'bg-gray-300'
+                  showLinks ? 'bg-primary-500' : 'bg-gray-300'
                 }`}
               >
                 <span
@@ -1420,7 +1420,7 @@ function KnowledgeGraphView({
               <button
                 onClick={() => setHighlightClusters(!highlightClusters)}
                 className={`relative w-11 h-6 rounded-full transition-colors ${
-                  highlightClusters ? 'bg-blue-500' : 'bg-gray-300'
+                  highlightClusters ? 'bg-primary-500' : 'bg-gray-300'
                 }`}
               >
                 <span
@@ -1436,7 +1436,7 @@ function KnowledgeGraphView({
         {/* 图例 */}
         <div className="bg-white/90 backdrop-blur-sm rounded-2xl border border-gray-100 p-5 shadow-sm">
           <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <svg className="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 text-accent-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
             </svg>
             图例
@@ -1469,11 +1469,11 @@ function KnowledgeGraphView({
           <div className="pt-4 border-t border-gray-100 space-y-2">
             <p className="text-xs text-gray-500 font-medium mb-2">连接类型</p>
             <div className="flex items-center gap-2">
-              <div className="w-8 h-0.5 bg-blue-500" />
+              <div className="w-8 h-0.5 bg-primary-500" />
               <span className="text-xs text-gray-500">前置关系</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-8 h-0.5 bg-blue-300" style={{ backgroundImage: 'repeating-linear-gradient(90deg, #93c5fd 0, #93c5fd 4px, transparent 4px, transparent 8px)' }} />
+              <div className="w-8 h-0.5 bg-accent-300" style={{ backgroundImage: 'repeating-linear-gradient(90deg, #5eead4 0, #5eead4 4px, transparent 4px, transparent 8px)' }} />
               <span className="text-xs text-gray-500">跨学科关联</span>
             </div>
             <div className="flex items-center gap-2">
@@ -1507,7 +1507,7 @@ function KnowledgeGraphView({
         {selectedNode && relatedCourses.length > 0 && (
           <div className="bg-white/90 backdrop-blur-sm rounded-2xl border border-gray-100 p-5 shadow-sm animate-fade-in">
             <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+              <span className="w-2 h-2 rounded-full bg-primary-500"></span>
               相关课程 - {knowledgeNodes.find(n => n.id === selectedNode)?.name}
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1536,7 +1536,7 @@ function KnowledgeGraphView({
                   </div>
                   <button
                     onClick={() => onTeach(course)}
-                    className="px-3 py-1.5 bg-blue-50 text-blue-600 text-xs font-medium rounded-lg hover:bg-blue-100 transition-colors whitespace-nowrap"
+                    className="px-3 py-1.5 bg-primary-50 text-primary-600 text-xs font-medium rounded-lg hover:bg-primary-100 transition-colors whitespace-nowrap"
                   >
                     去授课
                   </button>

@@ -725,15 +725,248 @@ export function StudentListItem({
 }
 
 // ============================================
-// 导出: 辅助类型和函数
+// 组件: 学生详情面板
 // ============================================
-export type {
-  CompetencyAssessment,
-  Evidence,
-  TaskCompletion,
-  CrossCourseCompetencyRecord,
-  CrossCourseProfile,
-  StudentCompetencyProfile,
-  ClassCompetencyDistribution,
-  ClassOverview,
-};
+export function StudentDetailPanel({
+  profile,
+  onClose,
+}: {
+  profile: StudentCompetencyProfile;
+  onClose: () => void;
+}) {
+  const [expandedCompetency, setExpandedCompetency] = useState<CompetencyType | null>(null);
+
+  // 计算平均星级
+  const avgStars = profile.currentCourseAssessments.length > 0
+    ? (profile.currentCourseAssessments.reduce((sum, a) => sum + a.stars, 0) / profile.currentCourseAssessments.length).toFixed(1)
+    : '--';
+
+  // 转换为 CrossCourseProfile 格式
+  const crossCourseProfiles: CrossCourseProfile[] = profile.crossCourseProfiles;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center backdrop-blur-sm" onClick={onClose}>
+      <div
+        className="bg-white w-[900px] max-h-[90vh] rounded-2xl shadow-2xl overflow-hidden flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* 头部 */}
+        <div className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-6 flex-shrink-0">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="text-5xl">{profile.avatar}</div>
+              <div>
+                <h2 className="text-2xl font-bold">{profile.studentName}</h2>
+                <p className="text-sm opacity-90 mt-1">
+                  学习时长：{profile.learningDuration}分钟 · 完成度：{profile.progress}%
+                </p>
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-4xl font-bold">{avgStars} ★</div>
+              <p className="text-xs opacity-90 mt-1">综合能力评级</p>
+            </div>
+          </div>
+        </div>
+
+        {/* 内容区域 - 可滚动 */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          {/* 1. 本课程能力评估（使用雷达图） */}
+          <div className="bg-gradient-to-br from-gray-50 to-blue-50/30 rounded-xl p-6 border border-gray-200">
+            <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+              <Target size={18} className="text-blue-600" />
+              本课程能力评估
+            </h3>
+
+            <div className="flex gap-6">
+              {/* 雷达图 */}
+              <div className="flex-shrink-0">
+                <CompetencyRadarChart assessments={profile.currentCourseAssessments} size={200} />
+              </div>
+
+              {/* 能力卡片网格 */}
+              <div className="flex-1 grid grid-cols-2 gap-3">
+                {profile.currentCourseAssessments.map((assessment) => {
+                  const def = COMPETENCY_DEFINITIONS[assessment.type];
+                  const Icon = def.icon;
+                  return (
+                    <div key={assessment.type} className="bg-white rounded-lg p-3 border border-gray-200">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className={`w-8 h-8 rounded-lg bg-${def.color}-100 flex items-center justify-center`}>
+                          <Icon size={16} className={`text-${def.color}-600`} />
+                        </div>
+                        <span className="text-sm font-medium text-gray-700">{def.name}</span>
+                      </div>
+                      {renderStars(assessment.stars, 'md')}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* 2. 能力详情（使用 CompetencyDetailCard） */}
+          <div>
+            <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+              <FileText size={18} className="text-blue-600" />
+              能力详情
+            </h3>
+
+            <div className="space-y-3">
+              {profile.currentCourseAssessments.map((assessment) => (
+                <CompetencyDetailCard
+                  key={assessment.type}
+                  assessment={assessment}
+                  expanded={expandedCompetency === assessment.type}
+                  onToggle={() => setExpandedCompetency(
+                    expandedCompetency === assessment.type ? null : assessment.type
+                  )}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* 3. 跨课程能力画像（使用 CrossCourseTimeline） */}
+          {crossCourseProfiles.length > 0 && (
+            <div className="bg-gradient-to-br from-purple-50 to-pink-50/30 rounded-xl p-6 border border-purple-200">
+              <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                <Network size={18} className="text-purple-600" />
+                跨课程能力画像
+              </h3>
+              <CrossCourseTimeline profiles={crossCourseProfiles} />
+            </div>
+          )}
+
+          {/* 4. 任务完成情况 */}
+          {profile.taskCompletions.length > 0 && (
+            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+              <div className="px-5 py-3 border-b border-gray-200">
+                <h3 className="text-base font-bold text-gray-800 flex items-center gap-2">
+                  <CheckCircle size={16} className="text-blue-600" />
+                  任务完成情况
+                </h3>
+              </div>
+              <div className="p-4">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-200">
+                      <th className="text-left py-2 text-xs font-semibold text-gray-600">任务</th>
+                      <th className="text-left py-2 text-xs font-semibold text-gray-600">类型</th>
+                      <th className="text-left py-2 text-xs font-semibold text-gray-600">得分</th>
+                      <th className="text-left py-2 text-xs font-semibold text-gray-600">能力标签</th>
+                      <th className="text-left py-2 text-xs font-semibold text-gray-600">状态</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {profile.taskCompletions.map((task) => (
+                      <tr key={task.taskId} className="border-b border-gray-100 last:border-0">
+                        <td className="py-2">{task.taskTitle}</td>
+                        <td className="py-2">
+                          <span className={`text-xs px-2 py-1 rounded ${
+                            task.taskType === 'quiz'
+                              ? 'bg-green-100 text-green-700'
+                              : 'bg-blue-100 text-blue-700'
+                          }`}>
+                            {task.taskType === 'quiz' ? '客观题' : '主观题'}
+                          </span>
+                        </td>
+                        <td className="py-2 font-semibold">{task.score}/{task.maxScore}</td>
+                        <td className="py-2">
+                          {task.competencyTags.length > 0 ? (
+                            <div className="flex flex-wrap gap-1">
+                              {task.competencyTags.map((tag) => (
+                                <span key={tag} className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded">
+                                  {COMPETENCY_DEFINITIONS[tag].name}
+                                </span>
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="text-gray-400">-</span>
+                          )}
+                        </td>
+                        <td className="py-2">
+                          <span className={`text-xs ${
+                            task.status === 'completed'
+                              ? 'text-green-600'
+                              : task.status === 'in_progress'
+                              ? 'text-amber-600'
+                              : 'text-gray-500'
+                          }`}>
+                            {task.status === 'completed' ? '✅ 完成' : task.status === 'in_progress' ? '⏳ 进行中' : '⏸ 待完成'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* 5. AI 发现的额外能力 */}
+          {profile.aiDetectedCompetencies.length > 0 && (
+            <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl p-4 border border-purple-200">
+              <div className="flex items-center gap-2 mb-3">
+                <Sparkles size={16} className="text-purple-600" />
+                <h4 className="text-sm font-bold text-gray-800">AI 发现的额外能力表现</h4>
+              </div>
+              <div className="space-y-2">
+                {profile.aiDetectedCompetencies.map((detected) => {
+                  const def = COMPETENCY_DEFINITIONS[detected.type];
+                  const Icon = def.icon;
+                  return (
+                    <div key={detected.type} className="flex items-center gap-3 bg-white rounded-lg p-3 border border-purple-100">
+                      <div className={`w-8 h-8 rounded-lg bg-${def.color}-100 flex items-center justify-center`}>
+                        <Icon size={16} className={`text-${def.color}-600`} />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-gray-700">{def.name}</span>
+                          <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
+                            置信度 {Math.round(detected.confidence * 100)}%
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-0.5">{detected.description}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* 6. 学习轨迹提示 */}
+          <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
+            <div className="flex items-center gap-2 mb-2">
+              <Route size={16} className="text-blue-600" />
+              <h4 className="text-sm font-semibold text-gray-800">学习轨迹</h4>
+            </div>
+            <p className="text-xs text-gray-600">
+              点击"展开查看详细时间线"可以查看该学生的完整学习轨迹，包括资源访问、任务提交、AI对话等所有活动记录。
+            </p>
+          </div>
+        </div>
+
+        {/* 底部按钮 */}
+        <div className="p-4 border-t border-gray-200 flex justify-end gap-3 bg-gray-50 flex-shrink-0">
+          <button
+            onClick={onClose}
+            className="px-5 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 font-medium"
+          >
+            返回班级概览
+          </button>
+          <button
+            onClick={onClose}
+            className="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium shadow-sm"
+          >
+            关闭
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================
+// 注意: 所有类型已在定义时通过 export interface 导出
+// ============================================

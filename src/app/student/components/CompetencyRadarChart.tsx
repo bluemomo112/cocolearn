@@ -94,7 +94,7 @@ export default function CompetencyRadarChart({
         <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3">
           <p className="font-semibold text-gray-900 mb-1">{data.competency}</p>
           <p className="text-sm text-gray-600">
-            评分: <span className="font-medium text-blue-600">{getCompetencyStars(data.rating as CompetencyRating)}</span>
+            评分: <span className="font-medium text-primary-600">{getCompetencyStars(data.rating as CompetencyRating)}</span>
           </p>
           <p className="text-xs text-gray-500 mt-1">
             {data.rating}/4 分

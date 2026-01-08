@@ -98,7 +98,7 @@ export default function AdminSidebar() {
       <div className="flex items-center justify-between h-16 px-4 border-b border-slate-800">
         {!collapsed && (
           <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-sky-500 rounded-xl flex items-center justify-center">
+            <div className="w-8 h-8 gradient-primary rounded-xl flex items-center justify-center">
               <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
               </svg>
@@ -128,10 +128,10 @@ export default function AdminSidebar() {
       <div className={`p-4 border-b border-slate-800 ${collapsed ? 'px-2' : ''}`}>
         <div className={`flex items-center ${collapsed ? 'justify-center' : 'gap-3'}`}>
           <div className="relative">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-sky-600 flex items-center justify-center text-white font-semibold">
+            <div className="w-10 h-10 rounded-full gradient-primary flex items-center justify-center text-white font-semibold">
               管
             </div>
-            <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-blue-500 rounded-full border-2 border-slate-900"></div>
+            <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-primary-500 rounded-full border-2 border-slate-900"></div>
           </div>
           {!collapsed && (
             <div className="flex-1 min-w-0">
@@ -150,7 +150,7 @@ export default function AdminSidebar() {
             href={item.href}
             className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group ${
               isActive(item.href)
-                ? 'bg-blue-600 text-white'
+                ? 'bg-primary-600 text-white'
                 : 'text-slate-400 hover:bg-slate-800 hover:text-white'
             } ${collapsed ? 'justify-center' : ''}`}
           >
@@ -160,7 +160,7 @@ export default function AdminSidebar() {
                 <span className="flex-1 font-medium">{item.label}</span>
                 {item.badge && (
                   <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${
-                    isActive(item.href) ? 'bg-white/20 text-white' : 'bg-blue-100 text-blue-600'
+                    isActive(item.href) ? 'bg-white/20 text-white' : 'bg-primary-100 text-primary-600'
                   }`}>
                     {item.badge}
                   </span>
@@ -179,11 +179,11 @@ export default function AdminSidebar() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-slate-400">活跃用户</span>
-                <span className="text-sm font-medium text-blue-400">1,234</span>
+                <span className="text-sm font-medium text-primary-400">1,234</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-xs text-slate-400">新增课程</span>
-                <span className="text-sm font-medium text-blue-400">23</span>
+                <span className="text-sm font-medium text-primary-400">23</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-xs text-slate-400">待审核</span>

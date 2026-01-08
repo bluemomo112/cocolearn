@@ -2,84 +2,226 @@
 @import 'tdesign-react/es/style/index.css';
 
 :root {
-  /* 主色 - 蓝色主题 (Blue) */
-  --primary-50: #eff6ff;
-  --primary-100: #dbeafe;
-  --primary-200: #bfdbfe;
-  --primary-300: #93c5fd;
-  --primary-400: #60a5fa;
-  --primary-500: #3b82f6;
-  --primary-600: #2563eb;
-  --primary-700: #1d4ed8;
+  /* ============================================
+   * 主题色配置 - 绿色主题 (护眼清新)
+   * 切换主题时修改这里的颜色值
+   * ============================================ */
 
-  /* 辅色 - 天蓝色 (Sky) */
-  --accent-500: #0ea5e9;
+  /* 主色 - Primary (翡翠绿) */
+  --primary-50: #f0fdf4;
+  --primary-100: #dcfce7;
+  --primary-200: #bbf7d0;
+  --primary-300: #86efac;
+  --primary-400: #4ade80;
+  --primary-500: #10b981;
+  --primary-600: #059669;
+  --primary-700: #047857;
+  --primary-800: #065f46;
+  --primary-900: #064e3b;
+
+  /* 辅色 - Accent (青绿) */
+  --accent-400: #2dd4bf;
+  --accent-500: #14b8a6;
+  --accent-600: #0d9488;
+
+  /* 活力色 - Fresh (黄绿) */
+  --fresh-400: #a3e635;
+  --fresh-500: #84cc16;
+  --fresh-600: #65a30d;
+
+  /* 背景色 */
+  --bg-default: #ffffff;
+  --bg-gradient: linear-gradient(180deg, #f0fdf6 0%, #fafafa 100%);
+  --bg-card: rgba(255, 255, 255, 0.8);
+
+  /* 发光色 */
+  --glow-primary: rgba(16, 185, 129, 0.35);
+  --glow-accent: rgba(20, 184, 166, 0.35);
 
   /* TDesign 品牌色覆盖 */
-  --td-brand-color: #3b82f6;
-  --td-brand-color-hover: #2563eb;
-  --td-brand-color-active: #1d4ed8;
-  --td-brand-color-light: #eff6ff;
+  --td-brand-color: var(--primary-500);
+  --td-brand-color-hover: var(--primary-600);
+  --td-brand-color-active: var(--primary-700);
+  --td-brand-color-light: var(--primary-50);
 
-  --background: #ffffff;
+  /* 布局 */
+  --max-width-container: 1400px;
+  --max-width-navbar: 1400px;
+  --max-width-content: 1200px;
+
+  /* 基础色 */
+  --background: var(--bg-default);
   --foreground: #171717;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', 'Roboto', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
   --font-mono: ui-monospace, monospace;
 
-  /* Blue 主色 */
-  --color-blue-50: #eff6ff;
-  --color-blue-100: #dbeafe;
-  --color-blue-200: #bfdbfe;
-  --color-blue-300: #93c5fd;
-  --color-blue-400: #60a5fa;
-  --color-blue-500: #3b82f6;
-  --color-blue-600: #2563eb;
-  --color-blue-700: #1d4ed8;
-  --color-blue-800: #1e40af;
-  --color-blue-900: #1e3a8a;
+  /* Primary 主色 - 使用 CSS 变量 */
+  --color-primary-50: var(--primary-50);
+  --color-primary-100: var(--primary-100);
+  --color-primary-200: var(--primary-200);
+  --color-primary-300: var(--primary-300);
+  --color-primary-400: var(--primary-400);
+  --color-primary-500: var(--primary-500);
+  --color-primary-600: var(--primary-600);
+  --color-primary-700: var(--primary-700);
+  --color-primary-800: var(--primary-800);
+  --color-primary-900: var(--primary-900);
 
-  /* Sky 辅色 */
-  --color-sky-500: #0ea5e9;
-  --color-sky-600: #0284c7;
+  /* Accent 辅色 */
+  --color-accent-400: var(--accent-400);
+  --color-accent-500: var(--accent-500);
+  --color-accent-600: var(--accent-600);
+
+  /* Fresh 活力色 */
+  --color-fresh-400: var(--fresh-400);
+  --color-fresh-500: var(--fresh-500);
+  --color-fresh-600: var(--fresh-600);
 }
 
 body {
-  background: var(--background);
+  background: var(--bg-gradient);
   color: var(--foreground);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', 'Roboto', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  min-height: 100vh;
 }
 
-/* 渐变文字 */
+/* ============================================
+ * 渐变效果
+ * ============================================ */
+
+/* 主渐变文字 */
 .gradient-text {
-  background: linear-gradient(135deg, #3b82f6 0%, #0ea5e9 100%);
+  background: linear-gradient(135deg, var(--primary-500) 0%, var(--accent-500) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-/* 玻璃态效果 */
-.glass-morphism {
-  background: rgba(255, 255, 255, 0.25);
-  backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.18);
+/* 活力渐变文字 */
+.gradient-text-fresh {
+  background: linear-gradient(135deg, var(--primary-500) 0%, var(--fresh-500) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
-/* 苹果风格过渡 */
+/* 主渐变背景 */
+.gradient-primary {
+  background: linear-gradient(135deg, var(--primary-500) 0%, var(--accent-500) 100%);
+}
+
+/* 活力渐变背景 */
+.gradient-fresh {
+  background: linear-gradient(135deg, var(--primary-500) 0%, var(--fresh-500) 100%);
+}
+
+/* ============================================
+ * 玻璃态效果
+ * ============================================ */
+
+.glass-morphism {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.glass-card {
+  background: var(--bg-card);
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+/* ============================================
+ * 卡片系统
+ * ============================================ */
+
+.card {
+  background: white;
+  border-radius: 1rem;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.02),
+    0 2px 4px rgba(0, 0, 0, 0.02),
+    0 4px 8px rgba(0, 0, 0, 0.02);
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.card:hover {
+  border-color: rgba(16, 185, 129, 0.2);
+  box-shadow:
+    0 0 0 1px rgba(16, 185, 129, 0.1),
+    0 4px 8px rgba(0, 0, 0, 0.04),
+    0 8px 16px rgba(0, 0, 0, 0.04);
+  transform: translateY(-2px);
+}
+
+/* ============================================
+ * 按钮系统
+ * ============================================ */
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-600) 100%);
+  color: white;
+  box-shadow: 0 4px 14px 0 var(--glow-primary);
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-700) 100%);
+  box-shadow: 0 6px 20px 0 var(--glow-primary);
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background: var(--primary-50);
+  color: var(--primary-600);
+  border: 1px solid var(--primary-200);
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.btn-secondary:hover {
+  background: var(--primary-100);
+  border-color: var(--primary-300);
+}
+
+/* ============================================
+ * 发光效果
+ * ============================================ */
+
+.glow-primary {
+  box-shadow: 0 0 25px var(--glow-primary);
+}
+
+.glow-accent {
+  box-shadow: 0 0 25px var(--glow-accent);
+}
+
+/* 卡片悬浮阴影 - 使用主题色 */
+.card-hover-shadow {
+  box-shadow: 0 10px 25px -5px var(--glow-primary);
+}
+
+/* ============================================
+ * 过渡动画
+ * ============================================ */
+
 .apple-transition {
   transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
-/* 弹簧效果 */
 .apple-spring {
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-/* 预设动画 */
+/* ============================================
+ * 预设动画
+ * ============================================ */
+
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -139,6 +281,17 @@ body {
   50% { opacity: 0.7; }
 }
 
+@keyframes pulse-ring {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+
 .animate-fade-in {
   animation: fadeIn 0.5s ease-out;
 }
@@ -167,12 +320,14 @@ body {
   animation: pulseSlow 2s ease-in-out infinite;
 }
 
-/* 卡片悬浮阴影 */
-.card-hover-shadow {
-  box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.1);
+.animate-pulse-ring {
+  animation: pulse-ring 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-/* 隐藏滚动条但保留功能 */
+/* ============================================
+ * 滚动条美化
+ * ============================================ */
+
 .scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;
@@ -180,4 +335,70 @@ body {
 
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
+}
+
+/* 美化滚动条 - 使用主题色 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--primary-200);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-300);
+}
+
+/* ============================================
+ * 布局工具类
+ * ============================================ */
+
+.main-container {
+  max-width: var(--max-width-container);
+  margin: 0 auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+@media (min-width: 640px) {
+  .main-container {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .main-container {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+/* ============================================
+ * 徽章系统
+ * ============================================ */
+
+.badge-primary {
+  background: var(--primary-50);
+  color: var(--primary-700);
+  border: 1px solid var(--primary-200);
+}
+
+.badge-accent {
+  background: rgba(20, 184, 166, 0.1);
+  color: var(--accent-600);
+  border: 1px solid rgba(20, 184, 166, 0.2);
+}
+
+.badge-fresh {
+  background: rgba(132, 204, 22, 0.1);
+  color: var(--fresh-600);
+  border: 1px solid rgba(132, 204, 22, 0.2);
 }

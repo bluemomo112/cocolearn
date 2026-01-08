@@ -111,8 +111,8 @@ export default function WorkshopPage() {
     <div className="min-h-screen bg-gray-50">
       {/* 背景装饰 */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-20 left-10 w-72 h-72 bg-blue-200/30 rounded-full blur-3xl" />
-        <div className="absolute bottom-20 right-10 w-96 h-96 bg-sky-200/20 rounded-full blur-3xl" />
+        <div className="absolute top-20 left-10 w-72 h-72 bg-primary-200/30 rounded-full blur-3xl" />
+        <div className="absolute bottom-20 right-10 w-96 h-96 bg-accent-200/20 rounded-full blur-3xl" />
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-6 py-8">
@@ -133,11 +133,11 @@ export default function WorkshopPage() {
             <div className="text-sm text-gray-600">全部工作坊</div>
           </div>
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-            <div className="text-3xl font-bold text-sky-600 mb-1">{stats.ongoing}</div>
+            <div className="text-3xl font-bold text-accent-600 mb-1">{stats.ongoing}</div>
             <div className="text-sm text-gray-600">进行中</div>
           </div>
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-            <div className="text-3xl font-bold text-blue-600 mb-1">{stats.completed}</div>
+            <div className="text-3xl font-bold text-primary-600 mb-1">{stats.completed}</div>
             <div className="text-sm text-gray-600">已完成</div>
           </div>
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
@@ -160,7 +160,7 @@ export default function WorkshopPage() {
                 onClick={() => setActiveFilter(filter.key as typeof activeFilter)}
                 className={`px-5 py-2.5 rounded-xl font-medium transition-all duration-300 ${
                   activeFilter === filter.key
-                    ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30'
+                    ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/30'
                     : 'bg-white/80 backdrop-blur-sm text-gray-700 hover:bg-white hover:shadow-md border border-gray-100'
                 }`}
               >
@@ -178,7 +178,7 @@ export default function WorkshopPage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="搜索工作坊..."
-                className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/80 backdrop-blur-sm border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 focus:border-blue-500 transition-all duration-200"
+                className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/80 backdrop-blur-sm border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50 focus:border-primary-500 transition-all duration-200"
               />
             </div>
           </div>
@@ -197,9 +197,9 @@ export default function WorkshopPage() {
               <div className="absolute top-4 left-4 z-10">
                 <span className={`px-3 py-1 rounded-full text-xs font-bold shadow-lg ${
                   workshop.status === 'ongoing'
-                    ? 'bg-sky-500 text-white'
+                    ? 'bg-accent-500 text-white'
                     : workshop.status === 'completed'
-                    ? 'bg-blue-500 text-white'
+                    ? 'bg-primary-500 text-white'
                     : 'bg-gray-500 text-white'
                 }`}>
                   {workshop.status === 'ongoing' ? '进行中' : workshop.status === 'completed' ? '已完成' : '即将开始'}
@@ -219,7 +219,7 @@ export default function WorkshopPage() {
 
                 {/* 讲师信息 */}
                 <div className="absolute bottom-3 left-3 flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-sky-600 flex items-center justify-center text-white text-sm font-medium">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-accent-600 flex items-center justify-center text-white text-sm font-medium">
                     {workshop.instructor.avatar}
                   </div>
                   <span className="text-white text-sm font-medium">{workshop.instructor.name}</span>
@@ -228,7 +228,7 @@ export default function WorkshopPage() {
 
               {/* 内容 */}
               <div className="p-5">
-                <h3 className="font-bold text-gray-900 text-lg mb-2 line-clamp-1 group-hover:text-blue-600 transition-colors">
+                <h3 className="font-bold text-gray-900 text-lg mb-2 line-clamp-1 group-hover:text-primary-600 transition-colors">
                   {workshop.title}
                 </h3>
                 <p className="text-sm text-gray-600 mb-4 line-clamp-2 leading-relaxed">
@@ -238,7 +238,7 @@ export default function WorkshopPage() {
                 {/* 标签 */}
                 <div className="flex flex-wrap gap-1.5 mb-4">
                   {workshop.tags.slice(0, 3).map(tag => (
-                    <span key={tag} className="px-2 py-0.5 bg-blue-50 text-blue-600 text-xs rounded-full">
+                    <span key={tag} className="px-2 py-0.5 bg-primary-50 text-primary-600 text-xs rounded-full">
                       {tag}
                     </span>
                   ))}
@@ -249,11 +249,11 @@ export default function WorkshopPage() {
                   <div className="mb-4">
                     <div className="flex justify-between items-center mb-2">
                       <span className="text-xs text-gray-500">学习进度</span>
-                      <span className="text-xs font-semibold text-blue-600">{workshop.progress}%</span>
+                      <span className="text-xs font-semibold text-primary-600">{workshop.progress}%</span>
                     </div>
                     <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-gradient-to-r from-blue-500 to-sky-500 rounded-full transition-all duration-500"
+                        className="h-full bg-gradient-to-r from-primary-500 to-accent-500 rounded-full transition-all duration-500"
                         style={{ width: `${workshop.progress}%` }}
                       />
                     </div>
@@ -278,7 +278,7 @@ export default function WorkshopPage() {
                   className={`w-full mt-4 px-4 py-3 rounded-xl font-medium transition-all duration-300 flex items-center justify-center gap-2 ${
                     workshop.status === 'upcoming'
                       ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                      : 'bg-blue-500 text-white hover:bg-blue-600 hover:shadow-lg shadow-blue-500/30'
+                      : 'bg-primary-500 text-white hover:bg-primary-600 hover:shadow-lg shadow-primary-500/30'
                   }`}
                   disabled={workshop.status === 'upcoming'}
                 >
@@ -294,7 +294,7 @@ export default function WorkshopPage() {
               </div>
 
               {/* 光效 */}
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-500/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary-500/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 pointer-events-none" />
             </Link>
           ))}
         </div>
@@ -311,7 +311,7 @@ export default function WorkshopPage() {
             <p className="text-gray-500 mb-6">试试调整筛选条件或搜索关键词</p>
             <button
               onClick={() => { setSearchQuery(''); setActiveFilter('all') }}
-              className="px-6 py-2.5 bg-blue-500 text-white font-medium rounded-xl hover:bg-blue-600 transition-all duration-200"
+              className="px-6 py-2.5 bg-primary-500 text-white font-medium rounded-xl hover:bg-primary-600 transition-all duration-200"
             >
               清除筛选
             </button>

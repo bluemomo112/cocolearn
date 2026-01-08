@@ -45,11 +45,11 @@ const userTrendData = [
 
 const courseDistribution = [
   { name: '数学', value: 28, color: '#10b981' },
-  { name: '物理', value: 24, color: '#3b82f6' },
+  { name: '物理', value: 24, color: '#14b8a6' },
   { name: '化学', value: 18, color: '#f59e0b' },
   { name: '生物', value: 16, color: '#22c55e' },
   { name: '地理', value: 14, color: '#06b6d4' },
-  { name: '历史', value: 12, color: '#8b5cf6' },
+  { name: '历史', value: 12, color: '#14b8a6' },
   { name: '其他', value: 44, color: '#6b7280' },
 ]
 
@@ -139,8 +139,8 @@ export default function AdminDashboard() {
 
       {/* Background Decoration */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-20 right-10 w-96 h-96 bg-blue-200/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-20 left-10 w-72 h-72 bg-blue-200/10 rounded-full blur-3xl" />
+        <div className="absolute top-20 right-10 w-96 h-96 bg-primary-200/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-20 left-10 w-72 h-72 bg-primary-200/10 rounded-full blur-3xl" />
       </div>
 
       <main className="relative z-10 p-6">
@@ -155,7 +155,7 @@ export default function AdminDashboard() {
               <div className="flex items-center justify-between mb-3">
                 <span className="text-2xl">{stat.icon}</span>
                 <span className={`text-xs font-medium px-2 py-1 rounded-full ${
-                  stat.changeType === 'up' ? 'bg-blue-100 text-blue-600' : 'bg-red-100 text-red-600'
+                  stat.changeType === 'up' ? 'bg-primary-100 text-primary-600' : 'bg-red-100 text-red-600'
                 }`}>
                   {stat.change}
                 </span>
@@ -174,11 +174,11 @@ export default function AdminDashboard() {
               <h3 className="font-semibold text-gray-900">用户增长趋势</h3>
               <div className="flex items-center gap-4 text-sm">
                 <span className="flex items-center gap-2">
-                  <span className="w-3 h-3 bg-blue-500 rounded-full"></span>
+                  <span className="w-3 h-3 bg-primary-500 rounded-full"></span>
                   教师
                 </span>
                 <span className="flex items-center gap-2">
-                  <span className="w-3 h-3 bg-blue-500 rounded-full"></span>
+                  <span className="w-3 h-3 bg-accent-500 rounded-full"></span>
                   学生
                 </span>
               </div>
@@ -191,8 +191,8 @@ export default function AdminDashboard() {
                     <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                   </linearGradient>
                   <linearGradient id="colorStudents" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                    <stop offset="5%" stopColor="#14b8a6" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#14b8a6" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
@@ -209,7 +209,7 @@ export default function AdminDashboard() {
                 <Area
                   type="monotone"
                   dataKey="students"
-                  stroke="#3b82f6"
+                  stroke="#14b8a6"
                   strokeWidth={2}
                   fillOpacity={1}
                   fill="url(#colorStudents)"
@@ -290,7 +290,7 @@ export default function AdminDashboard() {
           <div className="bg-white rounded-2xl border border-gray-100 p-6 animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold text-gray-900">优秀教师榜</h3>
-              <Link href="/admin/teachers" className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+              <Link href="/admin/teachers" className="text-sm text-primary-600 hover:text-primary-700 font-medium">
                 查看全部 →
               </Link>
             </div>
@@ -305,7 +305,7 @@ export default function AdminDashboard() {
                   }`}>
                     {index + 1}
                   </span>
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-sky-500 flex items-center justify-center text-white text-sm font-medium">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white text-sm font-medium">
                     {teacher.avatar}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -330,9 +330,9 @@ export default function AdminDashboard() {
               {recentActivities.map((activity) => (
                 <div key={activity.id} className="flex items-start gap-3">
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                    activity.type === 'course' ? 'bg-blue-100 text-blue-600' :
-                    activity.type === 'teacher' ? 'bg-sky-100 text-sky-600' :
-                    activity.type === 'report' ? 'bg-blue-100 text-blue-600' :
+                    activity.type === 'course' ? 'bg-primary-100 text-primary-600' :
+                    activity.type === 'teacher' ? 'bg-accent-100 text-accent-600' :
+                    activity.type === 'report' ? 'bg-primary-100 text-primary-600' :
                     'bg-red-100 text-red-600'
                   }`}>
                     {activity.type === 'course' && (
@@ -361,7 +361,7 @@ export default function AdminDashboard() {
                       <span className="font-medium">{activity.user}</span>{' '}
                       <span className="text-gray-600">{activity.action}</span>
                       {activity.target && (
-                        <span className="font-medium text-blue-600"> {activity.target}</span>
+                        <span className="font-medium text-primary-600"> {activity.target}</span>
                       )}
                     </p>
                     <p className="text-xs text-gray-400 mt-0.5">{activity.time}</p>
@@ -376,7 +376,7 @@ export default function AdminDashboard() {
         <div className="bg-white rounded-2xl border border-gray-100 p-6 animate-fade-in-up" style={{ animationDelay: '0.7s' }}>
           <div className="flex items-center justify-between mb-6">
             <h3 className="font-semibold text-gray-900">学校排名</h3>
-            <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+            <button className="text-sm text-primary-600 hover:text-primary-700 font-medium">
               查看详细报告 →
             </button>
           </div>
@@ -412,15 +412,15 @@ export default function AdminDashboard() {
                     <td className="py-4 px-4 text-center text-gray-600">{school.courses}</td>
                     <td className="py-4 px-4 text-center">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        school.score >= 95 ? 'bg-blue-100 text-blue-600' :
-                        school.score >= 90 ? 'bg-sky-100 text-sky-600' :
+                        school.score >= 95 ? 'bg-primary-100 text-primary-600' :
+                        school.score >= 90 ? 'bg-accent-100 text-accent-600' :
                         'bg-amber-100 text-amber-600'
                       }`}>
                         {school.score}分
                       </span>
                     </td>
                     <td className="py-4 px-4 text-right">
-                      <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+                      <button className="text-sm text-primary-600 hover:text-primary-700 font-medium">
                         详情
                       </button>
                     </td>
