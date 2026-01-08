@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Video,
   FileText,
@@ -283,6 +283,30 @@ const RESOURCE_LIBRARY = {
   ],
 };
 
+const KNOWLEDGE_POINTS_LIBRARY = [
+  {
+    id: 'kp1',
+    title: '水循环的概念',
+    subject: '科学',
+    grade: '四年级',
+    description: '了解水在自然界中的循环过程',
+  },
+  {
+    id: 'kp2',
+    title: '水资源的分布',
+    subject: '地理',
+    grade: '四年级',
+    description: '认识地球上水资源的分布情况',
+  },
+  {
+    id: 'kp3',
+    title: '节约用水的方法',
+    subject: '环境教育',
+    grade: '四年级',
+    description: '学习日常生活中的节水方法',
+  },
+];
+
 const GRADES = ['一年级', '二年级', '三年级', '四年级', '五年级', '六年级', '七年级', '八年级', '九年级'];
 
 const MOCK_CLASSES = [
@@ -295,19 +319,20 @@ const MOCK_CLASSES = [
 
 export default function NoteConfigPage() {
   // 视角状态：'edit' | 'use' | 'results'
-  const getInitialViewPerspective = (): 'edit' | 'use' | 'results' => {
-    if (typeof window === 'undefined') return 'edit';
-    const urlParams = new URLSearchParams(window.location.search);
-    const viewParam = urlParams.get('view');
-    if (viewParam === 'use' || viewParam === 'results' || viewParam === 'edit') {
-      return viewParam as 'edit' | 'use' | 'results';
-    }
-    return 'edit';
-  };
-  const [viewPerspective, setViewPerspective] = useState<'edit' | 'use' | 'results'>(getInitialViewPerspective());
+  // Initialize with 'edit' to ensure server and client match
+  const [viewPerspective, setViewPerspective] = useState<'edit' | 'use' | 'results'>('edit');
   const [leftWidth, setLeftWidth] = useState(25);
   const [rightWidth, setRightWidth] = useState(25);
   const [isTransitioning, setIsTransitioning] = useState(false);
+
+  // Update view perspective from URL after hydration (client-side only)
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const viewParam = urlParams.get('view');
+    if (viewParam === 'use' || viewParam === 'results' || viewParam === 'edit') {
+      setViewPerspective(viewParam as 'edit' | 'use' | 'results');
+    }
+  }, []);
 
   // 配置数据
   const [config, setConfig] = useState<NoteConfig>({

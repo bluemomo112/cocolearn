@@ -1631,139 +1631,275 @@ export function ResultsViewHeader({ config, onBack, onSwitchToUse }: any) {
   );
 }
 
-// 学生能力详情弹窗
+// 学生能力详情弹窗（改造：符合PRD的个体视角）
 function StudentCompetencyModal({ student, competencies, onClose }: any) {
   if (!student || !competencies || competencies.length === 0) return null;
 
-  // 为每个能力生成模拟数据
+  // 为每个能力生成详细的评估数据
   const studentCompetencyData = competencies.map((competency: CompetencyType) => {
     const def = COMPETENCY_DEFINITIONS[competency];
-    const score = 60 + Math.random() * 35; // 60-95分
-    const taskCount = Math.floor(2 + Math.random() * 4); // 2-6个任务
+    const stars = 1 + Math.floor(Math.random() * 4); // 1-4星
 
     return {
       type: competency,
       name: def.name,
       icon: def.icon,
-      description: def.description,
-      score: Math.round(score),
-      taskCount,
-      trend: Math.random() > 0.3 ? 'up' : 'stable', // 70%上升，30%稳定
+      stars,
+      // 描述性评价
+      description: `${student.name}在本课程中展现了${stars >= 3 ? '优秀的' : '基本的'}${def.name}能力。${stars === 4 ? '多次主动质疑、寻找证据，展现了系统性批判思维。' : stars === 3 ? '能够提出有深度的问题并尝试寻找依据。' : '需要加强证据支持和逻辑分析。'}`,
+      // 亮点
+      highlight: stars >= 3 ? '在讨论气候变化时，主动对比了资料A和资料B的不同观点，并指出资料A缺乏数据支持。' : '初步展现了质疑意识',
+      // 待提升
+      improvement: stars === 4 ? '可以尝试更深入地分析论证逻辑，识别潜在的假设。' : stars === 3 ? '可以尝试更深入地分析论证逻辑。' : '需要加强从多个角度分析问题的能力。',
+      // 建议
+      suggestion: stars === 4 ? '继续保持批判思维习惯，可以挑战更复杂的论证结构。' : '多练习识别论证中的假设和证据支持。',
+      // 具体证据
       evidence: [
-        '在作业《水循环探究》中展现出色的信息整合能力',
-        '能够从多个资源中提取关键信息并建立联系',
-        '在小组讨论中提出了深入的问题',
-      ].slice(0, Math.floor(1 + Math.random() * 3)),
+        '"这个数据是哪年的？可能已经过时了"（对话 #23）',
+        '"资料B的结论和资料A矛盾，我需要找更多证据"（对话 #31）',
+        '笔记中对比了三份资料的核心观点差异',
+      ].slice(0, stars >= 3 ? 3 : 1),
     };
   });
 
-  // 计算总体评级
-  const avgScore = Math.round(
-    studentCompetencyData.reduce((sum: number, data: any) => sum + data.score, 0) / studentCompetencyData.length
-  );
-  const overallRating = avgScore >= 85 ? '优秀' : avgScore >= 70 ? '良好' : '待提升';
-  const overallColor = avgScore >= 85 ? 'emerald' : avgScore >= 70 ? 'blue' : 'amber';
+  // 跨课程能力画像（模拟数据）
+  const crossCourseProfile = competencies.slice(0, 2).map((comp: CompetencyType) => {
+    const def = COMPETENCY_DEFINITIONS[comp];
+    return {
+      type: comp,
+      name: def.name,
+      history: [
+        { course: '科学探究课', date: '2025-01-05', stars: 3 + Math.floor(Math.random() * 2) },
+        { course: '媒体素养课', date: '2025-01-03', stars: 3 + Math.floor(Math.random() * 2) },
+        { course: '本课程', date: '2025-01-07', stars: student.competencies[comp] },
+      ],
+      trend: Math.random() > 0.5 ? '上升' : '稳定',
+    };
+  });
+
+  // 计算平均星级
+  const avgStars = (
+    studentCompetencyData.reduce((sum: number, data: any) => sum + data.stars, 0) / studentCompetencyData.length
+  ).toFixed(1);
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center backdrop-blur-sm" onClick={onClose}>
       <div
-        className="bg-white w-[700px] max-h-[85vh] rounded-2xl shadow-2xl overflow-hidden"
+        className="bg-white w-[900px] max-h-[90vh] rounded-2xl shadow-2xl overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* 头部 */}
-        <div className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-6">
+        <div className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-6 flex-shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="text-5xl">{student.avatar}</div>
               <div>
-                <h2 className="text-xl font-bold">{student.name}</h2>
-                <p className="text-sm opacity-90 mt-1">跨学科核心能力评估报告</p>
+                <h2 className="text-2xl font-bold">{student.name}</h2>
+                <p className="text-sm opacity-90 mt-1">学习时长：52分钟 · 完成度：{student.progress}%</p>
               </div>
             </div>
             <div className="text-right">
-              <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full bg-${overallColor}-100 border-2 border-white/30`}>
-                <span className={`text-2xl font-bold text-${overallColor}-700`}>{avgScore}</span>
-                <span className={`text-xs text-${overallColor}-700`}>综合评分</span>
-              </div>
-              <p className={`text-xs mt-2 text-${overallColor}-100`}>总体评级: {overallRating}</p>
+              <div className="text-4xl font-bold">{avgStars} ★</div>
+              <p className="text-xs opacity-90 mt-1">综合能力评级</p>
             </div>
           </div>
         </div>
 
-        {/* 内容区域 */}
-        <div className="p-6 overflow-y-auto max-h-[calc(85vh-200px)]">
-          <div className="space-y-4">
-            {studentCompetencyData.map((data: any) => {
-              const Icon = data.icon;
-              const percentage = data.score;
-              const barColor = percentage >= 85 ? 'emerald' : percentage >= 70 ? 'blue' : 'amber';
+        {/* 内容区域 - 可滚动 */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          {/* 1. 本课程能力评估（能力雷达图简化版） */}
+          <div className="bg-gradient-to-br from-gray-50 to-blue-50/30 rounded-xl p-6 border border-gray-200">
+            <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+              <Target size={18} className="text-blue-600" />
+              本课程能力评估
+            </h3>
 
-              return (
-                <div
-                  key={data.type}
-                  className="bg-gradient-to-br from-gray-50 to-blue-50/30 rounded-xl p-5 border border-gray-200"
-                >
-                  {/* 能力标题和分数 */}
-                  <div className="flex items-center justify-between mb-3">
+            <div className="grid grid-cols-3 gap-4">
+              {studentCompetencyData.map((data: any) => {
+                const Icon = data.icon;
+                return (
+                  <div key={data.type} className="bg-white rounded-lg p-4 border border-gray-200">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
+                        <Icon size={16} className="text-blue-600" />
+                      </div>
+                      <span className="text-sm font-medium text-gray-700">{data.name}</span>
+                    </div>
+                    <div className="text-2xl font-bold text-blue-600 mb-1">
+                      {'★'.repeat(data.stars)}
+                      {'☆'.repeat(4 - data.stars)}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 2. 能力详情（描述性评价） */}
+          <div>
+            <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+              <FileText size={18} className="text-blue-600" />
+              能力详情
+            </h3>
+
+            <div className="space-y-4">
+              {studentCompetencyData.map((data: any, idx: number) => (
+                <div key={data.type} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                  <button className="w-full px-5 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                        <Icon size={18} className="text-blue-600" />
+                      <div className="text-lg">
+                        {'★'.repeat(data.stars)}
+                        {'☆'.repeat(4 - data.stars)}
                       </div>
-                      <div>
-                        <h4 className="text-base font-bold text-gray-800">{data.name}</h4>
-                        <p className="text-xs text-gray-500">{data.description}</p>
+                      <span className="font-semibold text-gray-800">{data.name}</span>
+                    </div>
+                    <ChevronDown size={18} className="text-gray-400" />
+                  </button>
+
+                  <div className="px-5 pb-4 space-y-3">
+                    <div>
+                      <h4 className="text-sm font-semibold text-gray-700 mb-1">评价</h4>
+                      <p className="text-sm text-gray-600">{data.description}</p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="bg-emerald-50 rounded-lg p-3">
+                        <h4 className="text-xs font-semibold text-emerald-700 mb-1">亮点</h4>
+                        <p className="text-xs text-gray-600">{data.highlight}</p>
+                      </div>
+                      <div className="bg-amber-50 rounded-lg p-3">
+                        <h4 className="text-xs font-semibold text-amber-700 mb-1">待提升</h4>
+                        <p className="text-xs text-gray-600">{data.improvement}</p>
                       </div>
                     </div>
+
+                    <div>
+                      <h4 className="text-xs font-semibold text-gray-700 mb-2">证据</h4>
+                      <ul className="space-y-1">
+                        {data.evidence.map((evidence: string, eidx: number) => (
+                          <li key={eidx} className="text-xs text-gray-600 flex items-start gap-2">
+                            <span className="text-blue-500 mt-0.5">•</span>
+                            <span>{evidence}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* 3. 跨课程能力画像 */}
+          <div className="bg-gradient-to-br from-purple-50 to-pink-50/30 rounded-xl p-6 border border-purple-200">
+            <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+              <Network size={18} className="text-purple-600" />
+              跨课程能力画像
+            </h3>
+
+            <div className="space-y-4">
+              {crossCourseProfile.map((profile: any) => (
+                <div key={profile.type} className="bg-white rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
-                      <span className={`text-2xl font-bold text-${barColor}-600`}>{percentage}</span>
-                      {data.trend === 'up' && <TrendingUp size={18} className="text-emerald-500" />}
+                      <span className="font-semibold text-gray-800">{profile.name}</span>
+                      <span className={`text-xs px-2 py-1 rounded-full ${profile.trend === '上升' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
+                        趋势：{profile.trend === '上升' ? '↗ 上升' : '→ 稳定'}
+                      </span>
                     </div>
                   </div>
 
-                  {/* 进度条 */}
-                  <div className="mb-3">
-                    <div className="w-full bg-gray-200 rounded-full h-3">
-                      <div
-                        className={`bg-gradient-to-r from-${barColor}-500 to-${barColor}-600 h-3 rounded-full transition-all`}
-                        style={{ width: `${percentage}%` }}
-                      ></div>
-                    </div>
-                  </div>
-
-                  {/* 评估依据 */}
-                  <div className="space-y-1.5">
-                    <div className="flex items-center gap-1.5 text-xs text-gray-600 mb-1">
-                      <FileText size={12} />
-                      <span className="font-medium">评估依据 ({data.taskCount}个任务):</span>
-                    </div>
-                    {data.evidence.map((item: string, idx: number) => (
-                      <div key={idx} className="flex items-start gap-2 text-xs text-gray-600 ml-4">
-                        <span className="text-blue-500 mt-0.5">•</span>
-                        <span>{item}</span>
+                  <div className="space-y-2">
+                    {profile.history.map((h: any, idx: number) => (
+                      <div key={idx} className="flex items-center gap-3 text-sm">
+                        <span className="text-gray-600 w-28">{h.course}</span>
+                        <div className="flex-1 bg-gray-100 rounded-full h-6 flex items-center">
+                          <div
+                            className="bg-gradient-to-r from-purple-500 to-pink-500 h-6 rounded-full flex items-center justify-end pr-2 text-white text-xs font-bold"
+                            style={{ width: `${(h.stars / 4) * 100}%` }}
+                          >
+                            {h.stars}★
+                          </div>
+                        </div>
+                        <span className="text-xs text-gray-500">{h.date}</span>
                       </div>
                     ))}
                   </div>
                 </div>
-              );
-            })}
+              ))}
+            </div>
           </div>
 
-          {/* 教师建议 */}
-          <div className="mt-5 p-4 bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl border border-purple-200">
+          {/* 4. 任务完成情况 */}
+          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            <div className="px-5 py-3 border-b border-gray-200">
+              <h3 className="text-base font-bold text-gray-800 flex items-center gap-2">
+                <CheckCircle size={16} className="text-blue-600" />
+                任务完成情况
+              </h3>
+            </div>
+            <div className="p-4">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-200">
+                    <th className="text-left py-2 text-xs font-semibold text-gray-600">任务</th>
+                    <th className="text-left py-2 text-xs font-semibold text-gray-600">类型</th>
+                    <th className="text-left py-2 text-xs font-semibold text-gray-600">得分</th>
+                    <th className="text-left py-2 text-xs font-semibold text-gray-600">能力标签</th>
+                    <th className="text-left py-2 text-xs font-semibold text-gray-600">状态</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-b border-gray-100">
+                    <td className="py-2">知识检测Quiz</td>
+                    <td className="py-2"><span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">客观题</span></td>
+                    <td className="py-2 font-semibold">90/100</td>
+                    <td className="py-2">-</td>
+                    <td className="py-2"><span className="text-xs text-green-600">✅ 完成</span></td>
+                  </tr>
+                  <tr className="border-b border-gray-100">
+                    <td className="py-2">观点分析作业</td>
+                    <td className="py-2"><span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">主观题</span></td>
+                    <td className="py-2 font-semibold">85/100</td>
+                    <td className="py-2">
+                      <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded">批判性思维</span>
+                    </td>
+                    <td className="py-2"><span className="text-xs text-green-600">✅ 完成</span></td>
+                  </tr>
+                  <tr>
+                    <td className="py-2">资料整合报告</td>
+                    <td className="py-2"><span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">主观题</span></td>
+                    <td className="py-2 font-semibold">80/100</td>
+                    <td className="py-2">
+                      <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded">信息整合</span>
+                    </td>
+                    <td className="py-2"><span className="text-xs text-green-600">✅ 完成</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* 5. 学习轨迹提示 */}
+          <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
             <div className="flex items-center gap-2 mb-2">
-              <Lightbulb size={16} className="text-purple-600" />
-              <h4 className="text-sm font-bold text-gray-800">AI生成的发展建议</h4>
+              <Route size={16} className="text-blue-600" />
+              <h4 className="text-sm font-semibold text-gray-800">学习轨迹</h4>
             </div>
-            <div className="space-y-1.5 text-xs text-gray-700">
-              <p>• 该学生在信息整合和批判性思维方面表现突出，建议继续保持</p>
-              <p>• 可以尝试更多开放性问题，培养创造性思维</p>
-              <p>• 建议在小组合作中担任组长角色，锻炼领导能力</p>
-            </div>
+            <p className="text-xs text-gray-600">
+              点击"展开查看详细时间线"可以查看该学生的完整学习轨迹，包括资源访问、任务提交、AI对话等所有活动记录。
+            </p>
           </div>
         </div>
 
         {/* 底部按钮 */}
-        <div className="p-4 border-t border-gray-200 flex justify-end gap-3 bg-gray-50">
+        <div className="p-4 border-t border-gray-200 flex justify-end gap-3 bg-gray-50 flex-shrink-0">
+          <button
+            onClick={onClose}
+            className="px-5 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 font-medium"
+          >
+            返回班级概览
+          </button>
           <button
             onClick={onClose}
             className="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium shadow-sm"
@@ -1778,14 +1914,14 @@ function StudentCompetencyModal({ student, competencies, onClose }: any) {
 
 // Results视角仪表板 - 学习数据展示
 export function ResultsViewDashboard({ config }: any) {
-  // 模拟学生列表数据
+  // 模拟学生列表数据（增强：增加能力维度评级）
   const mockStudents = [
-    { id: 1, name: '张晓明', avatar: '👦', status: 'online', progress: 85, lastActive: '2分钟前' },
-    { id: 2, name: '李思琪', avatar: '👧', status: 'online', progress: 92, lastActive: '刚刚' },
-    { id: 3, name: '王浩宇', avatar: '👦', status: 'offline', progress: 45, lastActive: '1小时前' },
-    { id: 4, name: '刘雨欣', avatar: '👧', status: 'online', progress: 78, lastActive: '5分钟前' },
-    { id: 5, name: '陈思远', avatar: '👦', status: 'offline', progress: 60, lastActive: '30分钟前' },
-    { id: 6, name: '赵梓涵', avatar: '👧', status: 'online', progress: 95, lastActive: '1分钟前' },
+    { id: 1, name: '张晓明', avatar: '👦', status: 'online', progress: 85, lastActive: '2分钟前', competencies: { critical_thinking: 4, information_synthesis: 3, metacognition: 4 } },
+    { id: 2, name: '李思琪', avatar: '👧', status: 'online', progress: 92, lastActive: '刚刚', competencies: { critical_thinking: 3, information_synthesis: 4, metacognition: 3 } },
+    { id: 3, name: '王浩宇', avatar: '👦', status: 'offline', progress: 45, lastActive: '1小时前', competencies: { critical_thinking: 2, information_synthesis: 2, metacognition: 2 } },
+    { id: 4, name: '刘雨欣', avatar: '👧', status: 'online', progress: 78, lastActive: '5分钟前', competencies: { critical_thinking: 3, information_synthesis: 3, metacognition: 4 } },
+    { id: 5, name: '陈思远', avatar: '👦', status: 'offline', progress: 60, lastActive: '30分钟前', competencies: { critical_thinking: 2, information_synthesis: 3, metacognition: 2 } },
+    { id: 6, name: '赵梓涵', avatar: '👧', status: 'online', progress: 95, lastActive: '1分钟前', competencies: { critical_thinking: 4, information_synthesis: 4, metacognition: 4 } },
   ];
 
   // 模拟资源查看统计
@@ -1814,6 +1950,12 @@ export function ResultsViewDashboard({ config }: any) {
     }
   });
   const competencyList = Array.from(allCompetencies);
+
+  // 模拟AI发现的其他能力表现
+  const aiDetectedCompetencies = [
+    { type: 'metacognition', name: '元认知', studentCount: 15, description: '展现了良好的自我反思能力' },
+    { type: 'question_quality', name: '提问质量', studentCount: 8, description: '提出了深层次的"为什么"类问题' },
+  ];
 
   // 选中的学生（用于显示能力详情弹窗）
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
@@ -1868,35 +2010,31 @@ export function ResultsViewDashboard({ config }: any) {
           </div>
         </div>
 
-        {/* 班级能力分布概览 */}
+        {/* 能力维度分布（改造：星级分布） */}
         {(() => {
-          // 收集所有已配置的能力维度
-          const allCompetencies = new Set<CompetencyType>();
-          config.tasks?.forEach((task: any) => {
-            if (task.assignedCompetencies) {
-              task.assignedCompetencies.forEach((comp: CompetencyType) => allCompetencies.add(comp));
-            }
-          });
-
           if (allCompetencies.size === 0) return null;
 
-          // 模拟每个能力维度的班级数据
-          const competencyStats = Array.from(allCompetencies).map((competency) => {
+          // 模拟每个能力维度的班级星级分布数据（使用固定值避免hydration问题）
+          const competencyStarDistribution = Array.from(allCompetencies).map((competency, idx) => {
             const def = COMPETENCY_DEFINITIONS[competency];
-            // 模拟数据：班级平均分、优秀人数、待提升人数
-            const classAvg = 65 + Math.random() * 25; // 65-90
-            const excellentCount = Math.floor(5 + Math.random() * 8); // 5-13人
-            const needsImprovement = Math.floor(3 + Math.random() * 6); // 3-9人
+            // 使用固定模拟数据，根据索引确定不同的分布
+            const distributions = [
+              { star4: 12, star3: 18, star2: 10, star1: 5 },  // 第一个能力维度
+              { star4: 15, star3: 16, star2: 9, star1: 5 },   // 第二个能力维度
+              { star4: 10, star3: 20, star2: 11, star1: 4 }, // 第三个能力维度
+            ];
+            const dist = distributions[idx % distributions.length];
+            const total = dist.star4 + dist.star3 + dist.star2 + dist.star1;
+            const avgStars = ((dist.star4 * 4 + dist.star3 * 3 + dist.star2 * 2 + dist.star1 * 1) / total).toFixed(1);
 
             return {
               type: competency,
               name: def.name,
               icon: def.icon,
               description: def.description,
-              classAvg: Math.round(classAvg),
-              excellentCount,
-              needsImprovement,
-              assessedCount: 35 + Math.floor(Math.random() * 10), // 35-45人已评估
+              distribution: dist,
+              avgStars: parseFloat(avgStars),
+              total,
             };
           });
 
@@ -1906,7 +2044,7 @@ export function ResultsViewDashboard({ config }: any) {
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
                     <Target size={18} className="text-blue-600" />
-                    班级能力分布概览
+                    能力维度分布（本课程关注的能力）
                   </h3>
                   <span className="text-xs text-gray-600 bg-white px-3 py-1 rounded-full border border-blue-200">
                     跨学科核心能力评估
@@ -1915,86 +2053,149 @@ export function ResultsViewDashboard({ config }: any) {
               </div>
 
               <div className="p-6">
-                <div className="grid grid-cols-2 gap-4">
-                  {competencyStats.map((stat) => {
+                <div className="grid grid-cols-2 gap-6">
+                  {competencyStarDistribution.map((stat) => {
                     const Icon = stat.icon;
-                    const percentage = stat.classAvg;
+                    const maxCount = Math.max(stat.distribution.star4, stat.distribution.star3, stat.distribution.star2, stat.distribution.star1);
 
                     return (
                       <div
                         key={stat.type}
-                        className="bg-gradient-to-br from-gray-50 to-blue-50/30 rounded-xl p-4 border border-gray-200 hover:shadow-md transition-shadow"
+                        className="bg-gradient-to-br from-gray-50 to-blue-50/30 rounded-xl p-5 border border-gray-200 hover:shadow-md transition-shadow"
                       >
-                        {/* 能力标题 */}
-                        <div className="flex items-center gap-2 mb-3">
-                          <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
-                            <Icon size={16} className="text-blue-600" />
+                        {/* 能力标题和平均星级 */}
+                        <div className="flex items-center gap-2 mb-4">
+                          <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                            <Icon size={20} className="text-blue-600" />
                           </div>
                           <div className="flex-1">
-                            <h4 className="text-sm font-bold text-gray-800">{stat.name}</h4>
+                            <h4 className="text-base font-bold text-gray-800">{stat.name}</h4>
                             <p className="text-xs text-gray-500">{stat.description}</p>
                           </div>
-                        </div>
-
-                        {/* 班级平均分 */}
-                        <div className="mb-3">
-                          <div className="flex items-center justify-between mb-1.5">
-                            <span className="text-xs text-gray-600">班级平均水平</span>
-                            <span className="text-lg font-bold text-blue-600">{percentage}%</span>
-                          </div>
-                          <div className="w-full bg-gray-200 rounded-full h-2.5">
-                            <div
-                              className="bg-gradient-to-r from-blue-500 to-indigo-500 h-2.5 rounded-full transition-all"
-                              style={{ width: `${percentage}%` }}
-                            ></div>
+                          <div className="text-right">
+                            <div className="text-sm text-gray-500">班级平均</div>
+                            <div className="text-xl font-bold text-blue-600">{stat.avgStars} ★</div>
                           </div>
                         </div>
 
-                        {/* 学生分布统计 */}
-                        <div className="flex items-center justify-between text-xs pt-2 border-t border-gray-200">
-                          <div className="flex items-center gap-1">
-                            <TrendingUp size={12} className="text-emerald-600" />
-                            <span className="text-gray-600">优秀:</span>
-                            <span className="font-bold text-emerald-600">{stat.excellentCount}人</span>
+                        {/* 星级分布条形图 */}
+                        <div className="space-y-2">
+                          {/* 4星 */}
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-gray-600 w-12">★★★★</span>
+                            <div className="flex-1 bg-gray-200 rounded-full h-5 relative overflow-hidden">
+                              <div
+                                className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full flex items-center justify-end pr-2"
+                                style={{ width: `${(stat.distribution.star4 / maxCount) * 100}%` }}
+                              >
+                                <span className="text-xs font-bold text-white">{stat.distribution.star4}人</span>
+                              </div>
+                            </div>
+                            <span className="text-xs text-gray-500 w-8">{Math.round((stat.distribution.star4 / stat.total) * 100)}%</span>
                           </div>
-                          <div className="flex items-center gap-1">
-                            <AlertCircle size={12} className="text-amber-600" />
-                            <span className="text-gray-600">待提升:</span>
-                            <span className="font-bold text-amber-600">{stat.needsImprovement}人</span>
-                          </div>
-                        </div>
 
-                        {/* 已评估人数 */}
-                        <div className="mt-2 pt-2 border-t border-gray-200">
-                          <div className="flex items-center gap-1 text-xs text-gray-500">
-                            <CheckCircle size={12} />
-                            <span>已评估 {stat.assessedCount}/45 人</span>
+                          {/* 3星 */}
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-gray-600 w-12">★★★</span>
+                            <div className="flex-1 bg-gray-200 rounded-full h-5 relative overflow-hidden">
+                              <div
+                                className="h-full bg-gradient-to-r from-blue-400 to-indigo-400 rounded-full flex items-center justify-end pr-2"
+                                style={{ width: `${(stat.distribution.star3 / maxCount) * 100}%` }}
+                              >
+                                <span className="text-xs font-bold text-white">{stat.distribution.star3}人</span>
+                              </div>
+                            </div>
+                            <span className="text-xs text-gray-500 w-8">{Math.round((stat.distribution.star3 / stat.total) * 100)}%</span>
+                          </div>
+
+                          {/* 2星 */}
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-gray-600 w-12">★★</span>
+                            <div className="flex-1 bg-gray-200 rounded-full h-5 relative overflow-hidden">
+                              <div
+                                className="h-full bg-gradient-to-r from-blue-300 to-indigo-300 rounded-full flex items-center justify-end pr-2"
+                                style={{ width: `${(stat.distribution.star2 / maxCount) * 100}%` }}
+                              >
+                                <span className="text-xs font-bold text-white">{stat.distribution.star2}人</span>
+                              </div>
+                            </div>
+                            <span className="text-xs text-gray-500 w-8">{Math.round((stat.distribution.star2 / stat.total) * 100)}%</span>
+                          </div>
+
+                          {/* 1星 */}
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-gray-600 w-12">★</span>
+                            <div className="flex-1 bg-gray-200 rounded-full h-5 relative overflow-hidden">
+                              <div
+                                className="h-full bg-gradient-to-r from-blue-200 to-indigo-200 rounded-full flex items-center justify-end pr-2"
+                                style={{ width: `${(stat.distribution.star1 / maxCount) * 100}%` }}
+                              >
+                                <span className="text-xs font-bold text-white">{stat.distribution.star1}人</span>
+                              </div>
+                            </div>
+                            <span className="text-xs text-gray-500 w-8">{Math.round((stat.distribution.star1 / stat.total) * 100)}%</span>
                           </div>
                         </div>
                       </div>
                     );
                   })}
                 </div>
-
-                {/* 提示信息 */}
-                <div className="mt-4 p-3 bg-blue-50/50 rounded-lg border border-blue-200">
-                  <p className="text-xs text-gray-600">
-                    <strong className="text-blue-700">评估说明：</strong>
-                    能力评估数据来源于学生在作业任务中的表现，由AI根据教师配置的能力维度自动分析生成。
-                    点击具体学生可查看其能力详情。
-                  </p>
-                </div>
               </div>
             </div>
           );
         })()}
 
-        {/* 学生列表 */}
+        {/* AI发现的其他能力表现（新增） */}
+        {aiDetectedCompetencies.length > 0 && (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="p-5 border-b border-gray-200 bg-gradient-to-r from-purple-50 to-pink-50">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                  <Sparkles size={18} className="text-purple-600" />
+                  AI发现的其他能力表现
+                </h3>
+                <span className="text-xs text-gray-600 bg-white px-3 py-1 rounded-full border border-purple-200">
+                  智能识别 · 补充维度
+                </span>
+              </div>
+            </div>
+
+            <div className="p-6">
+              <p className="text-sm text-gray-600 mb-4">
+                除教师指定维度外，AI在学习过程中识别到以下能力表现：
+              </p>
+
+              <div className="grid grid-cols-2 gap-4">
+                {aiDetectedCompetencies.map((detected) => (
+                  <div
+                    key={detected.type}
+                    className="bg-gradient-to-br from-purple-50 to-pink-50/30 rounded-xl p-4 border border-purple-200"
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center">
+                        <Brain size={16} className="text-purple-600" />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="text-sm font-bold text-gray-800">{detected.name}</h4>
+                      </div>
+                      <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full font-medium">
+                        {detected.studentCount}名学生
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-600">{detected.description}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 学生列表（增强：添加能力维度列） */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <div className="p-5 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
             <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
               <Users size={18} className="text-blue-600" />
-              学生学习进度
+              学生列表
             </h3>
           </div>
           <div className="overflow-x-auto">
@@ -2003,8 +2204,19 @@ export function ResultsViewDashboard({ config }: any) {
                 <tr>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-gray-600">学生</th>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-gray-600">状态</th>
-                  <th className="text-left px-5 py-3 text-xs font-semibold text-gray-600">学习进度</th>
-                  <th className="text-left px-5 py-3 text-xs font-semibold text-gray-600">最后活跃</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-gray-600">进度</th>
+                  {competencyList.map((comp) => {
+                    const def = COMPETENCY_DEFINITIONS[comp];
+                    return (
+                      <th key={comp} className="text-center px-3 py-3 text-xs font-semibold text-gray-600">
+                        {def.name}
+                      </th>
+                    );
+                  })}
+                  {aiDetectedCompetencies.length > 0 && (
+                    <th className="text-center px-3 py-3 text-xs font-semibold text-purple-600">AI发现</th>
+                  )}
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-gray-600">操作</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -2012,8 +2224,7 @@ export function ResultsViewDashboard({ config }: any) {
                   <tr
                     key={student.id}
                     className="hover:bg-blue-50 transition-colors cursor-pointer"
-                    onClick={() => competencyList.length > 0 && setSelectedStudent(student)}
-                    title={competencyList.length > 0 ? '点击查看能力详情' : '暂无能力评估数据'}
+                    onClick={() => setSelectedStudent(student)}
                   >
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
@@ -2038,8 +2249,8 @@ export function ResultsViewDashboard({ config }: any) {
                       </span>
                     </td>
                     <td className="px-5 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="flex-1 bg-gray-100 rounded-full h-2 max-w-[120px]">
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 bg-gray-100 rounded-full h-2 w-16">
                           <div
                             className="bg-gradient-to-r from-blue-500 to-indigo-500 h-2 rounded-full transition-all"
                             style={{ width: `${student.progress}%` }}
@@ -2048,8 +2259,34 @@ export function ResultsViewDashboard({ config }: any) {
                         <span className="text-sm font-semibold text-gray-700">{student.progress}%</span>
                       </div>
                     </td>
+                    {competencyList.map((comp) => {
+                      const stars = (student.competencies as any)[comp] || 0;
+                      return (
+                        <td key={comp} className="px-3 py-4 text-center">
+                          <div className="flex items-center justify-center gap-1">
+                            <span className="text-sm font-bold text-gray-800">
+                              {'★'.repeat(stars)}
+                              {'☆'.repeat(4 - stars)}
+                            </span>
+                          </div>
+                        </td>
+                      );
+                    })}
+                    {aiDetectedCompetencies.length > 0 && (
+                      <td className="px-3 py-4 text-center">
+                        {student.id === 1 || student.id === 4 || student.id === 6 ? (
+                          <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full">元认知↑</span>
+                        ) : student.id === 2 ? (
+                          <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full">提问↑</span>
+                        ) : (
+                          <span className="text-gray-400">-</span>
+                        )}
+                      </td>
+                    )}
                     <td className="px-5 py-4">
-                      <span className="text-sm text-gray-500">{student.lastActive}</span>
+                      <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+                        查看详情
+                      </button>
                     </td>
                   </tr>
                 ))}

@@ -162,8 +162,10 @@ export default function StudentWorkbenchPage() {
   // 左侧内容状态
   const [selectedResource, setSelectedResource] = useState<Resource | null>(null);
   const [isResourceFullscreen, setIsResourceFullscreen] = useState(false);
-  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [completedTasks, setCompletedTasks] = useState<Set<string>>(new Set());
+
+  // 笔记面板状态
+  const [isNotePanelOpen, setIsNotePanelOpen] = useState(false);
 
   // 模拟配置数据
   const config: NoteConfig = {
@@ -333,8 +335,6 @@ export default function StudentWorkbenchPage() {
           isResourceFullscreen={isResourceFullscreen}
           setSelectedResource={setSelectedResource}
           setIsResourceFullscreen={setIsResourceFullscreen}
-          selectedTask={selectedTask}
-          setSelectedTask={setSelectedTask}
           completedTasks={completedTasks}
           toggleTaskCompletion={toggleTaskCompletion}
         />
@@ -377,6 +377,8 @@ export default function StudentWorkbenchPage() {
           width={rightWidth}
           elapsedTime={elapsedTime}
           tasks={config.tasks}
+          isNotePanelOpen={isNotePanelOpen}
+          setIsNotePanelOpen={setIsNotePanelOpen}
         />
       </div>
     </div>
@@ -391,8 +393,6 @@ function LeftPanel({
   isResourceFullscreen,
   setSelectedResource,
   setIsResourceFullscreen,
-  selectedTask,
-  setSelectedTask,
   completedTasks,
   toggleTaskCompletion,
 }: {
@@ -402,27 +402,19 @@ function LeftPanel({
   isResourceFullscreen: boolean;
   setSelectedResource: (resource: Resource | null) => void;
   setIsResourceFullscreen: (fullscreen: boolean) => void;
-  selectedTask: Task | null;
-  setSelectedTask: (task: Task | null) => void;
   completedTasks: Set<string>;
   toggleTaskCompletion: (taskId: string) => void;
 }) {
-  const [activeView, setActiveView] = useState<'list' | 'resource' | 'task'>('list');
+  const [activeView, setActiveView] = useState<'list' | 'resource'>('list');
 
   const handleResourceClick = (resource: Resource) => {
     setSelectedResource(resource);
     setActiveView('resource');
   };
 
-  const handleTaskClick = (task: Task) => {
-    setSelectedTask(task);
-    setActiveView('task');
-  };
-
   const handleBackToList = () => {
     setActiveView('list');
     setSelectedResource(null);
-    setSelectedTask(null);
     setIsResourceFullscreen(false);
   };
 
@@ -475,16 +467,18 @@ function LeftPanel({
                 return (
                   <div
                     key={task.id}
-                    onClick={() => handleTaskClick(task)}
-                    className={`flex items-center gap-2 p-3 bg-white rounded-lg hover:bg-amber-50 cursor-pointer transition-colors border ${
+                    className={`flex items-center gap-2 p-3 bg-white rounded-lg transition-colors border ${
                       isCompleted ? 'border-green-300 bg-green-50' : 'border-gray-200'
                     }`}
                   >
-                    <div className={`w-8 h-8 rounded flex items-center justify-center ${
-                      isCompleted
-                        ? 'bg-green-100'
-                        : task.status === 'required' ? 'bg-red-100' : 'bg-gray-100'
-                    }`}>
+                    <button
+                      onClick={() => toggleTaskCompletion(task.id)}
+                      className={`w-8 h-8 rounded flex items-center justify-center flex-shrink-0 ${
+                        isCompleted
+                          ? 'bg-green-100 hover:bg-green-200'
+                          : task.status === 'required' ? 'bg-red-100 hover:bg-red-200' : 'bg-gray-100 hover:bg-gray-200'
+                      } transition-colors`}
+                    >
                       {isCompleted ? (
                         <Check size={14} className="text-green-600" />
                       ) : task.type === 'quiz' ? (
@@ -492,7 +486,7 @@ function LeftPanel({
                       ) : (
                         <FileEdit size={14} className={task.status === 'required' ? 'text-red-600' : 'text-gray-500'} />
                       )}
-                    </div>
+                    </button>
                     <div className="flex-1 min-w-0">
                       <p className={`text-sm font-medium truncate ${isCompleted ? 'text-green-700 line-through' : 'text-gray-700'}`}>
                         {task.title}
@@ -520,16 +514,6 @@ function LeftPanel({
           isFullscreen={isResourceFullscreen}
           setIsFullscreen={setIsResourceFullscreen}
           onBack={handleBackToList}
-        />
-      )}
-
-      {/* 任务查看视图 */}
-      {activeView === 'task' && selectedTask && (
-        <TaskViewer
-          task={selectedTask}
-          isCompleted={completedTasks.has(selectedTask.id)}
-          onBack={handleBackToList}
-          onToggleComplete={toggleTaskCompletion}
         />
       )}
     </div>
@@ -613,138 +597,6 @@ function ResourceViewer({
               <Globe size={48} className="mx-auto mb-3 text-gray-400" />
               <p className="text-sm text-gray-600">外部网页</p>
               <p className="text-xs text-gray-400 mt-2 break-all">{resource.url}</p>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// 任务查看器（嵌入式）
-function TaskViewer({
-  task,
-  isCompleted,
-  onBack,
-  onToggleComplete,
-}: {
-  task: Task;
-  isCompleted: boolean;
-  onBack: () => void;
-  onToggleComplete: (taskId: string) => void;
-}) {
-  return (
-    <div className="flex flex-col h-full">
-      {/* 头部导航 */}
-      <div className={`p-4 border-b border-gray-200 bg-gradient-to-r ${task.type === 'quiz' ? 'from-amber-500 to-orange-600' : 'from-purple-500 to-pink-600'} text-white`}>
-        <div className="flex items-center gap-3 mb-2">
-          <button
-            onClick={onBack}
-            className="w-8 h-8 bg-white/20 hover:bg-white/30 rounded-lg flex items-center justify-center transition-colors flex-shrink-0"
-          >
-            <ChevronRight size={16} className="rotate-180" />
-          </button>
-          <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
-            {task.type === 'quiz' ? <Zap size={20} /> : <FileEdit size={20} />}
-          </div>
-          <div className="flex-1 min-w-0">
-            <h3 className="text-sm font-bold">{task.title}</h3>
-            <p className="text-xs text-white/80">{task.type === 'quiz' ? '知识测验' : '实践作业'}</p>
-          </div>
-        </div>
-        {isCompleted && (
-          <div className="flex items-center gap-2 mt-2 bg-white/20 rounded-lg px-3 py-2">
-            <Check size={14} />
-            <span className="text-xs">已完成该任务</span>
-          </div>
-        )}
-      </div>
-
-      {/* 内容区 */}
-      <div className="flex-1 overflow-y-auto p-4">
-        {task.type === 'quiz' && (
-          <div className="space-y-4">
-            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-              <div className="flex items-start gap-2">
-                <AlertCircle size={18} className="text-blue-600 mt-0.5" />
-                <div className="text-sm text-blue-800">
-                  <p className="font-medium mb-1">测验说明</p>
-                  <p className="text-xs">本测验包含多道选择题，用于检验你对学习内容的掌握程度。</p>
-                </div>
-              </div>
-            </div>
-
-            {/* 模拟测验题目 */}
-            <div className="bg-white rounded-xl p-4 border border-gray-200">
-              <h4 className="font-medium text-gray-900 mb-3">1. 水循环的三个主要阶段是什么？</h4>
-              <div className="space-y-2">
-                <label className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-blue-50">
-                  <input type="radio" name="q1" className="text-blue-600" />
-                  <span className="text-sm">蒸发、凝结、降水</span>
-                </label>
-                <label className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-blue-50">
-                  <input type="radio" name="q1" className="text-blue-600" />
-                  <span className="text-sm">蒸发、沸腾、下雨</span>
-                </label>
-                <label className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-blue-50">
-                  <input type="radio" name="q1" className="text-blue-600" />
-                  <span className="text-sm">蒸发、液化、融化</span>
-                </label>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex items-center justify-between text-sm text-gray-600">
-                <span>题目数量: 10 题</span>
-                <span>预计时间: 15 分钟</span>
-              </div>
-              <button
-                onClick={() => onToggleComplete(task.id)}
-                className={`w-full py-3 rounded-lg font-medium transition-colors ${
-                  isCompleted
-                    ? 'bg-gray-200 text-gray-600 hover:bg-gray-300'
-                    : 'bg-amber-500 hover:bg-amber-600 text-white'
-                }`}
-              >
-                {isCompleted ? '标记为未完成' : '提交任务'}
-              </button>
-            </div>
-          </div>
-        )}
-
-        {task.type === 'assignment' && (
-          <div className="space-y-4">
-            <div className="bg-purple-50 border border-purple-200 rounded-xl p-4">
-              <div className="flex items-start gap-2">
-                <AlertCircle size={18} className="text-purple-600 mt-0.5" />
-                <div className="text-sm text-purple-800">
-                  <p className="font-medium mb-1">作业说明</p>
-                  <p className="text-xs">请根据所学知识完成以下实践任务，并提交你的成果。</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-xl p-4 border border-gray-200">
-              <p className="text-sm text-gray-700 leading-relaxed mb-4">
-                任务要求：请设计一个节约用水的方案，说明具体措施和预期效果。可以采用文字、图片或视频等形式提交。
-              </p>
-              <textarea
-                placeholder="请在此输入你的节水方案..."
-                className="w-full min-h-[200px] p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-purple-500"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <button
-                onClick={() => onToggleComplete(task.id)}
-                className={`w-full py-3 rounded-lg font-medium transition-colors ${
-                  isCompleted
-                    ? 'bg-gray-200 text-gray-600 hover:bg-gray-300'
-                    : 'bg-purple-500 hover:bg-purple-600 text-white'
-                }`}
-              >
-                {isCompleted ? '标记为未完成' : '提交作业'}
-              </button>
             </div>
           </div>
         )}
@@ -1110,7 +962,7 @@ function EnhancedNotesPanel() {
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
-  const [showNoteList, setShowNoteList] = useState(true);
+  const [showNoteEditor, setShowNoteEditor] = useState(false);
 
   const activeNote = notes.find(n => n.id === activeNoteId) || notes[0];
 
@@ -1127,6 +979,7 @@ function EnhancedNotesPanel() {
     };
     setNotes([newNote, ...notes]);
     setActiveNoteId(newNote.id);
+    setShowNoteEditor(true);
   };
 
   // 删除笔记
@@ -1224,199 +1077,209 @@ function EnhancedNotesPanel() {
       .replace(/\n/gim, '<br />');
   };
 
-  return (
-    <div className="flex h-full">
-      {/* 笔记列表侧边栏 */}
-      {showNoteList && (
-        <div className="w-48 border-r border-gray-200 bg-gray-50 flex flex-col">
-          <div className="p-3 border-b border-gray-200">
-            <button
-              onClick={createNote}
-              className="w-full px-3 py-2 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-1.5"
-            >
-              <Plus size={14} />
-              新建笔记
-            </button>
-          </div>
-          <div className="flex-1 overflow-y-auto p-2 space-y-1">
-            {notes.map(note => (
-              <div
-                key={note.id}
-                onClick={() => setActiveNoteId(note.id)}
-                className={`p-2 rounded-lg cursor-pointer transition-colors ${
-                  activeNoteId === note.id
-                    ? 'bg-blue-100 border border-blue-200'
-                    : 'hover:bg-gray-100 border border-transparent'
-                }`}
-              >
-                <div className="text-xs font-medium text-gray-800 truncate">
-                  {note.title}
-                </div>
-                <div className="text-xs text-gray-500 mt-1 truncate">
-                  {note.content.slice(0, 30) || '空笔记'}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* 主编辑区 */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* 工具栏 */}
-        <div className="p-2 border-b border-gray-200 bg-white flex items-center justify-between gap-2">
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => setShowNoteList(!showNoteList)}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              title="切换笔记列表"
-            >
-              <Sidebar size={16} className="text-gray-600" />
-            </button>
-            <div className="h-4 w-px bg-gray-300" />
-            <button
-              onClick={() => setIsPreviewMode(!isPreviewMode)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                isPreviewMode
-                  ? 'bg-gray-100 text-gray-700'
-                  : 'bg-blue-600 text-white'
-              }`}
-            >
-              {isPreviewMode ? <Eye size={14} className="inline mr-1" /> : <Edit size={14} className="inline mr-1" />}
-              {isPreviewMode ? '预览' : '编辑'}
-            </button>
-          </div>
-
-          <div className="flex items-center gap-1">
-            <label className="cursor-pointer">
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                className="hidden"
-                onChange={handleImageUpload}
-              />
-              <button
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                title="上传图片"
-              >
-                <ImageIcon size={16} className="text-gray-600" />
-              </button>
-            </label>
-            <button
-              onClick={toggleRecording}
-              className={`p-2 hover:bg-gray-100 rounded-lg transition-colors ${
-                isRecording ? 'animate-pulse' : ''
-              }`}
-              title={isRecording ? '停止录音' : '开始录音'}
-            >
-              <Mic size={16} className={isRecording ? 'text-red-600' : 'text-gray-600'} />
-            </button>
-            {isRecording && (
-              <span className="text-xs font-mono text-red-600">
-                {formatTime(recordingTime)}
-              </span>
-            )}
-            <div className="h-4 w-px bg-gray-300" />
-            <button
-              onClick={() => deleteNote(activeNoteId)}
-              className="p-2 hover:bg-red-50 rounded-lg transition-colors"
-              title="删除笔记"
-            >
-              <Trash2 size={16} className="text-gray-600 hover:text-red-600" />
-            </button>
-          </div>
+  // 如果没有打开编辑器，显示简洁的笔记列表
+  if (!showNoteEditor) {
+    return (
+      <div className="flex flex-col h-full">
+        {/* 头部 */}
+        <div className="p-4 border-b border-gray-200">
+          <button
+            onClick={createNote}
+            className="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-medium rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+          >
+            <Plus size={18} />
+            添加笔记
+          </button>
         </div>
 
-        {/* 编辑/预览区 */}
-        <div className="flex-1 overflow-y-auto p-3 bg-white">
-          <input
-            type="text"
-            value={activeNote.title}
-            onChange={(e) => updateNote({ title: e.target.value })}
-            className="w-full text-lg font-bold text-gray-800 border-none outline-none mb-3 bg-transparent"
-            placeholder="笔记标题"
-          />
-
-          {isPreviewMode ? (
+        {/* 笔记列表 */}
+        <div className="flex-1 overflow-y-auto p-3 space-y-2">
+          {notes.map(note => (
             <div
-              className="prose prose-sm max-w-none text-gray-700 leading-relaxed"
-              dangerouslySetInnerHTML={{ __html: renderMarkdown(activeNote.content) }}
-            />
-          ) : (
-            <textarea
-              value={activeNote.content}
-              onChange={(e) => updateNote({ content: e.target.value })}
-              className="w-full h-full min-h-[400px] bg-transparent border-none outline-none resize-none text-sm text-gray-700 leading-relaxed font-mono"
-              placeholder="# 开始记录你的学习笔记...\n\n支持Markdown格式：\n- **粗体**\n- *斜体*\n- # 标题\n\n你也可以上传图片和录制语音笔记"
-            />
-          )}
-
-          {/* 图片列表 */}
-          {activeNote.images.length > 0 && (
-            <div className="mt-4 pt-4 border-t border-gray-200">
-              <div className="text-xs font-bold text-gray-600 mb-2">
-                图片 ({activeNote.images.length})
-              </div>
-              <div className="grid grid-cols-3 gap-2">
-                {activeNote.images.map((img, idx) => (
-                  <div key={idx} className="relative group">
-                    <img
-                      src={img}
-                      alt={`uploaded-${idx}`}
-                      className="w-full h-20 object-cover rounded-lg border border-gray-200"
-                    />
-                    <button
-                      onClick={() => {
-                        const newImages = activeNote.images.filter((_, i) => i !== idx);
-                        updateNote({ images: newImages });
-                      }}
-                      className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <X size={12} />
-                    </button>
+              key={note.id}
+              onClick={() => {
+                setActiveNoteId(note.id);
+                setShowNoteEditor(true);
+              }}
+              className="p-3 bg-white border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-md cursor-pointer transition-all"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-semibold text-gray-800 truncate mb-1">
+                    {note.title}
                   </div>
-                ))}
+                  <div className="text-xs text-gray-500 truncate">
+                    {note.content.slice(0, 50) || '空笔记'}
+                  </div>
+                  <div className="text-xs text-gray-400 mt-1">
+                    {new Date(note.updatedAt).toLocaleString('zh-CN')}
+                  </div>
+                </div>
+                <Edit size={14} className="text-gray-400 flex-shrink-0 mt-1" />
               </div>
             </div>
-          )}
+          ))}
+        </div>
+      </div>
+    );
+  }
 
-          {/* 语音录音列表 */}
-          {activeNote.voiceRecordings.length > 0 && (
-            <div className="mt-4 pt-4 border-t border-gray-200">
-              <div className="text-xs font-bold text-gray-600 mb-2">
-                语音笔记 ({activeNote.voiceRecordings.length})
-              </div>
-              <div className="space-y-2">
-                {activeNote.voiceRecordings.map((recording) => (
-                  <div
-                    key={recording.id}
-                    className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg border border-gray-200"
+  // 笔记编辑器（展开状态）
+  return (
+    <div className="flex flex-col h-full">
+      {/* 工具栏 */}
+      <div className="p-3 border-b border-gray-200 bg-white flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => setShowNoteEditor(false)}
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            title="返回列表"
+          >
+            <X size={16} className="text-gray-600" />
+          </button>
+          <div className="h-4 w-px bg-gray-300" />
+          <button
+            onClick={() => setIsPreviewMode(!isPreviewMode)}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+              isPreviewMode
+                ? 'bg-gray-100 text-gray-700'
+                : 'bg-blue-600 text-white'
+            }`}
+          >
+            {isPreviewMode ? <Eye size={14} className="inline mr-1" /> : <Edit size={14} className="inline mr-1" />}
+            {isPreviewMode ? '预览' : '编辑'}
+          </button>
+        </div>
+
+        <div className="flex items-center gap-1">
+          <label className="cursor-pointer">
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              className="hidden"
+              onChange={handleImageUpload}
+            />
+            <button
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              title="上传图片"
+            >
+              <ImageIcon size={16} className="text-gray-600" />
+            </button>
+          </label>
+          <button
+            onClick={toggleRecording}
+            className={`p-2 hover:bg-gray-100 rounded-lg transition-colors ${
+              isRecording ? 'animate-pulse' : ''
+            }`}
+            title={isRecording ? '停止录音' : '开始录音'}
+          >
+            <Mic size={16} className={isRecording ? 'text-red-600' : 'text-gray-600'} />
+          </button>
+          {isRecording && (
+            <span className="text-xs font-mono text-red-600">
+              {formatTime(recordingTime)}
+            </span>
+          )}
+          <div className="h-4 w-px bg-gray-300" />
+          <button
+            onClick={() => deleteNote(activeNoteId)}
+            className="p-2 hover:bg-red-50 rounded-lg transition-colors"
+            title="删除笔记"
+          >
+            <Trash2 size={16} className="text-gray-600 hover:text-red-600" />
+          </button>
+        </div>
+      </div>
+
+      {/* 编辑/预览区 */}
+      <div className="flex-1 overflow-y-auto p-3 bg-white">
+        <input
+          type="text"
+          value={activeNote.title}
+          onChange={(e) => updateNote({ title: e.target.value })}
+          className="w-full text-lg font-bold text-gray-800 border-none outline-none mb-3 bg-transparent"
+          placeholder="笔记标题"
+        />
+
+        {isPreviewMode ? (
+          <div
+            className="prose prose-sm max-w-none text-gray-700 leading-relaxed"
+            dangerouslySetInnerHTML={{ __html: renderMarkdown(activeNote.content) }}
+          />
+        ) : (
+          <textarea
+            value={activeNote.content}
+            onChange={(e) => updateNote({ content: e.target.value })}
+            className="w-full h-full min-h-[400px] bg-transparent border-none outline-none resize-none text-sm text-gray-700 leading-relaxed font-mono"
+            placeholder="# 开始记录你的学习笔记...\n\n支持Markdown格式：\n- **粗体**\n- *斜体*\n- # 标题\n\n你也可以上传图片和录制语音笔记"
+          />
+        )}
+
+        {/* 图片列表 */}
+        {activeNote.images.length > 0 && (
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <div className="text-xs font-bold text-gray-600 mb-2">
+              图片 ({activeNote.images.length})
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              {activeNote.images.map((img, idx) => (
+                <div key={idx} className="relative group">
+                  <img
+                    src={img}
+                    alt={`uploaded-${idx}`}
+                    className="w-full h-20 object-cover rounded-lg border border-gray-200"
+                  />
+                  <button
+                    onClick={() => {
+                      const newImages = activeNote.images.filter((_, i) => i !== idx);
+                      updateNote({ images: newImages });
+                    }}
+                    className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
                   >
-                    <button className="p-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                      <Play size={12} />
-                    </button>
-                    <div className="flex-1">
-                      <div className="text-xs text-gray-700">
-                        语音笔记 {new Date(recording.timestamp).toLocaleString('zh-CN')}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        时长: {formatTime(recording.duration)}
-                      </div>
+                    <X size={12} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 语音录音列表 */}
+        {activeNote.voiceRecordings.length > 0 && (
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <div className="text-xs font-bold text-gray-600 mb-2">
+              语音笔记 ({activeNote.voiceRecordings.length})
+            </div>
+            <div className="space-y-2">
+              {activeNote.voiceRecordings.map((recording) => (
+                <div
+                  key={recording.id}
+                  className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg border border-gray-200"
+                >
+                  <button className="p-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                    <Play size={12} />
+                  </button>
+                  <div className="flex-1">
+                    <div className="text-xs text-gray-700">
+                      语音笔记 {new Date(recording.timestamp).toLocaleString('zh-CN')}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      时长: {formatTime(recording.duration)}
                     </div>
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
 // 右侧面板 - 学习工作室
-function RightPanel({ config, rightTab, setRightTab, width, elapsedTime, tasks }: any) {
+function RightPanel({ config, rightTab, setRightTab, width, elapsedTime, tasks, isNotePanelOpen, setIsNotePanelOpen }: any) {
   const formatMinutes = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
