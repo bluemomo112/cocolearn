@@ -1646,7 +1646,7 @@ export function ResultsViewHeader({ config, onBack, onSwitchToUse }: any) {
 
 // Results视角仪表板 - 学习数据展示
 export function ResultsViewDashboard({ config }: any) {
-  // 模拟学生列表数据（转换为 StudentCompetencyProfile 格式）
+  // 模拟学生列表数据（增强版 - 包含详细的能力评估、任务完成、跨课程画像）
   const mockStudentsRaw = [
     { id: 1, name: '张晓明', avatar: '👦', status: 'online' as const, progress: 85, lastActive: '2分钟前', competencies: { critical_thinking: 4, information_synthesis: 3, metacognition: 4 } },
     { id: 2, name: '李思琪', avatar: '👧', status: 'online' as const, progress: 92, lastActive: '刚刚', competencies: { critical_thinking: 3, information_synthesis: 4, metacognition: 3 } },
@@ -1655,6 +1655,190 @@ export function ResultsViewDashboard({ config }: any) {
     { id: 5, name: '陈思远', avatar: '👦', status: 'offline' as const, progress: 60, lastActive: '30分钟前', competencies: { critical_thinking: 2, information_synthesis: 3, metacognition: 2 } },
     { id: 6, name: '赵梓涵', avatar: '👧', status: 'online' as const, progress: 95, lastActive: '1分钟前', competencies: { critical_thinking: 4, information_synthesis: 4, metacognition: 4 } },
   ];
+
+  // 增强的能力评估数据生成器
+  const generateEnhancedAssessments = (studentId: number, competencies: Record<string, number>) => {
+    const assessmentData: Record<string, any> = {
+      critical_thinking: {
+        4: {
+          description: '能够深入分析问题的多个层面，识别隐含假设，并提出有说服力的论证。在讨论水资源问题时，不仅关注表面现象，还能分析背后的社会、经济因素。',
+          highlights: ['能识别论证中的逻辑漏洞', '提出反例验证观点', '从多角度评估问题'],
+          areasForImprovement: ['可以尝试更系统地运用批判性思维框架'],
+          suggestions: ['阅读相关的论证分析案例', '练习识别常见的逻辑谬误', '尝试从相反立场思考问题'],
+          evidence: [
+            { id: 'e1', type: 'dialogue' as const, content: '学生在对话中质疑："如果所有人都节约用水，是否真的能解决水资源短缺问题？还需要考虑工业用水和农业用水的占比。"', timestamp: '2024-01-08 14:23', sourceRef: '对话 #12' },
+            { id: 'e2', type: 'note' as const, content: '笔记中记录：对比了城市和农村的水资源利用效率，发现农业灌溉的用水量远超生活用水。', timestamp: '2024-01-08 14:45', sourceRef: '康奈尔笔记' },
+          ]
+        },
+        3: {
+          description: '能够识别基本的论证结构，对信息进行初步评估。在课堂讨论中表现出一定的质疑精神，但分析深度还需提升。',
+          highlights: ['会提出"为什么"类问题', '能发现明显的矛盾'],
+          areasForImprovement: ['需要更深入地分析问题根源', '提高论证的系统性'],
+          suggestions: ['多阅读不同观点的文章', '练习总结论证的主要步骤', '尝试写出自己的论证大纲'],
+          evidence: [
+            { id: 'e3', type: 'dialogue' as const, content: '在讨论中提问："为什么海水淡化技术不能大规模应用？"', timestamp: '2024-01-08 15:10', sourceRef: '对话 #8' },
+          ]
+        },
+        2: {
+          description: '对问题的分析较为表面，主要依赖已知信息，缺乏深入质疑。需要培养批判性思考的习惯。',
+          highlights: ['能理解基本概念', '愿意参与讨论'],
+          areasForImprovement: ['需要养成质疑的习惯', '学会识别假设', '提高分析问题的深度'],
+          suggestions: ['从简单的案例开始，练习找出隐含假设', '尝试对日常生活中的现象提出"为什么"', '阅读一些入门级的批判性思维材料'],
+          evidence: [
+            { id: 'e4', type: 'task' as const, content: '在作业中基本复述了课程内容，缺少自己的分析和见解。', timestamp: '2024-01-08 16:30', sourceRef: '作业提交' },
+          ]
+        }
+      },
+      information_synthesis: {
+        4: {
+          description: '能够熟练地从多个资源中提取关键信息，建立概念之间的联系，形成结构化的知识体系。在学习水循环时，成功整合了地理、化学、生态等多学科知识。',
+          highlights: ['建立了清晰的知识网络', '能跨学科整合信息', '善于使用图表组织信息'],
+          areasForImprovement: ['可以尝试更复杂的信息整合任务'],
+          suggestions: ['尝试制作跨学科的概念图', '练习用自己的话综合不同来源的信息', '挑战整合相互矛盾的信息源'],
+          evidence: [
+            { id: 'e5', type: 'note' as const, content: '笔记中绘制了一张完整的水循环思维导图，连接了蒸发、降水、径流等概念，并标注了人类活动的影响。', timestamp: '2024-01-08 14:50', sourceRef: '康奈尔笔记' },
+            { id: 'e6', type: 'behavior' as const, content: '观看了3个不同的视频资源后，主动对比总结了共同点和差异。', timestamp: '2024-01-08 15:20', sourceRef: '学习行为' },
+          ]
+        },
+        3: {
+          description: '能够从多个来源获取信息并进行基本整合，但知识网络的系统性还需加强。',
+          highlights: ['会使用多个资源学习', '能找到信息之间的联系'],
+          areasForImprovement: ['提高信息整合的系统性', '加强知识网络的构建'],
+          suggestions: ['练习制作简单的概念图', '尝试用表格对比不同来源的信息', '定期回顾和整理学习笔记'],
+          evidence: [
+            { id: 'e7', type: 'note' as const, content: '笔记中记录了视频和文档的主要内容，但缺少整合和总结。', timestamp: '2024-01-08 15:35', sourceRef: '康奈尔笔记' },
+          ]
+        },
+        2: {
+          description: '主要依赖单一资源学习，信息整合能力较弱。需要培养从多个角度看待问题的习惯。',
+          highlights: ['能理解单一资源的内容', '开始尝试使用多个资源'],
+          areasForImprovement: ['学会从多个来源获取信息', '提高信息筛选和整合能力', '建立知识之间的联系'],
+          suggestions: ['每次学习尝试至少查看2-3个不同资源', '练习用自己的话总结信息', '尝试画简单的信息关系图'],
+          evidence: [
+            { id: 'e8', type: 'behavior' as const, content: '主要观看了1个视频资源，较少查阅其他材料。', timestamp: '2024-01-08 14:15', sourceRef: '学习行为' },
+          ]
+        }
+      },
+      metacognition: {
+        4: {
+          description: '展现出优秀的自我反思能力，能够主动监控学习进度，识别知识盲区，并调整学习策略。在学习过程中多次主动寻求反馈。',
+          highlights: ['主动识别学习困难点', '会调整学习方法', '善于自我评估'],
+          areasForImprovement: ['可以尝试更多元的学习策略'],
+          suggestions: ['记录不同学习策略的效果', '定期进行学习反思', '尝试向他人讲解学习内容以检验理解'],
+          evidence: [
+            { id: 'e9', type: 'dialogue' as const, content: '学生主动说："我发现自己对水资源的分配问题理解不够，需要再看一遍相关视频。"', timestamp: '2024-01-08 15:45', sourceRef: '对话 #15' },
+            { id: 'e10', type: 'behavior' as const, content: '在完成30%进度后，主动返回复习前面的内容。', timestamp: '2024-01-08 16:00', sourceRef: '学习行为' },
+          ]
+        },
+        3: {
+          description: '具备基本的自我监控意识，能够识别部分学习困难，但策略调整还不够主动。',
+          highlights: ['会评估自己的理解程度', '能识别一些困难点'],
+          areasForImprovement: ['提高策略调整的主动性', '加强学习过程的监控'],
+          suggestions: ['每次学习后进行简短的自我评估', '遇到困难时尝试不同的学习方法', '建立学习日志记录反思'],
+          evidence: [
+            { id: 'e11', type: 'dialogue' as const, content: '在AI提示下，学生表示："这个部分确实比较难理解。"', timestamp: '2024-01-08 15:50', sourceRef: '对话 #10' },
+          ]
+        },
+        2: {
+          description: '自我监控能力较弱，较少主动反思学习过程。需要培养元认知意识。',
+          highlights: ['能完成基本的学习任务', '在引导下能进行简单反思'],
+          areasForImprovement: ['培养自我监控的习惯', '学会识别学习困难', '提高反思的主动性'],
+          suggestions: ['尝试在学习前设定目标', '学习后问自己"学到了什么"', '遇到困难时记录下来并寻求帮助'],
+          evidence: [
+            { id: 'e12', type: 'behavior' as const, content: '学习过程较为线性，很少返回复习或调整策略。', timestamp: '2024-01-08 14:30', sourceRef: '学习行为' },
+          ]
+        }
+      }
+    };
+
+    return Object.entries(competencies).map(([type, stars]) => ({
+      type: type as ResultsCompetencyType,
+      stars: stars as 1 | 2 | 3 | 4,
+      ...(assessmentData[type]?.[stars] || {
+        description: `在${RESULTS_COMPETENCY_DEFINITIONS[type as ResultsCompetencyType].name}方面的表现。`,
+        highlights: ['展现了相关能力'],
+        areasForImprovement: ['继续提升'],
+        suggestions: ['保持学习热情'],
+        evidence: []
+      })
+    }));
+  };
+
+  // 生成任务完成记录
+  const generateTaskCompletions = (studentId: number, competencies: Record<string, number>) => {
+    const avgStars = Object.values(competencies).reduce((a, b) => a + b, 0) / Object.values(competencies).length;
+    const baseScore = avgStars * 20 + 20; // 转换为40-100分
+
+    return [
+      {
+        taskId: 'task_quiz_1',
+        taskTitle: '水循环基础知识测验',
+        taskType: 'quiz' as const,
+        score: Math.round(baseScore + (Math.random() * 10 - 5)),
+        maxScore: 100,
+        competencyTags: ['critical_thinking', 'information_synthesis'] as ResultsCompetencyType[],
+        completedAt: '2024-01-08 15:30',
+        status: 'completed' as const,
+      },
+      {
+        taskId: 'task_assignment_1',
+        taskTitle: '节水方案设计',
+        taskType: 'assignment' as const,
+        score: Math.round(baseScore + (Math.random() * 10 - 5)),
+        maxScore: 100,
+        competencyTags: ['creativity', 'information_synthesis'] as ResultsCompetencyType[],
+        completedAt: '2024-01-08 16:45',
+        status: 'completed' as const,
+      },
+    ];
+  };
+
+  // 生成跨课程能力画像
+  const generateCrossCourseProfiles = (studentId: number, competencies: Record<string, number>) => {
+    const profiles: any[] = [];
+
+    // 为每个能力维度生成跨课程记录
+    Object.entries(competencies).forEach(([type, currentStars]) => {
+      const records = [
+        {
+          courseId: 'course_geo_01',
+          courseName: '地理-气候变化',
+          date: '2023-12',
+          competencyType: type as ResultsCompetencyType,
+          stars: Math.max(1, Math.min(4, currentStars - 1 + Math.floor(Math.random() * 2))) as 1 | 2 | 3 | 4,
+        },
+        {
+          courseId: 'course_bio_01',
+          courseName: '生物-生态系统',
+          date: '2024-01',
+          competencyType: type as ResultsCompetencyType,
+          stars: Math.max(1, Math.min(4, currentStars - 1 + Math.floor(Math.random() * 3))) as 1 | 2 | 3 | 4,
+        },
+        {
+          courseId: 'course_current',
+          courseName: config.noteInfo.title,
+          date: '2024-01',
+          competencyType: type as ResultsCompetencyType,
+          stars: currentStars as 1 | 2 | 3 | 4,
+        },
+      ];
+
+      // 计算趋势
+      const firstStars = records[0].stars;
+      const lastStars = records[records.length - 1].stars;
+      const trend = lastStars > firstStars ? 'rising' : lastStars < firstStars ? 'declining' : 'stable';
+      const averageStars = records.reduce((sum, r) => sum + r.stars, 0) / records.length;
+
+      profiles.push({
+        competencyType: type as ResultsCompetencyType,
+        records,
+        trend: trend as 'rising' | 'stable' | 'declining',
+        averageStars: parseFloat(averageStars.toFixed(1)),
+      });
+    });
+
+    return profiles;
+  };
 
   // 转换为 StudentCompetencyProfile 格式
   const mockStudents: StudentCompetencyProfile[] = mockStudentsRaw.map((student) => ({
@@ -1665,21 +1849,13 @@ export function ResultsViewDashboard({ config }: any) {
     learningDuration: 30 + student.id * 5, // 模拟学习时长
     progress: student.progress,
     lastActive: student.lastActive,
-    currentCourseAssessments: Object.entries(student.competencies).map(([type, stars]) => ({
-      type: type as ResultsCompetencyType,
-      stars: stars as 1 | 2 | 3 | 4,
-      description: `在${RESULTS_COMPETENCY_DEFINITIONS[type as ResultsCompetencyType].name}方面表现${stars >= 3 ? '优秀' : '一般'}`,
-      highlights: stars >= 3 ? ['表现突出', '持续进步'] : ['有基础认知'],
-      areasForImprovement: stars < 4 ? ['可进一步深化'] : [],
-      suggestions: ['继续保持学习热情'],
-      evidence: [],
-    })),
-    taskCompletions: [],
-    crossCourseProfiles: [],
+    currentCourseAssessments: generateEnhancedAssessments(student.id, student.competencies),
+    taskCompletions: generateTaskCompletions(student.id, student.competencies),
+    crossCourseProfiles: generateCrossCourseProfiles(student.id, student.competencies),
     aiDetectedCompetencies: student.id === 1 || student.id === 4 || student.id === 6
-      ? [{ type: 'metacognition' as ResultsCompetencyType, confidence: 0.85, description: '展现了良好的自我反思能力' }]
+      ? [{ type: 'metacognition' as ResultsCompetencyType, confidence: 0.85, description: '在学习过程中展现了良好的自我反思能力，能主动调整学习策略' }]
       : student.id === 2
-      ? [{ type: 'question_quality' as ResultsCompetencyType, confidence: 0.78, description: '提出了深层次问题' }]
+      ? [{ type: 'question_quality' as ResultsCompetencyType, confidence: 0.78, description: '提出了多个深层次的"为什么"类问题，显示出强烈的探究意识' }]
       : [],
   }));
 
