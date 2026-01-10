@@ -51,44 +51,14 @@ import {
   mockLearnerProfile,
   mockCourseCompetencyReport,
   mockAIObservations,
-  mockCompetencyGuidedMessages,
   getCompetencyStars,
   getTrendIcon,
   COMPETENCY_METADATA,
   CompetencyType,
   CompetencyRating,
 } from '@/data/mockCompetencyData';
-
-// 类型定义
-interface Resource {
-  id: string;
-  type: 'video' | 'pdf' | 'ppt' | 'web';
-  title: string;
-  description?: string;
-  color: string;
-  duration?: string;
-  pages?: number;
-  url?: string;
-}
-
-interface Task {
-  id: string;
-  type: 'quiz' | 'assignment';
-  title: string;
-  status: 'required' | 'optional';
-  completed?: boolean;
-  score?: number;
-  description?: string;
-  questions?: TaskQuestion[];
-  submissionPlaceholder?: string;
-}
-
-interface TaskQuestion {
-  id: string;
-  question: string;
-  options?: string[];
-  correctAnswer?: string;
-}
+import { mockResources, mockTasks } from '@/data/mockLearningData';
+import { Resource, Task, TaskQuestion, TaskRubric } from '@/types/shared-context';
 
 // 任务展开卡片组件 - 在中间聊天区显示
 function TaskExpandedCard({
@@ -99,14 +69,33 @@ function TaskExpandedCard({
 }: {
   task: Task;
   onClose: () => void;
-  onComplete: (taskId: string) => void;
+  onComplete: (taskId: string, answer?: string) => void;
   isCompleted: boolean;
 }) {
-  const [selectedOption, setSelectedOption] = useState<string | null>(null);
+  const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string | string[]>>({});
   const [submissionText, setSubmissionText] = useState('');
 
+  const handleQuestionAnswer = (questionId: string, answer: string | string[], isMultiple: boolean) => {
+    if (isMultiple) {
+      const currentAnswers = (selectedAnswers[questionId] as string[]) || [];
+      const answerStr = answer as string;
+      const newAnswers = currentAnswers.includes(answerStr)
+        ? currentAnswers.filter(a => a !== answerStr)
+        : [...currentAnswers, answerStr];
+      setSelectedAnswers(prev => ({ ...prev, [questionId]: newAnswers }));
+    } else {
+      setSelectedAnswers(prev => ({ ...prev, [questionId]: answer }));
+    }
+  };
+
   const handleSubmit = () => {
-    onComplete(task.id);
+    let answer = '';
+    if (task.type === 'quiz') {
+      answer = JSON.stringify(selectedAnswers);
+    } else if (task.type === 'assignment' || task.type === 'reflection') {
+      answer = submissionText;
+    }
+    onComplete(task.id, answer);
   };
 
   return (
@@ -115,14 +104,18 @@ function TaskExpandedCard({
       <div className={`px-4 py-3 flex items-center justify-between ${
         task.type === 'quiz'
           ? 'bg-gradient-to-r from-amber-50 to-orange-50 border-b border-amber-100'
+          : task.type === 'reflection'
+          ? 'bg-gradient-to-r from-purple-50 to-pink-50 border-b border-purple-100'
           : 'bg-gradient-to-r from-primary-50 to-accent-50 border-b border-primary-100'
       }`}>
         <div className="flex items-center gap-3">
           <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-            task.type === 'quiz' ? 'bg-amber-100' : 'bg-primary-100'
+            task.type === 'quiz' ? 'bg-amber-100' : task.type === 'reflection' ? 'bg-purple-100' : 'bg-primary-100'
           }`}>
             {task.type === 'quiz' ? (
               <Zap size={18} className="text-amber-600" />
+            ) : task.type === 'reflection' ? (
+              <Brain size={18} className="text-purple-600" />
             ) : (
               <FileEdit size={18} className="text-primary-600" />
             )}
@@ -130,7 +123,7 @@ function TaskExpandedCard({
           <div>
             <h3 className="font-semibold text-gray-800">{task.title}</h3>
             <p className="text-xs text-gray-500">
-              {task.status === 'required' ? '必修任务' : '选修任务'}
+              {task.required ? '必修任务' : '选修任务'}
             </p>
           </div>
         </div>
@@ -144,52 +137,83 @@ function TaskExpandedCard({
 
       {/* 卡片内容 */}
       <div className="p-4">
+        {/* 任务描述 */}
+        {task.description && (
+          <p className="text-sm text-gray-600 mb-4 pb-4 border-b border-gray-200">{task.description}</p>
+        )}
+
         {/* 测验类型任务 */}
         {task.type === 'quiz' && task.questions && (
-          <div className="space-y-4">
-            {task.questions.map((q, idx) => (
-              <div key={q.id} className="space-y-3">
-                <p className="text-sm text-gray-700 font-medium">
-                  {idx + 1}. {q.question}
-                </p>
-                {q.options && (
-                  <div className="space-y-2">
-                    {q.options.map((option, optIdx) => (
-                      <label
-                        key={optIdx}
-                        className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
-                          selectedOption === option
-                            ? 'border-primary-500 bg-primary-50'
-                            : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                        }`}
-                      >
-                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                          selectedOption === option
-                            ? 'border-primary-500 bg-primary-500'
-                            : 'border-gray-300'
-                        }`}>
-                          {selectedOption === option && (
-                            <div className="w-2 h-2 rounded-full bg-white" />
-                          )}
-                        </div>
-                        <span className="text-sm text-gray-700">{option}</span>
-                      </label>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
+          <div className="space-y-6">
+            {task.questions.map((q, idx) => {
+              const isMultiple = q.type === 'multiple_choice';
+              const currentAnswer = selectedAnswers[q.id];
+
+              return (
+                <div key={q.id} className="space-y-3">
+                  <p className="text-sm text-gray-700 font-medium">
+                    {idx + 1}. {q.content}
+                    {isMultiple && <span className="ml-2 text-xs text-blue-600">(多选题)</span>}
+                  </p>
+                  {q.options && (
+                    <div className="space-y-2">
+                      {q.options.map((option, optIdx) => {
+                        const isSelected = isMultiple
+                          ? Array.isArray(currentAnswer) && currentAnswer.includes(option)
+                          : currentAnswer === option;
+
+                        return (
+                          <label
+                            key={optIdx}
+                            className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
+                              isSelected
+                                ? 'border-primary-500 bg-primary-50'
+                                : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                            }`}
+                          >
+                            <div className={`w-5 h-5 ${isMultiple ? 'rounded' : 'rounded-full'} border-2 flex items-center justify-center ${
+                              isSelected
+                                ? 'border-primary-500 bg-primary-500'
+                                : 'border-gray-300'
+                            }`}>
+                              {isSelected && (
+                                isMultiple ? (
+                                  <Check size={14} className="text-white" />
+                                ) : (
+                                  <div className="w-2 h-2 rounded-full bg-white" />
+                                )
+                              )}
+                            </div>
+                            <button
+                              onClick={() => handleQuestionAnswer(q.id, option, isMultiple)}
+                              className="text-sm text-gray-700 text-left flex-1"
+                            >
+                              {option}
+                            </button>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
 
-        {/* 作业类型任务 */}
-        {task.type === 'assignment' && (
+        {/* 作业/反思类型任务 */}
+        {(task.type === 'assignment' || task.type === 'reflection') && (
           <div className="space-y-3">
+            {task.prompt && (
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 mb-3">
+                <p className="text-xs text-blue-900 whitespace-pre-line">{task.prompt}</p>
+              </div>
+            )}
             <textarea
               value={submissionText}
               onChange={(e) => setSubmissionText(e.target.value)}
               placeholder={task.submissionPlaceholder || '请在这里提交你的作业内容...'}
-              className="w-full h-32 p-3 border border-gray-200 rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full h-40 p-3 border border-gray-200 rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
           </div>
         )}
@@ -226,6 +250,13 @@ interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
+  // 可选：嵌入的任务卡片
+  embeddedTask?: Task;
+  // 可选：能力培养提示
+  competencyHint?: {
+    type: CompetencyType;
+    strategy: string;
+  };
 }
 
 interface NoteConfig {
@@ -291,9 +322,11 @@ export default function StudentWorkbenchPage() {
   // 右侧工作室标签
   const [rightTab, setRightTab] = useState<'workspace' | 'status'>('workspace');
 
-  // 聊天消息 - 使用能力培养引导演示对话
-  const [messages, setMessages] = useState<ChatMessage[]>(mockCompetencyGuidedMessages as ChatMessage[]);
+  // 聊天消息 - 初始化为空，由useEffect添加欢迎消息
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputMessage, setInputMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [sessionId] = useState(`session_${Date.now()}`);
 
   // 计时器状态
   const [elapsedTime, setElapsedTime] = useState(0);
@@ -311,99 +344,184 @@ export default function StudentWorkbenchPage() {
   // 当前展开的任务
   const [expandedTask, setExpandedTask] = useState<Task | null>(null);
 
+  // 能力画像状态
+  const [competencyProfile, setCompetencyProfile] = useState<{
+    critical_thinking: number;
+    information_synthesis: number;
+    metacognition: number;
+  }>({
+    critical_thinking: 2,
+    information_synthesis: 2,
+    metacognition: 2,
+  });
+
   // 模拟配置数据
   const config: NoteConfig = {
-    title: '水循环与水资源',
-    description: '探索水的循环过程，理解水资源的重要性',
-    subjects: ['科学', '地理', '环境教育'],
-    grade: '四年级',
-    resources: [
-      {
-        id: 'r1',
-        type: 'video',
-        title: '水循环基础知识',
-        description: '了解水循环的基本概念',
-        color: 'red',
-        duration: '10:25',
-      },
-      {
-        id: 'r2',
-        type: 'pdf',
-        title: '水循环知识点总结',
-        color: 'blue',
-        pages: 12,
-      },
-    ],
-    tasks: [
-      {
-        id: 't1',
-        type: 'quiz',
-        title: '水循环知识自测',
-        status: 'required',
-        questions: [
-          {
-            id: 'q1',
-            question: '水循环的主要驱动力是什么？',
-            options: ['太阳能', '风能', '地热能', '潮汐能'],
-            correctAnswer: '太阳能',
-          },
-          {
-            id: 'q2',
-            question: '以下哪个不是水循环的主要环节？',
-            options: ['蒸发', '降水', '光合作用', '径流'],
-            correctAnswer: '光合作用',
-          },
-        ],
-      },
-      {
-        id: 't2',
-        type: 'assignment',
-        title: '节水方案设计',
-        status: 'optional',
-        submissionPlaceholder: '请描述你的节水方案，包括：\n1. 方案名称\n2. 适用场景\n3. 具体措施\n4. 预期效果',
-      },
-    ],
+    title: '植物工厂探索',
+    description: '了解植物工厂的原理、技术与应用',
+    subjects: ['科学', '技术', '生物'],
+    grade: '五年级',
+    resources: mockResources,
+    tasks: mockTasks,
     interactionMode: 'free',
     noteTemplate: 'cornell',
   };
 
   // 发送消息处理
-  const handleSendMessage = () => {
-    if (!inputMessage.trim()) return;
+  const handleSendMessage = async () => {
+    if (!inputMessage.trim() || isLoading) return;
 
+    const userMessage = inputMessage;
     const newMessage: ChatMessage = {
       id: `msg_${Date.now()}`,
       role: 'user',
-      content: inputMessage,
+      content: userMessage,
       timestamp: new Date(),
     };
 
     setMessages([...messages, newMessage]);
     setInputMessage('');
+    setIsLoading(true);
 
-    // 模拟AI回复
-    setTimeout(() => {
+    try {
+      // 调用真实API
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sessionId,
+          message: userMessage,
+          action: 'chat',
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('API请求失败');
+      }
+
+      const data = await response.json();
+
+      // 添加AI回复
       const aiReply: ChatMessage = {
-        id: `msg_${Date.now()}_ai`,
+        id: data.messageId || `msg_${Date.now()}_ai`,
         role: 'assistant',
-        content: '这是一个很好的问题！让我来帮你理解...',
+        content: data.message,
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, aiReply]);
-    }, 1000);
+
+      // 如果有能力更新，更新能力画像
+      if (data.competencyUpdates && data.competencyUpdates.length > 0) {
+        console.log('能力更新:', data.competencyUpdates);
+
+        // 更新能力画像
+        setCompetencyProfile((prev) => {
+          const updated = { ...prev };
+          data.competencyUpdates.forEach((update: any) => {
+            if (update.type in updated) {
+              // 简单平均更新（实际应该使用加权平均）
+              updated[update.type as keyof typeof updated] =
+                (updated[update.type as keyof typeof updated] + update.rating) / 2;
+            }
+          });
+          return updated;
+        });
+      }
+    } catch (error) {
+      console.error('发送消息失败:', error);
+      // 显示错误消息
+      const errorReply: ChatMessage = {
+        id: `msg_${Date.now()}_error`,
+        role: 'assistant',
+        content: '抱歉，我遇到了一些问题。请稍后再试。',
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, errorReply]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // 切换任务完成状态
-  const toggleTaskCompletion = (taskId: string) => {
-    setCompletedTasks((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(taskId)) {
-        newSet.delete(taskId);
-      } else {
-        newSet.add(taskId);
+  const toggleTaskCompletion = async (taskId: string, answer?: string) => {
+    // 如果任务已完成，不再处理
+    if (completedTasks.has(taskId)) {
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      // 调用任务提交API
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sessionId,
+          action: 'submit_task',
+          taskId,
+          taskAnswer: answer || '已完成任务',
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('任务提交失败');
       }
-      return newSet;
-    });
+
+      const data = await response.json();
+
+      // 标记任务为已完成
+      setCompletedTasks((prev) => {
+        const newSet = new Set(prev);
+        newSet.add(taskId);
+        return newSet;
+      });
+
+      // 显示评估反馈
+      if (data.message) {
+        const feedbackMessage: ChatMessage = {
+          id: `msg_${Date.now()}_feedback`,
+          role: 'assistant',
+          content: data.message,
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, feedbackMessage]);
+      }
+
+      // 如果有能力更新，更新能力画像
+      if (data.competencyUpdates && data.competencyUpdates.length > 0) {
+        console.log('能力更新:', data.competencyUpdates);
+
+        // 更新能力画像
+        setCompetencyProfile((prev) => {
+          const updated = { ...prev };
+          data.competencyUpdates.forEach((update: any) => {
+            if (update.type in updated) {
+              // 简单平均更新（实际应该使用加权平均）
+              updated[update.type as keyof typeof updated] =
+                (updated[update.type as keyof typeof updated] + update.rating) / 2;
+            }
+          });
+          return updated;
+        });
+      }
+    } catch (error) {
+      console.error('任务提交失败:', error);
+      // 显示错误消息
+      const errorMessage: ChatMessage = {
+        id: `msg_${Date.now()}_error`,
+        role: 'assistant',
+        content: '任务提交失败，请稍后再试。',
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // 计时器管理
@@ -425,6 +543,72 @@ export default function StudentWorkbenchPage() {
       }
     };
   }, [isTimerRunning]);
+
+  // 初始化欢迎消息 - 智能体主动开启对话
+  useEffect(() => {
+    const welcomeMessage: ChatMessage = {
+      id: `msg_welcome_${Date.now()}`,
+      role: 'assistant',
+      content: `你好！👋 欢迎来到「${config.title}」的学习之旅！
+
+我是你的AI学习助手，在学习过程中我会陪伴你一起探索和思考。
+
+📚 **学习建议**：
+1. 先浏览左侧的学习资料，从课件或视频开始了解基础知识
+2. 有任何疑问随时问我，我会帮助你理解和思考
+3. 准备好了就可以尝试完成学习任务
+
+你想从哪里开始呢？可以先看看《认识植物工厂课件》，或者告诉我你对植物工厂已经了解多少？`,
+      timestamp: new Date(),
+      competencyHint: {
+        type: 'metacognition' as CompetencyType,
+        strategy: '激活先验知识，建立学习目标'
+      }
+    };
+    setMessages([welcomeMessage]);
+  }, []); // 只在组件挂载时执行一次
+
+  // 处理用户点击任务 - 将任务作为智能体推送的消息嵌入对话
+  const handleTaskClick = (task: Task) => {
+    // 创建一条智能体消息，嵌入任务卡片
+    const taskIntroMessage: ChatMessage = {
+      id: `msg_task_${task.id}_${Date.now()}`,
+      role: 'assistant',
+      content: task.type === 'quiz'
+        ? `好的，让我们来做一个知识测验，检验一下你对植物工厂基础知识的掌握情况：`
+        : task.type === 'reflection'
+        ? `现在是一个很好的时机来反思你的学习过程。请认真思考以下问题：`
+        : `接下来让我们完成这个任务，这将帮助你更深入地理解所学内容：`,
+      timestamp: new Date(),
+      embeddedTask: task,
+    };
+
+    setMessages(prev => [...prev, taskIntroMessage]);
+    setExpandedTask(task);
+  };
+
+  // 处理资源查看事件 - 通知智能体用户正在查看资源
+  const handleResourceView = (resource: Resource) => {
+    // 添加一条智能体消息，表示注意到用户正在查看资源
+    const resourceMessage: ChatMessage = {
+      id: `msg_resource_${resource.id}_${Date.now()}`,
+      role: 'assistant',
+      content: `我看到你正在查看「${resource.title}」${resource.type === 'video' ? '视频' : resource.type === 'presentation' ? '课件' : '文档'}。
+
+${resource.type === 'video'
+  ? '📹 观看视频时，注意观察关键的演示环节。看完后可以告诉我你的发现或疑问！'
+  : resource.type === 'presentation'
+  ? '📊 浏览课件时，注意理解每一页的核心概念。有不明白的地方随时问我！'
+  : '📄 阅读文档时，可以边读边做笔记。遇到困难的部分我可以帮你解释！'}`,
+      timestamp: new Date(),
+      competencyHint: {
+        type: 'information_synthesis' as CompetencyType,
+        strategy: '引导有目的的资源学习'
+      }
+    };
+
+    setMessages(prev => [...prev, resourceMessage]);
+  };
 
   const formatTime = (seconds: number) => {
     const hours = Math.floor(seconds / 3600);
@@ -496,7 +680,8 @@ export default function StudentWorkbenchPage() {
           setIsResourceFullscreen={setIsResourceFullscreen}
           completedTasks={completedTasks}
           toggleTaskCompletion={toggleTaskCompletion}
-          onTaskClick={(task: Task) => setExpandedTask(task)}
+          onTaskClick={handleTaskClick}
+          onResourceView={handleResourceView}
         />
 
         {/* 左侧调整器 */}
@@ -519,9 +704,9 @@ export default function StudentWorkbenchPage() {
           onSendMessage={handleSendMessage}
           width={100 - leftWidth - rightWidth}
           expandedTask={expandedTask}
-          onCloseTask={() => setExpandedTask(null)}
           onCompleteTask={toggleTaskCompletion}
           completedTasks={completedTasks}
+          isLoading={isLoading}
         />
 
         {/* 右侧调整器 */}
@@ -543,6 +728,7 @@ export default function StudentWorkbenchPage() {
           tasks={config.tasks}
           isNotePanelOpen={isNotePanelOpen}
           setIsNotePanelOpen={setIsNotePanelOpen}
+          competencyProfile={competencyProfile}
         />
       </div>
     </div>
@@ -560,6 +746,7 @@ function LeftPanel({
   completedTasks,
   toggleTaskCompletion,
   onTaskClick,
+  onResourceView,
 }: {
   config: NoteConfig;
   width: number;
@@ -570,12 +757,15 @@ function LeftPanel({
   completedTasks: Set<string>;
   toggleTaskCompletion: (taskId: string) => void;
   onTaskClick: (task: Task) => void;
+  onResourceView: (resource: Resource) => void;
 }) {
   const [activeView, setActiveView] = useState<'list' | 'resource'>('list');
 
   const handleResourceClick = (resource: Resource) => {
     setSelectedResource(resource);
     setActiveView('resource');
+    // 通知智能体用户正在查看资源
+    onResourceView(resource);
   };
 
   const handleBackToList = () => {
@@ -601,26 +791,108 @@ function LeftPanel({
             </div>
 
             {/* 资源列表 */}
-            <div className="flex-1 overflow-y-auto p-3 space-y-2">
-              {config.resources.map((resource) => (
-                <div
-                  key={resource.id}
-                  onClick={() => handleResourceClick(resource)}
-                  className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-primary-50 cursor-pointer transition-colors group"
-                >
-                  <div className={`w-10 h-10 rounded-xl bg-${resource.color}-100 flex items-center justify-center`}>
-                    {resource.type === 'video' && <Video size={16} className={`text-${resource.color}-600`} />}
-                    {resource.type === 'pdf' && <FileText size={16} className={`text-${resource.color}-600`} />}
-                    {resource.type === 'ppt' && <FileSpreadsheet size={16} className={`text-${resource.color}-600`} />}
-                    {resource.type === 'web' && <Globe size={16} className={`text-${resource.color}-600`} />}
+            <div className="flex-1 overflow-y-auto p-3 space-y-3">
+              {config.resources.map((resource) => {
+                // 根据资源类型选择图标和颜色
+                let IconComponent = FileText;
+                let colorClass = 'blue';
+                let bgColorClass = 'bg-blue-100';
+                let textColorClass = 'text-blue-600';
+                let hoverBgClass = 'hover:bg-blue-700';
+                let tagBgClass = 'bg-blue-50';
+                let tagTextClass = 'text-blue-600';
+
+                if (resource.type === 'video') {
+                  IconComponent = Video;
+                  colorClass = 'red';
+                  bgColorClass = 'bg-red-100';
+                  textColorClass = 'text-red-600';
+                  hoverBgClass = 'hover:bg-red-700';
+                  tagBgClass = 'bg-red-50';
+                  tagTextClass = 'text-red-600';
+                } else if (resource.type === 'presentation') {
+                  IconComponent = FileSpreadsheet;
+                  colorClass = 'orange';
+                  bgColorClass = 'bg-orange-100';
+                  textColorClass = 'text-orange-600';
+                  hoverBgClass = 'hover:bg-orange-700';
+                  tagBgClass = 'bg-orange-50';
+                  tagTextClass = 'text-orange-600';
+                }
+
+                return (
+                  <div
+                    key={resource.id}
+                    className="bg-white border-2 border-gray-200 rounded-xl hover:border-primary-300 hover:shadow-md transition-all overflow-hidden"
+                  >
+                    {/* 资源信息区 */}
+                    <div className="p-3">
+                      <div className="flex items-start gap-3 mb-3">
+                        <div className={`w-12 h-12 rounded-xl ${bgColorClass} flex items-center justify-center flex-shrink-0`}>
+                          <IconComponent size={20} className={textColorClass} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-gray-800 mb-1 leading-snug">
+                            {resource.title}
+                          </p>
+                          <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed mb-2">
+                            {resource.description}
+                          </p>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className={`text-xs px-2 py-0.5 rounded-full ${tagBgClass} ${tagTextClass} font-medium`}>
+                              {resource.type === 'video' ? '视频' : resource.type === 'presentation' ? 'PPT' : 'Word'}
+                            </span>
+                            {resource.duration && (
+                              <>
+                                <span className="text-gray-300">•</span>
+                                <span className="text-xs text-gray-400 flex items-center gap-1">
+                                  <Clock size={10} />
+                                  {resource.duration}
+                                </span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 快捷操作按钮 */}
+                      <div className="flex gap-2">
+                        {resource.type === 'video' ? (
+                          <button
+                            onClick={() => handleResourceClick(resource)}
+                            className={`flex-1 px-3 py-2 bg-${colorClass}-600 ${hoverBgClass} text-white text-xs font-medium rounded-lg transition-colors flex items-center justify-center gap-1.5`}
+                          >
+                            <Play size={14} />
+                            播放视频
+                          </button>
+                        ) : (
+                          <>
+                            <a
+                              href={`/${resource.path}`}
+                              download
+                              onClick={(e) => e.stopPropagation()}
+                              className={`flex-1 px-3 py-2 bg-${colorClass}-600 ${hoverBgClass} text-white text-xs font-medium rounded-lg transition-colors flex items-center justify-center gap-1.5`}
+                            >
+                              <Download size={14} />
+                              下载
+                            </a>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                window.open(`/${resource.path}`, '_blank');
+                              }}
+                              className="flex-1 px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-medium rounded-lg transition-colors flex items-center justify-center gap-1.5"
+                            >
+                              <Eye size={14} />
+                              查看
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-700 truncate">{resource.title}</p>
-                    <p className="text-xs text-gray-400">{resource.duration || `${resource.pages}页`}</p>
-                  </div>
-                  <ChevronRight size={16} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
@@ -638,30 +910,41 @@ function LeftPanel({
             {/* 任务列表 */}
             <div className="flex-1 overflow-y-auto p-3 space-y-2">
               {config.tasks.map((task) => {
-                const isCompleted = completedTasks.has(task.id);
+                const isCompleted = completedTasks.has(task.id) || task.status === 'completed';
+                const isLocked = task.status === 'locked';
                 return (
                   <div
                     key={task.id}
-                    onClick={() => onTaskClick(task)}
-                    className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all group border-2 ${
-                      isCompleted
-                        ? 'border-green-300 bg-green-50 hover:bg-green-100'
-                        : 'border-gray-200 bg-white hover:border-primary-300 hover:bg-primary-50 hover:shadow-md'
+                    onClick={() => !isLocked && onTaskClick(task)}
+                    className={`flex items-center gap-3 p-3 rounded-xl transition-all group border-2 ${
+                      isLocked
+                        ? 'border-gray-200 bg-gray-50 opacity-50 cursor-not-allowed'
+                        : isCompleted
+                        ? 'border-green-300 bg-green-50 hover:bg-green-100 cursor-pointer'
+                        : 'border-gray-200 bg-white hover:border-primary-300 hover:bg-primary-50 hover:shadow-md cursor-pointer'
                     }`}
                   >
                     <div
                       className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                        isCompleted
+                        isLocked
+                          ? 'bg-gray-200'
+                          : isCompleted
                           ? 'bg-green-100'
                           : task.type === 'quiz'
                           ? 'bg-amber-100'
+                          : task.type === 'reflection'
+                          ? 'bg-purple-100'
                           : 'bg-primary-100'
                       }`}
                     >
-                      {isCompleted ? (
+                      {isLocked ? (
+                        <AlertCircle size={18} className="text-gray-400" />
+                      ) : isCompleted ? (
                         <Check size={18} className="text-green-600" />
                       ) : task.type === 'quiz' ? (
                         <Zap size={18} className="text-amber-600" />
+                      ) : task.type === 'reflection' ? (
+                        <Brain size={18} className="text-purple-600" />
                       ) : (
                         <FileEdit size={18} className="text-primary-600" />
                       )}
@@ -670,16 +953,21 @@ function LeftPanel({
                       <p className={`text-sm font-medium truncate ${isCompleted ? 'text-green-700 line-through' : 'text-gray-700'}`}>
                         {task.title}
                       </p>
-                      <p className="text-xs text-gray-400">{task.type === 'quiz' ? '测验' : '作业'}</p>
+                      <p className="text-xs text-gray-400">
+                        {task.type === 'quiz' ? '测验' : task.type === 'reflection' ? '反思' : '作业'}
+                      </p>
                     </div>
                     <div className="flex items-center gap-2">
-                      {!isCompleted && task.status === 'required' && (
+                      {!isCompleted && !isLocked && task.required && (
                         <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-medium">必修</span>
+                      )}
+                      {isLocked && (
+                        <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full font-medium">未解锁</span>
                       )}
                       {isCompleted && (
                         <span className="text-xs bg-green-100 text-green-600 px-2 py-0.5 rounded-full font-medium">已完成</span>
                       )}
-                      <ChevronRight size={16} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      {!isLocked && <ChevronRight size={16} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />}
                     </div>
                   </div>
                 );
@@ -714,10 +1002,18 @@ function ResourceViewer({
   setIsFullscreen: (fullscreen: boolean) => void;
   onBack: () => void;
 }) {
+  // 根据资源类型确定头部颜色
+  const getHeaderColor = () => {
+    if (resource.type === 'video') return 'from-red-500 to-red-600';
+    if (resource.type === 'presentation') return 'from-orange-500 to-orange-600';
+    if (resource.type === 'document') return 'from-blue-500 to-blue-600';
+    return 'from-primary-500 to-primary-600';
+  };
+
   return (
     <div className={`flex flex-col h-full ${isFullscreen ? 'fixed inset-0 z-50 bg-white' : ''}`}>
       {/* 头部导航 */}
-      <div className={`p-4 border-b border-gray-200 bg-gradient-to-r from-${resource.color}-500 to-${resource.color}-600 text-white flex items-center justify-between`}>
+      <div className={`p-4 border-b border-gray-200 bg-gradient-to-r ${getHeaderColor()} text-white flex items-center justify-between`}>
         <div className="flex items-center gap-3 flex-1 min-w-0">
           <button
             onClick={onBack}
@@ -743,42 +1039,107 @@ function ResourceViewer({
       <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
         {resource.type === 'video' && (
           <div className="space-y-4">
-            <div className="aspect-video bg-gray-900 rounded-xl flex items-center justify-center">
-              <div className="text-center text-white">
-                <Video size={48} className="mx-auto mb-2 opacity-50" />
-                <p className="text-sm opacity-70">视频播放器</p>
-                <p className="text-xs opacity-50 mt-1">时长: {resource.duration}</p>
+            <div className="aspect-video bg-gray-900 rounded-xl overflow-hidden">
+              <video
+                controls
+                className="w-full h-full"
+                src={`/${resource.path}`}
+              >
+                <source src={`/${resource.path}`} type="video/mp4" />
+                您的浏览器不支持视频播放
+              </video>
+            </div>
+            <div className="bg-white rounded-lg p-4 border border-gray-200">
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <Clock size={14} />
+                <span>{resource.duration}</span>
               </div>
             </div>
           </div>
         )}
 
-        {resource.type === 'pdf' && (
+        {resource.type === 'document' && (
           <div className="space-y-4">
-            <div className="bg-white rounded-xl p-8 text-center border-2 border-dashed border-gray-300 min-h-[400px] flex flex-col items-center justify-center">
-              <FileText size={48} className="mx-auto mb-3 text-gray-400" />
-              <p className="text-sm text-gray-600">PDF 文档阅读器</p>
-              <p className="text-xs text-gray-400 mt-1">共 {resource.pages} 页</p>
+            <div className="bg-white rounded-xl p-8 border border-gray-200 min-h-[400px]">
+              <div className="text-center mb-6">
+                <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <FileText size={32} className="text-blue-600" />
+                </div>
+                <h4 className="text-lg font-bold text-gray-800 mb-2">{resource.title}</h4>
+                <p className="text-sm text-gray-600 mb-4">{resource.description}</p>
+                <div className="flex items-center justify-center gap-2 text-xs text-gray-500">
+                  <span className="px-2 py-1 bg-blue-50 text-blue-600 rounded">Word 文档</span>
+                  <span>•</span>
+                  <span>{resource.duration}</span>
+                </div>
+              </div>
+
+              <div className="max-w-md mx-auto space-y-3">
+                <a
+                  href={`/${resource.path}`}
+                  download
+                  className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
+                >
+                  <Download size={16} />
+                  下载文档
+                </a>
+                <button
+                  onClick={() => window.open(`/${resource.path}`, '_blank')}
+                  className="w-full px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
+                >
+                  <Eye size={16} />
+                  在新窗口打开
+                </button>
+              </div>
+
+              <div className="mt-6 pt-6 border-t border-gray-200">
+                <p className="text-xs text-gray-500 text-center">
+                  提示：Word 文档需要下载后使用 Microsoft Word 或 WPS 等软件打开查看
+                </p>
+              </div>
             </div>
           </div>
         )}
 
-        {resource.type === 'ppt' && (
+        {resource.type === 'presentation' && (
           <div className="space-y-4">
-            <div className="bg-white rounded-xl p-8 text-center border-2 border-dashed border-gray-300 min-h-[400px] flex flex-col items-center justify-center">
-              <FileSpreadsheet size={48} className="mx-auto mb-3 text-gray-400" />
-              <p className="text-sm text-gray-600">PPT 演示文稿</p>
-              <p className="text-xs text-gray-400 mt-1">共 {resource.pages} 页</p>
-            </div>
-          </div>
-        )}
+            <div className="bg-white rounded-xl p-8 border border-gray-200 min-h-[400px]">
+              <div className="text-center mb-6">
+                <div className="w-16 h-16 bg-orange-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <FileSpreadsheet size={32} className="text-orange-600" />
+                </div>
+                <h4 className="text-lg font-bold text-gray-800 mb-2">{resource.title}</h4>
+                <p className="text-sm text-gray-600 mb-4">{resource.description}</p>
+                <div className="flex items-center justify-center gap-2 text-xs text-gray-500">
+                  <span className="px-2 py-1 bg-orange-50 text-orange-600 rounded">PPT 演示文稿</span>
+                  <span>•</span>
+                  <span>{resource.duration}</span>
+                </div>
+              </div>
 
-        {resource.type === 'web' && (
-          <div className="space-y-4">
-            <div className="bg-white rounded-xl p-8 text-center border-2 border-dashed border-gray-300 min-h-[400px] flex flex-col items-center justify-center">
-              <Globe size={48} className="mx-auto mb-3 text-gray-400" />
-              <p className="text-sm text-gray-600">外部网页</p>
-              <p className="text-xs text-gray-400 mt-2 break-all">{resource.url}</p>
+              <div className="max-w-md mx-auto space-y-3">
+                <a
+                  href={`/${resource.path}`}
+                  download
+                  className="w-full px-4 py-3 bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
+                >
+                  <Download size={16} />
+                  下载演示文稿
+                </a>
+                <button
+                  onClick={() => window.open(`/${resource.path}`, '_blank')}
+                  className="w-full px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
+                >
+                  <Eye size={16} />
+                  在新窗口打开
+                </button>
+              </div>
+
+              <div className="mt-6 pt-6 border-t border-gray-200">
+                <p className="text-xs text-gray-500 text-center">
+                  提示：PPT 演示文稿需要下载后使用 Microsoft PowerPoint 或 WPS 等软件打开查看
+                </p>
+              </div>
             </div>
           </div>
         )}
@@ -798,9 +1159,9 @@ function CenterPanel({
   onSendMessage,
   width,
   expandedTask,
-  onCloseTask,
   onCompleteTask,
   completedTasks,
+  isLoading,
 }: any) {
   return (
     <div style={{ width: `${width}%` }} className="flex flex-col bg-gray-50">
@@ -895,6 +1256,18 @@ function CenterPanel({
                   {message.content}
                 </p>
               </div>
+
+              {/* 嵌入的任务卡片 (作为智能体消息的一部分) */}
+              {message.role === 'assistant' && message.embeddedTask && (
+                <div className="mt-2">
+                  <TaskExpandedCard
+                    task={message.embeddedTask}
+                    onClose={() => {}}
+                    onComplete={onCompleteTask}
+                    isCompleted={completedTasks.has(message.embeddedTask.id)}
+                  />
+                </div>
+              )}
             </div>
           </div>
         ))}
@@ -940,15 +1313,6 @@ function CenterPanel({
           </div>
         )}
 
-        {/* 展开的任务卡片 - 在对话最下方 */}
-        {expandedTask && (
-          <TaskExpandedCard
-            task={expandedTask}
-            onClose={onCloseTask}
-            onComplete={onCompleteTask}
-            isCompleted={completedTasks.has(expandedTask.id)}
-          />
-        )}
       </div>
 
       {/* 输入框 */}
@@ -958,13 +1322,15 @@ function CenterPanel({
             type="text"
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && onSendMessage()}
-            placeholder="输入你的问题或想法..."
-            className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-4 pr-12 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            onKeyPress={(e) => e.key === 'Enter' && !isLoading && onSendMessage()}
+            placeholder={isLoading ? "AI正在思考..." : "输入你的问题或想法..."}
+            disabled={isLoading}
+            className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-4 pr-12 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
           />
           <button
             onClick={onSendMessage}
-            className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+            disabled={isLoading}
+            className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Send size={16} />
           </button>
@@ -975,25 +1341,21 @@ function CenterPanel({
 }
 
 // 能力成长面板组件
-function CompetencyGrowthPanel() {
+function CompetencyGrowthPanel({ competencyProfile }: {
+  competencyProfile: {
+    critical_thinking: number;
+    information_synthesis: number;
+    metacognition: number;
+  };
+}) {
   const [showCrossCoursProfile, setShowCrossCoursProfile] = useState(false);
 
-  // 获取当前课程的能力评估（合并教师指定和AI检测的能力）
-  const currentCompetencies: Partial<Record<CompetencyType, CompetencyRating>> = {};
-
-  // 从assignedCompetencies提取
-  Object.entries(mockCourseCompetencyReport.assignedCompetencies).forEach(([type, assessment]) => {
-    if (assessment) {
-      currentCompetencies[type as CompetencyType] = assessment.rating as CompetencyRating;
-    }
-  });
-
-  // 从detectedCompetencies提取（如果没有在assigned中）
-  Object.entries(mockCourseCompetencyReport.detectedCompetencies).forEach(([type, assessment]) => {
-    if (assessment && !currentCompetencies[type as CompetencyType]) {
-      currentCompetencies[type as CompetencyType] = assessment.rating as CompetencyRating;
-    }
-  });
+  // 将数字评分转换为CompetencyRating格式（1-4星级）
+  const currentCompetencies: Partial<Record<CompetencyType, CompetencyRating>> = {
+    critical_thinking: Math.round(competencyProfile.critical_thinking) as CompetencyRating,
+    information_synthesis: Math.round(competencyProfile.information_synthesis) as CompetencyRating,
+    metacognition: Math.round(competencyProfile.metacognition) as CompetencyRating,
+  };
 
   return (
     <div className="space-y-4">
@@ -1475,14 +1837,14 @@ function EnhancedNotesPanel() {
 }
 
 // 右侧面板 - 学习工作室
-function RightPanel({ config, rightTab, setRightTab, width, elapsedTime, tasks, isNotePanelOpen, setIsNotePanelOpen }: any) {
+function RightPanel({ config, rightTab, setRightTab, width, elapsedTime, tasks, isNotePanelOpen, setIsNotePanelOpen, competencyProfile }: any) {
   const formatMinutes = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const completedTasks = tasks?.filter((t: Task) => t.completed)?.length || 0;
+  const completedTasks = tasks?.filter((t: Task) => t.status === 'completed')?.length || 0;
   const totalTasks = tasks?.length || 1;
   const completionRate = Math.round((completedTasks / totalTasks) * 100);
 
@@ -1528,7 +1890,7 @@ function RightPanel({ config, rightTab, setRightTab, width, elapsedTime, tasks, 
           <EnhancedNotesPanel />
         ) : (
           <div className="flex-1 overflow-y-auto p-3">
-            <CompetencyGrowthPanel />
+            <CompetencyGrowthPanel competencyProfile={competencyProfile} />
           </div>
         )}
       </div>

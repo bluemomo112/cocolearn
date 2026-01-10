@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 
@@ -58,6 +58,79 @@ const todayTasks = [
   { id: '3', title: '回复学生问题 (3条)', priority: 'low', time: '16:00', done: true },
   { id: '4', title: '参加教研组会议', priority: 'medium', time: '15:00', done: false },
 ]
+
+// ============================================
+// Teacher Competency Insights Type Definitions
+// ============================================
+
+// Competency dimension types (aligned with results-view.tsx)
+type CompetencyType =
+  | 'critical_thinking'      // 批判性思维
+  | 'information_synthesis'  // 信息整合
+  | 'metacognition'          // 元认知
+  | 'question_quality'       // 提问质量
+  | 'creativity'             // 创造性
+  | 'persistence';           // 坚持性
+
+// API Response: Main data structure for teacher competency insights
+interface TeacherCompetencyInsights {
+  distribution: Record<CompetencyType, CompetencyDistributionData>;
+  trends: Record<CompetencyType, CourseTrendPoint[]>;
+  alerts: {
+    lowPerformance: StudentAlertData[];
+    highPerformance: StudentAlertData[];
+  };
+  insights: AIInsight[];
+}
+
+// Distribution data for a single competency
+interface CompetencyDistributionData {
+  source: 'teacher_assigned' | 'ai_detected';
+  level1: number;  // ★ 的学生百分比
+  level2: number;  // ★★
+  level3: number;  // ★★★
+  level4: number;  // ★★★★
+  avgRating: number;  // 班级平均分 1-4
+  totalStudents: number;
+  studentsDetected?: number;  // 仅AI识别维度需要
+}
+
+// Single point in cross-course trend timeline
+interface CourseTrendPoint {
+  courseId: string;
+  courseName: string;
+  date: string;
+  distribution: {
+    level1: number;
+    level2: number;
+    level3: number;
+    level4: number;
+  };
+}
+
+// Student alert data (low/high performance)
+interface StudentAlertData {
+  studentId: string;
+  name: string;
+  rating?: number;  // 单个能力评级
+  competencyType?: CompetencyType;  // 单个能力类型
+  competencyTypes?: CompetencyType[];  // 多个能力类型(高表现学生)
+  avgRating?: number;  // 平均评级
+}
+
+// AI-generated insight
+interface AIInsight {
+  type: 'trend' | 'alert';
+  competency: CompetencyType;
+  message: string;
+}
+
+// Filter options for competency insights
+interface CompetencyFilterOptions {
+  courseIds?: string[];
+  timeRange?: { start: Date; end: Date };
+  studentGroup?: 'all' | 'active' | 'inactive';
+}
 
 export default function TeacherDashboard() {
   const [activeTab, setActiveTab] = useState<'my-courses' | 'insights' | 'knowledge' | 'growth'>('my-courses')
@@ -566,8 +639,672 @@ function TeachingInsights() {
     },
   ]
 
+  // ============================================
+  // Competency Insights State & Handlers
+  // ============================================
+  const [competencyFilters, setCompetencyFilters] = useState<CompetencyFilterOptions>({
+    courseIds: [],
+    studentGroup: 'all',
+  })
+
+  const [showFilterPanel, setShowFilterPanel] = useState(false)
+
+  const handleFilterChange = (newFilters: Partial<CompetencyFilterOptions>) => {
+    setCompetencyFilters({ ...competencyFilters, ...newFilters })
+  }
+
+  const handleResetFilters = () => {
+    setCompetencyFilters({
+      courseIds: [],
+      studentGroup: 'all',
+    })
+  }
+
+  // ============================================
+  // Filtered Data Computation with useMemo
+  // ============================================
+
+  // 1. Filtered Competency Distributions
+  // Note: Current mock data represents class-level aggregate without courseId,
+  // so we return as-is. In production, this would filter by selected courses.
+  const filteredCompetencyDistributions = useMemo(() => {
+    return mockCompetencyDistributions;
+  }, [competencyFilters.courseIds]);
+
+  // 2. Filtered Student Alerts (by studentGroup)
+  const filteredAlerts = useMemo(() => {
+    if (competencyFilters.studentGroup === 'all') {
+      return mockAlerts;
+    }
+
+    // Simulate active/inactive filtering based on studentId
+    // In production, this would use actual student activity data
+    const isActive = (studentId: string) => parseInt(studentId) < 10;
+
+    return {
+      lowPerformance: mockAlerts.lowPerformance.filter((alert) =>
+        competencyFilters.studentGroup === 'active' ? isActive(alert.studentId) : !isActive(alert.studentId)
+      ),
+      highPerformance: mockAlerts.highPerformance.filter((alert) =>
+        competencyFilters.studentGroup === 'active' ? isActive(alert.studentId) : !isActive(alert.studentId)
+      ),
+    };
+  }, [competencyFilters.studentGroup]);
+
+  // 3. Filtered Competency Trends (by courseIds and timeRange)
+  const filteredCompetencyTrends = useMemo(() => {
+    const result: Record<CompetencyType, CourseTrendPoint[]> = {
+      critical_thinking: [],
+      information_synthesis: [],
+      metacognition: [],
+      question_quality: [],
+      creativity: [],
+      persistence: [],
+    };
+
+    (Object.keys(mockCompetencyTrends) as CompetencyType[]).forEach((competencyType) => {
+      let trends = mockCompetencyTrends[competencyType];
+
+      // Filter by courseIds if specified
+      if (competencyFilters.courseIds && competencyFilters.courseIds.length > 0) {
+        trends = trends.filter((point) => competencyFilters.courseIds!.includes(point.courseId));
+      }
+
+      // Filter by timeRange if specified
+      if (competencyFilters.timeRange) {
+        const { start, end } = competencyFilters.timeRange;
+        trends = trends.filter((point) => {
+          const pointDate = new Date(point.date + '-01'); // Append day to YYYY-MM format
+          return pointDate >= start && pointDate <= end;
+        });
+      }
+
+      result[competencyType] = trends;
+    });
+
+    return result;
+  }, [competencyFilters.courseIds, competencyFilters.timeRange]);
+
+  // CompetencyFilterBar Component
+  const CompetencyFilterBar = () => {
+    return (
+      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
+        <button
+          onClick={() => setShowFilterPanel(!showFilterPanel)}
+          className="w-full px-5 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-primary-100 flex items-center justify-center">
+              <svg className="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+              </svg>
+            </div>
+            <div className="text-left">
+              <h3 className="font-semibold text-gray-800">能力洞察筛选器</h3>
+              <p className="text-xs text-gray-500">
+                {competencyFilters.courseIds && competencyFilters.courseIds.length > 0
+                  ? `已选 ${competencyFilters.courseIds.length} 门课程`
+                  : '全部课程'}
+                {' · '}
+                {competencyFilters.studentGroup === 'all' ? '全部学生' :
+                 competencyFilters.studentGroup === 'active' ? '活跃学生' : '不活跃学生'}
+              </p>
+            </div>
+          </div>
+          <svg
+            className={`w-5 h-5 text-gray-400 transition-transform ${showFilterPanel ? 'rotate-180' : ''}`}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+
+        {showFilterPanel && (
+          <div className="px-5 pb-5 pt-2 border-t border-gray-100 space-y-4 animate-fade-in">
+            {/* Course Selection */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                课程筛选（可多选）
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {recentCourses.map((course) => {
+                  const isSelected = competencyFilters.courseIds?.includes(course.id) || false
+                  return (
+                    <button
+                      key={course.id}
+                      onClick={() => {
+                        const current = competencyFilters.courseIds || []
+                        const updated = isSelected
+                          ? current.filter(id => id !== course.id)
+                          : [...current, course.id]
+                        handleFilterChange({ courseIds: updated })
+                      }}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                        isSelected
+                          ? 'bg-primary-500 text-white shadow-sm'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                    >
+                      {course.title}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Student Group Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                学生群体
+              </label>
+              <div className="flex gap-2">
+                {[
+                  { value: 'all', label: '全部学生' },
+                  { value: 'active', label: '活跃学生' },
+                  { value: 'inactive', label: '不活跃学生' },
+                ].map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => handleFilterChange({ studentGroup: option.value as 'all' | 'active' | 'inactive' })}
+                    className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      competencyFilters.studentGroup === option.value
+                        ? 'bg-primary-500 text-white shadow-sm'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Time Range Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                时间范围
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">开始日期</label>
+                  <input
+                    type="date"
+                    value={competencyFilters.timeRange?.start.toISOString().split('T')[0] || ''}
+                    onChange={(e) => {
+                      const start = new Date(e.target.value)
+                      handleFilterChange({
+                        timeRange: {
+                          start,
+                          end: competencyFilters.timeRange?.end || new Date(),
+                        },
+                      })
+                    }}
+                    className="w-full bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">结束日期</label>
+                  <input
+                    type="date"
+                    value={competencyFilters.timeRange?.end.toISOString().split('T')[0] || ''}
+                    onChange={(e) => {
+                      const end = new Date(e.target.value)
+                      handleFilterChange({
+                        timeRange: {
+                          start: competencyFilters.timeRange?.start || new Date(),
+                          end,
+                        },
+                      })
+                    }}
+                    className="w-full bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 outline-none"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                onClick={handleResetFilters}
+                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors"
+              >
+                重置筛选
+              </button>
+              <button
+                onClick={() => setShowFilterPanel(false)}
+                className="px-4 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors shadow-sm"
+              >
+                应用筛选
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  // ============================================
+  // Mock Data for Competency Insights
+  // ============================================
+
+  // Generate mock competency distribution data
+  const mockCompetencyDistributions: Record<CompetencyType, CompetencyDistributionData> = {
+    critical_thinking: {
+      source: 'teacher_assigned',
+      level1: 8,    // 8 students with ★
+      level2: 22,   // 22 students with ★★
+      level3: 38,   // 38 students with ★★★
+      level4: 17,   // 17 students with ★★★★
+      avgRating: 2.8,
+      totalStudents: 85,
+    },
+    information_synthesis: {
+      source: 'teacher_assigned',
+      level1: 5,
+      level2: 18,
+      level3: 42,
+      level4: 20,
+      avgRating: 2.9,
+      totalStudents: 85,
+    },
+    metacognition: {
+      source: 'ai_detected',
+      level1: 12,
+      level2: 25,
+      level3: 30,
+      level4: 18,
+      avgRating: 2.6,
+      totalStudents: 85,
+      studentsDetected: 52, // AI只在52名学生中检测到元认知表现
+    },
+  };
+
+  // Mock student alert data
+  const mockAlerts = {
+    lowPerformance: [
+      { studentId: '3', name: '王浩宇', competencyType: 'critical_thinking' as CompetencyType, rating: 1 },
+      { studentId: '5', name: '陈思远', competencyType: 'metacognition' as CompetencyType, rating: 2 },
+      { studentId: '12', name: '赵明远', competencyType: 'information_synthesis' as CompetencyType, rating: 1 },
+      { studentId: '18', name: '孙雨晴', competencyType: 'critical_thinking' as CompetencyType, rating: 2 },
+    ],
+    highPerformance: [
+      { studentId: '6', name: '赵梓涵', competencyTypes: ['critical_thinking', 'information_synthesis', 'metacognition'] as CompetencyType[], avgRating: 4 },
+      { studentId: '2', name: '李思琪', competencyTypes: ['information_synthesis', 'metacognition'] as CompetencyType[], avgRating: 3.5 },
+      { studentId: '1', name: '张晓明', competencyTypes: ['critical_thinking', 'metacognition'] as CompetencyType[], avgRating: 3.8 },
+    ],
+  };
+
+  // Mock cross-course trend data
+  const mockCompetencyTrends: Record<CompetencyType, CourseTrendPoint[]> = {
+    critical_thinking: [
+      { courseId: 'geo_01', courseName: '地理-气候变化', date: '2023-11', distribution: { level1: 12, level2: 28, level3: 32, level4: 13 } },
+      { courseId: 'bio_01', courseName: '生物-生态系统', date: '2023-12', distribution: { level1: 10, level2: 25, level3: 35, level4: 15 } },
+      { courseId: 'current', courseName: '水循环与气候变化', date: '2024-01', distribution: { level1: 8, level2: 22, level3: 38, level4: 17 } },
+    ],
+    information_synthesis: [
+      { courseId: 'geo_01', courseName: '地理-气候变化', date: '2023-11', distribution: { level1: 8, level2: 22, level3: 38, level4: 17 } },
+      { courseId: 'phy_01', courseName: '物理-能量转换', date: '2023-12', distribution: { level1: 7, level2: 20, level3: 40, level4: 18 } },
+      { courseId: 'current', courseName: '水循环与气候变化', date: '2024-01', distribution: { level1: 5, level2: 18, level3: 42, level4: 20 } },
+    ],
+    metacognition: [
+      { courseId: 'math_01', courseName: '数学-函数思维', date: '2023-10', distribution: { level1: 15, level2: 30, level3: 28, level4: 12 } },
+      { courseId: 'bio_01', courseName: '生物-生态系统', date: '2023-12', distribution: { level1: 13, level2: 27, level3: 30, level4: 15 } },
+      { courseId: 'current', courseName: '水循环与气候变化', date: '2024-01', distribution: { level1: 12, level2: 25, level3: 30, level4: 18 } },
+    ],
+    question_quality: [],
+    creativity: [],
+    persistence: [],
+  };
+
   return (
     <div className="space-y-6">
+      {/* Competency Filter Bar */}
+      <CompetencyFilterBar />
+
+      {/* Competency Distribution Section */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="p-5 border-b border-gray-200 bg-gradient-to-r from-primary-50 to-accent-50">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+              <svg className="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+              能力维度班级分布
+            </h3>
+            <span className="text-xs text-gray-600 bg-white px-3 py-1 rounded-full border border-primary-200">
+              跨学科核心能力评估
+            </span>
+          </div>
+        </div>
+
+        <div className="p-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {(Object.keys(filteredCompetencyDistributions) as CompetencyType[]).map((competencyType) => {
+              const data = filteredCompetencyDistributions[competencyType];
+
+              // Transform to ClassCompetencyDistribution format for the reusable component
+              const distribution: ClassCompetencyDistribution = {
+                competencyType: competencyType as ResultsCompetencyType,
+                distribution: {
+                  star1: data.level1,
+                  star2: data.level2,
+                  star3: data.level3,
+                  star4: data.level4,
+                },
+                averageStars: data.avgRating,
+                totalStudents: data.totalStudents,
+              };
+
+              return (
+                <CompetencyDistributionChart
+                  key={competencyType}
+                  distribution={distribution}
+                />
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Student Alert Cards */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Low Performance Alerts */}
+        <div className="bg-white rounded-2xl shadow-sm border border-red-200 overflow-hidden">
+          <div className="p-5 border-b border-red-100 bg-gradient-to-r from-red-50 to-amber-50">
+            <h3 className="text-lg font-bold text-red-800 flex items-center gap-2">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              需要关注的学生
+            </h3>
+            <p className="text-xs text-red-600 mt-1">在关键能力维度表现较弱，建议重点辅导</p>
+          </div>
+          <div className="p-5 space-y-3">
+            {filteredAlerts.lowPerformance.map((alert) => {
+              const competencyDef = {
+                critical_thinking: { name: '批判性思维', icon: '🧠' },
+                information_synthesis: { name: '信息整合', icon: '🔗' },
+                metacognition: { name: '元认知', icon: '👁️' },
+                question_quality: { name: '提问质量', icon: '❓' },
+                creativity: { name: '创造性', icon: '💡' },
+                persistence: { name: '坚持性', icon: '🎯' },
+              }[alert.competencyType!];
+
+              return (
+                <div key={alert.studentId} className="flex items-center gap-3 p-3 bg-red-50/50 rounded-xl hover:bg-red-50 transition-colors cursor-pointer border border-red-100">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-red-500 to-orange-500 flex items-center justify-center text-white text-sm font-medium flex-shrink-0 shadow-sm">
+                    {alert.name.charAt(0)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900">{alert.name}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-xs text-gray-600 flex items-center gap-1">
+                        {competencyDef.icon} {competencyDef.name}
+                      </span>
+                      <div className="flex items-center gap-0.5">
+                        {[...Array(alert.rating)].map((_, i) => (
+                          <span key={i} className="text-amber-400 text-xs">★</span>
+                        ))}
+                        {[...Array(4 - alert.rating!)].map((_, i) => (
+                          <span key={i} className="text-gray-300 text-xs">★</span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* High Performance Highlights */}
+        <div className="bg-white rounded-2xl shadow-sm border border-emerald-200 overflow-hidden">
+          <div className="p-5 border-b border-emerald-100 bg-gradient-to-r from-emerald-50 to-teal-50">
+            <h3 className="text-lg font-bold text-emerald-800 flex items-center gap-2">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+              </svg>
+              表现优异的学生
+            </h3>
+            <p className="text-xs text-emerald-600 mt-1">在多个能力维度表现突出，值得表扬与激励</p>
+          </div>
+          <div className="p-5 space-y-3">
+            {filteredAlerts.highPerformance.map((alert) => {
+              const competencyDefs = {
+                critical_thinking: { name: '批判性思维', icon: '🧠' },
+                information_synthesis: { name: '信息整合', icon: '🔗' },
+                metacognition: { name: '元认知', icon: '👁️' },
+                question_quality: { name: '提问质量', icon: '❓' },
+                creativity: { name: '创造性', icon: '💡' },
+                persistence: { name: '坚持性', icon: '🎯' },
+              };
+
+              return (
+                <div key={alert.studentId} className="flex items-center gap-3 p-3 bg-emerald-50/50 rounded-xl hover:bg-emerald-50 transition-colors cursor-pointer border border-emerald-100">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center text-white text-sm font-medium flex-shrink-0 shadow-sm">
+                    {alert.name.charAt(0)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900">{alert.name}</p>
+                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                      <span className="text-xs text-emerald-700 font-medium flex items-center gap-0.5">
+                        平均 {alert.avgRating?.toFixed(1)}⭐
+                      </span>
+                      <div className="flex flex-wrap gap-1">
+                        {alert.competencyTypes?.slice(0, 2).map((type) => (
+                          <span key={type} className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded font-medium">
+                            {competencyDefs[type].icon}
+                          </span>
+                        ))}
+                        {alert.competencyTypes && alert.competencyTypes.length > 2 && (
+                          <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded font-medium">
+                            +{alert.competencyTypes.length - 2}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Cross-Course Competency Trends */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="p-5 border-b border-gray-200 bg-gradient-to-r from-cyan-50 to-blue-50">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+              <svg className="w-5 h-5 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+              </svg>
+              跨课程能力发展趋势
+            </h3>
+            <span className="text-xs text-gray-600 bg-white px-3 py-1 rounded-full border border-cyan-200">
+              追踪学生能力成长轨迹
+            </span>
+          </div>
+        </div>
+
+        <div className="p-6">
+          <div className="space-y-6">
+            {(Object.keys(filteredCompetencyTrends) as CompetencyType[])
+              .filter((type) => filteredCompetencyTrends[type].length > 0)
+              .map((competencyType) => {
+                const trends = filteredCompetencyTrends[competencyType];
+                const competencyDef = {
+                  critical_thinking: { name: '批判性思维', icon: '🧠', color: 'blue' },
+                  information_synthesis: { name: '信息整合', icon: '🔗', color: 'purple' },
+                  metacognition: { name: '元认知', icon: '👁️', color: 'indigo' },
+                  question_quality: { name: '提问质量', icon: '❓', color: 'teal' },
+                  creativity: { name: '创造性', icon: '💡', color: 'amber' },
+                  persistence: { name: '坚持性', icon: '🎯', color: 'rose' },
+                }[competencyType];
+
+                // Calculate class average stars for each course
+                const courseAverages = trends.map((point) => {
+                  const total = point.distribution.level1 + point.distribution.level2 + point.distribution.level3 + point.distribution.level4;
+                  const avgStars = (
+                    point.distribution.level1 * 1 +
+                    point.distribution.level2 * 2 +
+                    point.distribution.level3 * 3 +
+                    point.distribution.level4 * 4
+                  ) / total;
+                  return { ...point, avgStars, total };
+                });
+
+                // Determine overall trend
+                const firstAvg = courseAverages[0].avgStars;
+                const lastAvg = courseAverages[courseAverages.length - 1].avgStars;
+                const trendDirection = lastAvg > firstAvg + 0.1 ? 'rising' : lastAvg < firstAvg - 0.1 ? 'declining' : 'stable';
+
+                return (
+                  <div key={competencyType} className="bg-gradient-to-br from-cyan-50/30 to-blue-50/30 rounded-xl p-5 border border-cyan-200">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-12 h-12 rounded-xl bg-${competencyDef.color}-100 flex items-center justify-center text-2xl`}>
+                          {competencyDef.icon}
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-gray-800">{competencyDef.name}</h4>
+                          <p className="text-xs text-gray-500">
+                            {courseAverages.length} 门课程 ·
+                            {trendDirection === 'rising' ? (
+                              <span className="text-green-600 ml-1">↗ 上升趋势</span>
+                            ) : trendDirection === 'declining' ? (
+                              <span className="text-red-600 ml-1">↘ 下降趋势</span>
+                            ) : (
+                              <span className="text-gray-600 ml-1">→ 稳定表现</span>
+                            )}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs text-gray-500">当前班级平均</p>
+                        <p className="text-lg font-bold text-cyan-700">{lastAvg.toFixed(1)} ⭐</p>
+                      </div>
+                    </div>
+
+                    {/* Timeline */}
+                    <div className="relative">
+                      {/* Progress Line */}
+                      <div className="absolute top-8 left-0 right-0 h-0.5 bg-gradient-to-r from-cyan-200 via-cyan-300 to-cyan-200"></div>
+
+                      {/* Course Points */}
+                      <div className="flex justify-between items-start relative">
+                        {courseAverages.map((course, idx) => {
+                          const progressPercent = ((course.avgStars - 1) / 3) * 100; // 1-4 stars mapped to 0-100%
+
+                          return (
+                            <div key={course.courseId} className="flex flex-col items-center flex-1 relative">
+                              {/* Connection Line to Next Point */}
+                              {idx < courseAverages.length - 1 && (
+                                <div
+                                  className={`absolute top-8 left-1/2 w-full h-1 ${
+                                    courseAverages[idx + 1].avgStars > course.avgStars
+                                      ? 'bg-gradient-to-r from-cyan-400 to-green-400'
+                                      : courseAverages[idx + 1].avgStars < course.avgStars
+                                      ? 'bg-gradient-to-r from-cyan-400 to-red-400'
+                                      : 'bg-cyan-400'
+                                  }`}
+                                  style={{ zIndex: 1 }}
+                                ></div>
+                              )}
+
+                              {/* Course Point */}
+                              <div className="relative z-10 mb-3">
+                                <div
+                                  className={`w-16 h-16 rounded-full flex flex-col items-center justify-center border-4 border-white shadow-lg ${
+                                    idx === courseAverages.length - 1
+                                      ? 'bg-gradient-to-br from-cyan-500 to-blue-500'
+                                      : 'bg-gradient-to-br from-cyan-400 to-blue-400'
+                                  }`}
+                                >
+                                  <span className="text-white text-lg font-bold">{course.avgStars.toFixed(1)}</span>
+                                  <span className="text-white text-[10px]">⭐</span>
+                                </div>
+                                {idx === courseAverages.length - 1 && (
+                                  <div className="absolute -top-1 -right-1 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center border-2 border-white">
+                                    <span className="text-white text-xs">✓</span>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Course Info */}
+                              <div className="text-center max-w-[120px]">
+                                <p className="text-xs font-semibold text-gray-700 mb-1 line-clamp-2">{course.courseName}</p>
+                                <p className="text-[10px] text-gray-500">{course.date}</p>
+                                <div className="mt-2 flex items-center gap-0.5 justify-center">
+                                  {[...Array(4)].map((_, starIdx) => (
+                                    <span
+                                      key={starIdx}
+                                      className={`text-xs ${starIdx < Math.round(course.avgStars) ? 'text-amber-400' : 'text-gray-300'}`}
+                                    >
+                                      ★
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* Progress Indicator */}
+                              {idx < courseAverages.length - 1 && (
+                                <div className="absolute top-20 left-full w-full flex items-center justify-center">
+                                  {courseAverages[idx + 1].avgStars > course.avgStars ? (
+                                    <span className="text-xs text-green-600 font-medium">
+                                      +{(courseAverages[idx + 1].avgStars - course.avgStars).toFixed(1)}
+                                    </span>
+                                  ) : courseAverages[idx + 1].avgStars < course.avgStars ? (
+                                    <span className="text-xs text-red-600 font-medium">
+                                      {(courseAverages[idx + 1].avgStars - course.avgStars).toFixed(1)}
+                                    </span>
+                                  ) : (
+                                    <span className="text-xs text-gray-400 font-medium">-</span>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Distribution Summary */}
+                    <div className="mt-6 pt-4 border-t border-cyan-200">
+                      <p className="text-xs text-gray-600 mb-2">最新课程能力分布：</p>
+                      <div className="flex gap-3 text-xs">
+                        <div className="flex items-center gap-1">
+                          <span className="text-amber-400">★★★★</span>
+                          <span className="text-gray-600">{trends[trends.length - 1].distribution.level4}人</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span className="text-amber-400">★★★</span>
+                          <span className="text-gray-600">{trends[trends.length - 1].distribution.level3}人</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span className="text-amber-400">★★</span>
+                          <span className="text-gray-600">{trends[trends.length - 1].distribution.level2}人</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span className="text-gray-400">★</span>
+                          <span className="text-gray-600">{trends[trends.length - 1].distribution.level1}人</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+          </div>
+        </div>
+      </div>
+
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {metrics.map((metric, index) => (
