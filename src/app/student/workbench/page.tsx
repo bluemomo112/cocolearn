@@ -867,25 +867,22 @@ function LeftPanel({
                           </button>
                         ) : (
                           <>
-                            <a
-                              href={`/${resource.path}`}
-                              download
-                              onClick={(e) => e.stopPropagation()}
-                              className={`flex-1 px-3 py-2 bg-${colorClass}-600 ${hoverBgClass} text-white text-xs font-medium rounded-lg transition-colors flex items-center justify-center gap-1.5`}
-                            >
-                              <Download size={14} />
-                              下载
-                            </a>
                             <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                window.open(`/${resource.path}`, '_blank');
-                              }}
-                              className="flex-1 px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-medium rounded-lg transition-colors flex items-center justify-center gap-1.5"
+                              onClick={() => handleResourceClick(resource)}
+                              className={`flex-1 px-3 py-2 bg-${colorClass}-600 ${hoverBgClass} text-white text-xs font-medium rounded-lg transition-colors flex items-center justify-center gap-1.5`}
                             >
                               <Eye size={14} />
                               查看
                             </button>
+                            <a
+                              href={`/${resource.path}`}
+                              download
+                              onClick={(e) => e.stopPropagation()}
+                              className="flex-1 px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-medium rounded-lg transition-colors flex items-center justify-center gap-1.5"
+                            >
+                              <Download size={14} />
+                              下载
+                            </a>
                           </>
                         )}
                       </div>
@@ -1060,87 +1057,97 @@ function ResourceViewer({
 
         {resource.type === 'document' && (
           <div className="space-y-4">
-            <div className="bg-white rounded-xl p-8 border border-gray-200 min-h-[400px]">
-              <div className="text-center mb-6">
-                <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                  <FileText size={32} className="text-blue-600" />
-                </div>
-                <h4 className="text-lg font-bold text-gray-800 mb-2">{resource.title}</h4>
-                <p className="text-sm text-gray-600 mb-4">{resource.description}</p>
-                <div className="flex items-center justify-center gap-2 text-xs text-gray-500">
-                  <span className="px-2 py-1 bg-blue-50 text-blue-600 rounded">Word 文档</span>
-                  <span>•</span>
-                  <span>{resource.duration}</span>
+            {resource.textContent ? (
+              // 显示预提取的文本内容
+              <div className="bg-white rounded-xl p-8 border border-gray-200 shadow-sm">
+                <div className="prose prose-sm max-w-none">
+                  <div className="whitespace-pre-line text-gray-700 leading-relaxed">
+                    {resource.textContent}
+                  </div>
                 </div>
               </div>
+            ) : (
+              // 如果没有预提取内容,显示下载提示
+              <div className="bg-white rounded-xl p-8 border border-gray-200 min-h-[400px]">
+                <div className="text-center mb-6">
+                  <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <FileText size={32} className="text-blue-600" />
+                  </div>
+                  <h4 className="text-lg font-bold text-gray-800 mb-2">{resource.title}</h4>
+                  <p className="text-sm text-gray-600 mb-4">{resource.description}</p>
+                  <div className="flex items-center justify-center gap-2 text-xs text-gray-500">
+                    <span className="px-2 py-1 bg-blue-50 text-blue-600 rounded">Word 文档</span>
+                    <span>•</span>
+                    <span>{resource.duration}</span>
+                  </div>
+                </div>
 
-              <div className="max-w-md mx-auto space-y-3">
-                <a
-                  href={`/${resource.path}`}
-                  download
-                  className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
-                >
-                  <Download size={16} />
-                  下载文档
-                </a>
-                <button
-                  onClick={() => window.open(`/${resource.path}`, '_blank')}
-                  className="w-full px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
-                >
-                  <Eye size={16} />
-                  在新窗口打开
-                </button>
-              </div>
+                <div className="max-w-md mx-auto space-y-3">
+                  <a
+                    href={`/${resource.path}`}
+                    download
+                    className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
+                  >
+                    <Download size={16} />
+                    下载文档
+                  </a>
+                </div>
 
-              <div className="mt-6 pt-6 border-t border-gray-200">
-                <p className="text-xs text-gray-500 text-center">
-                  提示：Word 文档需要下载后使用 Microsoft Word 或 WPS 等软件打开查看
-                </p>
+                <div className="mt-6 pt-6 border-t border-gray-200">
+                  <p className="text-xs text-gray-500 text-center">
+                    提示：Word 文档需要下载后使用 Microsoft Word 或 WPS 等软件打开查看
+                  </p>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         )}
 
         {resource.type === 'presentation' && (
           <div className="space-y-4">
-            <div className="bg-white rounded-xl p-8 border border-gray-200 min-h-[400px]">
-              <div className="text-center mb-6">
-                <div className="w-16 h-16 bg-orange-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                  <FileSpreadsheet size={32} className="text-orange-600" />
-                </div>
-                <h4 className="text-lg font-bold text-gray-800 mb-2">{resource.title}</h4>
-                <p className="text-sm text-gray-600 mb-4">{resource.description}</p>
-                <div className="flex items-center justify-center gap-2 text-xs text-gray-500">
-                  <span className="px-2 py-1 bg-orange-50 text-orange-600 rounded">PPT 演示文稿</span>
-                  <span>•</span>
-                  <span>{resource.duration}</span>
+            {resource.textContent ? (
+              // 显示预提取的文本内容
+              <div className="bg-white rounded-xl p-8 border border-gray-200 shadow-sm">
+                <div className="prose prose-sm max-w-none">
+                  <div className="whitespace-pre-line text-gray-700 leading-relaxed">
+                    {resource.textContent}
+                  </div>
                 </div>
               </div>
+            ) : (
+              // 如果没有预提取内容,显示下载提示
+              <div className="bg-white rounded-xl p-8 border border-gray-200 min-h-[400px]">
+                <div className="text-center mb-6">
+                  <div className="w-16 h-16 bg-orange-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <FileSpreadsheet size={32} className="text-orange-600" />
+                  </div>
+                  <h4 className="text-lg font-bold text-gray-800 mb-2">{resource.title}</h4>
+                  <p className="text-sm text-gray-600 mb-4">{resource.description}</p>
+                  <div className="flex items-center justify-center gap-2 text-xs text-gray-500">
+                    <span className="px-2 py-1 bg-orange-50 text-orange-600 rounded">PPT 演示文稿</span>
+                    <span>•</span>
+                    <span>{resource.duration}</span>
+                  </div>
+                </div>
 
-              <div className="max-w-md mx-auto space-y-3">
-                <a
-                  href={`/${resource.path}`}
-                  download
-                  className="w-full px-4 py-3 bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
-                >
-                  <Download size={16} />
-                  下载演示文稿
-                </a>
-                <button
-                  onClick={() => window.open(`/${resource.path}`, '_blank')}
-                  className="w-full px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
-                >
-                  <Eye size={16} />
-                  在新窗口打开
-                </button>
-              </div>
+                <div className="max-w-md mx-auto space-y-3">
+                  <a
+                    href={`/${resource.path}`}
+                    download
+                    className="w-full px-4 py-3 bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
+                  >
+                    <Download size={16} />
+                    下载演示文稿
+                  </a>
+                </div>
 
-              <div className="mt-6 pt-6 border-t border-gray-200">
-                <p className="text-xs text-gray-500 text-center">
-                  提示：PPT 演示文稿需要下载后使用 Microsoft PowerPoint 或 WPS 等软件打开查看
-                </p>
+                <div className="mt-6 pt-6 border-t border-gray-200">
+                  <p className="text-xs text-gray-500 text-center">
+                    提示:PPT 演示文稿需要下载后使用 Microsoft PowerPoint 或 WPS 等软件打开查看
+                  </p>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         )}
       </div>
