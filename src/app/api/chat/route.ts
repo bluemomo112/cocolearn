@@ -216,12 +216,68 @@ async function handleTaskSubmission(
   taskId: string,
   answer: string
 ) {
+  // 找到任务
+  const task = context.tasks.list.find(t => t.id === taskId);
+  if (!task) {
+    return NextResponse.json(
+      { error: 'Task not found' },
+      { status: 404 }
+    );
+  }
+
   // 记录提交
   context.tasks.submissions.set(taskId, {
     answer,
     submittedAt: new Date()
   });
-  context.tasks.status.set(taskId, 'completed');
+
+  // 如果是客观题（quiz），先快速判断对错
+  if (task.type === 'quiz' && task.questions) {
+    const userAnswers = JSON.parse(answer);
+    const results = task.questions.map(q => {
+      const userAnswer = userAnswers[q.id];
+      const correctAnswer = q.answer; // 使用 answer 字段
+
+      let isCorrect = false;
+      if (q.type === 'multiple_choice') {
+        // 多选题：排序后比较
+        const userArr = Array.isArray(userAnswer) ? userAnswer : [];
+        const correctArr = Array.isArray(correctAnswer) ? correctAnswer : [];
+        isCorrect = JSON.stringify([...userArr].sort()) ===
+                   JSON.stringify([...correctArr].sort());
+      } else {
+        // 单选题
+        isCorrect = userAnswer === correctAnswer;
+      }
+
+      return {
+        questionId: q.id,
+        isCorrect,
+        userAnswer,
+        correctAnswer
+      };
+    });
+
+    const allCorrect = results.every(r => r.isCorrect);
+    const correctCount = results.filter(r => r.isCorrect).length;
+
+    // 返回快速判断结果，不等待AI分析
+    return NextResponse.json({
+      success: true,
+      taskType: 'quiz',
+      quickResult: {
+        allCorrect,
+        correctCount,
+        totalCount: results.length,
+        details: results
+      },
+      // 标记需要AI分析
+      needsAnalysis: true
+    });
+  }
+
+  // 主观题：标记为批改中，然后调用AI评估
+  context.tasks.status.set(taskId, 'grading');
 
   // 调用评估Agent
   const response = await coordinator.handleTaskSubmission(taskId, answer);
@@ -230,6 +286,9 @@ async function handleTaskSubmission(
   if (response.taskAssessment) {
     context.tasks.assessments.set(taskId, response.taskAssessment);
   }
+
+  // 标记为已完成
+  context.tasks.status.set(taskId, 'completed');
 
   // 更新能力画像
   if (response.competencyUpdates && response.competencyUpdates.length > 0) {
@@ -253,7 +312,6 @@ async function handleTaskSubmission(
 
   // 异步触发元认知分析
   if (response.shouldTriggerMetacognition) {
-    const task = context.tasks.list.find(t => t.id === taskId);
     coordinator.runMetacognitionAnalysis('task_complete', {
       taskId,
       taskTitle: task?.title,
@@ -269,6 +327,7 @@ async function handleTaskSubmission(
 
   return NextResponse.json({
     success: true,
+    taskType: task.type,
     message: response.message,
     assessment: response.taskAssessment,
     competencyUpdates: response.competencyUpdates,

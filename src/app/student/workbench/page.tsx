@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import {
   Video,
   FileText,
@@ -66,11 +68,20 @@ function TaskExpandedCard({
   onClose,
   onComplete,
   isCompleted,
+  taskStatus,
+  quickResult,
 }: {
   task: Task;
   onClose: () => void;
   onComplete: (taskId: string, answer?: string) => void;
   isCompleted: boolean;
+  taskStatus?: 'idle' | 'submitting' | 'grading' | 'completed';
+  quickResult?: {
+    allCorrect: boolean;
+    correctCount: number;
+    totalCount: number;
+    details: any[];
+  };
 }) {
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string | string[]>>({});
   const [submissionText, setSubmissionText] = useState('');
@@ -218,17 +229,61 @@ function TaskExpandedCard({
           </div>
         )}
 
+        {/* 快速判题结果 - 仅测验类型显示 */}
+        {task.type === 'quiz' && quickResult && (
+          <div className={`mt-4 p-4 rounded-xl border-2 ${
+            quickResult.allCorrect
+              ? 'bg-green-50 border-green-300'
+              : 'bg-amber-50 border-amber-300'
+          }`}>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                {quickResult.allCorrect ? (
+                  <Check size={20} className="text-green-600" />
+                ) : (
+                  <AlertCircle size={20} className="text-amber-600" />
+                )}
+                <span className={`text-sm font-bold ${
+                  quickResult.allCorrect ? 'text-green-700' : 'text-amber-700'
+                }`}>
+                  {quickResult.allCorrect ? '全部正确！' : '部分正确'}
+                </span>
+              </div>
+              <span className={`text-sm font-medium ${
+                quickResult.allCorrect ? 'text-green-600' : 'text-amber-600'
+              }`}>
+                {quickResult.correctCount}/{quickResult.totalCount} 题正确
+              </span>
+            </div>
+            <p className="text-xs text-gray-600">
+              AI正在为你生成详细的学习反馈...
+            </p>
+          </div>
+        )}
+
         {/* 提交按钮 */}
         <button
           onClick={handleSubmit}
-          disabled={isCompleted}
+          disabled={isCompleted || taskStatus === 'submitting' || taskStatus === 'grading' || taskStatus === 'completed'}
           className={`mt-4 w-full py-3 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2 ${
-            isCompleted
+            isCompleted || taskStatus === 'completed'
               ? 'bg-green-100 text-green-700 cursor-not-allowed'
+              : taskStatus === 'submitting' || taskStatus === 'grading'
+              ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
               : 'bg-primary-600 text-white hover:bg-primary-700'
           }`}
         >
-          {isCompleted ? (
+          {taskStatus === 'submitting' ? (
+            <>
+              <Activity size={16} className="animate-spin" />
+              提交中...
+            </>
+          ) : taskStatus === 'grading' ? (
+            <>
+              <Activity size={16} className="animate-spin" />
+              批改中...
+            </>
+          ) : isCompleted || taskStatus === 'completed' ? (
             <>
               <Check size={16} />
               已完成
@@ -344,6 +399,15 @@ export default function StudentWorkbenchPage() {
   // 当前展开的任务
   const [expandedTask, setExpandedTask] = useState<Task | null>(null);
 
+  // 任务提交状态管理
+  const [taskStatus, setTaskStatus] = useState<'idle' | 'submitting' | 'grading' | 'completed'>('idle');
+  const [quickResult, setQuickResult] = useState<{
+    allCorrect: boolean;
+    correctCount: number;
+    totalCount: number;
+    details: any[];
+  } | null>(null);
+
   // 能力画像状态
   const [competencyProfile, setCompetencyProfile] = useState<{
     critical_thinking: number;
@@ -444,13 +508,19 @@ export default function StudentWorkbenchPage() {
     }
   };
 
-  // 切换任务完成状态
+  // 切换任务完成状态 - 两阶段提交
   const toggleTaskCompletion = async (taskId: string, answer?: string) => {
     // 如果任务已完成，不再处理
     if (completedTasks.has(taskId)) {
       return;
     }
 
+    // 找到任务信息
+    const task = config.tasks.find(t => t.id === taskId);
+    if (!task) return;
+
+    // 第一阶段：标记为提交中
+    setTaskStatus('submitting');
     setIsLoading(true);
 
     try {
@@ -474,43 +544,146 @@ export default function StudentWorkbenchPage() {
 
       const data = await response.json();
 
-      // 标记任务为已完成
-      setCompletedTasks((prev) => {
-        const newSet = new Set(prev);
-        newSet.add(taskId);
-        return newSet;
-      });
+      // 处理客观题（quiz）- 两阶段流程
+      if (data.taskType === 'quiz' && data.quickResult) {
+        // 立即显示快速判题结果
+        setQuickResult(data.quickResult);
+        setTaskStatus('completed');
 
-      // 显示评估反馈
-      if (data.message) {
-        const feedbackMessage: ChatMessage = {
-          id: `msg_${Date.now()}_feedback`,
+        // 标记任务为已完成
+        setCompletedTasks((prev) => {
+          const newSet = new Set(prev);
+          newSet.add(taskId);
+          return newSet;
+        });
+
+        // 添加loading消息到对话区
+        const loadingMessage: ChatMessage = {
+          id: `msg_${Date.now()}_loading`,
           role: 'assistant',
-          content: data.message,
+          content: '正在为你生成详细的学习反馈，请稍候...',
           timestamp: new Date(),
         };
-        setMessages((prev) => [...prev, feedbackMessage]);
-      }
+        setMessages((prev) => [...prev, loadingMessage]);
 
-      // 如果有能力更新，更新能力画像
-      if (data.competencyUpdates && data.competencyUpdates.length > 0) {
-        console.log('能力更新:', data.competencyUpdates);
+        // 异步调用AI分析（不阻塞）
+        setTimeout(async () => {
+          try {
+            const analysisResponse = await fetch('/api/analyze-quiz', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                taskId,
+                taskTitle: task.title,
+                questions: task.questions,
+                userAnswers: JSON.parse(answer || '{}'),
+                results: data.quickResult.details,
+              }),
+            });
 
-        // 更新能力画像
-        setCompetencyProfile((prev) => {
-          const updated = { ...prev };
-          data.competencyUpdates.forEach((update: any) => {
-            if (update.type in updated) {
-              // 简单平均更新（实际应该使用加权平均）
-              updated[update.type as keyof typeof updated] =
-                (updated[update.type as keyof typeof updated] + update.rating) / 2;
+            if (!analysisResponse.ok) {
+              throw new Error('AI分析请求失败');
             }
-          });
-          return updated;
-        });
+
+            // 处理流式响应
+            const reader = analysisResponse.body?.getReader();
+            const decoder = new TextDecoder();
+            let aiAnalysis = '';
+
+            if (reader) {
+              while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                const chunk = decoder.decode(value, { stream: true });
+                aiAnalysis += chunk;
+
+                // 实时更新消息（替换loading消息和之前的分析消息）
+                setMessages((prev) => {
+                  const analysisMessageId = `msg_${taskId}_analysis`;
+                  const filtered = prev.filter(m =>
+                    m.id !== loadingMessage.id && m.id !== analysisMessageId
+                  );
+                  return [
+                    ...filtered,
+                    {
+                      id: analysisMessageId,
+                      role: 'assistant',
+                      content: aiAnalysis,
+                      timestamp: new Date(),
+                    },
+                  ];
+                });
+              }
+            }
+          } catch (error) {
+            console.error('AI分析失败:', error);
+            // 移除loading消息，显示错误
+            setMessages((prev) => {
+              const filtered = prev.filter(m => m.id !== loadingMessage.id);
+              return [
+                ...filtered,
+                {
+                  id: `msg_${Date.now()}_error`,
+                  role: 'assistant',
+                  content: 'AI分析暂时无法完成，但你的答题结果已经保存。',
+                  timestamp: new Date(),
+                },
+              ];
+            });
+          }
+        }, 500); // 短暂延迟，让用户看到快速判题结果
+
       }
+      // 处理主观题（assignment/reflection）
+      else if (data.taskType === 'assignment' || data.taskType === 'reflection') {
+        // 主观题批改完成
+        setTaskStatus('completed');
+
+        // 标记任务为已完成
+        setCompletedTasks((prev) => {
+          const newSet = new Set(prev);
+          newSet.add(taskId);
+          return newSet;
+        });
+
+        // 显示评估反馈
+        if (data.message) {
+          const feedbackMessage: ChatMessage = {
+            id: `msg_${Date.now()}_feedback`,
+            role: 'assistant',
+            content: data.message,
+            timestamp: new Date(),
+          };
+          setMessages((prev) => [...prev, feedbackMessage]);
+        }
+
+        // 如果有能力更新，更新能力画像
+        if (data.competencyUpdates && data.competencyUpdates.length > 0) {
+          console.log('能力更新:', data.competencyUpdates);
+
+          setCompetencyProfile((prev) => {
+            const updated = { ...prev };
+            data.competencyUpdates.forEach((update: any) => {
+              if (update.type in updated) {
+                updated[update.type as keyof typeof updated] =
+                  (updated[update.type as keyof typeof updated] + update.rating) / 2;
+              }
+            });
+            return updated;
+          });
+        }
+      }
+
     } catch (error) {
       console.error('任务提交失败:', error);
+
+      // 重置状态
+      setTaskStatus('idle');
+      setQuickResult(null);
+
       // 显示错误消息
       const errorMessage: ChatMessage = {
         id: `msg_${Date.now()}_error`,
@@ -1259,9 +1432,17 @@ function CenterPanel({
                     : 'bg-white border border-gray-200 rounded-tl-none'
                 }`}
               >
-                <p className={`text-sm leading-relaxed whitespace-pre-line ${message.role === 'user' ? 'text-white' : 'text-gray-700'}`}>
-                  {message.content}
-                </p>
+                {message.role === 'user' ? (
+                  <p className="text-sm leading-relaxed whitespace-pre-line text-white">
+                    {message.content}
+                  </p>
+                ) : (
+                  <div className="text-sm leading-relaxed text-gray-700 prose prose-sm max-w-none prose-headings:text-gray-800 prose-headings:font-bold prose-strong:text-gray-800 prose-p:my-2 prose-ul:my-2 prose-ol:my-2 prose-li:my-1">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {message.content}
+                    </ReactMarkdown>
+                  </div>
+                )}
               </div>
 
               {/* 嵌入的任务卡片 (作为智能体消息的一部分) */}

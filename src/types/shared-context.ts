@@ -4,7 +4,7 @@ export type AgentType = 'tutor' | 'assessor' | 'metacognition';
 
 export type CompetencyType = 'critical_thinking' | 'information_synthesis' | 'metacognition';
 
-export type TaskStatus = 'locked' | 'available' | 'in_progress' | 'completed';
+export type TaskStatus = 'locked' | 'available' | 'in_progress' | 'grading' | 'completed';
 
 export interface Message {
   id: string;
