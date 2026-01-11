@@ -22,6 +22,7 @@ export interface Resource {
   path: string;
   description: string;
   duration?: string;
+  textContent?: string;
 }
 
 export interface TaskQuestion {

@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { ClassCompetencyDistribution, CompetencyDistributionChart } from './note-config/results-view'
 
 // 模拟数据
 const recentCourses = [
@@ -918,6 +919,36 @@ function TeachingInsights() {
       totalStudents: 85,
       studentsDetected: 52, // AI只在52名学生中检测到元认知表现
     },
+    question_quality: {
+      source: 'ai_detected',
+      level1: 10,
+      level2: 28,
+      level3: 35,
+      level4: 12,
+      avgRating: 2.5,
+      totalStudents: 85,
+      studentsDetected: 65,
+    },
+    creativity: {
+      source: 'ai_detected',
+      level1: 15,
+      level2: 30,
+      level3: 25,
+      level4: 15,
+      avgRating: 2.4,
+      totalStudents: 85,
+      studentsDetected: 58,
+    },
+    persistence: {
+      source: 'ai_detected',
+      level1: 8,
+      level2: 20,
+      level3: 40,
+      level4: 17,
+      avgRating: 2.7,
+      totalStudents: 85,
+      studentsDetected: 70,
+    },
   };
 
   // Mock student alert data
@@ -952,9 +983,21 @@ function TeachingInsights() {
       { courseId: 'bio_01', courseName: '生物-生态系统', date: '2023-12', distribution: { level1: 13, level2: 27, level3: 30, level4: 15 } },
       { courseId: 'current', courseName: '水循环与气候变化', date: '2024-01', distribution: { level1: 12, level2: 25, level3: 30, level4: 18 } },
     ],
-    question_quality: [],
-    creativity: [],
-    persistence: [],
+    question_quality: [
+      { courseId: 'sci_01', courseName: '科学探究', date: '2023-11', distribution: { level1: 12, level2: 30, level3: 32, level4: 11 } },
+      { courseId: 'geo_01', courseName: '地理-气候变化', date: '2023-12', distribution: { level1: 11, level2: 29, level3: 33, level4: 12 } },
+      { courseId: 'current', courseName: '水循环与气候变化', date: '2024-01', distribution: { level1: 10, level2: 28, level3: 35, level4: 12 } },
+    ],
+    creativity: [
+      { courseId: 'art_01', courseName: '艺术创作', date: '2023-10', distribution: { level1: 18, level2: 32, level3: 23, level4: 12 } },
+      { courseId: 'tech_01', courseName: '技术创新', date: '2023-12', distribution: { level1: 16, level2: 31, level3: 24, level4: 14 } },
+      { courseId: 'current', courseName: '水循环与气候变化', date: '2024-01', distribution: { level1: 15, level2: 30, level3: 25, level4: 15 } },
+    ],
+    persistence: [
+      { courseId: 'math_01', courseName: '数学-函数思维', date: '2023-10', distribution: { level1: 10, level2: 22, level3: 38, level4: 15 } },
+      { courseId: 'phy_01', courseName: '物理-能量转换', date: '2023-12', distribution: { level1: 9, level2: 21, level3: 39, level4: 16 } },
+      { courseId: 'current', courseName: '水循环与气候变化', date: '2024-01', distribution: { level1: 8, level2: 20, level3: 40, level4: 17 } },
+    ],
   };
 
   return (
@@ -985,7 +1028,7 @@ function TeachingInsights() {
 
               // Transform to ClassCompetencyDistribution format for the reusable component
               const distribution: ClassCompetencyDistribution = {
-                competencyType: competencyType as ResultsCompetencyType,
+                competencyType: competencyType,
                 distribution: {
                   star1: data.level1,
                   star2: data.level2,
