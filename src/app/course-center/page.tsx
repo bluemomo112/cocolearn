@@ -50,11 +50,11 @@ const sources = ['全部', '官方', '组织']
 const courses: Course[] = [
   {
     id: '1',
-    title: '湿地生态系统的科学探究',
+    title: '植物工厂探究',
     cover: 'https://images.unsplash.com/photo-1501630834273-4b5604d2ee31?w=400&h=300&fit=crop',
-    subjects: ['生物', '地理'],
+    subjects: ['生物', '信息技术'],
     source: 'official',
-    concepts: ['系统与平衡', '生态系统', '水循环', '生物多样性'],
+    concepts: ['系统与平衡', '生态系统', '成长', '生命周期'],
     studentCount: 1240,
     rating: 4.8,
   },
@@ -806,10 +806,10 @@ export default function CourseCenter() {
     setShowTeachingModal(false)
     if (mode === 'teacher-centered') {
       // 讲授模式 - 跳转到讲授页面
-      window.open('/LMS-Teacher-Teaching.html', '_blank')
+      window.open('https://pbl.cocorobo.cn/pbl-student-table/dist/#/pptEasyClass?type=&courseId=ae814d33-ef5d-11f0-9b8a-005056924926&userid=e9b3eb89-2446-11ee-91d8-005056b86db5&oid=45facc0a-1211-11ec-80ad-005056b86db5&org=&cid=&tType=1&screenType=2', '_blank')
     } else {
       // 自学模式 - 跳转到使用视角
-      window.open('/teacher/note-config?view=use', '_blank')
+      window.open('https://cocolearn.cocorobo.cn/teacher/create', '_blank')
     }
   }
 

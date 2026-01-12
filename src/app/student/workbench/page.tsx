@@ -510,8 +510,8 @@ export default function StudentWorkbenchPage() {
 
   // 切换任务完成状态 - 两阶段提交
   const toggleTaskCompletion = async (taskId: string, answer?: string) => {
-    // 如果任务已完成，不再处理
-    if (completedTasks.has(taskId)) {
+    // 如果任务已完成或正在提交/批改中，不再处理
+    if (completedTasks.has(taskId) || taskStatus === 'submitting' || taskStatus === 'grading') {
       return;
     }
 
@@ -524,6 +524,11 @@ export default function StudentWorkbenchPage() {
     setIsLoading(true);
 
     try {
+      // 主观题：先标记为批改中状态
+      if (task.type === 'assignment' || task.type === 'reflection') {
+        setTaskStatus('grading');
+      }
+
       // 调用任务提交API
       const response = await fetch('/api/chat', {
         method: 'POST',
@@ -880,6 +885,8 @@ ${resource.type === 'video'
           onCompleteTask={toggleTaskCompletion}
           completedTasks={completedTasks}
           isLoading={isLoading}
+          taskStatus={taskStatus}
+          quickResult={quickResult}
         />
 
         {/* 右侧调整器 */}
@@ -1342,6 +1349,8 @@ function CenterPanel({
   onCompleteTask,
   completedTasks,
   isLoading,
+  taskStatus,
+  quickResult,
 }: any) {
   return (
     <div style={{ width: `${width}%` }} className="flex flex-col bg-gray-50">
@@ -1453,6 +1462,8 @@ function CenterPanel({
                     onClose={() => {}}
                     onComplete={onCompleteTask}
                     isCompleted={completedTasks.has(message.embeddedTask.id)}
+                    taskStatus={taskStatus}
+                    quickResult={quickResult}
                   />
                 </div>
               )}

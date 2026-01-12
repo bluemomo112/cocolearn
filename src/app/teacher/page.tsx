@@ -9,8 +9,8 @@ import { ClassCompetencyDistribution, CompetencyDistributionChart } from './note
 const recentCourses = [
   {
     id: '1',
-    title: '水循环与气候变化',
-    subjects: ['地理', '物理'],
+    title: '植物工厂探究',
+    subjects: ['科学', '数学', '信息技术'],
     progress: 75,
     students: 32,
     lastUpdate: '2小时前',
@@ -515,9 +515,9 @@ export default function TeacherDashboard() {
             {/* 课堂模式选项卡片 */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* 以教师为中心课堂 */}
-              <a
-                href="/LMS-Teacher-Teaching.html"
-                className="group relative bg-gradient-to-br from-primary-50 to-accent-50 border-2 border-primary-100 rounded-2xl p-6 hover:border-primary-300 hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+              <button
+                onClick={() => window.open('https://beta.pbl.cocorobo.cn/pbl-teacher-table/dist/#/pptEasy?cid=ae814d33-ef5d-11f0-9b8a-005056924926&userid=e9b3eb89-2446-11ee-91d8-005056b86db5&oid=45facc0a-1211-11ec-80ad-005056b86db5&org=&role=0', '_blank')}
+                className="group relative w-full bg-gradient-to-br from-emerald-50 to-teal-50 border-2 border-emerald-100 rounded-2xl p-6 hover:border-emerald-300 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 text-left"
               >
                 <div className="flex flex-col items-center text-center">
                   {/* 图标 */}
@@ -549,11 +549,11 @@ export default function TeacherDashboard() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
                 </div>
-              </a>
+              </button>
 
               {/* 以学生为中心的课堂 */}
               <button
-                onClick={() => window.open('/teacher/note-config?view=edit', '_blank')}
+                onClick={() => window.open('https://cocolearn.cocorobo.cn/teacher/create', '_blank')}
                 className="group relative w-full bg-gradient-to-br from-emerald-50 to-teal-50 border-2 border-emerald-100 rounded-2xl p-6 hover:border-emerald-300 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 text-left"
               >
                 <div className="flex flex-col items-center text-center">
@@ -602,6 +602,122 @@ export default function TeacherDashboard() {
 
 // 我的课程列表组件 - 不再使用，功能已合并到主组件
 // function MyCoursesList() { ... }
+
+// ============================================
+// Mock Data for Competency Insights
+// (Moved before TeachingInsights component to avoid hoisting issues)
+// ============================================
+
+// Generate mock competency distribution data
+const mockCompetencyDistributions: Record<CompetencyType, CompetencyDistributionData> = {
+  critical_thinking: {
+    source: 'teacher_assigned',
+    level1: 8,    // 8 students with ★
+    level2: 22,   // 22 students with ★★
+    level3: 38,   // 38 students with ★★★
+    level4: 17,   // 17 students with ★★★★
+    avgRating: 2.8,
+    totalStudents: 85,
+  },
+  information_synthesis: {
+    source: 'teacher_assigned',
+    level1: 5,
+    level2: 18,
+    level3: 42,
+    level4: 20,
+    avgRating: 2.9,
+    totalStudents: 85,
+  },
+  metacognition: {
+    source: 'ai_detected',
+    level1: 12,
+    level2: 25,
+    level3: 30,
+    level4: 18,
+    avgRating: 2.6,
+    totalStudents: 85,
+    studentsDetected: 52, // AI只在52名学生中检测到元认知表现
+  },
+  question_quality: {
+    source: 'ai_detected',
+    level1: 10,
+    level2: 28,
+    level3: 35,
+    level4: 12,
+    avgRating: 2.5,
+    totalStudents: 85,
+    studentsDetected: 65,
+  },
+  creativity: {
+    source: 'ai_detected',
+    level1: 15,
+    level2: 30,
+    level3: 25,
+    level4: 15,
+    avgRating: 2.4,
+    totalStudents: 85,
+    studentsDetected: 58,
+  },
+  persistence: {
+    source: 'ai_detected',
+    level1: 8,
+    level2: 20,
+    level3: 40,
+    level4: 17,
+    avgRating: 2.7,
+    totalStudents: 85,
+    studentsDetected: 70,
+  },
+};
+
+// Mock student alert data
+const mockAlerts = {
+  lowPerformance: [
+    { studentId: '3', name: '王浩宇', competencyType: 'critical_thinking' as CompetencyType, rating: 1 },
+    { studentId: '5', name: '陈思远', competencyType: 'metacognition' as CompetencyType, rating: 2 },
+    { studentId: '12', name: '赵明远', competencyType: 'information_synthesis' as CompetencyType, rating: 1 },
+    { studentId: '18', name: '孙雨晴', competencyType: 'critical_thinking' as CompetencyType, rating: 2 },
+  ],
+  highPerformance: [
+    { studentId: '6', name: '赵梓涵', competencyTypes: ['critical_thinking', 'information_synthesis', 'metacognition'] as CompetencyType[], avgRating: 4 },
+    { studentId: '2', name: '李思琪', competencyTypes: ['information_synthesis', 'metacognition'] as CompetencyType[], avgRating: 3.5 },
+    { studentId: '1', name: '张晓明', competencyTypes: ['critical_thinking', 'metacognition'] as CompetencyType[], avgRating: 3.8 },
+  ],
+};
+
+// Mock cross-course trend data
+const mockCompetencyTrends: Record<CompetencyType, CourseTrendPoint[]> = {
+  critical_thinking: [
+    { courseId: 'geo_01', courseName: '地理-气候变化', date: '2023-11', distribution: { level1: 12, level2: 28, level3: 32, level4: 13 } },
+    { courseId: 'bio_01', courseName: '生物-生态系统', date: '2023-12', distribution: { level1: 10, level2: 25, level3: 35, level4: 15 } },
+    { courseId: 'current', courseName: '水循环与气候变化', date: '2024-01', distribution: { level1: 8, level2: 22, level3: 38, level4: 17 } },
+  ],
+  information_synthesis: [
+    { courseId: 'geo_01', courseName: '地理-气候变化', date: '2023-11', distribution: { level1: 8, level2: 22, level3: 38, level4: 17 } },
+    { courseId: 'phy_01', courseName: '物理-能量转换', date: '2023-12', distribution: { level1: 7, level2: 20, level3: 40, level4: 18 } },
+    { courseId: 'current', courseName: '水循环与气候变化', date: '2024-01', distribution: { level1: 5, level2: 18, level3: 42, level4: 20 } },
+  ],
+  metacognition: [
+    { courseId: 'math_01', courseName: '数学-函数思维', date: '2023-10', distribution: { level1: 15, level2: 30, level3: 28, level4: 12 } },
+    { courseId: 'bio_01', courseName: '生物-生态系统', date: '2023-12', distribution: { level1: 13, level2: 27, level3: 30, level4: 15 } },
+    { courseId: 'current', courseName: '水循环与气候变化', date: '2024-01', distribution: { level1: 12, level2: 25, level3: 30, level4: 18 } },
+  ],
+  question_quality: [
+    { courseId: 'sci_01', courseName: '科学探究', date: '2023-11', distribution: { level1: 12, level2: 30, level3: 32, level4: 11 } },
+    { courseId: 'geo_01', courseName: '地理-气候变化', date: '2023-12', distribution: { level1: 11, level2: 29, level3: 33, level4: 12 } },
+    { courseId: 'current', courseName: '水循环与气候变化', date: '2024-01', distribution: { level1: 10, level2: 28, level3: 35, level4: 12 } },
+  ],
+  creativity: [
+    { courseId: 'art_01', courseName: '艺术创作', date: '2023-10', distribution: { level1: 18, level2: 32, level3: 23, level4: 12 } },
+    { courseId: 'tech_01', courseName: '技术创新', date: '2023-12', distribution: { level1: 16, level2: 31, level3: 24, level4: 14 } },
+    { courseId: 'current', courseName: '水循环与气候变化', date: '2024-01', distribution: { level1: 15, level2: 30, level3: 25, level4: 15 } },
+  ],
+  persistence: [
+    { courseId: 'math_01', courseName: '数学-函数思维', date: '2023-10', distribution: { level1: 10, level2: 22, level3: 38, level4: 15 } },
+    { courseId: 'phy_01', courseName: '物理-能量转换', date: '2023-12', distribution: { level1: 9, level2: 21, level3: 39, level4: 16 } },
+    { courseId: 'current', courseName: '水循环与气候变化', date: '2024-01', distribution: { level1: 8, level2: 20, level3: 40, level4: 17 } },
+  ],
+};
 
 // 教学洞察组件
 function TeachingInsights() {
@@ -884,121 +1000,6 @@ function TeachingInsights() {
       </div>
     )
   }
-
-  // ============================================
-  // Mock Data for Competency Insights
-  // ============================================
-
-  // Generate mock competency distribution data
-  const mockCompetencyDistributions: Record<CompetencyType, CompetencyDistributionData> = {
-    critical_thinking: {
-      source: 'teacher_assigned',
-      level1: 8,    // 8 students with ★
-      level2: 22,   // 22 students with ★★
-      level3: 38,   // 38 students with ★★★
-      level4: 17,   // 17 students with ★★★★
-      avgRating: 2.8,
-      totalStudents: 85,
-    },
-    information_synthesis: {
-      source: 'teacher_assigned',
-      level1: 5,
-      level2: 18,
-      level3: 42,
-      level4: 20,
-      avgRating: 2.9,
-      totalStudents: 85,
-    },
-    metacognition: {
-      source: 'ai_detected',
-      level1: 12,
-      level2: 25,
-      level3: 30,
-      level4: 18,
-      avgRating: 2.6,
-      totalStudents: 85,
-      studentsDetected: 52, // AI只在52名学生中检测到元认知表现
-    },
-    question_quality: {
-      source: 'ai_detected',
-      level1: 10,
-      level2: 28,
-      level3: 35,
-      level4: 12,
-      avgRating: 2.5,
-      totalStudents: 85,
-      studentsDetected: 65,
-    },
-    creativity: {
-      source: 'ai_detected',
-      level1: 15,
-      level2: 30,
-      level3: 25,
-      level4: 15,
-      avgRating: 2.4,
-      totalStudents: 85,
-      studentsDetected: 58,
-    },
-    persistence: {
-      source: 'ai_detected',
-      level1: 8,
-      level2: 20,
-      level3: 40,
-      level4: 17,
-      avgRating: 2.7,
-      totalStudents: 85,
-      studentsDetected: 70,
-    },
-  };
-
-  // Mock student alert data
-  const mockAlerts = {
-    lowPerformance: [
-      { studentId: '3', name: '王浩宇', competencyType: 'critical_thinking' as CompetencyType, rating: 1 },
-      { studentId: '5', name: '陈思远', competencyType: 'metacognition' as CompetencyType, rating: 2 },
-      { studentId: '12', name: '赵明远', competencyType: 'information_synthesis' as CompetencyType, rating: 1 },
-      { studentId: '18', name: '孙雨晴', competencyType: 'critical_thinking' as CompetencyType, rating: 2 },
-    ],
-    highPerformance: [
-      { studentId: '6', name: '赵梓涵', competencyTypes: ['critical_thinking', 'information_synthesis', 'metacognition'] as CompetencyType[], avgRating: 4 },
-      { studentId: '2', name: '李思琪', competencyTypes: ['information_synthesis', 'metacognition'] as CompetencyType[], avgRating: 3.5 },
-      { studentId: '1', name: '张晓明', competencyTypes: ['critical_thinking', 'metacognition'] as CompetencyType[], avgRating: 3.8 },
-    ],
-  };
-
-  // Mock cross-course trend data
-  const mockCompetencyTrends: Record<CompetencyType, CourseTrendPoint[]> = {
-    critical_thinking: [
-      { courseId: 'geo_01', courseName: '地理-气候变化', date: '2023-11', distribution: { level1: 12, level2: 28, level3: 32, level4: 13 } },
-      { courseId: 'bio_01', courseName: '生物-生态系统', date: '2023-12', distribution: { level1: 10, level2: 25, level3: 35, level4: 15 } },
-      { courseId: 'current', courseName: '水循环与气候变化', date: '2024-01', distribution: { level1: 8, level2: 22, level3: 38, level4: 17 } },
-    ],
-    information_synthesis: [
-      { courseId: 'geo_01', courseName: '地理-气候变化', date: '2023-11', distribution: { level1: 8, level2: 22, level3: 38, level4: 17 } },
-      { courseId: 'phy_01', courseName: '物理-能量转换', date: '2023-12', distribution: { level1: 7, level2: 20, level3: 40, level4: 18 } },
-      { courseId: 'current', courseName: '水循环与气候变化', date: '2024-01', distribution: { level1: 5, level2: 18, level3: 42, level4: 20 } },
-    ],
-    metacognition: [
-      { courseId: 'math_01', courseName: '数学-函数思维', date: '2023-10', distribution: { level1: 15, level2: 30, level3: 28, level4: 12 } },
-      { courseId: 'bio_01', courseName: '生物-生态系统', date: '2023-12', distribution: { level1: 13, level2: 27, level3: 30, level4: 15 } },
-      { courseId: 'current', courseName: '水循环与气候变化', date: '2024-01', distribution: { level1: 12, level2: 25, level3: 30, level4: 18 } },
-    ],
-    question_quality: [
-      { courseId: 'sci_01', courseName: '科学探究', date: '2023-11', distribution: { level1: 12, level2: 30, level3: 32, level4: 11 } },
-      { courseId: 'geo_01', courseName: '地理-气候变化', date: '2023-12', distribution: { level1: 11, level2: 29, level3: 33, level4: 12 } },
-      { courseId: 'current', courseName: '水循环与气候变化', date: '2024-01', distribution: { level1: 10, level2: 28, level3: 35, level4: 12 } },
-    ],
-    creativity: [
-      { courseId: 'art_01', courseName: '艺术创作', date: '2023-10', distribution: { level1: 18, level2: 32, level3: 23, level4: 12 } },
-      { courseId: 'tech_01', courseName: '技术创新', date: '2023-12', distribution: { level1: 16, level2: 31, level3: 24, level4: 14 } },
-      { courseId: 'current', courseName: '水循环与气候变化', date: '2024-01', distribution: { level1: 15, level2: 30, level3: 25, level4: 15 } },
-    ],
-    persistence: [
-      { courseId: 'math_01', courseName: '数学-函数思维', date: '2023-10', distribution: { level1: 10, level2: 22, level3: 38, level4: 15 } },
-      { courseId: 'phy_01', courseName: '物理-能量转换', date: '2023-12', distribution: { level1: 9, level2: 21, level3: 39, level4: 16 } },
-      { courseId: 'current', courseName: '水循环与气候变化', date: '2024-01', distribution: { level1: 8, level2: 20, level3: 40, level4: 17 } },
-    ],
-  };
 
   return (
     <div className="space-y-6">
