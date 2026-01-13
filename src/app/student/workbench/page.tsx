@@ -264,12 +264,12 @@ function TaskExpandedCard({
         {/* 提交按钮 */}
         <button
           onClick={handleSubmit}
-          disabled={isCompleted || taskStatus === 'submitting' || taskStatus === 'grading' || taskStatus === 'completed'}
+          disabled={taskStatus === 'submitting' || taskStatus === 'grading'}
           className={`mt-4 w-full py-3 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2 ${
-            isCompleted || taskStatus === 'completed'
-              ? 'bg-green-100 text-green-700 cursor-not-allowed'
-              : taskStatus === 'submitting' || taskStatus === 'grading'
+            taskStatus === 'submitting' || taskStatus === 'grading'
               ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
+              : isCompleted && quickResult?.allCorrect
+              ? 'bg-green-100 text-green-700 cursor-not-allowed'
               : 'bg-primary-600 text-white hover:bg-primary-700'
           }`}
         >
@@ -283,7 +283,7 @@ function TaskExpandedCard({
               <Activity size={16} className="animate-spin" />
               批改中...
             </>
-          ) : isCompleted || taskStatus === 'completed' ? (
+          ) : isCompleted && quickResult?.allCorrect ? (
             <>
               <Check size={16} />
               已完成
@@ -291,7 +291,7 @@ function TaskExpandedCard({
           ) : (
             <>
               <Check size={16} />
-              提交任务
+              {quickResult && !quickResult.allCorrect ? '重新提交' : '提交任务'}
             </>
           )}
         </button>
@@ -510,8 +510,8 @@ export default function StudentWorkbenchPage() {
 
   // 切换任务完成状态 - 两阶段提交
   const toggleTaskCompletion = async (taskId: string, answer?: string) => {
-    // 如果任务已完成或正在提交/批改中，不再处理
-    if (completedTasks.has(taskId) || taskStatus === 'submitting' || taskStatus === 'grading') {
+    // 如果正在提交或批改中，不再处理
+    if (taskStatus === 'submitting' || taskStatus === 'grading') {
       return;
     }
 
@@ -553,14 +553,21 @@ export default function StudentWorkbenchPage() {
       if (data.taskType === 'quiz' && data.quickResult) {
         // 立即显示快速判题结果
         setQuickResult(data.quickResult);
-        setTaskStatus('completed');
 
-        // 标记任务为已完成
-        setCompletedTasks((prev) => {
-          const newSet = new Set(prev);
-          newSet.add(taskId);
-          return newSet;
-        });
+        // 只有全对才标记任务为已完成
+        if (data.quickResult.allCorrect) {
+          setTaskStatus('completed');
+          setCompletedTasks((prev) => {
+            const newSet = new Set(prev);
+            newSet.add(taskId);
+            return newSet;
+          });
+        } else {
+          // 未全对，重置状态允许重做
+          setTimeout(() => {
+            setTaskStatus('idle');
+          }, 2000); // 2秒后重置，让用户看到结果
+        }
 
         // 添加loading消息到对话区
         const loadingMessage: ChatMessage = {
@@ -585,6 +592,7 @@ export default function StudentWorkbenchPage() {
                 questions: task.questions,
                 userAnswers: JSON.parse(answer || '{}'),
                 results: data.quickResult.details,
+                attemptNumber: data.attemptNumber,
               }),
             });
 

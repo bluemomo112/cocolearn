@@ -107,6 +107,19 @@ export interface TaskAssessment {
   };
 }
 
+// 任务提交记录
+export interface TaskSubmission {
+  attemptNumber: number; // 第几次提交
+  answer: string;
+  submittedAt: Date;
+  score?: number; // 客观题的得分
+  correctCount?: number; // 客观题答对的题数
+  totalCount?: number; // 客观题总题数
+  isAllCorrect?: boolean; // 客观题是否全对
+  assessment?: TaskAssessment; // 主观题的评估结果
+  details?: any[]; // 客观题的详细结果
+}
+
 export interface ResourceAccessLog {
   resourceId: string;
   startTime: Date;
@@ -149,10 +162,7 @@ export interface SharedContext {
   tasks: {
     list: Task[];
     status: Map<string, TaskStatus>;
-    submissions: Map<string, {
-      answer: string;
-      submittedAt: Date;
-    }>;
+    submissions: Map<string, TaskSubmission[]>; // 改为数组，支持多次提交
     assessments: Map<string, TaskAssessment>;
   };
 

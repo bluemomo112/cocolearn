@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { AgentCoordinator } from '@/lib/agents/agent-coordinator';
 import { extractAllResources } from '@/lib/resource-parser';
 import { mockResources } from '@/data/mockLearningData';
-import { SharedContext, Message } from '@/types/shared-context';
+import { SharedContext, Message, TaskSubmission } from '@/types/shared-context';
 
 // 临时存储会话上下文（生产环境应使用数据库）
 const sessionContexts = new Map<string, SharedContext>();
@@ -225,11 +225,9 @@ async function handleTaskSubmission(
     );
   }
 
-  // 记录提交
-  context.tasks.submissions.set(taskId, {
-    answer,
-    submittedAt: new Date()
-  });
+  // 获取该任务的历史提交记录
+  const previousSubmissions = context.tasks.submissions.get(taskId) || [];
+  const attemptNumber = previousSubmissions.length + 1;
 
   // 如果是客观题（quiz），先快速判断对错
   if (task.type === 'quiz' && task.questions) {
@@ -260,15 +258,39 @@ async function handleTaskSubmission(
 
     const allCorrect = results.every(r => r.isCorrect);
     const correctCount = results.filter(r => r.isCorrect).length;
+    const totalCount = results.length;
+    const score = Math.round((correctCount / totalCount) * 100);
+
+    // 创建提交记录
+    const submission: TaskSubmission = {
+      attemptNumber,
+      answer,
+      submittedAt: new Date(),
+      score,
+      correctCount,
+      totalCount,
+      isAllCorrect: allCorrect,
+      details: results
+    };
+
+    // 保存提交记录
+    previousSubmissions.push(submission);
+    context.tasks.submissions.set(taskId, previousSubmissions);
+
+    // 只有全对才标记为已完成
+    if (allCorrect) {
+      context.tasks.status.set(taskId, 'completed');
+    }
 
     // 返回快速判断结果，不等待AI分析
     return NextResponse.json({
       success: true,
       taskType: 'quiz',
+      attemptNumber,
       quickResult: {
         allCorrect,
         correctCount,
-        totalCount: results.length,
+        totalCount,
         details: results
       },
       // 标记需要AI分析
@@ -281,6 +303,18 @@ async function handleTaskSubmission(
 
   // 调用评估Agent
   const response = await coordinator.handleTaskSubmission(taskId, answer);
+
+  // 创建提交记录
+  const submission: TaskSubmission = {
+    attemptNumber,
+    answer,
+    submittedAt: new Date(),
+    assessment: response.taskAssessment
+  };
+
+  // 保存提交记录
+  previousSubmissions.push(submission);
+  context.tasks.submissions.set(taskId, previousSubmissions);
 
   // 保存评估结果
   if (response.taskAssessment) {
@@ -328,6 +362,7 @@ async function handleTaskSubmission(
   return NextResponse.json({
     success: true,
     taskType: task.type,
+    attemptNumber,
     message: response.message,
     assessment: response.taskAssessment,
     competencyUpdates: response.competencyUpdates,
