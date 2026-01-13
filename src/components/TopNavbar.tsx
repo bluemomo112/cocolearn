@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import ThemeSwitcher from './ThemeSwitcher'
 
 interface NavItem {
   id: string
@@ -122,6 +123,9 @@ export default function TopNavbar({ user = { name: 'Mo老师', role: 'AI · 高�
 
         {/* User Area */}
         <div className="flex items-center gap-3">
+          {/* Theme Switcher */}
+          <ThemeSwitcher />
+
           {/* Notification */}
           <button className="relative p-2 rounded-xl hover:bg-gray-100 transition-colors">
             <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
