@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { isAIEnabled } from '@/lib/ai-config';
 import {
   Video,
   FileText,
@@ -569,85 +570,87 @@ export default function StudentWorkbenchPage() {
           }, 2000); // 2秒后重置，让用户看到结果
         }
 
-        // 添加loading消息到对话区
-        const loadingMessage: ChatMessage = {
-          id: `msg_${Date.now()}_loading`,
-          role: 'assistant',
-          content: '正在为你生成详细的学习反馈，请稍候...',
-          timestamp: new Date(),
-        };
-        setMessages((prev) => [...prev, loadingMessage]);
+        // 添加loading消息到对话区（仅在AI启用时）
+        if (isAIEnabled()) {
+          const loadingMessage: ChatMessage = {
+            id: `msg_${Date.now()}_loading`,
+            role: 'assistant',
+            content: '正在为你生成详细的学习反馈，请稍候...',
+            timestamp: new Date(),
+          };
+          setMessages((prev) => [...prev, loadingMessage]);
 
-        // 异步调用AI分析（不阻塞）
-        setTimeout(async () => {
-          try {
-            const analysisResponse = await fetch('/api/analyze-quiz', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                taskId,
-                taskTitle: task.title,
-                questions: task.questions,
-                userAnswers: JSON.parse(answer || '{}'),
-                results: data.quickResult.details,
-                attemptNumber: data.attemptNumber,
-              }),
-            });
-
-            if (!analysisResponse.ok) {
-              throw new Error('AI分析请求失败');
-            }
-
-            // 处理流式响应
-            const reader = analysisResponse.body?.getReader();
-            const decoder = new TextDecoder();
-            let aiAnalysis = '';
-
-            if (reader) {
-              while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-
-                const chunk = decoder.decode(value, { stream: true });
-                aiAnalysis += chunk;
-
-                // 实时更新消息（替换loading消息和之前的分析消息）
-                setMessages((prev) => {
-                  const analysisMessageId = `msg_${taskId}_analysis`;
-                  const filtered = prev.filter(m =>
-                    m.id !== loadingMessage.id && m.id !== analysisMessageId
-                  );
-                  return [
-                    ...filtered,
-                    {
-                      id: analysisMessageId,
-                      role: 'assistant',
-                      content: aiAnalysis,
-                      timestamp: new Date(),
-                    },
-                  ];
-                });
-              }
-            }
-          } catch (error) {
-            console.error('AI分析失败:', error);
-            // 移除loading消息，显示错误
-            setMessages((prev) => {
-              const filtered = prev.filter(m => m.id !== loadingMessage.id);
-              return [
-                ...filtered,
-                {
-                  id: `msg_${Date.now()}_error`,
-                  role: 'assistant',
-                  content: 'AI分析暂时无法完成，但你的答题结果已经保存。',
-                  timestamp: new Date(),
+          // 异步调用AI分析（不阻塞）
+          setTimeout(async () => {
+            try {
+              const analysisResponse = await fetch('/api/analyze-quiz', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
                 },
-              ];
-            });
-          }
-        }, 500); // 短暂延迟，让用户看到快速判题结果
+                body: JSON.stringify({
+                  taskId,
+                  taskTitle: task.title,
+                  questions: task.questions,
+                  userAnswers: JSON.parse(answer || '{}'),
+                  results: data.quickResult.details,
+                  attemptNumber: data.attemptNumber,
+                }),
+              });
+
+              if (!analysisResponse.ok) {
+                throw new Error('AI分析请求失败');
+              }
+
+              // 处理流式响应
+              const reader = analysisResponse.body?.getReader();
+              const decoder = new TextDecoder();
+              let aiAnalysis = '';
+
+              if (reader) {
+                while (true) {
+                  const { done, value } = await reader.read();
+                  if (done) break;
+
+                  const chunk = decoder.decode(value, { stream: true });
+                  aiAnalysis += chunk;
+
+                  // 实时更新消息（替换loading消息和之前的分析消息）
+                  setMessages((prev) => {
+                    const analysisMessageId = `msg_${taskId}_analysis`;
+                    const filtered = prev.filter(m =>
+                      m.id !== loadingMessage.id && m.id !== analysisMessageId
+                    );
+                    return [
+                      ...filtered,
+                      {
+                        id: analysisMessageId,
+                        role: 'assistant',
+                        content: aiAnalysis,
+                        timestamp: new Date(),
+                      },
+                    ];
+                  });
+                }
+              }
+            } catch (error) {
+              console.error('AI分析失败:', error);
+              // 移除loading消息，显示错误
+              setMessages((prev) => {
+                const filtered = prev.filter(m => m.id !== loadingMessage.id);
+                return [
+                  ...filtered,
+                  {
+                    id: `msg_${Date.now()}_error`,
+                    role: 'assistant',
+                    content: 'AI分析暂时无法完成，但你的答题结果已经保存。',
+                    timestamp: new Date(),
+                  },
+                ];
+              });
+            }
+          }, 500); // 短暂延迟，让用户看到快速判题结果
+        }
 
       }
       // 处理主观题（assignment/reflection）

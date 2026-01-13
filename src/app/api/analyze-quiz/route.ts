@@ -7,6 +7,14 @@ import { streamChatWithGLM } from '@/lib/glm-client';
  */
 export async function POST(request: NextRequest) {
   try {
+    // 检查是否配置了 GLM API
+    if (!process.env.GLM_API_KEY) {
+      return NextResponse.json(
+        { error: 'AI analysis is not available. GLM_API_KEY is not configured.' },
+        { status: 503 }
+      );
+    }
+
     const body = await request.json();
     const { taskId, taskTitle, questions, userAnswers, results } = body;
 
