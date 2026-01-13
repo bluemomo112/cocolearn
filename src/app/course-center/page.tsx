@@ -749,7 +749,7 @@ function TeachingModeModal({
                 👨‍🏫
               </div>
               <div className="flex-1">
-                <h3 className="text-lg font-bold text-gray-900 mb-1">讲授模式</h3>
+                <h3 className="text-lg font-bold text-gray-900 mb-1">讲授模式（以教师为中心的课堂模式）</h3>
                 <p className="text-sm text-gray-600">教师主导课堂，进行知识讲解与示范，适合新知识的系统性教学</p>
               </div>
             </div>
@@ -765,8 +765,8 @@ function TeachingModeModal({
                 🎯
               </div>
               <div className="flex-1">
-                <h3 className="text-lg font-bold text-gray-900 mb-1">自学模式</h3>
-                <p className="text-sm text-gray-600">学生自主探究学习，教师作为引导者与支持者，适合培养学生自主学习能力</p>
+                <h3 className="text-lg font-bold text-gray-900 mb-1">自学模式（以学生为中心的课堂模式）</h3>
+                <p className="text-sm text-gray-600">学生自主探究学习，教师和AI虚拟导师作为引导者与支持者，适合培养学生自主学习能力</p>
               </div>
             </div>
           </button>

@@ -740,7 +740,9 @@ export default function ResourceHub() {
                       </div>
                     </div>
                   </div>
-                  <button className="px-4 py-2 bg-gradient-to-r from-primary-500 to-accent-500 text-white font-medium rounded-xl hover:shadow-lg hover:scale-105 transition-all duration-200">
+                  <button
+                  onClick={() => window.open("https://aichat.cocorobo.cn/#/?id=9e5a4eea-9a70-4c1a-ad7e-75f18fb9a563&type=agent")} 
+                  className="px-4 py-2 bg-gradient-to-r from-primary-500 to-accent-500 text-white font-medium rounded-xl hover:shadow-lg hover:scale-105 transition-all duration-200">
                     开始训练
                   </button>
                 </div>
@@ -830,7 +832,9 @@ export default function ResourceHub() {
                     placeholder="请输入您在跨学科课堂中使用的话术，例如：'这两个概念之间有什么联系？'"
                     className="w-full h-28 p-4 bg-white rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50 focus:border-primary-500 transition-all resize-none"
                   />
-                  <button className="w-full mt-4 py-3 bg-primary-500 text-white font-medium rounded-xl hover:bg-primary-600 transition-all duration-200">
+                  <button 
+          
+                  className="w-full mt-4 py-3 bg-primary-500 text-white font-medium rounded-xl hover:bg-primary-600 transition-all duration-200">
                     AI优化建议
                   </button>
                 </div>
