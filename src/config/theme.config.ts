@@ -228,7 +228,7 @@ export const purpleTheme: Theme = {
 // ============================================
 // 当前使用的主题 - 修改这里切换主题
 // ============================================
-export const currentTheme: Theme = blueTheme;
+export const currentTheme: Theme = greenTheme;
 
 // ============================================
 // 导出 CSS 变量生成函数
