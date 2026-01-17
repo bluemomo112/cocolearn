@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { ClassCompetencyDistribution, CompetencyDistributionChart } from '../../../note-config/results-view'
+import { ClassCompetencyDistribution, COMPETENCY_DEFINITIONS, getStarLevelColor } from '../../../note-config/results-view'
 
 // ============================================
 // Teacher Competency Insights Type Definitions
@@ -39,6 +39,26 @@ interface CompetencyFilterOptions {
 // ============================================
 // PRD V3 Data Model - Three Certainty Layers
 // ============================================
+
+// Class (班级) data model
+interface ClassInfo {
+  classId: string;
+  className: string;
+  studentCount: number;
+}
+
+// Student detail for drill-down
+interface StudentDetail {
+  studentId: string;
+  studentName: string;
+  classId: string;
+  className: string;
+  status: StudentStatus;
+  progress: number;
+  learningDuration: number;
+  objectiveScore?: number;
+  competencyScores?: Record<CompetencyType, number>; // 1-4 stars
+}
 
 // Layer 1: Guaranteed Statistics (100% certain)
 interface GuaranteedStatistics {
@@ -88,6 +108,75 @@ interface StudentStatusDistribution {
 // ============================================
 // PRD V3 Mock Data - Complete Course Data
 // ============================================
+
+// Mock Classes
+const mockClasses: ClassInfo[] = [
+  { classId: 'class-1', className: '一班', studentCount: 28 },
+  { classId: 'class-2', className: '二班', studentCount: 30 },
+  { classId: 'class-3', className: '三班', studentCount: 27 },
+]
+
+// Mock Students (for drill-down)
+const mockStudents: StudentDetail[] = [
+  // 一班学生
+  { studentId: 's1', studentName: '张三', classId: 'class-1', className: '一班', status: 'completed', progress: 100, learningDuration: 50, objectiveScore: 92, competencyScores: { critical_thinking: 4, information_synthesis: 3, metacognition: 3, question_quality: 4, creativity: 3, persistence: 4 } },
+  { studentId: 's2', studentName: '李四', classId: 'class-1', className: '一班', status: 'completed', progress: 100, learningDuration: 48, objectiveScore: 88, competencyScores: { critical_thinking: 3, information_synthesis: 4, metacognition: 3, question_quality: 3, creativity: 4, persistence: 3 } },
+  { studentId: 's3', studentName: '王五', classId: 'class-1', className: '一班', status: 'in_progress', progress: 75, learningDuration: 42, objectiveScore: 85, competencyScores: { critical_thinking: 3, information_synthesis: 3, metacognition: 4, question_quality: 3, creativity: 3, persistence: 3 } },
+  { studentId: 's4', studentName: '赵六', classId: 'class-1', className: '一班', status: 'completed', progress: 100, learningDuration: 55, objectiveScore: 95, competencyScores: { critical_thinking: 4, information_synthesis: 4, metacognition: 4, question_quality: 4, creativity: 4, persistence: 4 } },
+  { studentId: 's5', studentName: '孙七', classId: 'class-1', className: '一班', status: 'in_progress', progress: 68, learningDuration: 38, objectiveScore: 78, competencyScores: { critical_thinking: 2, information_synthesis: 3, metacognition: 2, question_quality: 3, creativity: 2, persistence: 3 } },
+  { studentId: 's6', studentName: '周八', classId: 'class-1', className: '一班', status: 'completed', progress: 100, learningDuration: 52, objectiveScore: 90, competencyScores: { critical_thinking: 4, information_synthesis: 3, metacognition: 3, question_quality: 4, creativity: 3, persistence: 4 } },
+  { studentId: 's7', studentName: '吴九', classId: 'class-1', className: '一班', status: 'needs_attention', progress: 45, learningDuration: 25, objectiveScore: 65, competencyScores: { critical_thinking: 2, information_synthesis: 2, metacognition: 2, question_quality: 2, creativity: 2, persistence: 1 } },
+  { studentId: 's8', studentName: '郑十', classId: 'class-1', className: '一班', status: 'completed', progress: 100, learningDuration: 47, objectiveScore: 87, competencyScores: { critical_thinking: 3, information_synthesis: 3, metacognition: 3, question_quality: 3, creativity: 3, persistence: 3 } },
+
+  // 二班学生
+  { studentId: 's9', studentName: '陈一', classId: 'class-2', className: '二班', status: 'completed', progress: 100, learningDuration: 45, objectiveScore: 82, competencyScores: { critical_thinking: 3, information_synthesis: 3, metacognition: 3, question_quality: 3, creativity: 3, persistence: 3 } },
+  { studentId: 's10', studentName: '林二', classId: 'class-2', className: '二班', status: 'in_progress', progress: 80, learningDuration: 40, objectiveScore: 80, competencyScores: { critical_thinking: 3, information_synthesis: 3, metacognition: 3, question_quality: 3, creativity: 3, persistence: 3 } },
+  { studentId: 's11', studentName: '黄三', classId: 'class-2', className: '二班', status: 'completed', progress: 100, learningDuration: 50, objectiveScore: 88, competencyScores: { critical_thinking: 3, information_synthesis: 4, metacognition: 3, question_quality: 3, creativity: 3, persistence: 3 } },
+  { studentId: 's12', studentName: '刘四', classId: 'class-2', className: '二班', status: 'not_started', progress: 0, learningDuration: 0, competencyScores: { critical_thinking: 1, information_synthesis: 1, metacognition: 1, question_quality: 1, creativity: 1, persistence: 1 } },
+  { studentId: 's13', studentName: '杨五', classId: 'class-2', className: '二班', status: 'completed', progress: 100, learningDuration: 48, objectiveScore: 85, competencyScores: { critical_thinking: 3, information_synthesis: 3, metacognition: 3, question_quality: 3, creativity: 3, persistence: 3 } },
+  { studentId: 's14', studentName: '许六', classId: 'class-2', className: '二班', status: 'in_progress', progress: 70, learningDuration: 35, objectiveScore: 75, competencyScores: { critical_thinking: 2, information_synthesis: 3, metacognition: 2, question_quality: 2, creativity: 3, persistence: 2 } },
+  { studentId: 's15', studentName: '何七', classId: 'class-2', className: '二班', status: 'completed', progress: 100, learningDuration: 52, objectiveScore: 91, competencyScores: { critical_thinking: 4, information_synthesis: 3, metacognition: 3, question_quality: 4, creativity: 3, persistence: 4 } },
+  { studentId: 's16', studentName: '罗八', classId: 'class-2', className: '二班', status: 'needs_attention', progress: 30, learningDuration: 18, objectiveScore: 58, competencyScores: { critical_thinking: 1, information_synthesis: 2, metacognition: 1, question_quality: 2, creativity: 1, persistence: 1 } },
+
+  // 三班学生
+  { studentId: 's17', studentName: '高一', classId: 'class-3', className: '三班', status: 'completed', progress: 100, learningDuration: 46, objectiveScore: 86, competencyScores: { critical_thinking: 3, information_synthesis: 3, metacognition: 3, question_quality: 3, creativity: 3, persistence: 3 } },
+  { studentId: 's18', studentName: '梁二', classId: 'class-3', className: '三班', status: 'in_progress', progress: 72, learningDuration: 38, objectiveScore: 79, competencyScores: { critical_thinking: 3, information_synthesis: 3, metacognition: 2, question_quality: 3, creativity: 2, persistence: 3 } },
+  { studentId: 's19', studentName: '郭三', classId: 'class-3', className: '三班', status: 'completed', progress: 100, learningDuration: 49, objectiveScore: 89, competencyScores: { critical_thinking: 3, information_synthesis: 3, metacognition: 3, question_quality: 3, creativity: 4, persistence: 3 } },
+  { studentId: 's20', studentName: '钱四', classId: 'class-3', className: '三班', status: 'completed', progress: 100, learningDuration: 51, objectiveScore: 93, competencyScores: { critical_thinking: 4, information_synthesis: 4, metacognition: 3, question_quality: 4, creativity: 3, persistence: 4 } },
+  { studentId: 's21', studentName: '孔五', classId: 'class-3', className: '三班', status: 'in_progress', progress: 65, learningDuration: 32, objectiveScore: 72, competencyScores: { critical_thinking: 2, information_synthesis: 2, metacognition: 3, question_quality: 2, creativity: 2, persistence: 2 } },
+  { studentId: 's22', studentName: '严六', classId: 'class-3', className: '三班', status: 'not_started', progress: 0, learningDuration: 0, competencyScores: { critical_thinking: 1, information_synthesis: 1, metacognition: 1, question_quality: 1, creativity: 1, persistence: 1 } },
+  { studentId: 's23', studentName: '华七', classId: 'class-3', className: '三班', status: 'completed', progress: 100, learningDuration: 47, objectiveScore: 84, competencyScores: { critical_thinking: 3, information_synthesis: 3, metacognition: 3, question_quality: 3, creativity: 3, persistence: 3 } },
+  { studentId: 's24', studentName: '金八', classId: 'class-3', className: '三班', status: 'needs_attention', progress: 40, learningDuration: 22, objectiveScore: 62, competencyScores: { critical_thinking: 2, information_synthesis: 2, metacognition: 2, question_quality: 2, creativity: 1, persistence: 1 } },
+]
+
+// Generate more students to reach 85 total
+for (let i = 25; i <= 85; i++) {
+  const classIndex = (i - 1) % 3
+  const classInfo = mockClasses[classIndex]
+  const statuses: StudentStatus[] = ['completed', 'in_progress', 'not_started', 'needs_attention']
+  const randomStatus = statuses[Math.floor(Math.random() * statuses.length)]
+  const progress = randomStatus === 'completed' ? 100 : randomStatus === 'not_started' ? 0 : Math.floor(Math.random() * 80) + 20
+  const score = Math.floor(Math.random() * 40) + 60
+
+  mockStudents.push({
+    studentId: `s${i}`,
+    studentName: `学生${i}`,
+    classId: classInfo.classId,
+    className: classInfo.className,
+    status: randomStatus,
+    progress,
+    learningDuration: Math.floor(Math.random() * 40) + 20,
+    objectiveScore: randomStatus !== 'not_started' ? score : undefined,
+    competencyScores: {
+      critical_thinking: Math.floor(Math.random() * 3) + 1,
+      information_synthesis: Math.floor(Math.random() * 3) + 1,
+      metacognition: Math.floor(Math.random() * 3) + 1,
+      question_quality: Math.floor(Math.random() * 3) + 1,
+      creativity: Math.floor(Math.random() * 3) + 1,
+      persistence: Math.floor(Math.random() * 3) + 1,
+    }
+  })
+}
 
 // Layer 1: Guaranteed Statistics (ALWAYS available)
 const mockGuaranteedStats: GuaranteedStatistics = {
@@ -297,10 +386,92 @@ interface CourseResultsPageProps {
   }
 }
 
+// Clickable Competency Distribution Chart Component
+function ClickableCompetencyDistributionChart({
+  distribution,
+  onBarClick,
+}: {
+  distribution: ClassCompetencyDistribution;
+  onBarClick: (level: 1 | 2 | 3 | 4, count: number) => void;
+}) {
+  const def = COMPETENCY_DEFINITIONS[distribution.competencyType];
+  const Icon = def.icon;
+  const { star1, star2, star3, star4 } = distribution.distribution;
+  const maxCount = Math.max(star1, star2, star3, star4);
+  const total = distribution.totalStudents;
+
+  const bars = [
+    { level: 4, count: star4, label: '★★★★' },
+    { level: 3, count: star3, label: '★★★' },
+    { level: 2, count: star2, label: '★★' },
+    { level: 1, count: star1, label: '★' },
+  ];
+
+  return (
+    <div className="bg-gradient-to-br from-gray-50 to-primary-50/30 rounded-xl p-5 border border-gray-200 hover:shadow-md transition-shadow">
+      {/* 标题和平均值 */}
+      <div className="flex items-center gap-3 mb-4">
+        <div className={`w-10 h-10 rounded-lg bg-${def.color}-100 flex items-center justify-center`}>
+          <Icon size={20} className={`text-${def.color}-600`} />
+        </div>
+        <div className="flex-1">
+          <h4 className="font-bold text-gray-800">{def.name}</h4>
+          <p className="text-xs text-gray-500">{def.description}</p>
+        </div>
+        <div className="text-right">
+          <div className="text-sm text-gray-500">班级平均</div>
+          <div className="text-xl font-bold text-primary-600">{distribution.averageStars.toFixed(1)} ★</div>
+        </div>
+      </div>
+
+      {/* 条形图 */}
+      <div className="space-y-2">
+        {bars.map((bar) => (
+          <button
+            key={bar.level}
+            onClick={() => onBarClick(bar.level as 1 | 2 | 3 | 4, bar.count)}
+            className="w-full flex items-center gap-2 hover:bg-white/50 rounded-lg p-1 -m-1 transition-colors cursor-pointer"
+            disabled={bar.count === 0}
+          >
+            <span className="text-xs text-gray-600 w-14 shrink-0">{bar.label}</span>
+            <div className="flex-1 bg-gray-200 rounded-full h-6 relative overflow-hidden">
+              <div
+                className={`h-full bg-gradient-to-r ${getStarLevelColor(bar.level as 1 | 2 | 3 | 4)} rounded-full flex items-center justify-end pr-2 transition-all`}
+                style={{ width: maxCount > 0 ? `${(bar.count / maxCount) * 100}%` : '0%' }}
+              >
+                {bar.count > 0 && (
+                  <span className="text-xs font-bold text-white">{bar.count}人</span>
+                )}
+              </div>
+            </div>
+            <span className="text-xs text-gray-500 w-10 text-right">
+              {total > 0 ? Math.round((bar.count / total) * 100) : 0}%
+            </span>
+            {bar.count > 0 && (
+              <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            )}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function CourseResultsPage({ params }: CourseResultsPageProps) {
   const [selectedStatusFilter, setSelectedStatusFilter] = useState<StudentStatus | 'all'>('all')
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null)
-  const [expandedCompetencyId, setExpandedCompetencyId] = useState<string | null>(null)
+  const [selectedClassId, setSelectedClassId] = useState<string | 'all'>('all')
+  const [drillDownModal, setDrillDownModal] = useState<{
+    isOpen: boolean
+    title: string
+    students: StudentDetail[]
+  }>({
+    isOpen: false,
+    title: '',
+    students: [],
+  })
 
   // 模拟课程数据
   const course = {
@@ -311,6 +482,48 @@ export default function CourseResultsPage({ params }: CourseResultsPageProps) {
     status: 'ongoing' as const,
     isPublished: true,
     hasObjectiveQuestions: mockConditionalScores.objectiveScores !== undefined,
+  }
+
+  // Filter students by selected class
+  const getFilteredStudents = () => {
+    if (selectedClassId === 'all') return mockStudents
+    return mockStudents.filter(s => s.classId === selectedClassId)
+  }
+
+  const filteredStudents = getFilteredStudents()
+
+  // Recalculate statistics based on filtered students
+  const filteredStats = {
+    totalStudents: filteredStudents.length,
+    enrolledStudents: filteredStudents.length,
+    averageProgress: Math.round(filteredStudents.reduce((sum, s) => sum + s.progress, 0) / filteredStudents.length),
+    averageLearningDuration: Math.round(filteredStudents.reduce((sum, s) => sum + s.learningDuration, 0) / filteredStudents.length),
+    lastActiveTime: mockGuaranteedStats.lastActiveTime,
+  }
+
+  const filteredStudentStatus = {
+    notStarted: filteredStudents.filter(s => s.status === 'not_started').length,
+    inProgress: filteredStudents.filter(s => s.status === 'in_progress').length,
+    completed: filteredStudents.filter(s => s.status === 'completed').length,
+    needsAttention: filteredStudents.filter(s => s.status === 'needs_attention').length,
+  }
+
+  // Open drill-down modal
+  const openDrillDown = (title: string, students: StudentDetail[]) => {
+    setDrillDownModal({
+      isOpen: true,
+      title,
+      students,
+    })
+  }
+
+  // Close drill-down modal
+  const closeDrillDown = () => {
+    setDrillDownModal({
+      isOpen: false,
+      title: '',
+      students: [],
+    })
   }
 
   // Format last active time
@@ -350,41 +563,26 @@ export default function CourseResultsPage({ params }: CourseResultsPageProps) {
 
   // Get student status filter options
   const statusFilters = [
-    { value: 'all' as const, label: '全部', count: mockGuaranteedStats.enrolledStudents },
-    { value: 'in_progress' as const, label: '进行中', count: mockStudentStatus.inProgress },
-    { value: 'completed' as const, label: '已完成', count: mockStudentStatus.completed },
-    { value: 'not_started' as const, label: '未开始', count: mockStudentStatus.notStarted },
-    { value: 'needs_attention' as const, label: '需关注', count: mockStudentStatus.needsAttention },
+    { value: 'all' as const, label: '全部', count: filteredStats.enrolledStudents },
+    { value: 'in_progress' as const, label: '进行中', count: filteredStudentStatus.inProgress },
+    { value: 'completed' as const, label: '已完成', count: filteredStudentStatus.completed },
+    { value: 'not_started' as const, label: '未开始', count: filteredStudentStatus.notStarted },
+    { value: 'needs_attention' as const, label: '需关注', count: filteredStudentStatus.needsAttention },
   ]
-
-  // Get filtered students count
-  const getFilteredStudentCount = () => {
-    if (selectedStatusFilter === 'all') return mockGuaranteedStats.enrolledStudents
-
-    // Map filter values to property names
-    const statusMap: Record<Exclude<StudentStatus, 'all'>, keyof StudentStatusDistribution> = {
-      'in_progress': 'inProgress',
-      'completed': 'completed',
-      'not_started': 'notStarted',
-      'needs_attention': 'needsAttention',
-    }
-
-    return mockStudentStatus[statusMap[selectedStatusFilter as Exclude<StudentStatus, 'all'>]]
-  }
 
   // Generate insights based on student status
   const generateStudentStatusInsights = () => {
     const insights = []
 
-    if (mockStudentStatus.needsAttention > 0) {
-      insights.push(`${mockStudentStatus.needsAttention}名学生超过48小时未活跃，建议关注`)
+    if (filteredStudentStatus.needsAttention > 0) {
+      insights.push(`${filteredStudentStatus.needsAttention}名学生超过48小时未活跃，建议关注`)
     }
 
-    if (mockStudentStatus.notStarted > 0) {
-      insights.push(`${mockStudentStatus.notStarted}名学生尚未开始学习，需要引导`)
+    if (filteredStudentStatus.notStarted > 0) {
+      insights.push(`${filteredStudentStatus.notStarted}名学生尚未开始学习，需要引导`)
     }
 
-    if (mockStudentStatus.completed === mockGuaranteedStats.enrolledStudents) {
+    if (filteredStudentStatus.completed === filteredStats.enrolledStudents) {
       insights.push('🎉 全部学生已完成学习任务')
     }
 
@@ -455,6 +653,47 @@ export default function CourseResultsPage({ params }: CourseResultsPageProps) {
         </div>
 
         {/* ============================================ */}
+        {/* Class Filter Section                        */}
+        {/* ============================================ */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-6 animate-fade-in">
+          <div className="p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <svg className="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
+              <h3 className="text-sm font-semibold text-gray-700">班级筛选</h3>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => setSelectedClassId('all')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  selectedClassId === 'all'
+                    ? 'bg-primary-500 text-white shadow-sm'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                全部班级
+                <span className="ml-1 opacity-75">({mockGuaranteedStats.totalStudents}人)</span>
+              </button>
+              {mockClasses.map((classInfo) => (
+                <button
+                  key={classInfo.classId}
+                  onClick={() => setSelectedClassId(classInfo.classId)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    selectedClassId === classInfo.classId
+                      ? 'bg-primary-500 text-white shadow-sm'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  {classInfo.className}
+                  <span className="ml-1 opacity-75">({classInfo.studentCount}人)</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* ============================================ */}
         {/* PRD V3 Section 5.2.1: Class Overview Cards    */}
         {/* Priority: 1 (ALWAYS_SHOW)                 */}
         {/* ============================================ */}
@@ -469,7 +708,7 @@ export default function CourseResultsPage({ params }: CourseResultsPageProps) {
               </div>
               <div className="flex-1">
                 <p className="text-xs text-gray-500 mb-1">参与学生</p>
-                <p className="text-2xl font-bold text-gray-900">{mockOverviewDeltas.enrolledStudents.current}</p>
+                <p className="text-2xl font-bold text-gray-900">{filteredStats.enrolledStudents}</p>
               </div>
             </div>
             {renderDeltaIndicator(
@@ -488,7 +727,7 @@ export default function CourseResultsPage({ params }: CourseResultsPageProps) {
               </div>
               <div className="flex-1">
                 <p className="text-xs text-gray-500 mb-1">平均进度</p>
-                <p className="text-2xl font-bold text-gray-900">{mockGuaranteedStats.averageProgress}%</p>
+                <p className="text-2xl font-bold text-gray-900">{filteredStats.averageProgress}%</p>
               </div>
             </div>
             {renderDeltaIndicator(mockOverviewDeltas.averageProgress.delta, mockOverviewDeltas.averageProgress.deltaLabel)}
@@ -504,7 +743,7 @@ export default function CourseResultsPage({ params }: CourseResultsPageProps) {
               </div>
               <div className="flex-1">
                 <p className="text-xs text-gray-500 mb-1">平均学习时长</p>
-                <p className="text-2xl font-bold text-gray-900">{mockGuaranteedStats.averageLearningDuration}</p>
+                <p className="text-2xl font-bold text-gray-900">{filteredStats.averageLearningDuration}</p>
               </div>
             </div>
             {renderDeltaIndicator(mockOverviewDeltas.averageDuration.delta, mockOverviewDeltas.averageDuration.deltaLabel)}
@@ -520,7 +759,7 @@ export default function CourseResultsPage({ params }: CourseResultsPageProps) {
               </div>
               <div className="flex-1">
                 <p className="text-xs text-gray-500 mb-1">最近活跃</p>
-                <p className="text-sm font-semibold text-gray-900">{formatLastActiveTime(mockGuaranteedStats.lastActiveTime)}</p>
+                <p className="text-sm font-semibold text-gray-900">{formatLastActiveTime(filteredStats.lastActiveTime)}</p>
               </div>
             </div>
           </div>
@@ -564,7 +803,7 @@ export default function CourseResultsPage({ params }: CourseResultsPageProps) {
               {statusFilters
                 .filter((f) => f.value !== 'all')
                 .map((status) => {
-                  const percentage = (status.count / mockGuaranteedStats.enrolledStudents) * 100
+                  const percentage = (status.count / filteredStats.enrolledStudents) * 100
                   const statusConfig = {
                     in_progress: { color: 'bg-blue-500', label: '进行中' },
                     completed: { color: 'bg-green-500', label: '已完成' },
@@ -574,7 +813,14 @@ export default function CourseResultsPage({ params }: CourseResultsPageProps) {
                   const config = statusConfig[status.value as keyof typeof statusConfig]
 
                   return (
-                    <div key={status.value} className="flex items-center gap-3">
+                    <button
+                      key={status.value}
+                      onClick={() => {
+                        const studentsInStatus = filteredStudents.filter(s => s.status === status.value)
+                        openDrillDown(`${config.label} (${studentsInStatus.length}人)`, studentsInStatus)
+                      }}
+                      className="w-full flex items-center gap-3 hover:bg-gray-50 rounded-lg p-2 -m-2 transition-colors cursor-pointer"
+                    >
                       <div className="w-20 text-sm text-gray-600">{config.label}</div>
                       <div className="flex-1 h-6 bg-gray-100 rounded-full overflow-hidden">
                         <div
@@ -585,7 +831,10 @@ export default function CourseResultsPage({ params }: CourseResultsPageProps) {
                       <div className="w-16 text-right text-sm font-medium text-gray-900">
                         {status.count}人 ({Math.round(percentage)}%)
                       </div>
-                    </div>
+                      <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </button>
                   )
                 })}
             </div>
@@ -759,21 +1008,32 @@ export default function CourseResultsPage({ params }: CourseResultsPageProps) {
                 <h4 className="text-sm font-semibold text-gray-700 mb-3">分数段分布</h4>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   {[
-                    { range: '90-100', label: '优秀', count: mockConditionalScores.objectiveScores.scoreDistribution.excellent, color: 'bg-green-500' },
-                    { range: '80-89', label: '良好', count: mockConditionalScores.objectiveScores.scoreDistribution.good, color: 'bg-blue-500' },
-                    { range: '60-79', label: '及格', count: mockConditionalScores.objectiveScores.scoreDistribution.pass, color: 'bg-yellow-500' },
-                    { range: '0-59', label: '不及格', count: mockConditionalScores.objectiveScores.scoreDistribution.fail, color: 'bg-red-500' },
+                    { range: '90-100', label: '优秀', count: mockConditionalScores.objectiveScores.scoreDistribution.excellent, color: 'bg-green-500', min: 90, max: 100 },
+                    { range: '80-89', label: '良好', count: mockConditionalScores.objectiveScores.scoreDistribution.good, color: 'bg-blue-500', min: 80, max: 89 },
+                    { range: '60-79', label: '及格', count: mockConditionalScores.objectiveScores.scoreDistribution.pass, color: 'bg-yellow-500', min: 60, max: 79 },
+                    { range: '0-59', label: '不及格', count: mockConditionalScores.objectiveScores.scoreDistribution.fail, color: 'bg-red-500', min: 0, max: 59 },
                   ].map((segment) => {
-                    const percentage = (segment.count / mockGuaranteedStats.enrolledStudents) * 100
+                    const percentage = (segment.count / filteredStats.enrolledStudents) * 100
                     return (
-                      <div key={segment.range} className="text-center">
-                        <div className={`h-20 ${segment.color} rounded-lg mb-2 flex items-end justify-center pb-2`}>
+                      <button
+                        key={segment.range}
+                        onClick={() => {
+                          // Filter students by score range
+                          const studentsInRange = filteredStudents.filter(s => {
+                            const score = s.objectiveScore;
+                            return score !== undefined && score >= segment.min && score <= segment.max;
+                          });
+                          openDrillDown(`${segment.label} (${segment.range}分) - ${studentsInRange.length}人`, studentsInRange);
+                        }}
+                        className="text-center hover:scale-105 transition-transform cursor-pointer"
+                      >
+                        <div className={`h-20 ${segment.color} rounded-lg mb-2 flex items-end justify-center pb-2 hover:opacity-90 transition-opacity`}>
                           <span className="text-white font-bold text-lg">{segment.count}</span>
                         </div>
                         <p className="text-xs text-gray-500">{segment.range}分</p>
                         <p className="text-sm font-medium text-gray-700">{segment.label}</p>
                         <p className="text-xs text-gray-400">{Math.round(percentage)}%</p>
-                      </div>
+                      </button>
                     )
                   })}
                 </div>
@@ -827,9 +1087,19 @@ export default function CourseResultsPage({ params }: CourseResultsPageProps) {
             <div className="p-6">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {mockOptionalCompetency.competencyDistributions.map((distribution) => (
-                  <CompetencyDistributionChart
+                  <ClickableCompetencyDistributionChart
                     key={distribution.competencyType}
                     distribution={distribution}
+                    onBarClick={(level, count) => {
+                      if (count === 0) return;
+                      // Filter students by competency level
+                      const studentsWithLevel = filteredStudents.filter(s => {
+                        const competencyScore = s.competencyScores?.[distribution.competencyType];
+                        return competencyScore === level;
+                      });
+                      const competencyName = COMPETENCY_DEFINITIONS[distribution.competencyType].name;
+                      openDrillDown(`${competencyName} - ${'★'.repeat(level)} (${studentsWithLevel.length}人)`, studentsWithLevel);
+                    }}
                   />
                 ))}
               </div>
@@ -907,6 +1177,110 @@ export default function CourseResultsPage({ params }: CourseResultsPageProps) {
           </div>
         )}
       </div>
+
+      {/* ============================================ */}
+      {/* Student Drill-Down Modal                    */}
+      {/* ============================================ */}
+      {drillDownModal.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 animate-fade-in">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[80vh] overflow-hidden animate-scale-in">
+            {/* Modal Header */}
+            <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-primary-50 to-accent-50">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-bold text-gray-900">{drillDownModal.title}</h3>
+                <button
+                  onClick={closeDrillDown}
+                  className="p-2 hover:bg-white/50 rounded-lg transition-colors"
+                >
+                  <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 overflow-y-auto max-h-[calc(80vh-120px)]">
+              {drillDownModal.students.length === 0 ? (
+                <div className="text-center py-12">
+                  <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                  </svg>
+                  <p className="text-gray-500">暂无学生数据</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {drillDownModal.students.map((student) => (
+                    <div
+                      key={student.studentId}
+                      className="p-4 border border-gray-200 rounded-xl hover:border-primary-300 hover:shadow-sm transition-all"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <h4 className="font-semibold text-gray-900">{student.studentName}</h4>
+                            <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs">
+                              {student.className}
+                            </span>
+                            <span className={`px-2 py-1 rounded text-xs font-medium ${
+                              student.status === 'completed' ? 'bg-green-100 text-green-700' :
+                              student.status === 'in_progress' ? 'bg-blue-100 text-blue-700' :
+                              student.status === 'not_started' ? 'bg-gray-100 text-gray-700' :
+                              'bg-orange-100 text-orange-700'
+                            }`}>
+                              {student.status === 'completed' ? '已完成' :
+                               student.status === 'in_progress' ? '进行中' :
+                               student.status === 'not_started' ? '未开始' : '需关注'}
+                            </span>
+                          </div>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                            <div>
+                              <p className="text-gray-500 mb-1">学习进度</p>
+                              <p className="font-semibold text-gray-900">{student.progress}%</p>
+                            </div>
+                            <div>
+                              <p className="text-gray-500 mb-1">学习时长</p>
+                              <p className="font-semibold text-gray-900">{student.learningDuration}分钟</p>
+                            </div>
+                            {student.objectiveScore !== undefined && (
+                              <div>
+                                <p className="text-gray-500 mb-1">客观题得分</p>
+                                <p className="font-semibold text-gray-900">{student.objectiveScore}分</p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => {
+                            // TODO: Navigate to student detail page
+                            alert(`跳转到学生 ${student.studentName} 的详情页面`)
+                          }}
+                          className="ml-4 px-3 py-1.5 bg-primary-100 text-primary-700 rounded-lg text-sm font-medium hover:bg-primary-200 transition-colors"
+                        >
+                          查看详情
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-gray-200 bg-gray-50 flex items-center justify-between">
+              <p className="text-sm text-gray-600">
+                共 {drillDownModal.students.length} 名学生
+              </p>
+              <button
+                onClick={closeDrillDown}
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300 transition-colors"
+              >
+                关闭
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
