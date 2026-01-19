@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { isAIEnabled } from '@/lib/ai-config';
@@ -48,6 +49,7 @@ import {
   Image as ImageIcon,
   Mic,
   Trash2,
+  BarChart3,
 } from 'lucide-react';
 import CompetencyRadarChart from '../components/CompetencyRadarChart';
 import {
@@ -368,6 +370,8 @@ function Resizer({ onResize, position }: { onResize: (delta: number) => void; po
 
 // 主组件
 export default function StudentWorkbenchPage() {
+  const router = useRouter();
+
   // 布局状态
   const [leftWidth, setLeftWidth] = useState(25);
   const [rightWidth, setRightWidth] = useState(25);
@@ -431,6 +435,11 @@ export default function StudentWorkbenchPage() {
     interactionMode: 'free',
     noteTemplate: 'cornell',
   };
+
+  // 计算必修任务完成情况（需要在config定义之后）
+  const requiredTasks = config.tasks.filter(t => t.required);
+  const completedRequiredTasks = requiredTasks.filter(t => completedTasks.has(t.id)).length;
+  const allRequiredCompleted = requiredTasks.length > 0 && completedRequiredTasks === requiredTasks.length;
 
   // 发送消息处理
   const handleSendMessage = async () => {
@@ -850,6 +859,16 @@ ${resource.type === 'video'
           >
             <RotateCcw size={16} className="text-gray-700" />
           </button>
+          {allRequiredCompleted && (
+            <button
+              onClick={() => router.push('/student/courses/plant-factory/report')}
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white text-sm font-medium rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all shadow-md hover:shadow-lg"
+              title="查看学习报告"
+            >
+              <BarChart3 size={16} />
+              查看报告
+            </button>
+          )}
           <button className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 transition-colors">
             <Save size={16} />
             保存进度
