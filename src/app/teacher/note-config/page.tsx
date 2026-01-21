@@ -59,8 +59,6 @@ import {
   PreviewHeader,
   StudentPreview,
   UseViewHeader,
-  ResultsViewHeader,
-  ResultsViewDashboard,
   Resizer,
   NoteInfoModal,
 } from './modals';
@@ -318,9 +316,9 @@ const MOCK_CLASSES = [
 ];
 
 export default function NoteConfigPage() {
-  // 视角状态：'edit' | 'use' | 'results'
+  // 视角状态：'edit' | 'use'
   // Initialize with 'edit' to ensure server and client match
-  const [viewPerspective, setViewPerspective] = useState<'edit' | 'use' | 'results'>('edit');
+  const [viewPerspective, setViewPerspective] = useState<'edit' | 'use'>('edit');
   const [leftWidth, setLeftWidth] = useState(25);
   const [rightWidth, setRightWidth] = useState(25);
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -329,8 +327,8 @@ export default function NoteConfigPage() {
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const viewParam = urlParams.get('view');
-    if (viewParam === 'use' || viewParam === 'results' || viewParam === 'edit') {
-      setViewPerspective(viewParam as 'edit' | 'use' | 'results');
+    if (viewParam === 'use' || viewParam === 'edit') {
+      setViewPerspective(viewParam as 'edit' | 'use');
     }
   }, []);
 
@@ -388,7 +386,7 @@ export default function NoteConfigPage() {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
   // 视角切换处理
-  const handleViewSwitch = (newView: 'edit' | 'use' | 'results') => {
+  const handleViewSwitch = (newView: 'edit' | 'use') => {
     if (newView === viewPerspective) return;
 
     setIsTransitioning(true);
@@ -405,23 +403,8 @@ export default function NoteConfigPage() {
         <UseViewHeader
           config={config}
           onBack={() => handleViewSwitch('edit')}
-          onSwitchToResults={() => handleViewSwitch('results')}
         />
         <StudentPreview config={config} leftWidth={leftWidth} rightWidth={rightWidth} />
-      </div>
-    );
-  }
-
-  // Results视角：学习数据统计
-  if (viewPerspective === 'results') {
-    return (
-      <div className={`h-[calc(100vh-4rem)] flex flex-col bg-gray-100 transition-opacity duration-150 ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}>
-        <ResultsViewHeader
-          config={config}
-          onBack={() => handleViewSwitch('edit')}
-          onSwitchToUse={() => handleViewSwitch('use')}
-        />
-        <ResultsViewDashboard config={config} />
       </div>
     );
   }
@@ -461,13 +444,15 @@ export default function NoteConfigPage() {
             <Eye size={14} />
             使用视角
           </button>
-          <button
-            onClick={() => handleViewSwitch('results')}
-            className="flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-lg transition-all text-gray-600 hover:bg-gray-100"
+          <a
+            href={`/teacher/courses/1/results`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-lg transition-all text-gray-600 hover:bg-gray-100 cursor-pointer"
           >
             <Activity size={14} />
-            结果视角
-          </button>
+            查看课程报告
+          </a>
           <div className="w-px h-5 bg-gray-200"></div>
           <button className="flex items-center gap-1.5 px-3 py-1 bg-primary-600 text-white text-xs font-medium rounded-lg hover:bg-primary-700 transition-colors">
             <Save size={14} />

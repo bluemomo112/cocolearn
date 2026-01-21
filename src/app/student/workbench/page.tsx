@@ -53,6 +53,13 @@ import {
 } from 'lucide-react';
 import CompetencyRadarChart from '../components/CompetencyRadarChart';
 import {
+  LinearCompetencyView,
+  RadarCompetencyView,
+  BarCompetencyView,
+  CrossCourseGrowthTimeline,
+  GroupCollaborationView,
+} from '../components/CompetencyVisualizations';
+import {
   mockLearnerProfile,
   mockCourseCompetencyReport,
   mockAIObservations,
@@ -61,6 +68,7 @@ import {
   COMPETENCY_METADATA,
   CompetencyType,
   CompetencyRating,
+  CompetencyTrend,
 } from '@/data/mockCompetencyData';
 import { mockResources, mockTasks } from '@/data/mockLearningData';
 import { Resource, Task, TaskQuestion, TaskRubric } from '@/types/shared-context';
@@ -414,11 +422,7 @@ export default function StudentWorkbenchPage() {
   } | null>(null);
 
   // 能力画像状态
-  const [competencyProfile, setCompetencyProfile] = useState<{
-    critical_thinking: number;
-    information_synthesis: number;
-    metacognition: number;
-  }>({
+  const [competencyProfile, setCompetencyProfile] = useState<Partial<Record<CompetencyType, number>>>({
     critical_thinking: 2,
     information_synthesis: 2,
     metacognition: 2,
@@ -1571,34 +1575,40 @@ function CenterPanel({
 
 // 能力成长面板组件
 function CompetencyGrowthPanel({ competencyProfile }: {
-  competencyProfile: {
-    critical_thinking: number;
-    information_synthesis: number;
-    metacognition: number;
-  };
+  competencyProfile: Partial<Record<CompetencyType, number>>;
 }) {
-  const [showCrossCoursProfile, setShowCrossCoursProfile] = useState(false);
+  const [showCrossCourseProfile, setShowCrossCourseProfile] = useState(false);
 
-  // 将数字评分转换为CompetencyRating格式（1-4星级）
-  const currentCompetencies: Partial<Record<CompetencyType, CompetencyRating>> = {
-    critical_thinking: Math.round(competencyProfile.critical_thinking) as CompetencyRating,
-    information_synthesis: Math.round(competencyProfile.information_synthesis) as CompetencyRating,
-    metacognition: Math.round(competencyProfile.metacognition) as CompetencyRating,
+  // 转换数据格式：从 object 转为 CompetencyData 数组
+  const competencies: Array<{
+    type: CompetencyType;
+    rating: CompetencyRating;
+    trend?: CompetencyTrend;
+  }> = Object.entries(competencyProfile).map(([type, rating]) => ({
+    type: type as CompetencyType,
+    rating: Math.round(rating) as CompetencyRating,
+    trend: 'stable' as CompetencyTrend,
+  }));
+
+  const count = competencies.length;
+
+  // 智能路由：根据维度数量选择可视化组件
+  const renderVisualization = () => {
+    if (count === 0) return null;
+    if (count <= 2) return <LinearCompetencyView competencies={competencies} />;
+    if (count <= 6) return <RadarCompetencyView competencies={competencies} />;
+    return <BarCompetencyView competencies={competencies} />;
   };
 
   return (
     <div className="space-y-4">
-      {/* 当前课程能力雷达图 */}
+      {/* 当前课程能力画像 - 自适应可视化 */}
       <div className="bg-gradient-to-br from-primary-50 to-accent-50 rounded-xl p-4 border border-primary-100">
         <div className="flex items-center gap-2 mb-3">
           <Award size={14} className="text-primary-600" />
           <span className="text-xs font-bold text-primary-700">本课程能力画像</span>
         </div>
-        <CompetencyRadarChart
-          competencies={currentCompetencies}
-          size="small"
-          showLegend={false}
-        />
+        {renderVisualization()}
       </div>
 
       {/* AI实时观察 */}
@@ -1636,56 +1646,26 @@ function CompetencyGrowthPanel({ competencyProfile }: {
         </div>
       </div>
 
-      {/* 跨课程能力画像 (可折叠) */}
+      {/* 跨课程能力画像 (可折叠) - 使用CrossCourseGrowthTimeline组件 */}
       <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl border border-emerald-200 overflow-hidden">
         <button
-          onClick={() => setShowCrossCoursProfile(!showCrossCoursProfile)}
+          onClick={() => setShowCrossCourseProfile(!showCrossCourseProfile)}
           className="w-full p-4 flex items-center justify-between hover:bg-emerald-100/50 transition-colors"
         >
           <div className="flex items-center gap-2">
             <TrendingUp size={14} className="text-emerald-600" />
             <span className="text-xs font-bold text-emerald-700">我的跨课程能力画像</span>
           </div>
-          {showCrossCoursProfile ? (
+          {showCrossCourseProfile ? (
             <ChevronUp size={14} className="text-emerald-600" />
           ) : (
             <ChevronDown size={14} className="text-emerald-600" />
           )}
         </button>
 
-        {showCrossCoursProfile && (
-          <div className="p-4 pt-0 space-y-3">
-            {/* 全局能力趋势 */}
-            {Object.entries(mockLearnerProfile.globalCompetencies).map(([type, comp]: [string, any]) => {
-              const metadata = COMPETENCY_METADATA[type as keyof typeof COMPETENCY_METADATA];
-              if (!comp || !metadata) return null;
-
-              return (
-                <div key={type} className="bg-white/80 rounded-lg p-3 border border-emerald-100">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <div
-                        className="w-3 h-3 rounded-full"
-                        style={{ backgroundColor: metadata.color }}
-                      />
-                      <span className="text-xs font-medium text-gray-700">{metadata.name}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-gray-500">
-                        {getCompetencyStars(comp.overallRating)}
-                      </span>
-                      <span className="text-xs">{getTrendIcon(comp.trend)}</span>
-                    </div>
-                  </div>
-                  <div className="text-xs text-gray-500 mb-2">
-                    涉及课程: {comp.history.length} 门
-                  </div>
-                  <p className="text-xs text-gray-600 leading-relaxed line-clamp-2">
-                    {comp.latestObservation}
-                  </p>
-                </div>
-              );
-            })}
+        {showCrossCourseProfile && (
+          <div className="p-4 pt-0">
+            <CrossCourseGrowthTimeline globalCompetencies={mockLearnerProfile.globalCompetencies} />
           </div>
         )}
       </div>
