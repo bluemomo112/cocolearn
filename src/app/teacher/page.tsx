@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { CompetencyDistributionChart } from './note-config/results-view'
 
 // 模拟数据
 const recentCourses = [
