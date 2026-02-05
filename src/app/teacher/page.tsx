@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { CompetencyDistributionChart } from './note-config/results-view'
+import { CompetencyDistributionChart, type ClassCompetencyDistribution } from './note-config/results-view'
 
 // 模拟数据
 const recentCourses = [
@@ -561,7 +561,7 @@ export default function TeacherDashboard() {
 
               {/* 以学生为中心的课堂 */}
               <button
-                onClick={() => window.open('https://cocolearn.cocorobo.cn/teacher/create', '_blank')}
+                onClick={() => window.open('teacher/note-config', '_blank')}
                 className="group relative w-full bg-gradient-to-br from-emerald-50 to-teal-50 border-2 border-emerald-100 rounded-2xl p-6 hover:border-emerald-300 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 text-left"
               >
                 <div className="flex flex-col items-center text-center">
