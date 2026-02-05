@@ -1,41 +1,49 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { AgentCoordinator } from '@/lib/agents/agent-coordinator';
-import { extractAllResources } from '@/lib/resource-parser';
-import { mockResources } from '@/data/mockLearningData';
-import { SharedContext, Message, TaskSubmission } from '@/types/shared-context';
+import { Message, TaskSubmission } from '@/types/shared-context';
 
-// 临时存储会话上下文（生产环境应使用数据库）
-const sessionContexts = new Map<string, SharedContext>();
+// Demo 模式：返回 mock 数据，不调用真实 AI
+const DEMO_MODE = true;
+
+// Mock 回复列表
+const mockResponses = [
+  "这是一个很好的问题！在植物工厂中，光照是影响植物生长的关键因素之一。LED灯可以提供植物所需的特定光谱，红光促进开花结果，蓝光促进叶片生长。",
+  "你的思考很有深度！水培系统的优势在于可以精确控制营养液的浓度和pH值，让植物获得最佳的生长条件。",
+  "非常棒的观察！温度和湿度的控制确实是植物工厂的核心技术之一。通常叶菜类适合18-25°C的环境。",
+  "这个问题问得好！植物工厂的自动化系统可以24小时监控植物状态，及时调整环境参数，这是传统农业难以实现的。",
+  "你已经掌握了关键概念！继续保持这种探索精神，相信你会对植物工厂有更深入的理解。",
+];
+
+// Mock 能力更新
+const mockCompetencyProfile = {
+  studentId: 'student_demo',
+  courseId: 'course_plant_factory',
+  competencies: {
+    critical_thinking: { currentRating: 3.2, trend: 'improving' as const, evidenceCount: 5, recentEvidence: [] },
+    information_synthesis: { currentRating: 2.8, trend: 'stable' as const, evidenceCount: 4, recentEvidence: [] },
+    metacognition: { currentRating: 2.5, trend: 'improving' as const, evidenceCount: 3, recentEvidence: [] },
+  },
+  history: [],
+  lastUpdated: new Date(),
+};
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { sessionId, message, action, taskId, taskAnswer } = body;
+    const { action, taskId, taskAnswer, message } = body;
 
-    // 获取或创建会话上下文
-    let context = sessionContexts.get(sessionId);
-    if (!context) {
-      // 初始化新会话
-      context = await initializeSession(sessionId);
-      sessionContexts.set(sessionId, context);
+    if (DEMO_MODE) {
+      // Demo 模式：返回 mock 数据
+      if (action === 'chat') {
+        return handleMockChat(message);
+      } else if (action === 'submit_task') {
+        return handleMockTaskSubmission(taskId, taskAnswer);
+      }
     }
 
-    // 创建Agent协调器
-    const coordinator = new AgentCoordinator(context);
-
-    // 根据action类型处理
-    if (action === 'chat') {
-      // 处理普通对话
-      return await handleChat(coordinator, context, message);
-    } else if (action === 'submit_task') {
-      // 处理任务提交
-      return await handleTaskSubmission(coordinator, context, taskId, taskAnswer);
-    } else {
-      return NextResponse.json(
-        { error: 'Invalid action' },
-        { status: 400 }
-      );
-    }
+    return NextResponse.json(
+      { error: 'Invalid action' },
+      { status: 400 }
+    );
   } catch (error) {
     console.error('Chat API错误:', error);
     return NextResponse.json(
@@ -46,326 +54,61 @@ export async function POST(request: NextRequest) {
 }
 
 /**
- * 初始化会话
+ * Mock 对话处理
  */
-async function initializeSession(sessionId: string): Promise<SharedContext> {
-  // 创建初始上下文
-  const context: SharedContext = {
-    session: {
-      sessionId,
-      studentId: 'student_demo',
-      courseId: 'course_plant_factory',
-      startTime: new Date(),
-      currentPhase: 'exploring'
-    },
-    conversation: {
-      messages: [],
-      lastAgentType: null,
-      turnCount: 0,
-      messageAgentMap: new Map()
-    },
-    resources: {
-      available: mockResources,
-      contents: new Map(),
-      currentId: null,
-      accessLog: []
-    },
-    tasks: {
-      list: require('@/data/mockLearningData').mockTasks,
-      status: new Map(),
-      submissions: new Map(),
-      assessments: new Map()
-    },
-    competency: {
-      profile: {
-        studentId: 'student_demo',
-        courseId: 'course_plant_factory',
-        competencies: {
-          critical_thinking: {
-            currentRating: 2,
-            trend: 'stable',
-            evidenceCount: 0,
-            recentEvidence: []
-          },
-          information_synthesis: {
-            currentRating: 2,
-            trend: 'stable',
-            evidenceCount: 0,
-            recentEvidence: []
-          },
-          metacognition: {
-            currentRating: 2,
-            trend: 'stable',
-            evidenceCount: 0,
-            recentEvidence: []
-          }
-        },
-        history: [],
-        lastUpdated: new Date()
-      },
-      pendingUpdates: [],
-      lastUpdated: new Date()
-    },
-    behavior: {
-      resourceStayTime: new Map(),
-      totalIdleTime: 0,
-      currentIdleStart: null,
-      confusionSignals: [],
-      lastActivityTime: new Date()
-    }
-  };
-
-  // 初始化任务状态
-  context.tasks.list.forEach(task => {
-    context.tasks.status.set(task.id, task.status);
-  });
-
-  // 提取资源内容
-  try {
-    const resourceContents = await extractAllResources(mockResources);
-    context.resources.contents = resourceContents;
-  } catch (error) {
-    console.error('提取资源内容失败:', error);
-  }
-
-  return context;
-}
-
-/**
- * 处理对话
- */
-async function handleChat(
-  coordinator: AgentCoordinator,
-  context: SharedContext,
-  userMessage: string
-) {
-  // 添加用户消息到上下文
-  const userMsg: Message = {
-    id: `msg_${Date.now()}`,
-    role: 'user',
-    content: userMessage,
-    timestamp: new Date()
-  };
-  context.conversation.messages.push(userMsg);
-
-  // 调用Agent处理
-  const response = await coordinator.handleUserMessage(userMessage);
-
-  // 添加AI回复到上下文
-  const aiMsg: Message = {
-    id: `msg_${Date.now()}_ai`,
-    role: 'assistant',
-    content: response.message,
-    timestamp: new Date(),
-    agentType: 'tutor'
-  };
-  context.conversation.messages.push(aiMsg);
-  context.conversation.lastAgentType = 'tutor';
-  context.conversation.turnCount++;
-
-  // 更新能力画像
-  if (response.competencyUpdates && response.competencyUpdates.length > 0) {
-    response.competencyUpdates.forEach(update => {
-      const comp = context.competency.profile.competencies[update.type];
-      const newRating = (comp.currentRating * comp.evidenceCount + update.rating)
-        / (comp.evidenceCount + 1);
-      comp.currentRating = Math.round(newRating * 10) / 10;
-      comp.evidenceCount++;
-      comp.recentEvidence.push(update.evidence);
-
-      context.competency.profile.history.push({
-        timestamp: new Date(),
-        competencyType: update.type,
-        rating: update.rating,
-        source: update.source,
-        evidence: update.evidence
-      });
-    });
-  }
-
-  // 异步触发元认知分析
-  if (response.shouldTriggerMetacognition) {
-    coordinator.runMetacognitionAnalysis('chat', {
-      userMessage,
-      aiResponse: response.message
-    }).then(metacogResult => {
-      if (metacogResult) {
-        // 这里可以通过WebSocket或其他方式推送到前端
-        console.log('元认知分析结果:', metacogResult);
-      }
-    }).catch(err => {
-      console.error('元认知分析异步执行失败:', err);
-    });
-  }
+function handleMockChat(userMessage: string) {
+  const randomResponse = mockResponses[Math.floor(Math.random() * mockResponses.length)];
 
   return NextResponse.json({
     success: true,
-    message: response.message,
-    messageId: aiMsg.id,
-    competencyUpdates: response.competencyUpdates,
-    competencyProfile: context.competency.profile
+    message: randomResponse,
+    messageId: `msg_${Date.now()}_ai`,
+    competencyUpdates: [],
+    competencyProfile: mockCompetencyProfile,
   });
 }
 
 /**
- * 处理任务提交
+ * Mock 任务提交处理
  */
-async function handleTaskSubmission(
-  coordinator: AgentCoordinator,
-  context: SharedContext,
-  taskId: string,
-  answer: string
-) {
-  // 找到任务
-  const task = context.tasks.list.find(t => t.id === taskId);
-  if (!task) {
-    return NextResponse.json(
-      { error: 'Task not found' },
-      { status: 404 }
-    );
-  }
-
-  // 获取该任务的历史提交记录
-  const previousSubmissions = context.tasks.submissions.get(taskId) || [];
-  const attemptNumber = previousSubmissions.length + 1;
-
-  // 如果是客观题（quiz），先快速判断对错
-  if (task.type === 'quiz' && task.questions) {
+function handleMockTaskSubmission(taskId: string, answer: string) {
+  // 尝试解析为 quiz 答案
+  try {
     const userAnswers = JSON.parse(answer);
-    const results = task.questions.map(q => {
-      const userAnswer = userAnswers[q.id];
-      const correctAnswer = q.answer; // 使用 answer 字段
-
-      let isCorrect = false;
-      if (q.type === 'multiple_choice') {
-        // 多选题：排序后比较
-        const userArr = Array.isArray(userAnswer) ? userAnswer : [];
-        const correctArr = Array.isArray(correctAnswer) ? correctAnswer : [];
-        isCorrect = JSON.stringify([...userArr].sort()) ===
-                   JSON.stringify([...correctArr].sort());
-      } else {
-        // 单选题
-        isCorrect = userAnswer === correctAnswer;
-      }
-
-      return {
-        questionId: q.id,
-        isCorrect,
-        userAnswer,
-        correctAnswer
-      };
-    });
-
-    const allCorrect = results.every(r => r.isCorrect);
-    const correctCount = results.filter(r => r.isCorrect).length;
-    const totalCount = results.length;
-    const score = Math.round((correctCount / totalCount) * 100);
-
-    // 创建提交记录
-    const submission: TaskSubmission = {
-      attemptNumber,
-      answer,
-      submittedAt: new Date(),
-      score,
-      correctCount,
-      totalCount,
-      isAllCorrect: allCorrect,
-      details: results
-    };
-
-    // 保存提交记录
-    previousSubmissions.push(submission);
-    context.tasks.submissions.set(taskId, previousSubmissions);
-
-    // 只有全对才标记为已完成
-    if (allCorrect) {
-      context.tasks.status.set(taskId, 'completed');
-    }
-
-    // 返回快速判断结果，不等待AI分析
+    // 假设是 quiz，返回 mock 结果
     return NextResponse.json({
       success: true,
       taskType: 'quiz',
-      attemptNumber,
+      attemptNumber: 1,
       quickResult: {
-        allCorrect,
-        correctCount,
-        totalCount,
-        details: results
+        allCorrect: true,
+        correctCount: Object.keys(userAnswers).length,
+        totalCount: Object.keys(userAnswers).length,
+        details: Object.keys(userAnswers).map(qId => ({
+          questionId: qId,
+          isCorrect: true,
+          userAnswer: userAnswers[qId],
+          correctAnswer: userAnswers[qId],
+        })),
       },
-      // 标记需要AI分析
-      needsAnalysis: true
+      needsAnalysis: true,
+    });
+  } catch {
+    // 主观题
+    return NextResponse.json({
+      success: true,
+      taskType: 'subjective',
+      attemptNumber: 1,
+      message: "你的回答展现了对植物工厂概念的良好理解！特别是在环境控制方面的分析很到位。建议可以进一步思考如何优化能源使用效率。",
+      assessment: {
+        score: 85,
+        feedback: "回答结构清晰，论点明确。",
+        strengths: ["概念理解准确", "逻辑清晰"],
+        improvements: ["可以增加更多实例", "深入分析成本效益"],
+      },
+      competencyUpdates: [],
+      competencyProfile: mockCompetencyProfile,
     });
   }
-
-  // 主观题：标记为批改中，然后调用AI评估
-  context.tasks.status.set(taskId, 'grading');
-
-  // 调用评估Agent
-  const response = await coordinator.handleTaskSubmission(taskId, answer);
-
-  // 创建提交记录
-  const submission: TaskSubmission = {
-    attemptNumber,
-    answer,
-    submittedAt: new Date(),
-    assessment: response.taskAssessment
-  };
-
-  // 保存提交记录
-  previousSubmissions.push(submission);
-  context.tasks.submissions.set(taskId, previousSubmissions);
-
-  // 保存评估结果
-  if (response.taskAssessment) {
-    context.tasks.assessments.set(taskId, response.taskAssessment);
-  }
-
-  // 标记为已完成
-  context.tasks.status.set(taskId, 'completed');
-
-  // 更新能力画像
-  if (response.competencyUpdates && response.competencyUpdates.length > 0) {
-    response.competencyUpdates.forEach(update => {
-      const comp = context.competency.profile.competencies[update.type];
-      const newRating = (comp.currentRating * comp.evidenceCount + update.rating)
-        / (comp.evidenceCount + 1);
-      comp.currentRating = Math.round(newRating * 10) / 10;
-      comp.evidenceCount++;
-      comp.recentEvidence.push(update.evidence);
-
-      context.competency.profile.history.push({
-        timestamp: new Date(),
-        competencyType: update.type,
-        rating: update.rating,
-        source: update.source,
-        evidence: update.evidence
-      });
-    });
-  }
-
-  // 异步触发元认知分析
-  if (response.shouldTriggerMetacognition) {
-    coordinator.runMetacognitionAnalysis('task_complete', {
-      taskId,
-      taskTitle: task?.title,
-      assessment: response.taskAssessment
-    }).then(metacogResult => {
-      if (metacogResult) {
-        console.log('元认知分析结果:', metacogResult);
-      }
-    }).catch(err => {
-      console.error('元认知分析异步执行失败:', err);
-    });
-  }
-
-  return NextResponse.json({
-    success: true,
-    taskType: task.type,
-    attemptNumber,
-    message: response.message,
-    assessment: response.taskAssessment,
-    competencyUpdates: response.competencyUpdates,
-    competencyProfile: context.competency.profile
-  });
 }
+

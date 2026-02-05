@@ -809,7 +809,7 @@ export default function CourseCenter() {
       window.open('https://pbl.cocorobo.cn/pbl-student-table/dist/#/pptEasyClass?type=&courseId=ae814d33-ef5d-11f0-9b8a-005056924926&userid=e9b3eb89-2446-11ee-91d8-005056b86db5&oid=45facc0a-1211-11ec-80ad-005056b86db5&org=&cid=&tType=1&screenType=2', '_blank')
     } else {
       // 自学模式 - 跳转到使用视角
-      window.open('https://cocolearn.cocorobo.cn/teacher/create', '_blank')
+      window.open('/teacher/note-config', '_blank')
     }
   }
 

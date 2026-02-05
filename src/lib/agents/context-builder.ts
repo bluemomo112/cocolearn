@@ -37,7 +37,8 @@ function buildTaskCompletionDetails(sharedContext: SharedContext): TaskCompletio
 
   return list.map(task => {
     const taskStatus = status.get(task.id) || 'available';
-    const submission = submissions.get(task.id);
+    const submissionList = submissions.get(task.id);
+    const latestSubmission = submissionList?.[submissionList.length - 1];
     const assessment = assessments.get(task.id);
 
     return {
@@ -45,9 +46,9 @@ function buildTaskCompletionDetails(sharedContext: SharedContext): TaskCompletio
       title: task.title,
       type: task.type,
       status: taskStatus,
-      ...(submission && {
-        studentAnswer: submission.answer,
-        submittedAt: submission.submittedAt
+      ...(latestSubmission && {
+        studentAnswer: latestSubmission.answer,
+        submittedAt: latestSubmission.submittedAt
       }),
       ...(assessment && {
         score: assessment.score,

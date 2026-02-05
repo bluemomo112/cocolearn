@@ -166,7 +166,8 @@ export const useSharedContext = create<SharedContextStore>()(
 
       return list.map(task => {
         const taskStatus = status.get(task.id) || 'available';
-        const submission = submissions.get(task.id);
+        const submissionList = submissions.get(task.id);
+        const latestSubmission = submissionList?.[submissionList.length - 1];
         const assessment = assessments.get(task.id);
 
         return {
@@ -174,9 +175,9 @@ export const useSharedContext = create<SharedContextStore>()(
           title: task.title,
           type: task.type,
           status: taskStatus,
-          ...(submission && {
-            studentAnswer: submission.answer,
-            submittedAt: submission.submittedAt
+          ...(latestSubmission && {
+            studentAnswer: latestSubmission.answer,
+            submittedAt: latestSubmission.submittedAt
           }),
           ...(assessment && {
             score: assessment.score,
@@ -217,10 +218,13 @@ export const useSharedContext = create<SharedContextStore>()(
     // 提交任务
     submitTask: (taskId, answer) => {
       set(state => {
-        state.context.tasks.submissions.set(taskId, {
+        const existingSubmissions = state.context.tasks.submissions.get(taskId) || [];
+        const newSubmission = {
+          attemptNumber: existingSubmissions.length + 1,
           answer,
           submittedAt: new Date()
-        });
+        };
+        state.context.tasks.submissions.set(taskId, [...existingSubmissions, newSubmission]);
         state.context.tasks.status.set(taskId, 'completed');
         state.context.behavior.lastActivityTime = new Date();
       });

@@ -64,8 +64,8 @@ import {
   COMPETENCY_DEFINITIONS as RESULTS_COMPETENCY_DEFINITIONS,
 } from './results-view';
 
-// 能力维度类型定义
-type CompetencyType =
+// 能力维度类型定义（跨学科通用能力）
+type CrossCompetencyType =
   | 'critical_thinking'      // 批判性思维
   | 'information_synthesis'  // 信息整合
   | 'metacognition'          // 元认知
@@ -73,8 +73,8 @@ type CompetencyType =
   | 'creativity'             // 创造性
   | 'persistence';           // 坚持性
 
-// 能力维度定义（用于UI展示）
-const COMPETENCY_DEFINITIONS: Record<CompetencyType, { name: string; description: string; icon: any }> = {
+// 跨学科能力定义（通用能力，所有学科共享）
+const CROSS_COMPETENCY_DEFINITIONS: Record<CrossCompetencyType, { name: string; description: string; icon: any }> = {
   critical_thinking: {
     name: '批判性思维',
     description: '评估信息、识别假设、分析论证的能力',
@@ -105,6 +105,75 @@ const COMPETENCY_DEFINITIONS: Record<CompetencyType, { name: string; description
     description: '面对挑战持续努力、不轻易放弃的品质',
     icon: Target,
   },
+};
+
+// 学科能力定义（学科特定的核心素养）
+interface SubjectCompetency {
+  id: string;
+  name: string;
+  description: string;
+}
+
+interface SubjectCompetencies {
+  [subject: string]: SubjectCompetency[];
+}
+
+// 学科能力数据（从后台配置获取，这里为 mock 数据）
+const SUBJECT_COMPETENCIES: SubjectCompetencies = {
+  '语文': [
+    { id: 'chinese_culture', name: '文化自信', description: '认同中华文化，理解多样文化' },
+    { id: 'language_use', name: '语言运用', description: '有效表达和交流沟通能力' },
+    { id: 'thinking_quality', name: '思维能力', description: '逻辑思维、直觉思维的品质' },
+    { id: 'aesthetic_creation', name: '审美创造', description: '感受美、发现美、创造美' },
+  ],
+  '数学': [
+    { id: 'math_abstraction', name: '数学抽象', description: '从具体情境中抽象出数学概念' },
+    { id: 'logical_reasoning', name: '逻辑推理', description: '从已有事实推出新结论的能力' },
+    { id: 'math_modeling', name: '数学建模', description: '用数学解决实际问题的能力' },
+    { id: 'math_operation', name: '数学运算', description: '正确进行运算的能力' },
+    { id: 'spatial_imagination', name: '直观想象', description: '几何直观和空间想象能力' },
+    { id: 'data_analysis', name: '数据分析', description: '收集、整理、分析数据的能力' },
+  ],
+  '科学': [
+    { id: 'science_inquiry', name: '科学探究', description: '提出问题、设计探究、得出结论' },
+    { id: 'science_attitude', name: '科学态度', description: '严谨认真、实事求是的科学态度' },
+    { id: 'science_responsibility', name: '社会责任', description: '爱护环境、保护生态的责任感' },
+  ],
+  '英语': [
+    { id: 'language_ability', name: '语言能力', description: '听、说、读、看、写等语言技能' },
+    { id: 'cultural_awareness', name: '文化意识', description: '理解中外文化差异' },
+    { id: 'thinking_quality', name: '思维品质', description: '思维的逻辑性、批判性、创新性' },
+    { id: 'learning_ability', name: '学习能力', description: '学习策略和自主学习能力' },
+  ],
+  '历史': [
+    { id: 'historical_materialism', name: '唯物史观', description: '用历史唯物主义观点分析历史' },
+    { id: 'historical_interpretation', name: '历史解释', description: '对历史事物的理性分析和阐释' },
+    { id: 'historical_values', name: '家国情怀', description: '对国家认同、民族认同的情感' },
+  ],
+  '地理': [
+    { id: 'human_land_coordination', name: '人地协调观', description: '人类活动与地理环境的关系' },
+    { id: 'comprehensive_thinking', name: '综合思维', description: '要素综合、时空综合、区域综合' },
+    { id: 'regional_cognition', name: '区域认知', description: '认识区域特征、差异与联系' },
+    { id: 'geographic_practice', name: '地理实践力', description: '地理工具使用和实践活动能力' },
+  ],
+  '物理': [
+    { id: 'physics_concept', name: '物理观念', description: '物质、运动、相互作用、能量等观念' },
+    { id: 'scientific_thinking', name: '科学思维', description: '模型建构、推理论证、质疑创新' },
+    { id: 'scientific_inquiry', name: '科学探究', description: '问题、证据、解释、交流' },
+    { id: 'scientific_attitude', name: '科学态度与责任', description: '科学本质、STSE、科学态度' },
+  ],
+  '化学': [
+    { id: 'macro_micro_identification', name: '宏观辨识', description: '从宏观和微观角度认识化学物质' },
+    { id: 'evidence_reasoning', name: '证据推理', description: '基于证据进行逻辑推理' },
+    { id: 'model_innovation', name: '模型认知', description: '构建化学模型并应用创新' },
+    { id: 'scientific_attitude', name: '科学态度', description: '严谨求实、探索未知的科学精神' },
+  ],
+  '生物': [
+    { id: 'life_concept', name: '生命观念', description: '对生命现象及关系的认识' },
+    { id: 'scientific_thinking', name: '科学思维', description: '归纳概括、演绎推理、模型建模' },
+    { id: 'scientific_inquiry', name: '科学探究', description: '发现问题、实验设计、得出结论' },
+    { id: 'social_responsibility', name: '社会责任', description: '生物科学价值观和责任感' },
+  ],
 };
 
 // 可调整大小的分隔条组件
@@ -761,16 +830,19 @@ export function MetaModal({ config, inheritedStrategies, onSave, onClose }: any)
               {config.tasks && config.tasks.length > 0 ? (
                 (() => {
                   // 收集所有已配置的能力维度
-                  const allCompetencies = new Set<CompetencyType>();
+                  const allCompetencies = new Set<CrossCompetencyType>();
                   config.tasks.forEach((task: any) => {
                     if (task.assignedCompetencies) {
-                      task.assignedCompetencies.forEach((comp: CompetencyType) => allCompetencies.add(comp));
+                      task.assignedCompetencies.forEach((comp: CrossCompetencyType) => allCompetencies.add(comp));
+                    }
+                    if (task.crossCompetencies) {
+                      task.crossCompetencies.forEach((comp: CrossCompetencyType) => allCompetencies.add(comp));
                     }
                   });
 
                   return allCompetencies.size > 0 ? (
                     Array.from(allCompetencies).map((competency) => {
-                      const def = COMPETENCY_DEFINITIONS[competency];
+                      const def = CROSS_COMPETENCY_DEFINITIONS[competency];
                       const Icon = def.icon;
                       return (
                         <div
@@ -916,6 +988,9 @@ export function TaskEditModal({ task, onSave, onClose }: any) {
   const [localTask, setLocalTask] = useState({ ...task });
   const [isGenerating, setIsGenerating] = useState(false);
   const [showAIConfig, setShowAIConfig] = useState(false);
+  const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
+  const [editingQuestion, setEditingQuestion] = useState<any>(null);
+  const [showQuestionEditor, setShowQuestionEditor] = useState(false);
   const [aiGenConfig, setAiGenConfig] = useState({
     questionTypes: ['choice'] as string[],
     questionCount: 5,
@@ -962,6 +1037,58 @@ export function TaskEditModal({ task, onSave, onClose }: any) {
 
     updateField('questions', generatedQuestions);
     setIsGenerating(false);
+  };
+
+  // 添加新题目
+  const addQuestion = () => {
+    const newQuestion = {
+      id: `q_${Date.now()}`,
+      type: 'choice' as 'choice' | 'fillblank' | 'truefalse' | 'shortanswer',
+      content: '',
+      options: ['选项A', '选项B', '选项C', '选项D'],
+      answer: 0,
+    };
+    setEditingQuestion(newQuestion);
+    setShowQuestionEditor(true);
+  };
+
+  // 编辑现有题目
+  const editQuestion = (question: any) => {
+    setEditingQuestion({ ...question });
+    setShowQuestionEditor(true);
+  };
+
+  // 保存题目
+  const saveQuestion = () => {
+    if (!editingQuestion.content?.trim()) {
+      alert('请输入题目内容');
+      return;
+    }
+
+    const existingQuestions = localTask.questions || [];
+    const questionIndex = existingQuestions.findIndex((q: any) => q.id === editingQuestion.id);
+
+    let updatedQuestions;
+    if (questionIndex >= 0) {
+      // 更新现有题目
+      updatedQuestions = [...existingQuestions];
+      updatedQuestions[questionIndex] = editingQuestion;
+    } else {
+      // 添加新题目
+      updatedQuestions = [...existingQuestions, editingQuestion];
+    }
+
+    updateField('questions', updatedQuestions);
+    setShowQuestionEditor(false);
+    setEditingQuestion(null);
+  };
+
+  // 删除题目
+  const deleteQuestion = (questionId: string) => {
+    if (confirm('确定要删除这道题目吗？')) {
+      const updatedQuestions = (localTask.questions || []).filter((q: any) => q.id !== questionId);
+      updateField('questions', updatedQuestions);
+    }
   };
 
   const GRADING_AGENTS = [
@@ -1100,6 +1227,13 @@ export function TaskEditModal({ task, onSave, onClose }: any) {
                         </>
                       )}
                     </button>
+                    <button
+                      onClick={addQuestion}
+                      className="px-3 py-1.5 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-lg text-xs font-medium hover:from-green-600 hover:to-emerald-600 transition-all flex items-center gap-1"
+                    >
+                      <Plus size={12} />
+                      手动添加
+                    </button>
                   </div>
                 </div>
 
@@ -1205,9 +1339,210 @@ export function TaskEditModal({ task, onSave, onClose }: any) {
                   </div>
                 )}
 
-                <div className="text-center py-6 text-gray-400">
-                  <ListChecks size={24} className="mx-auto mb-2" />
-                  <p className="text-xs">配置参数后点击"AI生成题目"，或手动添加题目</p>
+                {/* 题目列表 */}
+                {(localTask.questions && localTask.questions.length > 0) ? (
+                  <div className="space-y-2 max-h-80 overflow-y-auto">
+                    {localTask.questions.map((question: any, index: number) => {
+                      const typeLabels: Record<string, string> = {
+                        choice: '单选题',
+                        multipleChoice: '多选题',
+                        fillBlank: '填空题',
+                        trueFalse: '判断题',
+                        shortAnswer: '简答题',
+                      };
+
+                      return (
+                        <div
+                          key={question.id}
+                          className="p-3 bg-gray-50 rounded-lg border border-gray-200 hover:border-green-300 transition-all"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="text-xs font-medium text-gray-500">题目 {index + 1}</span>
+                                <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded">
+                                  {typeLabels[question.type] || question.type}
+                                </span>
+                                {question.aiGenerated && (
+                                  <span className="text-xs px-2 py-0.5 bg-purple-100 text-purple-700 rounded">
+                                    AI生成
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-sm text-gray-800 line-clamp-2">{question.content}</p>
+                              {question.type === 'choice' && question.options && (
+                                <div className="mt-2 space-y-1">
+                                  {question.options.map((option: string, optIndex: number) => (
+                                    <div key={optIndex} className="text-xs text-gray-600 flex items-center gap-2">
+                                      <span className={`w-4 h-4 rounded-full border flex items-center justify-center text-[10px] ${
+                                        question.answer === optIndex
+                                          ? 'border-green-500 bg-green-50 text-green-700'
+                                          : 'border-gray-300'
+                                      }`}>
+                                        {question.answer === optIndex ? '✓' : String.fromCharCode(65 + optIndex)}
+                                      </span>
+                                      <span className={question.answer === optIndex ? 'font-medium text-green-700' : ''}>
+                                        {option || '(空选项)'}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-1 shrink-0">
+                              <button
+                                onClick={() => editQuestion(question)}
+                                className="p-1.5 hover:bg-blue-50 rounded transition-colors text-blue-600"
+                                title="编辑"
+                              >
+                                <Pencil size={14} />
+                              </button>
+                              <button
+                                onClick={() => deleteQuestion(question.id)}
+                                className="p-1.5 hover:bg-red-50 rounded transition-colors text-red-600"
+                                title="删除"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center py-6 text-gray-400">
+                    <ListChecks size={24} className="mx-auto mb-2" />
+                    <p className="text-xs">配置参数后点击"AI生成题目"，或手动添加题目</p>
+                  </div>
+                )}
+
+                {/* 高级选项 - 能力维度配置 */}
+                <div className="mt-4 pt-4 border-t border-gray-200">
+                  <button
+                    onClick={() => setShowAdvancedOptions(!showAdvancedOptions)}
+                    className="w-full flex items-center justify-between px-4 py-3 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl hover:from-amber-100 hover:to-orange-100 transition-all"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Sparkles size={16} className="text-amber-600" />
+                      <span className="text-sm font-bold text-amber-800">高级选项：能力维度配置</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-amber-700">可选配置</span>
+                      {showAdvancedOptions ? <ChevronUp size={16} className="text-amber-600" /> : <ChevronDown size={16} className="text-amber-600" />}
+                    </div>
+                  </button>
+
+                  {showAdvancedOptions && (
+                    <div className="mt-4 p-4 bg-gradient-to-br from-amber-50/50 to-orange-50/50 rounded-xl border border-amber-200 space-y-4">
+                      {/* 学科能力维度 */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-1.5">
+                          <Target size={14} className="text-blue-500" />
+                          学科能力维度
+                          <span className="text-xs text-gray-500 font-normal ml-1">(根据课程设置的学科显示)</span>
+                        </label>
+                        <div className="mb-2 p-2 bg-blue-50 rounded-lg border border-blue-200">
+                          <p className="text-xs text-blue-700">
+                            当前课程学科：<span className="font-bold">科学、地理</span>
+                          </p>
+                        </div>
+                        <div className="space-y-3">
+                          {['科学', '地理'].map((subject) => {
+                            const subjectCompetencies = SUBJECT_COMPETENCIES[subject];
+                            if (!subjectCompetencies || subjectCompetencies.length === 0) return null;
+
+                            return (
+                              <div key={subject}>
+                                <h5 className="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1">
+                                  <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                                  {subject}学科核心素养
+                                </h5>
+                                <div className="flex flex-wrap gap-2">
+                                  {subjectCompetencies.map((competency) => {
+                                    const isSelected = localTask.subjectCompetencies?.includes(competency.id) || false;
+
+                                    return (
+                                      <button
+                                        key={competency.id}
+                                        type="button"
+                                        onClick={() => {
+                                          const current = localTask.subjectCompetencies || [];
+                                          const updated = isSelected
+                                            ? current.filter((c: string) => c !== competency.id)
+                                            : [...current, competency.id];
+                                          updateField('subjectCompetencies', updated.length > 0 ? updated : undefined);
+                                        }}
+                                        className={`
+                                          px-3 py-1.5 rounded-lg text-xs font-medium transition-all
+                                          ${
+                                            isSelected
+                                            ? 'bg-blue-100 text-blue-700 border-2 border-blue-400 shadow-sm'
+                                            : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50'
+                                          }
+                                        `}
+                                        title={competency.description}
+                                      >
+                                        {competency.name}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        <p className="mt-2 text-xs text-gray-500">
+                          选择本测验重点评估的学科核心素养，这些能力与学科教学目标直接相关
+                        </p>
+                      </div>
+
+                      {/* 跨学科能力维度 */}
+                      <div className="pt-4 border-t border-amber-200">
+                        <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-1.5">
+                          <Network size={14} className="text-indigo-500" />
+                          跨学科能力维度
+                          <span className="text-xs text-gray-500 font-normal ml-1">(通用能力，可跨课程追踪)</span>
+                        </label>
+                        <div className="flex flex-wrap gap-2">
+                          {(Object.keys(CROSS_COMPETENCY_DEFINITIONS) as CrossCompetencyType[]).map((competency) => {
+                            const def = CROSS_COMPETENCY_DEFINITIONS[competency];
+                            const Icon = def.icon;
+                            const isSelected = localTask.crossCompetencies?.includes(competency) || false;
+
+                            return (
+                              <button
+                                key={`cross-${competency}`}
+                                type="button"
+                                onClick={() => {
+                                  const current = localTask.crossCompetencies || [];
+                                  const updated = isSelected
+                                    ? current.filter((c: CrossCompetencyType) => c !== competency)
+                                    : [...current, competency];
+                                  updateField('crossCompetencies', updated.length > 0 ? updated : undefined);
+                                }}
+                                className={`
+                                  flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all
+                                  ${
+                                    isSelected
+                                      ? 'bg-indigo-100 text-indigo-700 border-2 border-indigo-400 shadow-sm'
+                                      : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50'
+                                  }
+                                `}
+                                title={def.description}
+                              >
+                                <Icon size={14} />
+                                {def.name}
+                              </button>
+                            );
+                          })}
+                        </div>
+                        <p className="mt-2 text-xs text-gray-500">
+                          选择跨学科通用能力维度，这些能力将跨课程追踪学生的发展
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -1224,150 +1559,234 @@ export function TaskEditModal({ task, onSave, onClose }: any) {
                   />
                 </div>
 
-                {/* 能力维度标记 */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-1.5">
-                    <Target size={14} className="text-primary-500" />
-                    能力维度标记
-                    <span className="text-xs text-gray-500 font-normal ml-1">(可选择多个)</span>
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    {(Object.keys(COMPETENCY_DEFINITIONS) as CompetencyType[]).map((competency) => {
-                      const def = COMPETENCY_DEFINITIONS[competency];
-                      const Icon = def.icon;
-                      const isSelected = localTask.assignedCompetencies?.includes(competency) || false;
+                {/* 高级选项 - 能力维度配置和AI批改 */}
+                <div className="mt-4 pt-4 border-t border-gray-200">
+                  <button
+                    onClick={() => setShowAdvancedOptions(!showAdvancedOptions)}
+                    className="w-full flex items-center justify-between px-4 py-3 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl hover:from-amber-100 hover:to-orange-100 transition-all"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Sparkles size={16} className="text-amber-600" />
+                      <span className="text-sm font-bold text-amber-800">高级选项：学习能力与AI批改</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-amber-700">可选配置</span>
+                      {showAdvancedOptions ? <ChevronUp size={16} className="text-amber-600" /> : <ChevronDown size={16} className="text-amber-600" />}
+                    </div>
+                  </button>
 
-                      return (
-                        <button
-                          key={competency}
-                          type="button"
-                          onClick={() => {
-                            const current = localTask.assignedCompetencies || [];
-                            const updated = isSelected
-                              ? current.filter((c: CompetencyType) => c !== competency)
-                              : [...current, competency];
-                            updateField('assignedCompetencies', updated.length > 0 ? updated : undefined);
-                          }}
-                          className={`
-                            flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all
-                            ${
-                              isSelected
-                                ? 'bg-blue-100 text-primary-700 border-2 border-primary-400 shadow-sm'
-                                : 'bg-gray-50 text-gray-600 border border-gray-300 hover:bg-gray-100'
-                            }
-                          `}
-                          title={def.description}
-                        >
-                          <Icon size={14} />
-                          {def.name}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  <p className="mt-2 text-xs text-gray-500">
-                    选择本次作业重点培养的能力维度，AI将在批改时重点评估这些能力的表现
-                  </p>
-                </div>
-
-                <div className="p-4 bg-purple-50 rounded-xl border border-purple-200">
-                  <div className="flex items-center justify-between mb-3">
-                    <h4 className="text-sm font-bold text-purple-700 flex items-center gap-2">
-                      <Bot size={14} />
-                      AI智能批改
-                    </h4>
-                    <button
-                      onClick={() =>
-                        updateField('aiGrading', {
-                          ...localTask.aiGrading,
-                          enabled: !localTask.aiGrading?.enabled,
-                        })
-                      }
-                      className={`w-12 h-6 rounded-full transition-colors relative ${
-                        localTask.aiGrading?.enabled ? 'bg-purple-600' : 'bg-gray-300'
-                      }`}
-                    >
-                      <div
-                        className={`w-5 h-5 bg-white rounded-full shadow transform transition-transform absolute top-0.5 ${
-                          localTask.aiGrading?.enabled ? 'translate-x-6' : 'translate-x-0.5'
-                        }`}
-                      ></div>
-                    </button>
-                  </div>
-                  {localTask.aiGrading?.enabled && (
-                    <div className="space-y-3">
+                  {showAdvancedOptions && (
+                    <div className="mt-4 p-4 bg-gradient-to-br from-amber-50/50 to-orange-50/50 rounded-xl border border-amber-200 space-y-4">
+                      {/* 学科能力维度 */}
                       <div>
-                        <label className="block text-xs font-medium text-accent-600 mb-2">选择批改Agent</label>
-                        <div className="space-y-2 max-h-80 overflow-y-auto">
-                          {GRADING_AGENTS.map((agent) => {
-                            const isSelected = (localTask.aiGrading?.agentId || 'agent_default') === agent.id;
+                        <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-1.5">
+                          <Target size={14} className="text-blue-500" />
+                          学科能力维度
+                          <span className="text-xs text-gray-500 font-normal ml-1">(根据课程设置的学科显示)</span>
+                        </label>
+                        <div className="mb-2 p-2 bg-blue-50 rounded-lg border border-blue-200">
+                          <p className="text-xs text-blue-700">
+                            当前课程学科：<span className="font-bold">科学、地理</span>
+                          </p>
+                        </div>
+                        <div className="space-y-3">
+                          {['科学', '地理'].map((subject) => {
+                            const subjectCompetencies = SUBJECT_COMPETENCIES[subject];
+                            if (!subjectCompetencies || subjectCompetencies.length === 0) return null;
+
+                            return (
+                              <div key={subject}>
+                                <h5 className="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1">
+                                  <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                                  {subject}学科核心素养
+                                </h5>
+                                <div className="flex flex-wrap gap-2">
+                                  {subjectCompetencies.map((competency) => {
+                                    const isSelected = localTask.subjectCompetencies?.includes(competency.id) || false;
+
+                                    return (
+                                      <button
+                                        key={competency.id}
+                                        type="button"
+                                        onClick={() => {
+                                          const current = localTask.subjectCompetencies || [];
+                                          const updated = isSelected
+                                            ? current.filter((c: string) => c !== competency.id)
+                                            : [...current, competency.id];
+                                          updateField('subjectCompetencies', updated.length > 0 ? updated : undefined);
+                                        }}
+                                        className={`
+                                          px-3 py-1.5 rounded-lg text-xs font-medium transition-all
+                                          ${
+                                            isSelected
+                                              ? 'bg-blue-100 text-blue-700 border-2 border-blue-400 shadow-sm'
+                                              : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50'
+                                          }
+                                        `}
+                                        title={competency.description}
+                                      >
+                                        {competency.name}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        <p className="mt-2 text-xs text-gray-500">
+                          选择本次作业重点培养的学科核心素养，这些能力与学科教学目标直接相关
+                        </p>
+                      </div>
+
+                      {/* 跨学科能力维度 */}
+                      <div className="pt-4 border-t border-amber-200">
+                        <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-1.5">
+                          <Network size={14} className="text-indigo-500" />
+                          跨学科能力维度
+                          <span className="text-xs text-gray-500 font-normal ml-1">(通用能力，可跨课程追踪)</span>
+                        </label>
+                        <div className="flex flex-wrap gap-2">
+                          {(Object.keys(CROSS_COMPETENCY_DEFINITIONS) as CrossCompetencyType[]).map((competency) => {
+                            const def = CROSS_COMPETENCY_DEFINITIONS[competency];
+                            const Icon = def.icon;
+                            const isSelected = localTask.crossCompetencies?.includes(competency) || false;
+
                             return (
                               <button
-                                key={agent.id}
-                                onClick={() =>
-                                  updateField('aiGrading', { ...localTask.aiGrading, agentId: agent.id })
-                                }
-                                className={`w-full text-left p-3 rounded-lg border-2 transition-all ${
-                                  isSelected
-                                    ? 'border-purple-500 bg-purple-50'
-                                    : 'border-gray-200 bg-white hover:border-purple-300 hover:bg-purple-50/50'
-                                }`}
+                                key={`cross-${competency}`}
+                                type="button"
+                                onClick={() => {
+                                  const current = localTask.crossCompetencies || [];
+                                  const updated = isSelected
+                                    ? current.filter((c: CrossCompetencyType) => c !== competency)
+                                    : [...current, competency];
+                                  updateField('crossCompetencies', updated.length > 0 ? updated : undefined);
+                                }}
+                                className={`
+                                  flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all
+                                  ${
+                                    isSelected
+                                      ? 'bg-indigo-100 text-indigo-700 border-2 border-indigo-400 shadow-sm'
+                                      : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50'
+                                  }
+                                `}
+                                title={def.description}
                               >
-                                <div className="flex items-start justify-between gap-2 mb-1">
-                                  <div className="flex items-center gap-2">
-                                    <h5 className="font-bold text-sm text-gray-800">{agent.name}</h5>
-                                    {agent.type === 'system' && (
-                                      <span className="px-1.5 py-0.5 bg-blue-100 text-primary-700 rounded text-[10px] font-medium">
-                                        系统
-                                      </span>
-                                    )}
-                                  </div>
-                                  {isSelected && (
-                                    <div className="w-5 h-5 bg-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
-                                      <svg
-                                        className="w-3 h-3 text-white"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                      >
-                                        <path
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                          strokeWidth={3}
-                                          d="M5 13l4 4L19 7"
-                                        />
-                                      </svg>
-                                    </div>
-                                  )}
-                                </div>
-                                <p className="text-xs text-gray-600 leading-relaxed">{agent.description}</p>
-                                {agent.difyConfig && (
-                                  <div className="mt-2 flex items-center gap-2 text-[10px] text-gray-500">
-                                    <span className="px-2 py-0.5 bg-gray-100 rounded font-mono">
-                                      Dify: {agent.difyConfig.agentId}
-                                    </span>
-                                  </div>
-                                )}
+                                <Icon size={14} />
+                                {def.name}
                               </button>
                             );
                           })}
                         </div>
+                        <p className="mt-2 text-xs text-gray-500">
+                          选择跨学科通用能力维度，这些能力将跨课程追踪学生的发展
+                        </p>
                       </div>
-                      <div>
-                        <label className="block text-xs font-medium text-accent-600 mb-2">
-                          批改标准（可选）
-                        </label>
-                        <textarea
-                          value={localTask.aiGrading?.customCriteria || ''}
-                          onChange={(e) =>
-                            updateField('aiGrading', {
-                              ...localTask.aiGrading,
-                              customCriteria: e.target.value,
-                            })
-                          }
-                          placeholder="例如：重点关注学生的思维过程和实际应用能力..."
-                          className="w-full bg-white border border-purple-200 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-accent-500 outline-none resize-none"
-                          rows={3}
-                        />
+
+                      {/* AI智能批改 */}
+                      <div className="pt-4 border-t border-amber-200">
+                        <div className="flex items-center justify-between mb-3">
+                          <h4 className="text-sm font-bold text-purple-700 flex items-center gap-2">
+                            <Bot size={14} />
+                            AI智能批改
+                          </h4>
+                          <button
+                            onClick={() =>
+                              updateField('aiGrading', {
+                                ...localTask.aiGrading,
+                                enabled: !localTask.aiGrading?.enabled,
+                              })
+                            }
+                            className={`w-12 h-6 rounded-full transition-colors relative ${
+                              localTask.aiGrading?.enabled ? 'bg-purple-600' : 'bg-gray-300'
+                            }`}
+                          >
+                            <div
+                              className={`w-5 h-5 bg-white rounded-full shadow transform transition-transform absolute top-0.5 ${
+                                localTask.aiGrading?.enabled ? 'translate-x-6' : 'translate-x-0.5'
+                              }`}
+                            ></div>
+                          </button>
+                        </div>
+                        {localTask.aiGrading?.enabled && (
+                          <div className="space-y-3">
+                            <div>
+                              <label className="block text-xs font-medium text-accent-600 mb-2">选择批改Agent</label>
+                              <div className="space-y-2 max-h-80 overflow-y-auto">
+                                {GRADING_AGENTS.map((agent) => {
+                                  const isSelected = (localTask.aiGrading?.agentId || 'agent_default') === agent.id;
+                                  return (
+                                    <button
+                                      key={agent.id}
+                                      onClick={() =>
+                                        updateField('aiGrading', { ...localTask.aiGrading, agentId: agent.id })
+                                      }
+                                      className={`w-full text-left p-3 rounded-lg border-2 transition-all ${
+                                        isSelected
+                                          ? 'border-purple-500 bg-purple-50'
+                                          : 'border-gray-200 bg-white hover:border-purple-300 hover:bg-purple-50/50'
+                                      }`}
+                                    >
+                                      <div className="flex items-start justify-between gap-2 mb-1">
+                                        <div className="flex items-center gap-2">
+                                          <h5 className="font-bold text-sm text-gray-800">{agent.name}</h5>
+                                          {agent.type === 'system' && (
+                                            <span className="px-1.5 py-0.5 bg-blue-100 text-primary-700 rounded text-[10px] font-medium">
+                                              系统
+                                            </span>
+                                          )}
+                                        </div>
+                                        {isSelected && (
+                                          <div className="w-5 h-5 bg-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
+                                            <svg
+                                              className="w-3 h-3 text-white"
+                                              fill="none"
+                                              stroke="currentColor"
+                                              viewBox="0 0 24 24"
+                                            >
+                                              <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={3}
+                                                d="M5 13l4 4L19 7"
+                                              />
+                                            </svg>
+                                          </div>
+                                        )}
+                                      </div>
+                                      <p className="text-xs text-gray-600 leading-relaxed">{agent.description}</p>
+                                      {agent.difyConfig && (
+                                        <div className="mt-2 flex items-center gap-2 text-[10px] text-gray-500">
+                                          <span className="px-2 py-0.5 bg-gray-100 rounded font-mono">
+                                            Dify: {agent.difyConfig.agentId}
+                                          </span>
+                                        </div>
+                                      )}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                            <div>
+                              <label className="block text-xs font-medium text-accent-600 mb-2">
+                                批改标准（可选）
+                              </label>
+                              <textarea
+                                value={localTask.aiGrading?.customCriteria || ''}
+                                onChange={(e) =>
+                                  updateField('aiGrading', {
+                                    ...localTask.aiGrading,
+                                    customCriteria: e.target.value,
+                                  })
+                                }
+                                placeholder="例如：重点关注学生的思维过程和实际应用能力..."
+                                className="w-full bg-white border border-purple-200 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-accent-500 outline-none resize-none"
+                                rows={3}
+                              />
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
@@ -1389,6 +1808,146 @@ export function TaskEditModal({ task, onSave, onClose }: any) {
           </button>
         </div>
       </div>
+
+      {/* 题目编辑器模态框 */}
+      {showQuestionEditor && editingQuestion && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center backdrop-blur-sm" onClick={() => setShowQuestionEditor(false)}>
+          <div
+            className="bg-white w-[600px] max-h-[85vh] rounded-2xl shadow-2xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="bg-gradient-to-r from-green-500 to-emerald-500 text-white p-5">
+              <h2 className="text-lg font-bold flex items-center gap-2">
+                <FileEdit size={20} />
+                {editingQuestion.id && localTask.questions?.some((q: any) => q.id === editingQuestion.id) ? '编辑题目' : '添加题目'}
+              </h2>
+            </div>
+
+            <div className="p-5 max-h-[60vh] overflow-y-auto space-y-4">
+              {/* 题目类型选择 */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">题目类型</label>
+                <select
+                  value={editingQuestion.type}
+                  onChange={(e) => setEditingQuestion({
+                    ...editingQuestion,
+                    type: e.target.value as any,
+                    answer: e.target.value === 'choice' ? 0 : e.target.value === 'trueFalse' ? true : '',
+                  })}
+                  className="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-green-500 outline-none"
+                >
+                  <option value="choice">单选题</option>
+                  <option value="fillBlank">填空题</option>
+                  <option value="trueFalse">判断题</option>
+                </select>
+              </div>
+
+              {/* 题目内容 */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">题目内容 *</label>
+                <textarea
+                  value={editingQuestion.content}
+                  onChange={(e) => setEditingQuestion({ ...editingQuestion, content: e.target.value })}
+                  placeholder="请输入题目内容..."
+                  className="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-green-500 outline-none h-24 resize-none"
+                />
+              </div>
+
+              {/* 选项配置（仅单选题） */}
+              {editingQuestion.type === 'choice' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">选项配置</label>
+                  <div className="space-y-2">
+                    {editingQuestion.options?.map((option: string, index: number) => (
+                      <div key={index} className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          name="correctAnswer"
+                          checked={editingQuestion.answer === index}
+                          onChange={() => setEditingQuestion({ ...editingQuestion, answer: index })}
+                          className="w-4 h-4 text-green-600"
+                        />
+                        <input
+                          type="text"
+                          value={option}
+                          onChange={(e) => {
+                            const newOptions = [...(editingQuestion.options || [])];
+                            newOptions[index] = e.target.value;
+                            setEditingQuestion({ ...editingQuestion, options: newOptions });
+                          }}
+                          placeholder={`选项 ${String.fromCharCode(65 + index)}`}
+                          className="flex-1 bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 outline-none"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">点击单选按钮标记正确答案</p>
+                </div>
+              )}
+
+              {/* 答案配置（填空题和判断题） */}
+              {editingQuestion.type === 'fillBlank' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">参考答案</label>
+                  <input
+                    type="text"
+                    value={editingQuestion.answer || ''}
+                    onChange={(e) => setEditingQuestion({ ...editingQuestion, answer: e.target.value })}
+                    placeholder="请输入参考答案..."
+                    className="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-green-500 outline-none"
+                  />
+                </div>
+              )}
+
+              {editingQuestion.type === 'trueFalse' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">正确答案</label>
+                  <div className="flex items-center gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="trueFalseAnswer"
+                        checked={editingQuestion.answer === true}
+                        onChange={() => setEditingQuestion({ ...editingQuestion, answer: true })}
+                        className="w-4 h-4 text-green-600"
+                      />
+                      <span className="text-sm text-gray-700">正确</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="trueFalseAnswer"
+                        checked={editingQuestion.answer === false}
+                        onChange={() => setEditingQuestion({ ...editingQuestion, answer: false })}
+                        className="w-4 h-4 text-green-600"
+                      />
+                      <span className="text-sm text-gray-700">错误</span>
+                    </label>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="p-4 border-t border-gray-200 flex justify-end gap-3 bg-gray-50">
+              <button
+                onClick={() => {
+                  setShowQuestionEditor(false);
+                  setEditingQuestion(null);
+                }}
+                className="px-4 py-2 text-gray-600 hover:text-gray-800"
+              >
+                取消
+              </button>
+              <button
+                onClick={saveQuestion}
+                className="px-6 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 font-medium shadow-sm"
+              >
+                保存题目
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1549,7 +2108,7 @@ export function StudentPreview({ config, leftWidth, rightWidth }: any) {
 }
 
 // Use视角头部 - 学生使用界面预览
-export function UseViewHeader({ config, onBack, onSwitchToResults }: any) {
+export function UseViewHeader({ config, onBack }: any) {
   return (
     <header className="h-10 bg-white/80 backdrop-blur-xl border-b border-gray-100 flex items-center justify-between px-4 shrink-0">
       <div className="flex items-center gap-2">
@@ -1576,13 +2135,15 @@ export function UseViewHeader({ config, onBack, onSwitchToResults }: any) {
           <Eye size={14} />
           使用视角
         </button>
-        <button
-          onClick={onSwitchToResults}
-          className="flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-lg text-gray-600 hover:bg-gray-100 transition-all"
+        <a
+          href="/teacher/courses/1/results"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-lg text-gray-600 hover:bg-gray-100 transition-all cursor-pointer"
         >
           <Activity size={14} />
-          结果视角
-        </button>
+          查看课程报告
+        </a>
         <div className="w-px h-5 bg-gray-200"></div>
         <button
           onClick={() => window.open('/student/workbench', '_blank')}
@@ -1878,10 +2439,13 @@ export function ResultsViewDashboard({ config }: any) {
   }));
 
   // 收集所有已配置的能力维度
-  const allCompetencies = new Set<CompetencyType>();
+  const allCompetencies = new Set<CrossCompetencyType>();
   config.tasks?.forEach((task: any) => {
     if (task.assignedCompetencies) {
-      task.assignedCompetencies.forEach((comp: CompetencyType) => allCompetencies.add(comp));
+      task.assignedCompetencies.forEach((comp: CrossCompetencyType) => allCompetencies.add(comp));
+    }
+    if (task.crossCompetencies) {
+      task.crossCompetencies.forEach((comp: CrossCompetencyType) => allCompetencies.add(comp));
     }
   });
   const competencyList = Array.from(allCompetencies);
@@ -2063,7 +2627,7 @@ export function ResultsViewDashboard({ config }: any) {
                   <th className="text-left px-5 py-3 text-xs font-semibold text-gray-600">状态</th>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-gray-600">进度</th>
                   {competencyList.map((comp) => {
-                    const def = COMPETENCY_DEFINITIONS[comp];
+                    const def = CROSS_COMPETENCY_DEFINITIONS[comp];
                     return (
                       <th key={comp} className="text-center px-3 py-3 text-xs font-semibold text-gray-600">
                         {def.name}
