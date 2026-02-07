@@ -22,11 +22,138 @@ import {
   X,
   FileText,
   Loader2,
+  CheckCircle2,
+  Circle,
 } from 'lucide-react';
 
 interface OnboardingProps {
   onComplete: (config: SpaceConfig) => void;
   onCancel?: () => void;
+}
+
+// Self-directed mode preview component
+function SelfDirectedPreview({ topic }: { topic: string }) {
+  return (
+    <div className="rounded-xl border border-blue-200 bg-gradient-to-br from-blue-50 to-white overflow-hidden">
+      <div className="px-4 py-3 bg-blue-100/50 border-b border-blue-200">
+        <span className="text-sm font-medium text-blue-800">💬 自由探索模式预览</span>
+      </div>
+      <div className="p-4 space-y-3">
+        {/* AI message */}
+        <div className="flex items-start gap-3">
+          <div className="w-7 h-7 bg-gradient-to-br from-primary-500 to-accent-600 rounded-full flex items-center justify-center flex-shrink-0">
+            <Brain size={14} className="text-white" />
+          </div>
+          <div className="bg-gray-100 rounded-xl rounded-tl-none px-3 py-2 max-w-[85%]">
+            <p className="text-sm text-gray-700">
+              你好！关于「{topic}」，你可以随时问我任何问题。有什么想了解的吗？
+            </p>
+          </div>
+        </div>
+        {/* User message */}
+        <div className="flex justify-end">
+          <div className="bg-primary-600 text-white rounded-xl rounded-tr-none px-3 py-2 max-w-[85%]">
+            <p className="text-sm">什么是量子纠缠？</p>
+          </div>
+        </div>
+        {/* AI response */}
+        <div className="flex items-start gap-3">
+          <div className="w-7 h-7 bg-gradient-to-br from-primary-500 to-accent-600 rounded-full flex items-center justify-center flex-shrink-0">
+            <Brain size={14} className="text-white" />
+          </div>
+          <div className="bg-gray-100 rounded-xl rounded-tl-none px-3 py-2 max-w-[85%]">
+            <p className="text-sm text-gray-700">
+              量子纠缠是指两个粒子之间存在一种神奇的关联...
+              <br />
+              <span className="text-gray-500">你还想了解哪些方面？</span>
+            </p>
+          </div>
+        </div>
+        {/* Quick actions */}
+        <div className="pt-2 border-t border-gray-100">
+          <p className="text-xs text-gray-500 mb-2">快捷操作:</p>
+          <div className="flex flex-wrap gap-2">
+            <span className="px-2 py-1 bg-white border border-gray-200 rounded-lg text-xs text-gray-600 hover:bg-gray-50 cursor-pointer">🔍 搜索概念</span>
+            <span className="px-2 py-1 bg-white border border-gray-200 rounded-lg text-xs text-gray-600 hover:bg-gray-50 cursor-pointer">📋 总结要点</span>
+            <span className="px-2 py-1 bg-white border border-gray-200 rounded-lg text-xs text-gray-600 hover:bg-gray-50 cursor-pointer">💡 举个例子</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// AI-guided mode preview component
+function AiGuidedPreview({ topic }: { topic: string }) {
+  return (
+    <div className="rounded-xl border border-purple-200 bg-gradient-to-br from-purple-50 to-white overflow-hidden">
+      <div className="px-4 py-3 bg-purple-100/50 border-b border-purple-200">
+        <span className="text-sm font-medium text-purple-800">🗺️ 目标导向模式预览</span>
+      </div>
+      <div className="p-4 space-y-4">
+        {/* Learning path progress */}
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-gray-700">📊 学习路径 (2/5 已完成)</span>
+            <span className="text-xs text-purple-600 font-medium">40%</span>
+          </div>
+          <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+            <div className="h-full w-[40%] bg-gradient-to-r from-purple-500 to-purple-600 rounded-full" />
+          </div>
+        </div>
+        {/* Learning steps */}
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-sm">
+            <CheckCircle2 size={16} className="text-green-500" />
+            <span className="text-gray-500 line-through">基础概念与定义</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm">
+            <CheckCircle2 size={16} className="text-green-500" />
+            <span className="text-gray-500 line-through">核心原理解析</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm">
+            <div className="w-4 h-4 rounded-full bg-purple-500 flex items-center justify-center">
+              <div className="w-2 h-2 bg-white rounded-full" />
+            </div>
+            <span className="text-purple-700 font-medium">关键公式与推导</span>
+            <span className="text-xs text-purple-500 ml-1">← 当前</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm">
+            <Circle size={16} className="text-gray-300" />
+            <span className="text-gray-400">典型例题分析</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm">
+            <Circle size={16} className="text-gray-300" />
+            <span className="text-gray-400">综合应用与拓展</span>
+          </div>
+        </div>
+        {/* AI guidance message */}
+        <div className="flex items-start gap-3 pt-2 border-t border-gray-100">
+          <div className="w-7 h-7 bg-gradient-to-br from-primary-500 to-accent-600 rounded-full flex items-center justify-center flex-shrink-0">
+            <Brain size={14} className="text-white" />
+          </div>
+          <div className="bg-purple-50 rounded-xl rounded-tl-none px-3 py-2 flex-1">
+            <p className="text-sm text-gray-700">
+              很好！你已经掌握了基础概念。现在让我们来学习「关键公式与推导」。
+              <br />
+              先看看这个公式：<span className="font-mono text-purple-700">E=mc²</span>...
+              <br />
+              <span className="text-purple-600">你能解释一下这个公式的含义吗？</span>
+            </p>
+          </div>
+        </div>
+        {/* Quick actions */}
+        <div className="pt-2 border-t border-gray-100">
+          <p className="text-xs text-gray-500 mb-2">快捷操作:</p>
+          <div className="flex flex-wrap gap-2">
+            <span className="px-2 py-1 bg-white border border-gray-200 rounded-lg text-xs text-gray-600 hover:bg-gray-50 cursor-pointer">🧪 考考我</span>
+            <span className="px-2 py-1 bg-white border border-gray-200 rounded-lg text-xs text-gray-600 hover:bg-gray-50 cursor-pointer">⏭️ 下一个知识点</span>
+            <span className="px-2 py-1 bg-white border border-gray-200 rounded-lg text-xs text-gray-600 hover:bg-gray-50 cursor-pointer">🗺️ 查看完整路径</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default function Onboarding({ onComplete, onCancel }: OnboardingProps) {
@@ -313,18 +440,42 @@ export default function Onboarding({ onComplete, onCancel }: OnboardingProps) {
               </div>
 
               {/* AI 对话气泡 */}
-              <div className="flex items-start gap-4 mb-8">
+              <div className="flex items-start gap-4 mb-4">
                 <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-accent-600 rounded-full flex items-center justify-center flex-shrink-0">
                   <Brain size={20} className="text-white" />
                 </div>
-                <div className="flex-1 bg-gray-50 rounded-2xl rounded-tl-none p-4">
-                  <p className="text-gray-700">
-                    {state.intent?.type === 'resource'
-                      ? '我看到你上传了资料。你希望我怎么帮你？'
-                      : state.intent?.type === 'topic'
-                      ? `关于「${state.intent.value}」，你目前了解多少？`
-                      : '你希望以什么方式学习？'}
-                  </p>
+                <div className="flex-1">
+                  <div className="bg-gray-50 rounded-2xl rounded-tl-none p-4">
+                    <p className="text-gray-700">
+                      {state.clarification?.learningMode === 'self_directed'
+                        ? '好的，我会在旁边待命。你可以自由浏览资料，有任何问题随时问我。'
+                        : state.clarification?.learningMode === 'ai_guided'
+                        ? '太好了！我会为你规划学习路径。首先让我了解你的基础，然后一步步带你学。'
+                        : state.intent?.type === 'resource'
+                        ? '我看到你上传了资料。你希望我怎么帮你？'
+                        : state.intent?.type === 'topic'
+                        ? `关于「${state.intent.value}」，你目前了解多少？`
+                        : '你希望以什么方式学习？'}
+                    </p>
+                  </div>
+                  {/* Feature tags - shown when a non-diagnostic mode is selected */}
+                  {state.clarification?.learningMode && state.clarification.learningMode !== 'diagnostic' && (
+                    <div className="flex items-center gap-2 mt-2 animate-fade-in">
+                      {state.clarification.learningMode === 'self_directed' ? (
+                        <>
+                          <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">📖 自由浏览</span>
+                          <span className="px-3 py-1 bg-green-50 text-green-700 rounded-full text-xs font-medium">💬 随时提问</span>
+                          <span className="px-3 py-1 bg-amber-50 text-amber-700 rounded-full text-xs font-medium">📝 自主笔记</span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="px-3 py-1 bg-purple-50 text-purple-700 rounded-full text-xs font-medium">🗺️ 学习路径</span>
+                          <span className="px-3 py-1 bg-rose-50 text-rose-700 rounded-full text-xs font-medium">🧪 随堂检测</span>
+                          <span className="px-3 py-1 bg-cyan-50 text-cyan-700 rounded-full text-xs font-medium">📊 进度追踪</span>
+                        </>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -350,6 +501,17 @@ export default function Onboarding({ onComplete, onCancel }: OnboardingProps) {
                   )}
                 </div>
               </div>
+
+              {/* Mock Preview - shown when a non-diagnostic mode is selected */}
+              {state.clarification?.learningMode && state.clarification.learningMode !== 'diagnostic' && (
+                <div className="mb-8 animate-fade-in">
+                  {state.clarification.learningMode === 'self_directed' ? (
+                    <SelfDirectedPreview topic={state.intent?.value || '量子力学'} />
+                  ) : (
+                    <AiGuidedPreview topic={state.intent?.value || '量子力学'} />
+                  )}
+                </div>
+              )}
 
               {/* 水平选择（仅主题驱动时显示） */}
               {state.intent?.type === 'topic' && (

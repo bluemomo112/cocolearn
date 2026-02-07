@@ -3,13 +3,16 @@
 import { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { SpaceConfig, LearningMode, LEARNING_MODE_CONFIG } from '@/types/self-study';
+import { SpaceConfig, LearningMode, LearningPathNode, LEARNING_MODE_CONFIG } from '@/types/self-study';
 import { Resource, Task } from '@/types/shared-context';
 import {
   ArrowLeft, Send, Settings, BookOpen, Brain, Sparkles, FileText, Video,
   FileSpreadsheet, Plus, Upload, Link, GripVertical, X, Check, Zap, FileEdit,
   Activity, Pencil, Save, Target, Lightbulb, MessageCircle, Clock, FolderOpen,
-  ListChecks, ChevronRight, Play, Download, Eye,
+  ListChecks, ChevronRight, Play, Download, Eye, Search, BarChart3, Map,
+  CheckCircle2, Circle, Bot, MessageSquare, Pause, RotateCcw, GitBranch,
+  Edit, Image as ImageIcon, Mic, Trash2, Layers, Award, TrendingUp,
+  ChevronDown, ChevronUp, Layout,
 } from 'lucide-react';
 import SettingsModal from './SettingsModal';
 
@@ -24,6 +27,24 @@ interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
+}
+
+// Note interfaces for EnhancedNotesPanel
+interface VoiceRecording {
+  id: string;
+  url: string;
+  duration: number;
+  timestamp: Date;
+}
+
+interface Note {
+  id: string;
+  title: string;
+  content: string;
+  createdAt: Date;
+  updatedAt: Date;
+  images: string[];
+  voiceRecordings: VoiceRecording[];
 }
 
 function Resizer({ onResize }: { onResize: (delta: number) => void }) {
@@ -58,260 +79,312 @@ function Resizer({ onResize }: { onResize: (delta: number) => void }) {
   );
 }
 
-export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: SelfStudyWorkbenchProps) {
-  const [leftWidth, setLeftWidth] = useState(25);
-  const [rightWidth, setRightWidth] = useState(25);
-  const [learningMode, setLearningMode] = useState<LearningMode>(config.learningMode);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [inputMessage, setInputMessage] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
-  const [noteContent, setNoteContent] = useState('');
-  const [isEditingNote, setIsEditingNote] = useState(false);
-  const [resources] = useState<Resource[]>(config.resources);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+// Mock learning path data (ai_guided mode)
+const MOCK_LEARNING_PATH: LearningPathNode[] = [
+  { id: 'node_1', title: '基础概念与定义', status: 'mastered', estimatedTime: 15 },
+  { id: 'node_2', title: '核心原理解析', status: 'mastered', estimatedTime: 20 },
+  { id: 'node_3', title: '关键公式与推导', status: 'learning', estimatedTime: 25 },
+  { id: 'node_4', title: '典型例题分析', status: 'pending', estimatedTime: 20 },
+  { id: 'node_5', title: '综合应用与拓展', status: 'pending', estimatedTime: 30 },
+];
 
-  useEffect(() => {
-    const welcomeMessage = learningMode === 'ai_guided'
-      ? `你好！我将带你系统学习「${config.topic || config.title}」。\n\n首先，让我了解一下你目前的基础。你能用自己的话说说你已经知道什么吗？`
-      : `你好！我是你的学习助手。关于「${config.topic || config.title}」，你可以随时问我任何问题。\n\n有什么想了解的吗？`;
-    setMessages([{ id: 'welcome', role: 'assistant', content: welcomeMessage, timestamp: new Date() }]);
-  }, []);
+const MOCK_CURRENT_NODE = 'node_3';
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+// Mock AI observations (inline, no external import)
+const MOCK_AI_OBSERVATIONS = [
+  {
+    id: 'obs_1',
+    type: 'praise' as const,
+    icon: '🌟',
+    message: '你对基础概念的理解非常扎实，能够准确地用自己的话解释核心原理。',
+    timestamp: new Date(Date.now() - 1000 * 60 * 15),
+  },
+  {
+    id: 'obs_2',
+    type: 'suggestion' as const,
+    icon: '💡',
+    message: '建议在推导公式时多画图辅助理解，这样可以更直观地把握变量之间的关系。',
+    timestamp: new Date(Date.now() - 1000 * 60 * 5),
+  },
+  {
+    id: 'obs_3',
+    type: 'insight' as const,
+    icon: '🔍',
+    message: '你倾向于先理解整体框架再深入细节，这是一种很好的学习策略。',
+    timestamp: new Date(Date.now() - 1000 * 60 * 2),
+  },
+];
 
-  const handleSendMessage = async () => {
-    if (!inputMessage.trim() || isLoading) return;
-    const userMessage: ChatMessage = { id: `msg_${Date.now()}`, role: 'user', content: inputMessage, timestamp: new Date() };
-    setMessages(prev => [...prev, userMessage]);
-    setInputMessage('');
-    setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    const aiReply: ChatMessage = {
-      id: `msg_${Date.now()}_ai`,
-      role: 'assistant',
-      content: learningMode === 'ai_guided'
-        ? `这是一个很好的问题！让我来帮你理解。\n\n首先，我们需要明确几个关键概念...\n\n你觉得这样解释清楚吗？`
-        : `关于你的问题，这里有一些信息：\n\n1. 首先...\n2. 其次...\n\n还有其他想了解的吗？`,
-      timestamp: new Date(),
+// Enhanced Notes Panel component
+function EnhancedNotesPanel() {
+  const [notes, setNotes] = useState<Note[]>([
+    {
+      id: '1',
+      title: '我的学习笔记',
+      content: '# 欢迎使用增强笔记\n\n你可以：\n- 记录Markdown格式的笔记\n- 上传图片\n- 录制语音笔记\n\n开始你的学习之旅吧！',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      images: [],
+      voiceRecordings: [],
+    },
+  ]);
+  const [activeNoteId, setActiveNoteId] = useState('1');
+  const [isPreviewMode, setIsPreviewMode] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const [showNoteEditor, setShowNoteEditor] = useState(false);
+
+  const activeNote = notes.find((n) => n.id === activeNoteId) || notes[0];
+
+  const createNote = () => {
+    const newNote: Note = {
+      id: Date.now().toString(),
+      title: `笔记 ${notes.length + 1}`,
+      content: '',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      images: [],
+      voiceRecordings: [],
     };
-    setMessages(prev => [...prev, aiReply]);
-    setIsLoading(false);
+    setNotes([newNote, ...notes]);
+    setActiveNoteId(newNote.id);
+    setShowNoteEditor(true);
   };
 
-  const handleModeChange = (mode: LearningMode) => {
-    setLearningMode(mode);
-    onUpdateConfig({ ...config, learningMode: mode });
-    setMessages(prev => [...prev, {
-      id: `mode_${Date.now()}`,
-      role: 'assistant',
-      content: `已切换到「${LEARNING_MODE_CONFIG[mode].label}」模式。${LEARNING_MODE_CONFIG[mode].description}`,
-      timestamp: new Date(),
-    }]);
+  const deleteNote = (noteId: string) => {
+    if (notes.length === 1) {
+      alert('至少需要保留一个笔记');
+      return;
+    }
+    const newNotes = notes.filter((n) => n.id !== noteId);
+    setNotes(newNotes);
+    if (activeNoteId === noteId) {
+      setActiveNoteId(newNotes[0].id);
+    }
   };
 
-  return (
-    <div className="h-screen flex flex-col bg-gray-50">
-      {/* 顶部导航栏 */}
-      <header className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-4 flex-shrink-0">
-        <div className="flex items-center gap-4">
-          <button onClick={onBack} className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors">
-            <ArrowLeft size={20} />
-            <span className="text-sm font-medium">返回</span>
-          </button>
-          <div className="h-6 w-px bg-gray-200" />
-          <h1 className="font-semibold text-gray-900">{config.title}</h1>
-        </div>
+  const updateNote = (updates: Partial<Note>) => {
+    setNotes(
+      notes.map((n) =>
+        n.id === activeNoteId ? { ...n, ...updates, updatedAt: new Date() } : n
+      )
+    );
+  };
 
-        <div className="flex items-center gap-3">
-          {/* 学习模式切换 */}
-          {(['self_directed', 'ai_guided'] as LearningMode[]).map(mode => (
-            <button
-              key={mode}
-              onClick={() => handleModeChange(mode)}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                learningMode === mode ? 'bg-primary-100 text-primary-700' : 'text-gray-500 hover:bg-gray-100'
-              }`}
-            >
-              {LEARNING_MODE_CONFIG[mode].label}
-            </button>
-          ))}
-          <div className="h-6 w-px bg-gray-200" />
-          {/* 设置按钮 - 右上角齿轮图标 */}
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    const newImages: string[] = [];
+    Array.from(files).forEach((file) => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          newImages.push(event.target.result as string);
+          if (newImages.length === files.length) {
+            updateNote({ images: [...activeNote.images, ...newImages] });
+          }
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isRecording) {
+      interval = setInterval(() => {
+        setRecordingTime((prev) => prev + 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [isRecording]);
+
+  const toggleRecording = () => {
+    if (isRecording) {
+      setIsRecording(false);
+      const newRecording: VoiceRecording = {
+        id: Date.now().toString(),
+        url: '',
+        duration: recordingTime,
+        timestamp: new Date(),
+      };
+      updateNote({
+        voiceRecordings: [...activeNote.voiceRecordings, newRecording],
+      });
+      setRecordingTime(0);
+    } else {
+      setIsRecording(true);
+      setRecordingTime(0);
+    }
+  };
+
+  const formatRecTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // Note list view
+  if (!showNoteEditor) {
+    return (
+      <div className="flex flex-col h-full">
+        <div className="p-4 border-b border-gray-200">
           <button
-            onClick={() => setShowSettings(true)}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            title="设置"
+            onClick={createNote}
+            className="w-full px-4 py-3 bg-gradient-to-r from-primary-600 to-accent-600 text-white text-sm font-medium rounded-xl hover:from-primary-700 hover:to-accent-700 transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
           >
-            <Settings size={20} className="text-gray-600" />
+            <Plus size={18} />
+            添加笔记
           </button>
         </div>
-      </header>
-
-      {/* 三栏布局 */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* 左侧面板 - 资源和快捷操作 */}
-        <div className="bg-white border-r border-gray-200 flex flex-col overflow-hidden" style={{ width: `${leftWidth}%` }}>
-          <div className="flex-1 overflow-y-auto">
-            {/* 资源区域 */}
-            <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-primary-50 to-accent-50">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-bold text-gray-700 flex items-center gap-2">
-                  <FolderOpen size={16} className="text-primary-500" />
-                  学习资料
-                </h3>
-                <button className="w-7 h-7 rounded-lg bg-white hover:bg-gray-50 flex items-center justify-center transition-colors border border-gray-200">
-                  <Plus size={16} className="text-gray-600" />
-                </button>
-              </div>
-              {resources.length === 0 ? (
-                <div className="text-center py-6">
-                  <Upload size={24} className="text-gray-300 mx-auto mb-2" />
-                  <p className="text-xs text-gray-500">上传资料开始学习</p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {resources.map(resource => (
-                    <div key={resource.id} className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 bg-white hover:border-primary-200 cursor-pointer transition-all">
-                      <div className="w-10 h-10 rounded-lg bg-primary-100 flex items-center justify-center">
-                        {resource.type === 'video' ? <Video size={18} className="text-primary-600" /> : <FileText size={18} className="text-primary-600" />}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-800 truncate">{resource.title}</p>
-                        <p className="text-xs text-gray-500 truncate">{resource.description}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* 快捷操作 */}
-            <div className="p-4">
-              <h3 className="text-sm font-bold text-gray-700 flex items-center gap-2 mb-3">
-                <Zap size={16} className="text-amber-500" />
-                快捷操作
-              </h3>
-              <div className="space-y-2">
-                {[
-                  { icon: Target, label: '考考我', color: 'amber' },
-                  { icon: Lightbulb, label: '总结要点', color: 'purple' },
-                  { icon: MessageCircle, label: '深入讨论', color: 'blue' },
-                ].map(({ icon: Icon, label, color }) => (
-                  <button key={label} className={`w-full flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:border-${color}-200 hover:bg-${color}-50 transition-all text-left`}>
-                    <div className={`w-8 h-8 rounded-lg bg-${color}-100 flex items-center justify-center`}>
-                      <Icon size={16} className={`text-${color}-600`} />
-                    </div>
-                    <span className="text-sm text-gray-700">{label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <Resizer onResize={(delta) => setLeftWidth(prev => Math.max(15, Math.min(40, prev + delta)))} />
-
-        {/* 中间面板 - AI 对话 */}
-        <div className="flex-1 flex flex-col bg-gray-50 min-w-0">
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {messages.map(message => (
-              <div key={message.id} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[80%] rounded-2xl px-4 py-3 ${
-                  message.role === 'user' ? 'bg-primary-600 text-white rounded-br-none' : 'bg-white border border-gray-200 rounded-bl-none'
-                }`}>
-                  {message.role === 'assistant' ? (
-                    <div className="prose prose-sm max-w-none">
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
-                    </div>
-                  ) : (
-                    <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                  )}
-                </div>
-              </div>
-            ))}
-            {isLoading && (
-              <div className="flex justify-start">
-                <div className="bg-white border border-gray-200 rounded-2xl rounded-bl-none px-4 py-3">
-                  <div className="flex items-center gap-2">
-                    <Activity size={16} className="text-primary-500 animate-spin" />
-                    <span className="text-sm text-gray-500">思考中...</span>
+        <div className="flex-1 overflow-y-auto p-3 space-y-2">
+          {notes.map((note) => (
+            <div
+              key={note.id}
+              onClick={() => {
+                setActiveNoteId(note.id);
+                setShowNoteEditor(true);
+              }}
+              className="p-3 bg-white border border-gray-200 rounded-lg hover:border-primary-300 hover:shadow-md cursor-pointer transition-all"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-semibold text-gray-800 truncate mb-1">
+                    {note.title}
+                  </div>
+                  <div className="text-xs text-gray-500 truncate">
+                    {note.content.slice(0, 50) || '空笔记'}
+                  </div>
+                  <div className="text-xs text-gray-400 mt-1">
+                    {new Date(note.updatedAt).toLocaleString('zh-CN')}
                   </div>
                 </div>
+                <Edit size={14} className="text-gray-400 flex-shrink-0 mt-1" />
               </div>
-            )}
-            <div ref={messagesEndRef} />
-          </div>
-
-          <div className="p-4 bg-white border-t border-gray-200">
-            <div className="flex items-end gap-3">
-              <textarea
-                value={inputMessage}
-                onChange={(e) => setInputMessage(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(); } }}
-                placeholder="输入你的问题..."
-                className="flex-1 px-4 py-3 border border-gray-200 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-primary-500"
-                rows={1}
-              />
-              <button
-                onClick={handleSendMessage}
-                disabled={!inputMessage.trim() || isLoading}
-                className="w-12 h-12 bg-primary-600 text-white rounded-xl flex items-center justify-center hover:bg-primary-700 disabled:opacity-50"
-              >
-                <Send size={20} />
-              </button>
             </div>
-          </div>
+          ))}
         </div>
+      </div>
+    );
+  }
 
-        <Resizer onResize={(delta) => setRightWidth(prev => Math.max(15, Math.min(40, prev - delta)))} />
-
-        {/* 右侧面板 - 只有笔记 */}
-        <div className="bg-white border-l border-gray-200 flex flex-col overflow-hidden" style={{ width: `${rightWidth}%` }}>
-          <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
-            <h3 className="font-semibold text-gray-800 flex items-center gap-2">
-              <Pencil size={16} className="text-primary-500" />
-              学习笔记
-            </h3>
-            <button onClick={() => setIsEditingNote(!isEditingNote)} className="text-sm text-primary-600 hover:text-primary-700 font-medium">
-              {isEditingNote ? '完成' : '编辑'}
-            </button>
-          </div>
-          <div className="flex-1 overflow-y-auto p-4">
-            {isEditingNote ? (
-              <textarea
-                value={noteContent}
-                onChange={(e) => setNoteContent(e.target.value)}
-                placeholder="在这里记录你的学习笔记..."
-                className="w-full h-full p-3 border border-gray-200 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
-              />
-            ) : noteContent ? (
-              <div className="prose prose-sm max-w-none">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{noteContent}</ReactMarkdown>
-              </div>
-            ) : (
-              <div className="text-center py-12">
-                <Pencil size={32} className="text-gray-300 mx-auto mb-3" />
-                <p className="text-sm text-gray-500 mb-3">还没有笔记</p>
-                <button onClick={() => setIsEditingNote(true)} className="text-sm text-primary-600 hover:text-primary-700 font-medium">
-                  开始记录
-                </button>
-              </div>
-            )}
-          </div>
+  // Note editor view
+  return (
+    <div className="flex flex-col h-full">
+      {/* Toolbar */}
+      <div className="p-3 border-b border-gray-200 bg-white flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => setShowNoteEditor(false)}
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            title="返回列表"
+          >
+            <X size={16} className="text-gray-600" />
+          </button>
+          <div className="h-4 w-px bg-gray-300" />
+          <button
+            onClick={() => setIsPreviewMode(!isPreviewMode)}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+              isPreviewMode ? 'bg-gray-100 text-gray-700' : 'bg-primary-600 text-white'
+            }`}
+          >
+            {isPreviewMode ? <Eye size={14} className="inline mr-1" /> : <Edit size={14} className="inline mr-1" />}
+            {isPreviewMode ? '预览' : '编辑'}
+          </button>
+        </div>
+        <div className="flex items-center gap-1">
+          <label className="cursor-pointer">
+            <input type="file" accept="image/*" multiple className="hidden" onChange={handleImageUpload} />
+            <div className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+              <ImageIcon size={16} className="text-gray-600" />
+            </div>
+          </label>
+          <button
+            onClick={toggleRecording}
+            className={`p-2 hover:bg-gray-100 rounded-lg transition-colors ${isRecording ? 'animate-pulse' : ''}`}
+            title={isRecording ? '停止录音' : '开始录音'}
+          >
+            <Mic size={16} className={isRecording ? 'text-red-600' : 'text-gray-600'} />
+          </button>
+          {isRecording && (
+            <span className="text-xs font-mono text-red-600">{formatRecTime(recordingTime)}</span>
+          )}
+          <div className="h-4 w-px bg-gray-300" />
+          <button
+            onClick={() => deleteNote(activeNoteId)}
+            className="p-2 hover:bg-red-50 rounded-lg transition-colors"
+            title="删除笔记"
+          >
+            <Trash2 size={16} className="text-gray-600 hover:text-red-600" />
+          </button>
         </div>
       </div>
 
-      {/* 设置弹窗 */}
-      {showSettings && (
-        <SettingsModal
-          config={config}
-          onSave={(newConfig) => onUpdateConfig(newConfig)}
-          onClose={() => setShowSettings(false)}
+      {/* Editor / Preview area */}
+      <div className="flex-1 overflow-y-auto p-3 bg-white">
+        <input
+          type="text"
+          value={activeNote.title}
+          onChange={(e) => updateNote({ title: e.target.value })}
+          className="w-full text-lg font-bold text-gray-800 border-none outline-none mb-3 bg-transparent"
+          placeholder="笔记标题"
         />
-      )}
+        {isPreviewMode ? (
+          <div className="prose prose-sm max-w-none text-gray-700 leading-relaxed">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{activeNote.content}</ReactMarkdown>
+          </div>
+        ) : (
+          <textarea
+            value={activeNote.content}
+            onChange={(e) => updateNote({ content: e.target.value })}
+            className="w-full h-full min-h-[300px] bg-transparent border-none outline-none resize-none text-sm text-gray-700 leading-relaxed font-mono"
+            placeholder="# 开始记录你的学习笔记...\n\n支持Markdown格式"
+          />
+        )}
+
+        {/* Image grid */}
+        {activeNote.images.length > 0 && (
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <div className="text-xs font-bold text-gray-600 mb-2">图片 ({activeNote.images.length})</div>
+            <div className="grid grid-cols-3 gap-2">
+              {activeNote.images.map((img, idx) => (
+                <div key={idx} className="relative group">
+                  <img src={img} alt={`uploaded-${idx}`} className="w-full h-20 object-cover rounded-lg border border-gray-200" />
+                  <button
+                    onClick={() => {
+                      const newImages = activeNote.images.filter((_, i) => i !== idx);
+                      updateNote({ images: newImages });
+                    }}
+                    className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <X size={12} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Voice recordings list */}
+        {activeNote.voiceRecordings.length > 0 && (
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <div className="text-xs font-bold text-gray-600 mb-2">语音笔记 ({activeNote.voiceRecordings.length})</div>
+            <div className="space-y-2">
+              {activeNote.voiceRecordings.map((recording) => (
+                <div key={recording.id} className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg border border-gray-200">
+                  <button className="p-1.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors">
+                    <Play size={12} />
+                  </button>
+                  <div className="flex-1">
+                    <div className="text-xs text-gray-700">语音笔记 {new Date(recording.timestamp).toLocaleString('zh-CN')}</div>
+                    <div className="text-xs text-gray-500">时长: {formatRecTime(recording.duration)}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
