@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { useRouter } from 'next/navigation'
 import { CompetencyDistributionChart, type ClassCompetencyDistribution } from './note-config/results-view'
 
 // 模拟数据
@@ -134,7 +135,7 @@ interface CompetencyFilterOptions {
 }
 
 export default function TeacherDashboard() {
-  const [activeTab, setActiveTab] = useState<'my-courses' | 'insights' | 'knowledge' | 'growth'>('my-courses')
+  const [activeTab, setActiveTab] = useState<'my-courses' | 'self-study' | 'insights' | 'knowledge' | 'growth'>('my-courses')
   const [showCourseTypeModal, setShowCourseTypeModal] = useState(false)
 
   // 获取当前日期
@@ -167,6 +168,11 @@ export default function TeacherDashboard() {
             { id: 'my-courses', label: '我的课程', icon: (
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
+            )},
+            { id: 'self-study', label: '自学空间', icon: (
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
               </svg>
             )},
             { id: 'insights', label: '教学洞察', icon: (
@@ -471,6 +477,12 @@ export default function TeacherDashboard() {
                 </div>
               </div>
             </div>
+          </div>
+        )}
+
+        {activeTab === 'self-study' && (
+          <div className="animate-fade-in">
+            <SelfStudyEntry />
           </div>
         )}
 
@@ -1679,6 +1691,151 @@ function GrowthArchive() {
           ))}
         </div>
       </div>
+    </div>
+  )
+}
+
+// 自学空间入口组件
+function SelfStudyEntry() {
+  const router = useRouter()
+
+  const handleEnterSelfStudy = () => {
+    router.push('/teacher/self-study')
+  }
+
+  // 模拟最近的学习空间
+  const recentSpaces = [
+    {
+      id: 'space_1',
+      title: 'Python 数据分析入门',
+      topic: 'Python数据分析',
+      progress: 45,
+      lastAccessed: '2小时前',
+      icon: '🐍',
+    },
+    {
+      id: 'space_2',
+      title: '量子力学基础概念',
+      topic: '量子力学',
+      progress: 20,
+      lastAccessed: '1天前',
+      icon: '⚛️',
+    },
+  ]
+
+  return (
+    <div className="space-y-6">
+      {/* 介绍卡片 */}
+      <div className="bg-gradient-to-r from-primary-50 to-accent-50 rounded-2xl p-8 border border-primary-100">
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-primary-100 text-primary-700 rounded-full text-sm font-medium mb-4">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              AI 增强型自学工具
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-3">自学空间</h2>
+            <p className="text-gray-600 mb-6 max-w-xl">
+              面向终身学习者的 AI 增强型自学工具。你可以自主学习任何主题，AI 会根据你的需求提供个性化的学习支持。
+            </p>
+            <div className="flex items-center gap-4">
+              <button
+                onClick={handleEnterSelfStudy}
+                className="px-6 py-3 bg-primary-600 text-white rounded-xl font-medium hover:bg-primary-700 transition-colors shadow-lg shadow-primary-200 flex items-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                进入自学空间
+              </button>
+            </div>
+          </div>
+          <div className="hidden lg:block">
+            <div className="w-48 h-48 bg-gradient-to-br from-primary-200 to-accent-200 rounded-2xl flex items-center justify-center">
+              <svg className="w-24 h-24 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 功能特点 */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-white rounded-2xl p-5 border border-gray-100 hover:shadow-lg transition-all">
+          <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-4">
+            <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+          </div>
+          <h3 className="font-semibold text-gray-900 mb-2">对话式学习</h3>
+          <p className="text-sm text-gray-500">
+            通过自然对话与 AI 互动，随时切换"我自己学"和"你带我学"模式
+          </p>
+        </div>
+        <div className="bg-white rounded-2xl p-5 border border-gray-100 hover:shadow-lg transition-all">
+          <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mb-4">
+            <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+            </svg>
+          </div>
+          <h3 className="font-semibold text-gray-900 mb-2">智能测评</h3>
+          <p className="text-sm text-gray-500">
+            AI 自动生成测验题目，帮助你检验学习效果，巩固知识点
+          </p>
+        </div>
+        <div className="bg-white rounded-2xl p-5 border border-gray-100 hover:shadow-lg transition-all">
+          <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center mb-4">
+            <svg className="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+            </svg>
+          </div>
+          <h3 className="font-semibold text-gray-900 mb-2">多空间管理</h3>
+          <p className="text-sm text-gray-500">
+            创建多个学习空间，分别管理不同主题的学习进度和笔记
+          </p>
+        </div>
+      </div>
+
+      {/* 最近的学习空间 */}
+      {recentSpaces.length > 0 && (
+        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+          <div className="p-5 border-b border-gray-100 flex items-center justify-between">
+            <h3 className="font-semibold text-gray-900">最近的学习空间</h3>
+            <button
+              onClick={handleEnterSelfStudy}
+              className="text-sm text-primary-600 hover:text-primary-700 font-medium"
+            >
+              查看全部
+            </button>
+          </div>
+          <div className="divide-y divide-gray-50">
+            {recentSpaces.map((space) => (
+              <button
+                key={space.id}
+                onClick={handleEnterSelfStudy}
+                className="w-full p-4 hover:bg-gray-50 transition-colors flex items-center gap-4 text-left"
+              >
+                <div className="w-12 h-12 bg-gradient-to-br from-primary-100 to-accent-100 rounded-xl flex items-center justify-center text-2xl">
+                  {space.icon}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-gray-900 truncate">{space.title}</p>
+                  <p className="text-sm text-gray-500">{space.topic}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-medium text-gray-900">{space.progress}%</p>
+                  <p className="text-xs text-gray-400">{space.lastAccessed}</p>
+                </div>
+                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
