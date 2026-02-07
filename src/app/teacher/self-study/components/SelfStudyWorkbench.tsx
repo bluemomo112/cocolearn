@@ -5,6 +5,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { SpaceConfig, LearningMode, LearningPathNode, LEARNING_MODE_CONFIG } from '@/types/self-study';
 import { Resource, Task } from '@/types/shared-context';
+import { mockResources } from '@/data/mockLearningData';
 import {
   ArrowLeft, Send, Settings, BookOpen, Brain, Sparkles, FileText, Video,
   FileSpreadsheet, Plus, Upload, Link, GripVertical, X, Check, Zap, FileEdit,
@@ -90,6 +91,14 @@ const MOCK_LEARNING_PATH: LearningPathNode[] = [
 
 const MOCK_CURRENT_NODE = 'node_3';
 
+// Mock AI-generated resources for guided mode
+const MOCK_AI_RESOURCES = [
+  { id: 'ai_res_1', title: '概念图解：核心原理可视化', type: 'ai_generated', status: 'ready', icon: '🎨' },
+  { id: 'ai_res_2', title: '练习题：基础概念巩固', type: 'ai_generated', status: 'ready', icon: '📝' },
+  { id: 'ai_res_3', title: '知识卡片：公式速记', type: 'ai_generated', status: 'generating', icon: '🃏' },
+  { id: 'ai_res_4', title: '思维导图：知识结构', type: 'ai_generated', status: 'pending', icon: '🗺️' },
+];
+
 // Mock AI observations (inline, no external import)
 const MOCK_AI_OBSERVATIONS = [
   {
@@ -115,8 +124,23 @@ const MOCK_AI_OBSERVATIONS = [
   },
 ];
 
+// Quick actions for different modes
+const SELF_DIRECTED_QUICK_ACTIONS = [
+  { id: 'search', label: '搜索概念', icon: Search, color: 'primary' },
+  { id: 'summarize', label: '总结要点', icon: FileText, color: 'emerald' },
+  { id: 'example', label: '举个例子', icon: Lightbulb, color: 'amber' },
+  { id: 'explain', label: '深入解释', icon: MessageCircle, color: 'purple' },
+];
+
+const AI_GUIDED_QUICK_ACTIONS = [
+  { id: 'quiz', label: '考考我', icon: Zap, color: 'amber' },
+  { id: 'next', label: '下一知识点', icon: ChevronRight, color: 'emerald' },
+  { id: 'path', label: '查看路径', icon: Map, color: 'primary' },
+  { id: 'hint', label: '给我提示', icon: Lightbulb, color: 'purple' },
+];
+
 // Enhanced Notes Panel component
-function EnhancedNotesPanel() {
+function EnhancedNotesPanel({ learningMode }: { learningMode?: LearningMode }) {
   const [notes, setNotes] = useState<Note[]>([
     {
       id: '1',
@@ -133,6 +157,8 @@ function EnhancedNotesPanel() {
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [showNoteEditor, setShowNoteEditor] = useState(false);
+  const [isGeneratingNote, setIsGeneratingNote] = useState(false);
+  const [generationProgress, setGenerationProgress] = useState(0);
 
   const activeNote = notes.find((n) => n.id === activeNoteId) || notes[0];
 
@@ -149,6 +175,49 @@ function EnhancedNotesPanel() {
     setNotes([newNote, ...notes]);
     setActiveNoteId(newNote.id);
     setShowNoteEditor(true);
+  };
+
+  // AI-assisted note generation (for guided mode)
+  const generateAINote = () => {
+    setIsGeneratingNote(true);
+    setGenerationProgress(0);
+
+    // Simulate AI generation process
+    const steps = [
+      { progress: 20, delay: 500 },
+      { progress: 50, delay: 800 },
+      { progress: 80, delay: 600 },
+      { progress: 100, delay: 400 },
+    ];
+
+    let currentStep = 0;
+    const runStep = () => {
+      if (currentStep < steps.length) {
+        setTimeout(() => {
+          setGenerationProgress(steps[currentStep].progress);
+          currentStep++;
+          runStep();
+        }, steps[currentStep].delay);
+      } else {
+        // Generation complete
+        setTimeout(() => {
+          const aiNote: Note = {
+            id: Date.now().toString(),
+            title: '📚 AI生成：关键公式与推导笔记',
+            content: `# 关键公式与推导\n\n## 核心公式\n\n### 公式1：基本定义\n$$E = mc^2$$\n\n### 公式2：推导过程\n1. 从基本假设出发...\n2. 应用数学变换...\n3. 得到最终结果...\n\n## 重点理解\n- 公式的物理意义\n- 适用条件和范围\n- 常见错误分析\n\n## 练习建议\n尝试用自己的话解释这个公式的含义。`,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            images: [],
+            voiceRecordings: [],
+          };
+          setNotes([aiNote, ...notes]);
+          setActiveNoteId(aiNote.id);
+          setIsGeneratingNote(false);
+          setShowNoteEditor(true);
+        }, 300);
+      }
+    };
+    runStep();
   };
 
   const deleteNote = (noteId: string) => {
@@ -228,7 +297,7 @@ function EnhancedNotesPanel() {
   if (!showNoteEditor) {
     return (
       <div className="flex flex-col h-full">
-        <div className="p-4 border-b border-gray-200">
+        <div className="p-4 border-b border-gray-200 space-y-2">
           <button
             onClick={createNote}
             className="w-full px-4 py-3 bg-gradient-to-r from-primary-600 to-accent-600 text-white text-sm font-medium rounded-xl hover:from-primary-700 hover:to-accent-700 transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
@@ -236,7 +305,46 @@ function EnhancedNotesPanel() {
             <Plus size={18} />
             添加笔记
           </button>
+          {learningMode === 'ai_guided' && (
+            <button
+              onClick={generateAINote}
+              disabled={isGeneratingNote}
+              className="w-full px-4 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-sm font-medium rounded-xl hover:from-emerald-600 hover:to-teal-600 transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 disabled:opacity-70"
+            >
+              {isGeneratingNote ? (
+                <>
+                  <Activity size={18} className="animate-spin" />
+                  <span>正在从知识库提取... {generationProgress}%</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles size={18} />
+                  AI 生成笔记
+                </>
+              )}
+            </button>
+          )}
         </div>
+        {/* Generation progress indicator */}
+        {isGeneratingNote && (
+          <div className="px-4 py-2 bg-emerald-50 border-b border-emerald-100">
+            <div className="flex items-center gap-2 text-xs text-emerald-700 mb-2">
+              <Brain size={14} className="animate-pulse" />
+              <span>AI 正在分析当前学习内容并生成笔记...</span>
+            </div>
+            <div className="h-1.5 bg-emerald-100 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-emerald-500 rounded-full transition-all duration-300"
+                style={{ width: `${generationProgress}%` }}
+              />
+            </div>
+            <div className="flex justify-between text-xs text-emerald-600 mt-1">
+              <span>📖 提取知识点</span>
+              <span>🔍 整理结构</span>
+              <span>✨ 生成笔记</span>
+            </div>
+          </div>
+        )}
         <div className="flex-1 overflow-y-auto p-3 space-y-2">
           {notes.map((note) => (
             <div
@@ -564,23 +672,50 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
     };
 
     setMessages((prev) => [...prev, userMessage]);
+    const userInput = inputMessage.toLowerCase();
     setInputMessage('');
     setIsLoading(true);
 
-    // 模拟 AI 回复
+    // 模拟 AI 回复 - 根据模式和输入内容生成不同回复
     setTimeout(() => {
+      let aiContent = '';
+
+      if (config.learningMode === 'self_directed') {
+        // 自由探索模式的回复
+        if (userInput.includes('搜索') || userInput.includes('概念')) {
+          aiContent = `🔍 **概念解析**\n\n让我帮你搜索相关概念...\n\n根据知识库检索，这个概念的核心要点是：\n\n1. **定义**：...\n2. **特征**：...\n3. **应用场景**：...\n\n你想深入了解哪个方面？`;
+        } else if (userInput.includes('总结') || userInput.includes('要点')) {
+          aiContent = `📋 **要点总结**\n\n根据你目前的学习内容，我来帮你梳理关键要点：\n\n**核心概念**\n- 要点一：...\n- 要点二：...\n\n**重要公式**\n- 公式一：...\n\n**常见误区**\n- 注意事项：...\n\n需要我详细解释某个要点吗？`;
+        } else if (userInput.includes('例子') || userInput.includes('举例')) {
+          aiContent = `💡 **实例说明**\n\n让我用一个生活中的例子来解释：\n\n想象一下...\n\n这就像是...\n\n通过这个例子，你能理解核心原理了吗？`;
+        } else {
+          aiContent = `这是一个很好的问题！让我来帮你解答...\n\n根据你的问题，我认为关键点在于：\n\n1. **首先**，我们需要理解...\n2. **其次**，要注意...\n3. **最后**，可以这样应用...\n\n你还有其他想了解的吗？`;
+        }
+      } else {
+        // 目标导向模式的回复
+        if (userInput.includes('考考') || userInput.includes('测试')) {
+          aiContent = `🧪 **知识检测**\n\n好的，让我来考考你！\n\n**问题**：关于「${learningPath.find(n => n.id === currentNodeId)?.title}」，请回答：\n\n这个概念的核心定义是什么？它与前面学过的内容有什么联系？\n\n💭 *提示：可以结合之前学习的基础概念来思考*`;
+        } else if (userInput.includes('下一') || userInput.includes('继续')) {
+          aiContent = `⏭️ **进入下一知识点**\n\n很好！你已经掌握了当前内容。\n\n📍 正在为你准备下一个知识点：「${learningPath.find(n => n.status === 'pending')?.title || '综合应用'}」\n\n🔄 *正在从知识库加载相关资源...*\n\n准备好了吗？让我们开始吧！`;
+        } else if (userInput.includes('路径') || userInput.includes('进度')) {
+          const mastered = learningPath.filter(n => n.status === 'mastered').length;
+          aiContent = `🗺️ **学习路径概览**\n\n**当前进度**：${mastered}/${learningPath.length} 个知识点已掌握\n\n**学习路径**：\n${learningPath.map((n, i) => `${n.status === 'mastered' ? '✅' : n.id === currentNodeId ? '📍' : '⬜'} ${i + 1}. ${n.title}`).join('\n')}\n\n继续加油！你已经完成了 ${Math.round((mastered / learningPath.length) * 100)}%`;
+        } else if (userInput.includes('提示') || userInput.includes('帮助')) {
+          aiContent = `💡 **学习提示**\n\n关于「${learningPath.find(n => n.id === currentNodeId)?.title}」，这里有一些提示：\n\n1. 🔑 **关键词**：注意理解核心术语的含义\n2. 🔗 **联系**：思考与前面知识点的关联\n3. 📝 **练习**：尝试用自己的话复述\n\n需要更具体的帮助吗？`;
+        } else {
+          aiContent = `很好的思考！👍\n\n让我来引导你深入理解这个概念...\n\n**关键点**：\n1. 首先，我们需要明确...\n2. 其次，要理解...\n3. 最后，可以这样应用...\n\n🎯 **小测验**：现在，你能用自己的话解释一下吗？这样我可以确认你是否理解了。`;
+        }
+      }
+
       const aiReply: ChatMessage = {
         id: `msg_${Date.now()}_ai`,
         role: 'assistant',
-        content:
-          config.learningMode === 'self_directed'
-            ? `这是一个很好的问题！让我来帮你解答...\n\n根据你的问题，我认为关键点在于...\n\n你还有其他想了解的吗？`
-            : `很好的思考！👍\n\n让我来引导你深入理解这个概念...\n\n**关键点**：\n1. 首先...\n2. 其次...\n\n现在，你能用自己的话解释一下吗？这样我可以确认你是否理解了。`,
+        content: aiContent,
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, aiReply]);
       setIsLoading(false);
-    }, 1000);
+    }, 1200);
   };
 
   // 切换计时器
@@ -611,31 +746,6 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
           <div className="flex items-center gap-2">
             <Brain size={20} className="text-primary-600" />
             <h1 className="text-base font-semibold text-gray-900">{config.title}</h1>
-          </div>
-          {/* 模式切换 */}
-          <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
-            <button
-              onClick={() => handleModeChange('self_directed')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-                config.learningMode === 'self_directed'
-                  ? 'bg-primary-500 text-white shadow-sm'
-                  : 'text-gray-600 hover:bg-gray-200'
-              }`}
-            >
-              <MessageCircle size={14} />
-              自由探索
-            </button>
-            <button
-              onClick={() => handleModeChange('ai_guided')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-                config.learningMode === 'ai_guided'
-                  ? 'bg-emerald-500 text-white shadow-sm'
-                  : 'text-gray-600 hover:bg-gray-200'
-              }`}
-            >
-              <GitBranch size={14} />
-              目标导向
-            </button>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -676,108 +786,203 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
         {/* 左侧面板 */}
         <div style={{ width: `${leftWidth}%` }} className="bg-white border-r border-gray-200 flex flex-col flex-shrink-0">
           {config.learningMode === 'ai_guided' ? (
-            // 目标导向模式：学习路径
+            // 目标导向模式：上方AI资源 + 下方学习路径（类似学生端布局）
             <>
-              <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-emerald-50 to-teal-50">
-                <h2 className="text-sm font-bold text-gray-700 flex items-center gap-2">
-                  <Map size={16} className="text-emerald-500" />
-                  学习路径
-                </h2>
-                <p className="text-xs text-gray-500 mt-1">按顺序完成知识点</p>
-              </div>
-              <div className="flex-1 overflow-y-auto p-3 space-y-2">
-                {learningPath.map((node, idx) => (
-                  <div
-                    key={node.id}
-                    className={`flex items-center gap-3 p-3 rounded-xl transition-all ${
-                      node.id === currentNodeId
-                        ? 'bg-emerald-50 border-2 border-emerald-300'
-                        : node.status === 'mastered'
-                        ? 'bg-green-50 border border-green-200'
-                        : 'bg-gray-50 border border-gray-200'
-                    }`}
-                  >
+              {/* AI生成资源区域 - 占40% */}
+              <div className="flex flex-col min-h-0" style={{ flex: '0 0 40%' }}>
+                <div className="p-3 border-b border-gray-100 bg-gradient-to-r from-purple-50 to-pink-50">
+                  <h2 className="text-sm font-bold text-gray-700 flex items-center gap-2">
+                    <Sparkles size={16} className="text-purple-500" />
+                    AI 智能资源
+                  </h2>
+                  <p className="text-xs text-gray-500 mt-1">根据学习进度动态生成</p>
+                </div>
+                <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                  {MOCK_AI_RESOURCES.map((resource) => (
                     <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                        node.status === 'mastered'
-                          ? 'bg-green-500'
-                          : node.id === currentNodeId
-                          ? 'bg-emerald-500'
-                          : 'bg-gray-300'
+                      key={resource.id}
+                      className={`flex items-center gap-3 p-3 rounded-xl transition-all cursor-pointer ${
+                        resource.status === 'generating'
+                          ? 'bg-purple-50 border-2 border-purple-200 animate-pulse'
+                          : resource.status === 'ready'
+                          ? 'bg-white border border-gray-200 hover:border-purple-300 hover:shadow-md'
+                          : 'bg-gray-50 border border-gray-200 opacity-60'
                       }`}
                     >
-                      {node.status === 'mastered' ? (
-                        <CheckCircle2 size={16} className="text-white" />
-                      ) : node.id === currentNodeId ? (
-                        <Circle size={16} className="text-white" />
-                      ) : (
-                        <span className="text-xs text-white font-medium">{idx + 1}</span>
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg ${
+                        resource.status === 'generating'
+                          ? 'bg-purple-100'
+                          : resource.status === 'ready'
+                          ? 'bg-gradient-to-br from-purple-100 to-pink-100'
+                          : 'bg-gray-100'
+                      }`}>
+                        {resource.icon}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-sm font-medium truncate ${
+                          resource.status === 'pending' ? 'text-gray-400' : 'text-gray-700'
+                        }`}>
+                          {resource.title}
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          {resource.status === 'generating' ? (
+                            <span className="text-purple-600 flex items-center gap-1">
+                              <Activity size={10} className="animate-spin" />
+                              正在生成...
+                            </span>
+                          ) : resource.status === 'ready' ? (
+                            <span className="text-emerald-600">✓ 已就绪</span>
+                          ) : (
+                            '待生成'
+                          )}
+                        </p>
+                      </div>
+                      {resource.status === 'ready' && (
+                        <ChevronRight size={16} className="text-gray-400" />
                       )}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p
-                        className={`text-sm font-medium ${
+                  ))}
+                </div>
+              </div>
+
+              {/* 学习路径区域 - 占60% */}
+              <div className="flex-1 flex flex-col min-h-0 border-t-2 border-emerald-200">
+                <div className="p-3 border-b border-gray-100 bg-gradient-to-r from-emerald-50 to-teal-50">
+                  <h2 className="text-sm font-bold text-gray-700 flex items-center gap-2">
+                    <Map size={16} className="text-emerald-500" />
+                    学习路径
+                  </h2>
+                  <p className="text-xs text-gray-500 mt-1">
+                    已完成 {learningPath.filter(n => n.status === 'mastered').length}/{learningPath.length} 个知识点
+                  </p>
+                </div>
+                <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                  {learningPath.map((node, idx) => (
+                    <div
+                      key={node.id}
+                      className={`flex items-center gap-3 p-3 rounded-xl transition-all ${
+                        node.id === currentNodeId
+                          ? 'bg-emerald-50 border-2 border-emerald-300 shadow-md'
+                          : node.status === 'mastered'
+                          ? 'bg-green-50 border border-green-200'
+                          : 'bg-gray-50 border border-gray-200'
+                      }`}
+                    >
+                      <div
+                        className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
                           node.status === 'mastered'
-                            ? 'text-green-700 line-through'
+                            ? 'bg-green-500'
                             : node.id === currentNodeId
-                            ? 'text-emerald-700'
-                            : 'text-gray-500'
+                            ? 'bg-emerald-500'
+                            : 'bg-gray-300'
                         }`}
                       >
-                        {node.title}
-                      </p>
-                      {node.estimatedTime && (
-                        <p className="text-xs text-gray-400">预计 {node.estimatedTime} 分钟</p>
+                        {node.status === 'mastered' ? (
+                          <CheckCircle2 size={16} className="text-white" />
+                        ) : node.id === currentNodeId ? (
+                          <Circle size={16} className="text-white" />
+                        ) : (
+                          <span className="text-xs text-white font-medium">{idx + 1}</span>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p
+                          className={`text-sm font-medium ${
+                            node.status === 'mastered'
+                              ? 'text-green-700 line-through'
+                              : node.id === currentNodeId
+                              ? 'text-emerald-700'
+                              : 'text-gray-500'
+                          }`}
+                        >
+                          {node.title}
+                        </p>
+                        {node.estimatedTime && (
+                          <p className="text-xs text-gray-400">预计 {node.estimatedTime} 分钟</p>
+                        )}
+                      </div>
+                      {node.id === currentNodeId && (
+                        <span className="text-xs bg-emerald-100 text-emerald-600 px-2 py-0.5 rounded-full font-medium animate-pulse">
+                          当前
+                        </span>
                       )}
                     </div>
-                    {node.id === currentNodeId && (
-                      <span className="text-xs bg-emerald-100 text-emerald-600 px-2 py-0.5 rounded-full">当前</span>
-                    )}
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </>
           ) : (
-            // 自由探索模式：资源列表
+            // 自由探索模式：Sources 面板（类似 NotebookLM）
             <>
               <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-primary-50 to-accent-50">
                 <h2 className="text-sm font-bold text-gray-700 flex items-center gap-2">
                   <FolderOpen size={16} className="text-primary-500" />
-                  学习资料
+                  Sources
                 </h2>
                 <p className="text-xs text-gray-500 mt-1">自由浏览，随时提问</p>
               </div>
+
+              {/* 添加资源入口 */}
+              <div className="p-3 border-b border-gray-100 space-y-2">
+                <button className="w-full px-3 py-2.5 border-2 border-dashed border-gray-300 rounded-xl text-sm text-gray-500 hover:border-primary-400 hover:text-primary-600 hover:bg-primary-50 transition-all flex items-center justify-center gap-2">
+                  <Plus size={16} />
+                  添加资料来源
+                </button>
+                <div className="flex gap-2">
+                  <button className="flex-1 px-2 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-600 hover:bg-gray-100 transition-colors flex items-center justify-center gap-1">
+                    <Upload size={12} />
+                    上传文件
+                  </button>
+                  <button className="flex-1 px-2 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-600 hover:bg-gray-100 transition-colors flex items-center justify-center gap-1">
+                    <Link size={12} />
+                    粘贴链接
+                  </button>
+                </div>
+              </div>
+
+              {/* 资源列表 - 使用 mockResources */}
               <div className="flex-1 overflow-y-auto p-3 space-y-2">
-                {config.resources.length === 0 ? (
-                  <div className="text-center py-8 text-gray-400">
-                    <BookOpen size={32} className="mx-auto mb-2 opacity-50" />
-                    <p className="text-sm">暂无学习资料</p>
-                    <p className="text-xs mt-1">可以上传资料或添加链接</p>
-                  </div>
-                ) : (
-                  config.resources.map((resource: Resource) => (
-                    <div
-                      key={resource.id}
-                      className="p-3 bg-white border border-gray-200 rounded-xl hover:border-primary-300 hover:shadow-md transition-all cursor-pointer"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
+                {/* 全选控制 */}
+                <div className="flex items-center justify-between px-1 mb-1">
+                  <span className="text-xs text-gray-500">{mockResources.length} 个来源</span>
+                  <button className="text-xs text-primary-600 hover:text-primary-700 font-medium">全选</button>
+                </div>
+
+                {mockResources.map((resource) => (
+                  <div
+                    key={resource.id}
+                    className="flex items-start gap-3 p-3 bg-white border border-gray-200 rounded-xl hover:border-primary-300 hover:shadow-md transition-all cursor-pointer group"
+                  >
+                    {/* 选中指示器 */}
+                    <div className="w-5 h-5 rounded border-2 border-primary-400 bg-primary-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <Check size={12} className="text-white" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className={`w-6 h-6 rounded flex items-center justify-center flex-shrink-0 ${
+                          resource.type === 'video' ? 'bg-red-100' :
+                          resource.type === 'presentation' ? 'bg-orange-100' : 'bg-blue-100'
+                        }`}>
                           {resource.type === 'video' ? (
-                            <Video size={18} className="text-primary-600" />
+                            <Video size={12} className="text-red-600" />
                           ) : resource.type === 'presentation' ? (
-                            <FileSpreadsheet size={18} className="text-primary-600" />
+                            <FileSpreadsheet size={12} className="text-orange-600" />
                           ) : (
-                            <FileText size={18} className="text-primary-600" />
+                            <FileText size={12} className="text-blue-600" />
                           )}
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-700 truncate">{resource.title}</p>
-                          <p className="text-xs text-gray-400">{resource.type}</p>
-                        </div>
+                        <p className="text-sm font-medium text-gray-700 truncate">{resource.title}</p>
                       </div>
+                      <p className="text-xs text-gray-400 line-clamp-2 ml-8">{resource.description}</p>
+                      {resource.duration && (
+                        <div className="flex items-center gap-1 text-xs text-gray-400 mt-1 ml-8">
+                          <Clock size={10} />
+                          <span>{resource.duration}</span>
+                        </div>
+                      )}
                     </div>
-                  ))
-                )}
+                  </div>
+                ))}
               </div>
             </>
           )}
@@ -793,12 +998,40 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
 
         {/* 中间聊天面板 */}
         <div style={{ width: `${100 - leftWidth - rightWidth}%` }} className="flex flex-col bg-gray-50">
-          {/* 对话区头部 */}
+          {/* 对话区头部 + 模式切换 */}
           <div className="p-3 bg-white border-b border-gray-200">
-            <h2 className="font-bold text-gray-700 flex items-center gap-2">
-              <MessageSquare size={18} className="text-accent-600" />
-              AI 学习对话
-            </h2>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="font-bold text-gray-700 flex items-center gap-2">
+                <MessageSquare size={18} className="text-accent-600" />
+                AI 学习对话
+              </h2>
+            </div>
+
+            {/* 模式切换 - 类似学生端 */}
+            <div className="flex gap-2">
+              <button
+                onClick={() => handleModeChange('self_directed')}
+                className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                  config.learningMode === 'self_directed'
+                    ? 'bg-primary-500 text-white shadow-sm'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                <MessageCircle size={14} className="inline mr-1" />
+                自由探索
+              </button>
+              <button
+                onClick={() => handleModeChange('ai_guided')}
+                className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                  config.learningMode === 'ai_guided'
+                    ? 'bg-emerald-500 text-white shadow-sm'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                <GitBranch size={14} className="inline mr-1" />
+                AI 自适应学习
+              </button>
+            </div>
           </div>
 
           {/* 消息列表 */}
@@ -887,6 +1120,28 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
 
           {/* 输入框 */}
           <div className="p-3 bg-white border-t border-gray-200">
+            {/* Quick Actions - above input */}
+            <div className="mb-3 flex flex-wrap gap-2">
+              {(config.learningMode === 'self_directed' ? SELF_DIRECTED_QUICK_ACTIONS : AI_GUIDED_QUICK_ACTIONS).map((action) => {
+                const IconComp = action.icon;
+                const colorMap: Record<string, string> = {
+                  primary: 'bg-primary-50 text-primary-600 hover:bg-primary-100 border-primary-200',
+                  emerald: 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border-emerald-200',
+                  amber: 'bg-amber-50 text-amber-600 hover:bg-amber-100 border-amber-200',
+                  purple: 'bg-purple-50 text-purple-600 hover:bg-purple-100 border-purple-200',
+                };
+                return (
+                  <button
+                    key={action.id}
+                    onClick={() => setInputMessage(action.label)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${colorMap[action.color]}`}
+                  >
+                    <IconComp size={14} />
+                    {action.label}
+                  </button>
+                );
+              })}
+            </div>
             <div className="relative">
               <input
                 type="text"
@@ -950,7 +1205,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
 
           {/* 内容区 */}
           {rightTab === 'workspace' ? (
-            <EnhancedNotesPanel />
+            <EnhancedNotesPanel learningMode={config.learningMode} />
           ) : (
             <LearningStatusPanel
               elapsedTime={elapsedTime}
