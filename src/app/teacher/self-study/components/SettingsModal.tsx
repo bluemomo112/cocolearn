@@ -91,7 +91,7 @@ export default function SettingsModal({ config, onSave, onClose }: SettingsModal
                       ...localConfig,
                       userProfile: {
                         ...localConfig.userProfile,
-                        preferences: { ...localConfig.userProfile.preferences, aiStyle: e.target.value as AIStyle }
+                        preferences: { aiStyle: e.target.value as AIStyle, knowledgeBoundary: localConfig.userProfile.preferences?.knowledgeBoundary || 'moderate', ...localConfig.userProfile.preferences }
                       }
                     })}
                     className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
@@ -161,7 +161,7 @@ export default function SettingsModal({ config, onSave, onClose }: SettingsModal
                       ...localConfig,
                       userProfile: {
                         ...localConfig.userProfile,
-                        preferences: { ...localConfig.userProfile.preferences, knowledgeBoundary: e.target.value as KnowledgeBoundary }
+                        preferences: { aiStyle: localConfig.userProfile.preferences?.aiStyle || 'patient', knowledgeBoundary: e.target.value as KnowledgeBoundary, ...localConfig.userProfile.preferences }
                       }
                     })}
                     className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
@@ -255,7 +255,7 @@ export default function SettingsModal({ config, onSave, onClose }: SettingsModal
                       ...localConfig,
                       userProfile: {
                         ...localConfig.userProfile,
-                        preferences: { ...localConfig.userProfile.preferences, learningFlow: e.target.value as LearningFlow }
+                        preferences: { aiStyle: localConfig.userProfile.preferences?.aiStyle || 'patient', knowledgeBoundary: localConfig.userProfile.preferences?.knowledgeBoundary || 'moderate', ...localConfig.userProfile.preferences, learningFlow: e.target.value as LearningFlow }
                       }
                     })}
                     className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
