@@ -88,7 +88,7 @@ function AiGuidedPreview({ topic }: { topic: string }) {
   return (
     <div className="rounded-xl border border-purple-200 bg-gradient-to-br from-purple-50 to-white overflow-hidden">
       <div className="px-4 py-3 bg-purple-100/50 border-b border-purple-200">
-        <span className="text-sm font-medium text-purple-800">🗺️ 目标导向模式预览</span>
+        <span className="text-sm font-medium text-purple-800">🗺️ AI 自适应学习模式预览</span>
       </div>
       <div className="p-4 space-y-4">
         {/* Learning path progress */}

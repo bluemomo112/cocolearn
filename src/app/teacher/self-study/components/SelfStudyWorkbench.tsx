@@ -129,7 +129,7 @@ const SELF_DIRECTED_QUICK_ACTIONS = [
   { id: 'search', label: '搜索概念', icon: Search, color: 'primary' },
   { id: 'summarize', label: '总结要点', icon: FileText, color: 'emerald' },
   { id: 'example', label: '举个例子', icon: Lightbulb, color: 'amber' },
-  { id: 'explain', label: '深入解释', icon: MessageCircle, color: 'purple' },
+  { id: 'generate_quiz', label: '生成测试', icon: Zap, color: 'purple' },
 ];
 
 const AI_GUIDED_QUICK_ACTIONS = [
@@ -137,6 +137,35 @@ const AI_GUIDED_QUICK_ACTIONS = [
   { id: 'next', label: '下一知识点', icon: ChevronRight, color: 'emerald' },
   { id: 'path', label: '查看路径', icon: Map, color: 'primary' },
   { id: 'hint', label: '给我提示', icon: Lightbulb, color: 'purple' },
+];
+
+// Studio tools (NotebookLM style) for right panel
+const STUDIO_TOOLS = [
+  { id: 'audio_overview', label: '音频概述', icon: '🎧', description: '生成音频摘要', status: 'ready' as const },
+  { id: 'mind_map', label: '思维导图', icon: '🗺️', description: '可视化知识结构', status: 'ready' as const },
+  { id: 'flashcards', label: '记忆卡片', icon: '🃏', description: '生成复习卡片', status: 'ready' as const },
+  { id: 'quiz', label: '知识测验', icon: '📝', description: '生成测试题目', status: 'ready' as const },
+  { id: 'summary', label: '学习报告', icon: '📊', description: '生成学习总结', status: 'generating' as const },
+  { id: 'timeline', label: '时间线', icon: '📅', description: '梳理知识脉络', status: 'pending' as const },
+];
+
+// Mock generated tasks for self-directed mode
+const MOCK_GENERATED_TASKS = [
+  {
+    id: 'gen_task_1',
+    type: 'quiz' as const,
+    title: 'AI生成：植物工厂基础测验',
+    status: 'available' as const,
+    questionCount: 5,
+    generatedAt: new Date(Date.now() - 1000 * 60 * 10),
+  },
+  {
+    id: 'gen_task_2',
+    type: 'reflection' as const,
+    title: 'AI生成：学习反思',
+    status: 'available' as const,
+    generatedAt: new Date(Date.now() - 1000 * 60 * 5),
+  },
 ];
 
 // Enhanced Notes Panel component
@@ -618,6 +647,34 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
   // 设置弹窗
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
+  // 面板折叠状态
+  const [collapsedPanels, setCollapsedPanels] = useState<Record<string, boolean>>({
+    sources: false,
+    tasks: true, // 初始收起
+    aiResources: false,
+    learningPath: false,
+    studio: false,
+  });
+
+  // 生成的任务列表（初始为空）
+  const [generatedTasks, setGeneratedTasks] = useState<typeof MOCK_GENERATED_TASKS>([]);
+  const [isGeneratingTask, setIsGeneratingTask] = useState(false);
+
+  // 生成测试任务
+  const handleGenerateTest = () => {
+    setIsGeneratingTask(true);
+    // 模拟生成过程
+    setTimeout(() => {
+      setGeneratedTasks(MOCK_GENERATED_TASKS);
+      setCollapsedPanels(prev => ({ ...prev, tasks: false })); // 展开任务区域
+      setIsGeneratingTask(false);
+    }, 1500);
+  };
+
+  const togglePanel = (panelId: string) => {
+    setCollapsedPanels(prev => ({ ...prev, [panelId]: !prev[panelId] }));
+  };
+
   // 格式化时间
   const formatTime = (seconds: number) => {
     const hours = Math.floor(seconds / 3600);
@@ -912,77 +969,205 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
               </div>
             </>
           ) : (
-            // 自由探索模式：Sources 面板（类似 NotebookLM）
+            // 自由探索模式：Sources 面板（类似 NotebookLM）+ 任务区（类似 student-workbench）
             <>
-              <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-primary-50 to-accent-50">
-                <h2 className="text-sm font-bold text-gray-700 flex items-center gap-2">
-                  <FolderOpen size={16} className="text-primary-500" />
-                  Sources
-                </h2>
-                <p className="text-xs text-gray-500 mt-1">自由浏览，随时提问</p>
-              </div>
-
-              {/* 添加资源入口 */}
-              <div className="p-3 border-b border-gray-100 space-y-2">
-                <button className="w-full px-3 py-2.5 border-2 border-dashed border-gray-300 rounded-xl text-sm text-gray-500 hover:border-primary-400 hover:text-primary-600 hover:bg-primary-50 transition-all flex items-center justify-center gap-2">
-                  <Plus size={16} />
-                  添加资料来源
-                </button>
-                <div className="flex gap-2">
-                  <button className="flex-1 px-2 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-600 hover:bg-gray-100 transition-colors flex items-center justify-center gap-1">
-                    <Upload size={12} />
-                    上传文件
-                  </button>
-                  <button className="flex-1 px-2 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-600 hover:bg-gray-100 transition-colors flex items-center justify-center gap-1">
-                    <Link size={12} />
-                    粘贴链接
-                  </button>
-                </div>
-              </div>
-
-              {/* 资源列表 - 使用 mockResources */}
-              <div className="flex-1 overflow-y-auto p-3 space-y-2">
-                {/* 全选控制 */}
-                <div className="flex items-center justify-between px-1 mb-1">
-                  <span className="text-xs text-gray-500">{mockResources.length} 个来源</span>
-                  <button className="text-xs text-primary-600 hover:text-primary-700 font-medium">全选</button>
+              {/* 资源区域 - 占60% */}
+              <div className="flex flex-col min-h-0" style={{ flex: '0 0 60%' }}>
+                <div className="p-3 border-b border-gray-100 bg-gradient-to-r from-primary-50 to-accent-50">
+                  <h2 className="text-sm font-bold text-gray-700 flex items-center gap-2">
+                    <FolderOpen size={16} className="text-primary-500" />
+                    Sources
+                  </h2>
+                  <p className="text-xs text-gray-500 mt-1">自由浏览，随时提问</p>
                 </div>
 
-                {mockResources.map((resource) => (
-                  <div
-                    key={resource.id}
-                    className="flex items-start gap-3 p-3 bg-white border border-gray-200 rounded-xl hover:border-primary-300 hover:shadow-md transition-all cursor-pointer group"
-                  >
-                    {/* 选中指示器 */}
-                    <div className="w-5 h-5 rounded border-2 border-primary-400 bg-primary-500 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <Check size={12} className="text-white" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <div className={`w-6 h-6 rounded flex items-center justify-center flex-shrink-0 ${
-                          resource.type === 'video' ? 'bg-red-100' :
-                          resource.type === 'presentation' ? 'bg-orange-100' : 'bg-blue-100'
-                        }`}>
-                          {resource.type === 'video' ? (
-                            <Video size={12} className="text-red-600" />
-                          ) : resource.type === 'presentation' ? (
-                            <FileSpreadsheet size={12} className="text-orange-600" />
-                          ) : (
-                            <FileText size={12} className="text-blue-600" />
-                          )}
-                        </div>
-                        <p className="text-sm font-medium text-gray-700 truncate">{resource.title}</p>
+                {/* 添加资源入口 */}
+                <div className="p-3 border-b border-gray-100 space-y-2">
+                  <button className="w-full px-3 py-2.5 border-2 border-dashed border-gray-300 rounded-xl text-sm text-gray-500 hover:border-primary-400 hover:text-primary-600 hover:bg-primary-50 transition-all flex items-center justify-center gap-2">
+                    <Plus size={16} />
+                    添加资料来源
+                  </button>
+                  <div className="flex gap-2">
+                    <button className="flex-1 px-2 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-600 hover:bg-gray-100 transition-colors flex items-center justify-center gap-1">
+                      <Upload size={12} />
+                      上传文件
+                    </button>
+                    <button className="flex-1 px-2 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-600 hover:bg-gray-100 transition-colors flex items-center justify-center gap-1">
+                      <Link size={12} />
+                      粘贴链接
+                    </button>
+                  </div>
+                </div>
+
+                {/* 资源列表 - 使用 mockResources */}
+                <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                  {/* 全选控制 */}
+                  <div className="flex items-center justify-between px-1 mb-1">
+                    <span className="text-xs text-gray-500">{mockResources.length} 个来源</span>
+                    <button className="text-xs text-primary-600 hover:text-primary-700 font-medium">全选</button>
+                  </div>
+
+                  {mockResources.map((resource) => (
+                    <div
+                      key={resource.id}
+                      className="flex items-start gap-3 p-3 bg-white border border-gray-200 rounded-xl hover:border-primary-300 hover:shadow-md transition-all cursor-pointer group"
+                    >
+                      {/* 选中指示器 */}
+                      <div className="w-5 h-5 rounded border-2 border-primary-400 bg-primary-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <Check size={12} className="text-white" />
                       </div>
-                      <p className="text-xs text-gray-400 line-clamp-2 ml-8">{resource.description}</p>
-                      {resource.duration && (
-                        <div className="flex items-center gap-1 text-xs text-gray-400 mt-1 ml-8">
-                          <Clock size={10} />
-                          <span>{resource.duration}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <div className={`w-6 h-6 rounded flex items-center justify-center flex-shrink-0 ${
+                            resource.type === 'video' ? 'bg-red-100' :
+                            resource.type === 'presentation' ? 'bg-orange-100' : 'bg-blue-100'
+                          }`}>
+                            {resource.type === 'video' ? (
+                              <Video size={12} className="text-red-600" />
+                            ) : resource.type === 'presentation' ? (
+                              <FileSpreadsheet size={12} className="text-orange-600" />
+                            ) : (
+                              <FileText size={12} className="text-blue-600" />
+                            )}
+                          </div>
+                          <p className="text-sm font-medium text-gray-700 truncate">{resource.title}</p>
                         </div>
+                        <p className="text-xs text-gray-400 line-clamp-1 ml-8">{resource.description}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* 任务区域 - 可折叠 (类似 student-workbench) */}
+              <div className={`flex flex-col min-h-0 border-t-2 border-amber-200 transition-all ${
+                collapsedPanels.tasks ? '' : 'flex-1'
+              }`}>
+                {/* 可折叠的标题栏 */}
+                <div
+                  className="p-3 border-b border-gray-100 bg-gradient-to-r from-amber-50 to-orange-50 cursor-pointer hover:bg-amber-100/50 transition-colors"
+                  onClick={() => togglePanel('tasks')}
+                >
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-bold text-gray-700 flex items-center gap-2">
+                      <ListChecks size={16} className="text-amber-500" />
+                      学习任务
+                      {generatedTasks.length > 0 && (
+                        <span className="text-xs bg-amber-200 text-amber-700 px-1.5 py-0.5 rounded-full">
+                          {generatedTasks.length}
+                        </span>
+                      )}
+                    </h3>
+                    <div className="flex items-center gap-2">
+                      {collapsedPanels.tasks && generatedTasks.length === 0 && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleGenerateTest();
+                          }}
+                          disabled={isGeneratingTask}
+                          className="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-white text-xs font-medium rounded-lg transition-colors flex items-center gap-1 disabled:opacity-70"
+                        >
+                          {isGeneratingTask ? (
+                            <>
+                              <Activity size={12} className="animate-spin" />
+                              生成中...
+                            </>
+                          ) : (
+                            <>
+                              <Zap size={12} />
+                              生成测试
+                            </>
+                          )}
+                        </button>
+                      )}
+                      {collapsedPanels.tasks ? (
+                        <ChevronDown size={16} className="text-gray-400" />
+                      ) : (
+                        <ChevronUp size={16} className="text-gray-400" />
                       )}
                     </div>
                   </div>
-                ))}
+                  <p className="text-xs text-gray-500 mt-1">AI 生成的测试和练习</p>
+                </div>
+
+                {/* 可折叠的内容区域 */}
+                {!collapsedPanels.tasks && (
+                  <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                    {generatedTasks.length === 0 ? (
+                      <div className="text-center py-6 text-gray-400">
+                        <Zap size={24} className="mx-auto mb-2 opacity-50" />
+                        <p className="text-xs mb-3">点击"生成测试"创建学习任务</p>
+                        <button
+                          onClick={handleGenerateTest}
+                          disabled={isGeneratingTask}
+                          className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2 mx-auto disabled:opacity-70"
+                        >
+                          {isGeneratingTask ? (
+                            <>
+                              <Activity size={14} className="animate-spin" />
+                              生成中...
+                            </>
+                          ) : (
+                            <>
+                              <Zap size={14} />
+                              生成测试
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    ) : (
+                      generatedTasks.map((task) => (
+                        <div
+                          key={task.id}
+                          className="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-xl hover:border-amber-300 hover:shadow-md transition-all cursor-pointer"
+                        >
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                            task.type === 'quiz' ? 'bg-amber-100' : 'bg-purple-100'
+                          }`}>
+                            {task.type === 'quiz' ? (
+                              <Zap size={18} className="text-amber-600" />
+                            ) : (
+                              <Brain size={18} className="text-purple-600" />
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-700 truncate">{task.title}</p>
+                            <div className="flex items-center gap-2 text-xs text-gray-400 mt-0.5">
+                              {task.type === 'quiz' && task.questionCount && (
+                                <span>{task.questionCount} 道题</span>
+                              )}
+                              <span>•</span>
+                              <span>{new Date(task.generatedAt).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}</span>
+                            </div>
+                          </div>
+                          <ChevronRight size={16} className="text-gray-400" />
+                        </div>
+                      ))
+                    )}
+
+                    {/* 生成更多任务按钮 - 仅当已有任务时显示 */}
+                    {generatedTasks.length > 0 && (
+                      <button
+                        onClick={handleGenerateTest}
+                        disabled={isGeneratingTask}
+                        className="w-full px-3 py-2.5 border-2 border-dashed border-amber-300 rounded-xl text-sm text-amber-600 hover:border-amber-400 hover:bg-amber-50 transition-all flex items-center justify-center gap-2 disabled:opacity-70"
+                      >
+                        {isGeneratingTask ? (
+                          <>
+                            <Activity size={14} className="animate-spin" />
+                            生成中...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles size={14} />
+                            AI 生成更多任务
+                          </>
+                        )}
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             </>
           )}
@@ -1205,7 +1390,65 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
 
           {/* 内容区 */}
           {rightTab === 'workspace' ? (
-            <EnhancedNotesPanel learningMode={config.learningMode} />
+            <div className="flex-1 flex flex-col overflow-hidden">
+              {/* 笔记区域 - 上半部分 */}
+              <div className="flex-1 min-h-0 overflow-hidden" style={{ flex: config.learningMode === 'self_directed' ? '0 0 55%' : '1 1 auto' }}>
+                <EnhancedNotesPanel learningMode={config.learningMode} />
+              </div>
+
+              {/* Studio 工具区域 - 仅自由探索模式显示 (类似 NotebookLM) */}
+              {config.learningMode === 'self_directed' && (
+                <div className="border-t-2 border-purple-200 bg-gradient-to-b from-purple-50/50 to-white" style={{ flex: '0 0 45%' }}>
+                  <div className="p-3 border-b border-purple-100">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-sm font-bold text-purple-800 flex items-center gap-2">
+                        <Sparkles size={14} className="text-purple-600" />
+                        Studio
+                      </h3>
+                      <span className="text-xs text-purple-500">AI 学习工具</span>
+                    </div>
+                  </div>
+                  <div className="p-3 overflow-y-auto" style={{ maxHeight: 'calc(100% - 48px)' }}>
+                    <div className="grid grid-cols-2 gap-2">
+                      {STUDIO_TOOLS.map((tool) => (
+                        <button
+                          key={tool.id}
+                          className={`p-3 rounded-xl border text-left transition-all ${
+                            tool.status === 'generating'
+                              ? 'bg-purple-50 border-purple-200 animate-pulse'
+                              : tool.status === 'ready'
+                              ? 'bg-white border-gray-200 hover:border-purple-300 hover:shadow-md cursor-pointer'
+                              : 'bg-gray-50 border-gray-200 opacity-50 cursor-not-allowed'
+                          }`}
+                          disabled={tool.status === 'pending'}
+                        >
+                          <div className="flex items-start gap-2">
+                            <span className="text-lg">{tool.icon}</span>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-medium text-gray-700 truncate">{tool.label}</p>
+                              {tool.status === 'generating' ? (
+                                <p className="text-xs text-purple-600 flex items-center gap-1 mt-0.5">
+                                  <Activity size={10} className="animate-spin" />
+                                  生成中...
+                                </p>
+                              ) : (
+                                <p className="text-xs text-gray-400 mt-0.5 truncate">{tool.description}</p>
+                              )}
+                            </div>
+                            {tool.status === 'ready' && (
+                              <Pencil size={12} className="text-gray-400 flex-shrink-0" />
+                            )}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                    <p className="text-xs text-center text-gray-400 mt-3">
+                      添加资料后，点击生成学习工具
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
           ) : (
             <LearningStatusPanel
               elapsedTime={elapsedTime}
