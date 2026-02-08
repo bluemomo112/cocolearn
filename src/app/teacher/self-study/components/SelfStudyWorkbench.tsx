@@ -16,6 +16,7 @@ import {
   ChevronDown, ChevronUp, Layout,
 } from 'lucide-react';
 import SettingsModal from './SettingsModal';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface SelfStudyWorkbenchProps {
   config: SpaceConfig;
@@ -80,101 +81,19 @@ function Resizer({ onResize }: { onResize: (delta: number) => void }) {
   );
 }
 
-// Mock learning path data (ai_guided mode)
-const MOCK_LEARNING_PATH: LearningPathNode[] = [
-  { id: 'node_1', title: '基础概念与定义', status: 'mastered', estimatedTime: 15 },
-  { id: 'node_2', title: '核心原理解析', status: 'mastered', estimatedTime: 20 },
-  { id: 'node_3', title: '关键公式与推导', status: 'learning', estimatedTime: 25 },
-  { id: 'node_4', title: '典型例题分析', status: 'pending', estimatedTime: 20 },
-  { id: 'node_5', title: '综合应用与拓展', status: 'pending', estimatedTime: 30 },
-];
-
+// Mock learning path data (ai_guided mode) - will be created inside component with t()
 const MOCK_CURRENT_NODE = 'node_3';
 
-// Mock AI-generated resources for guided mode
-const MOCK_AI_RESOURCES = [
-  { id: 'ai_res_1', title: '概念图解：核心原理可视化', type: 'ai_generated', status: 'ready', icon: '🎨' },
-  { id: 'ai_res_2', title: '练习题：基础概念巩固', type: 'ai_generated', status: 'ready', icon: '📝' },
-  { id: 'ai_res_3', title: '知识卡片：公式速记', type: 'ai_generated', status: 'generating', icon: '🃏' },
-  { id: 'ai_res_4', title: '思维导图：知识结构', type: 'ai_generated', status: 'pending', icon: '🗺️' },
-];
-
-// Mock AI observations (inline, no external import)
-const MOCK_AI_OBSERVATIONS = [
-  {
-    id: 'obs_1',
-    type: 'praise' as const,
-    icon: '🌟',
-    message: '你对基础概念的理解非常扎实，能够准确地用自己的话解释核心原理。',
-    timestamp: new Date(Date.now() - 1000 * 60 * 15),
-  },
-  {
-    id: 'obs_2',
-    type: 'suggestion' as const,
-    icon: '💡',
-    message: '建议在推导公式时多画图辅助理解，这样可以更直观地把握变量之间的关系。',
-    timestamp: new Date(Date.now() - 1000 * 60 * 5),
-  },
-  {
-    id: 'obs_3',
-    type: 'insight' as const,
-    icon: '🔍',
-    message: '你倾向于先理解整体框架再深入细节，这是一种很好的学习策略。',
-    timestamp: new Date(Date.now() - 1000 * 60 * 2),
-  },
-];
-
-// Quick actions for different modes
-const SELF_DIRECTED_QUICK_ACTIONS = [
-  { id: 'search', label: '搜索概念', icon: Search, color: 'primary' },
-  { id: 'summarize', label: '总结要点', icon: FileText, color: 'emerald' },
-  { id: 'example', label: '举个例子', icon: Lightbulb, color: 'amber' },
-  { id: 'generate_quiz', label: '生成测试', icon: Zap, color: 'purple' },
-];
-
-const AI_GUIDED_QUICK_ACTIONS = [
-  { id: 'quiz', label: '考考我', icon: Zap, color: 'amber' },
-  { id: 'next', label: '下一知识点', icon: ChevronRight, color: 'emerald' },
-  { id: 'path', label: '查看路径', icon: Map, color: 'primary' },
-  { id: 'hint', label: '给我提示', icon: Lightbulb, color: 'purple' },
-];
-
-// Studio tools (NotebookLM style) for right panel
-const STUDIO_TOOLS = [
-  { id: 'audio_overview', label: '音频概述', icon: '🎧', description: '生成音频摘要', status: 'ready' as const },
-  { id: 'mind_map', label: '思维导图', icon: '🗺️', description: '可视化知识结构', status: 'ready' as const },
-  { id: 'flashcards', label: '记忆卡片', icon: '🃏', description: '生成复习卡片', status: 'ready' as const },
-  { id: 'quiz', label: '知识测验', icon: '📝', description: '生成测试题目', status: 'ready' as const },
-  { id: 'summary', label: '学习报告', icon: '📊', description: '生成学习总结', status: 'generating' as const },
-  { id: 'timeline', label: '时间线', icon: '📅', description: '梳理知识脉络', status: 'pending' as const },
-];
-
-// Mock generated tasks for self-directed mode
-const MOCK_GENERATED_TASKS = [
-  {
-    id: 'gen_task_1',
-    type: 'quiz' as const,
-    title: 'AI生成：植物工厂基础测验',
-    status: 'available' as const,
-    questionCount: 5,
-    generatedAt: new Date(Date.now() - 1000 * 60 * 10),
-  },
-  {
-    id: 'gen_task_2',
-    type: 'reflection' as const,
-    title: 'AI生成：学习反思',
-    status: 'available' as const,
-    generatedAt: new Date(Date.now() - 1000 * 60 * 5),
-  },
-];
+// Mock generated tasks for self-directed mode - will be created inside component with t()
 
 // Enhanced Notes Panel component
 function EnhancedNotesPanel({ learningMode }: { learningMode?: LearningMode }) {
+  const { t } = useLanguage();
   const [notes, setNotes] = useState<Note[]>([
     {
       id: '1',
-      title: '我的学习笔记',
-      content: '# 欢迎使用增强笔记\n\n你可以：\n- 记录Markdown格式的笔记\n- 上传图片\n- 录制语音笔记\n\n开始你的学习之旅吧！',
+      title: t('我的学习笔记'),
+      content: `# ${t('欢迎使用增强笔记')}\n\n${t('你可以：')}\n- ${t('记录Markdown格式的笔记')}\n- ${t('上传图片')}\n- ${t('录制语音笔记')}\n\n${t('开始你的学习之旅吧！')}`,
       createdAt: new Date(),
       updatedAt: new Date(),
       images: [],
@@ -194,7 +113,7 @@ function EnhancedNotesPanel({ learningMode }: { learningMode?: LearningMode }) {
   const createNote = () => {
     const newNote: Note = {
       id: Date.now().toString(),
-      title: `笔记 ${notes.length + 1}`,
+      title: `${t('笔记')} ${notes.length + 1}`,
       content: '',
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -232,8 +151,8 @@ function EnhancedNotesPanel({ learningMode }: { learningMode?: LearningMode }) {
         setTimeout(() => {
           const aiNote: Note = {
             id: Date.now().toString(),
-            title: '📚 AI生成：关键公式与推导笔记',
-            content: `# 关键公式与推导\n\n## 核心公式\n\n### 公式1：基本定义\n$$E = mc^2$$\n\n### 公式2：推导过程\n1. 从基本假设出发...\n2. 应用数学变换...\n3. 得到最终结果...\n\n## 重点理解\n- 公式的物理意义\n- 适用条件和范围\n- 常见错误分析\n\n## 练习建议\n尝试用自己的话解释这个公式的含义。`,
+            title: `📚 ${t('AI生成：关键公式与推导笔记')}`,
+            content: `# ${t('关键公式与推导')}\n\n## ${t('核心公式')}\n\n### ${t('公式1：基本定义')}\n$$E = mc^2$$\n\n### ${t('公式2：推导过程')}\n1. ${t('从基本假设出发...')}\n2. ${t('应用数学变换...')}\n3. ${t('得到最终结果...')}\n\n## ${t('重点理解')}\n- ${t('公式的物理意义')}\n- ${t('适用条件和范围')}\n- ${t('常见错误分析')}\n\n## ${t('练习建议')}\n${t('尝试用自己的话解释这个公式的含义。')}`,
             createdAt: new Date(),
             updatedAt: new Date(),
             images: [],
@@ -251,7 +170,7 @@ function EnhancedNotesPanel({ learningMode }: { learningMode?: LearningMode }) {
 
   const deleteNote = (noteId: string) => {
     if (notes.length === 1) {
-      alert('至少需要保留一个笔记');
+      alert(t('至少需要保留一个笔记'));
       return;
     }
     const newNotes = notes.filter((n) => n.id !== noteId);
@@ -332,7 +251,7 @@ function EnhancedNotesPanel({ learningMode }: { learningMode?: LearningMode }) {
             className="w-full px-4 py-3 bg-gradient-to-r from-primary-600 to-accent-600 text-white text-sm font-medium rounded-xl hover:from-primary-700 hover:to-accent-700 transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
           >
             <Plus size={18} />
-            添加笔记
+            {t('添加笔记')}
           </button>
           {learningMode === 'ai_guided' && (
             <button
@@ -343,12 +262,12 @@ function EnhancedNotesPanel({ learningMode }: { learningMode?: LearningMode }) {
               {isGeneratingNote ? (
                 <>
                   <Activity size={18} className="animate-spin" />
-                  <span>正在从知识库提取... {generationProgress}%</span>
+                  <span>{t('正在从知识库提取...')} {generationProgress}%</span>
                 </>
               ) : (
                 <>
                   <Sparkles size={18} />
-                  AI 生成笔记
+                  {t('AI 生成笔记')}
                 </>
               )}
             </button>
@@ -359,7 +278,7 @@ function EnhancedNotesPanel({ learningMode }: { learningMode?: LearningMode }) {
           <div className="px-4 py-2 bg-emerald-50 border-b border-emerald-100">
             <div className="flex items-center gap-2 text-xs text-emerald-700 mb-2">
               <Brain size={14} className="animate-pulse" />
-              <span>AI 正在分析当前学习内容并生成笔记...</span>
+              <span>{t('AI 正在分析当前学习内容并生成笔记...')}</span>
             </div>
             <div className="h-1.5 bg-emerald-100 rounded-full overflow-hidden">
               <div
@@ -368,9 +287,9 @@ function EnhancedNotesPanel({ learningMode }: { learningMode?: LearningMode }) {
               />
             </div>
             <div className="flex justify-between text-xs text-emerald-600 mt-1">
-              <span>📖 提取知识点</span>
-              <span>🔍 整理结构</span>
-              <span>✨ 生成笔记</span>
+              <span>📖 {t('提取知识点')}</span>
+              <span>🔍 {t('整理结构')}</span>
+              <span>✨ {t('生成笔记')}</span>
             </div>
           </div>
         )}
@@ -390,7 +309,7 @@ function EnhancedNotesPanel({ learningMode }: { learningMode?: LearningMode }) {
                     {note.title}
                   </div>
                   <div className="text-xs text-gray-500 truncate">
-                    {note.content.slice(0, 50) || '空笔记'}
+                    {note.content.slice(0, 50) || t('空笔记')}
                   </div>
                   <div className="text-xs text-gray-400 mt-1">
                     {new Date(note.updatedAt).toLocaleString('zh-CN')}
@@ -414,7 +333,7 @@ function EnhancedNotesPanel({ learningMode }: { learningMode?: LearningMode }) {
           <button
             onClick={() => setShowNoteEditor(false)}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            title="返回列表"
+            title={t('返回列表')}
           >
             <X size={16} className="text-gray-600" />
           </button>
@@ -426,7 +345,7 @@ function EnhancedNotesPanel({ learningMode }: { learningMode?: LearningMode }) {
             }`}
           >
             {isPreviewMode ? <Eye size={14} className="inline mr-1" /> : <Edit size={14} className="inline mr-1" />}
-            {isPreviewMode ? '预览' : '编辑'}
+            {isPreviewMode ? t('预览') : t('编辑')}
           </button>
         </div>
         <div className="flex items-center gap-1">
@@ -439,7 +358,7 @@ function EnhancedNotesPanel({ learningMode }: { learningMode?: LearningMode }) {
           <button
             onClick={toggleRecording}
             className={`p-2 hover:bg-gray-100 rounded-lg transition-colors ${isRecording ? 'animate-pulse' : ''}`}
-            title={isRecording ? '停止录音' : '开始录音'}
+            title={isRecording ? t('停止录音') : t('开始录音')}
           >
             <Mic size={16} className={isRecording ? 'text-red-600' : 'text-gray-600'} />
           </button>
@@ -450,7 +369,7 @@ function EnhancedNotesPanel({ learningMode }: { learningMode?: LearningMode }) {
           <button
             onClick={() => deleteNote(activeNoteId)}
             className="p-2 hover:bg-red-50 rounded-lg transition-colors"
-            title="删除笔记"
+            title={t('删除笔记')}
           >
             <Trash2 size={16} className="text-gray-600 hover:text-red-600" />
           </button>
@@ -464,7 +383,7 @@ function EnhancedNotesPanel({ learningMode }: { learningMode?: LearningMode }) {
           value={activeNote.title}
           onChange={(e) => updateNote({ title: e.target.value })}
           className="w-full text-lg font-bold text-gray-800 border-none outline-none mb-3 bg-transparent"
-          placeholder="笔记标题"
+          placeholder={t('笔记标题')}
         />
         {isPreviewMode ? (
           <div className="prose prose-sm max-w-none text-gray-700 leading-relaxed">
@@ -475,14 +394,14 @@ function EnhancedNotesPanel({ learningMode }: { learningMode?: LearningMode }) {
             value={activeNote.content}
             onChange={(e) => updateNote({ content: e.target.value })}
             className="w-full h-full min-h-[300px] bg-transparent border-none outline-none resize-none text-sm text-gray-700 leading-relaxed font-mono"
-            placeholder="# 开始记录你的学习笔记...\n\n支持Markdown格式"
+            placeholder={`# ${t('开始记录你的学习笔记...')}\n\n${t('支持Markdown格式')}`}
           />
         )}
 
         {/* Image grid */}
         {activeNote.images.length > 0 && (
           <div className="mt-4 pt-4 border-t border-gray-200">
-            <div className="text-xs font-bold text-gray-600 mb-2">图片 ({activeNote.images.length})</div>
+            <div className="text-xs font-bold text-gray-600 mb-2">{t('图片')} ({activeNote.images.length})</div>
             <div className="grid grid-cols-3 gap-2">
               {activeNote.images.map((img, idx) => (
                 <div key={idx} className="relative group">
@@ -505,7 +424,7 @@ function EnhancedNotesPanel({ learningMode }: { learningMode?: LearningMode }) {
         {/* Voice recordings list */}
         {activeNote.voiceRecordings.length > 0 && (
           <div className="mt-4 pt-4 border-t border-gray-200">
-            <div className="text-xs font-bold text-gray-600 mb-2">语音笔记 ({activeNote.voiceRecordings.length})</div>
+            <div className="text-xs font-bold text-gray-600 mb-2">{t('语音笔记')} ({activeNote.voiceRecordings.length})</div>
             <div className="space-y-2">
               {activeNote.voiceRecordings.map((recording) => (
                 <div key={recording.id} className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg border border-gray-200">
@@ -513,8 +432,8 @@ function EnhancedNotesPanel({ learningMode }: { learningMode?: LearningMode }) {
                     <Play size={12} />
                   </button>
                   <div className="flex-1">
-                    <div className="text-xs text-gray-700">语音笔记 {new Date(recording.timestamp).toLocaleString('zh-CN')}</div>
-                    <div className="text-xs text-gray-500">时长: {formatRecTime(recording.duration)}</div>
+                    <div className="text-xs text-gray-700">{t('语音笔记')} {new Date(recording.timestamp).toLocaleString('zh-CN')}</div>
+                    <div className="text-xs text-gray-500">{t('时长')}: {formatRecTime(recording.duration)}</div>
                   </div>
                 </div>
               ))}
@@ -531,14 +450,17 @@ function LearningStatusPanel({
   elapsedTime,
   learningMode,
   learningPath,
+  observations,
 }: {
   elapsedTime: number;
   learningMode: LearningMode;
   learningPath: LearningPathNode[];
+  observations: Array<{ id: string; type: 'praise' | 'suggestion' | 'insight'; icon: string; message: string; timestamp: Date }>;
 }) {
+  const { t } = useLanguage();
   const formatMinutes = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
-    return `${mins} 分钟`;
+    return `${mins} ${t('分钟')}`;
   };
 
   const masteredCount = learningPath.filter((n) => n.status === 'mastered').length;
@@ -547,9 +469,9 @@ function LearningStatusPanel({
 
   // 简化版能力画像数据
   const competencies = [
-    { name: '批判性思维', value: 65, color: 'primary' },
-    { name: '信息整合', value: 72, color: 'emerald' },
-    { name: '元认知', value: 58, color: 'amber' },
+    { name: t('批判性思维'), value: 65, color: 'primary' },
+    { name: t('信息整合'), value: 72, color: 'emerald' },
+    { name: t('元认知'), value: 58, color: 'amber' },
   ];
 
   // 当前学习节点
@@ -561,20 +483,20 @@ function LearningStatusPanel({
       <div className="bg-gradient-to-br from-primary-50 to-accent-50 rounded-xl p-4 border border-primary-100">
         <div className="flex items-center gap-2 mb-3">
           <Activity size={14} className="text-primary-600" />
-          <span className="text-xs font-bold text-primary-700">学习概况</span>
+          <span className="text-xs font-bold text-primary-700">{t('学习概况')}</span>
         </div>
         <div className="grid grid-cols-3 gap-3">
           <div className="text-center">
             <div className="text-lg font-bold text-primary-600">{formatMinutes(elapsedTime)}</div>
-            <div className="text-xs text-gray-500">学习时长</div>
+            <div className="text-xs text-gray-500">{t('学习时长')}</div>
           </div>
           <div className="text-center">
             <div className="text-lg font-bold text-emerald-600">{masteredCount}/{totalCount}</div>
-            <div className="text-xs text-gray-500">已掌握概念</div>
+            <div className="text-xs text-gray-500">{t('已掌握概念')}</div>
           </div>
           <div className="text-center">
             <div className="text-lg font-bold text-amber-600">{progressPercent}%</div>
-            <div className="text-xs text-gray-500">完成进度</div>
+            <div className="text-xs text-gray-500">{t('完成进度')}</div>
           </div>
         </div>
       </div>
@@ -585,11 +507,11 @@ function LearningStatusPanel({
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <Map size={14} className="text-emerald-600" />
-              <span className="text-xs font-bold text-emerald-700">学习路径</span>
+              <span className="text-xs font-bold text-emerald-700">{t('学习路径')}</span>
             </div>
             <span className="text-xs text-emerald-600">
               <Activity size={10} className="inline animate-pulse mr-1" />
-              AI 动态规划
+              {t('AI 动态规划')}
             </span>
           </div>
           <div className="space-y-2">
@@ -634,12 +556,12 @@ function LearningStatusPanel({
                     {node.title}
                   </p>
                   {node.estimatedTime && node.status !== 'mastered' && (
-                    <p className="text-xs text-gray-400">预计 {node.estimatedTime} 分钟</p>
+                    <p className="text-xs text-gray-400">{t('预计')} {node.estimatedTime} {t('分钟')}</p>
                   )}
                 </div>
                 {node.status === 'learning' && (
                   <span className="text-xs bg-emerald-200 text-emerald-700 px-1.5 py-0.5 rounded-full font-medium animate-pulse">
-                    当前
+                    {t('当前')}
                   </span>
                 )}
               </div>
@@ -653,11 +575,11 @@ function LearningStatusPanel({
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <Award size={14} className="text-purple-600" />
-            <span className="text-xs font-bold text-purple-700">能力画像</span>
+            <span className="text-xs font-bold text-purple-700">{t('能力画像')}</span>
           </div>
           <span className="text-xs text-purple-600">
             <TrendingUp size={10} className="inline mr-1" />
-            实时更新
+            {t('实时更新')}
           </span>
         </div>
         <div className="space-y-3">
@@ -682,10 +604,10 @@ function LearningStatusPanel({
       <div className="bg-gradient-to-br from-accent-50 to-primary-50 rounded-xl p-4 border border-accent-200">
         <div className="flex items-center gap-2 mb-3">
           <Sparkles size={14} className="text-accent-600" />
-          <span className="text-xs font-bold text-accent-700">AI 观察记录</span>
+          <span className="text-xs font-bold text-accent-700">{t('AI 观察记录')}</span>
         </div>
         <div className="space-y-2">
-          {MOCK_AI_OBSERVATIONS.slice(0, 3).map((obs) => (
+          {observations.slice(0, 3).map((obs) => (
             <div key={obs.id} className="bg-white/80 rounded-lg p-2 border border-accent-100">
               <div className="flex items-start gap-2">
                 <span className="text-sm flex-shrink-0">{obs.icon}</span>
@@ -701,6 +623,89 @@ function LearningStatusPanel({
 
 // 主组件
 export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: SelfStudyWorkbenchProps) {
+  const { t } = useLanguage();
+
+  // Mock data with translations
+  const MOCK_LEARNING_PATH: LearningPathNode[] = [
+    { id: 'node_1', title: t('基础概念与定义'), status: 'mastered', estimatedTime: 15 },
+    { id: 'node_2', title: t('核心原理解析'), status: 'mastered', estimatedTime: 20 },
+    { id: 'node_3', title: t('关键公式与推导'), status: 'learning', estimatedTime: 25 },
+    { id: 'node_4', title: t('典型例题分析'), status: 'pending', estimatedTime: 20 },
+    { id: 'node_5', title: t('综合应用与拓展'), status: 'pending', estimatedTime: 30 },
+  ];
+
+  const MOCK_AI_RESOURCES = [
+    { id: 'ai_res_1', title: t('概念图解：核心原理可视化'), type: 'ai_generated', status: 'ready', icon: '🎨' },
+    { id: 'ai_res_2', title: t('练习题：基础概念巩固'), type: 'ai_generated', status: 'ready', icon: '📝' },
+    { id: 'ai_res_3', title: t('知识卡片：公式速记'), type: 'ai_generated', status: 'generating', icon: '🃏' },
+    { id: 'ai_res_4', title: t('思维导图：知识结构'), type: 'ai_generated', status: 'pending', icon: '🗺️' },
+  ];
+
+  const MOCK_AI_OBSERVATIONS = [
+    {
+      id: 'obs_1',
+      type: 'praise' as const,
+      icon: '🌟',
+      message: t('你对基础概念的理解非常扎实，能够准确地用自己的话解释核心原理。'),
+      timestamp: new Date(Date.now() - 1000 * 60 * 15),
+    },
+    {
+      id: 'obs_2',
+      type: 'suggestion' as const,
+      icon: '💡',
+      message: t('建议在推导公式时多画图辅助理解，这样可以更直观地把握变量之间的关系。'),
+      timestamp: new Date(Date.now() - 1000 * 60 * 5),
+    },
+    {
+      id: 'obs_3',
+      type: 'insight' as const,
+      icon: '🔍',
+      message: t('你倾向于先理解整体框架再深入细节，这是一种很好的学习策略。'),
+      timestamp: new Date(Date.now() - 1000 * 60 * 2),
+    },
+  ];
+
+  const SELF_DIRECTED_QUICK_ACTIONS = [
+    { id: 'search', label: t('搜索概念'), icon: Search, color: 'primary' },
+    { id: 'summarize', label: t('总结要点'), icon: FileText, color: 'emerald' },
+    { id: 'example', label: t('举个例子'), icon: Lightbulb, color: 'amber' },
+    { id: 'generate_quiz', label: t('生成测试'), icon: Zap, color: 'purple' },
+  ];
+
+  const AI_GUIDED_QUICK_ACTIONS = [
+    { id: 'quiz', label: t('考考我'), icon: Zap, color: 'amber' },
+    { id: 'next', label: t('下一知识点'), icon: ChevronRight, color: 'emerald' },
+    { id: 'path', label: t('查看路径'), icon: Map, color: 'primary' },
+    { id: 'hint', label: t('给我提示'), icon: Lightbulb, color: 'purple' },
+  ];
+
+  const STUDIO_TOOLS = [
+    { id: 'audio_overview', label: t('音频概述'), icon: '🎧', description: t('生成音频摘要'), status: 'ready' as const },
+    { id: 'mind_map', label: t('思维导图'), icon: '🗺️', description: t('可视化知识结构'), status: 'ready' as const },
+    { id: 'flashcards', label: t('记忆卡片'), icon: '🃏', description: t('生成复习卡片'), status: 'ready' as const },
+    { id: 'quiz', label: t('知识测验'), icon: '📝', description: t('生成测试题目'), status: 'ready' as const },
+    { id: 'summary', label: t('学习报告'), icon: '📊', description: t('生成学习总结'), status: 'generating' as const },
+    { id: 'timeline', label: t('时间线'), icon: '📅', description: t('梳理知识脉络'), status: 'pending' as const },
+  ];
+
+  const MOCK_GENERATED_TASKS = [
+    {
+      id: 'gen_task_1',
+      type: 'quiz' as const,
+      title: t('AI生成：植物工厂基础测验'),
+      status: 'available' as const,
+      questionCount: 5,
+      generatedAt: new Date(Date.now() - 1000 * 60 * 10),
+    },
+    {
+      id: 'gen_task_2',
+      type: 'reflection' as const,
+      title: t('AI生成：学习反思'),
+      status: 'available' as const,
+      generatedAt: new Date(Date.now() - 1000 * 60 * 5),
+    },
+  ];
+
   // 布局状态
   const [leftWidth, setLeftWidth] = useState(28);
   const [rightWidth, setRightWidth] = useState(25);
@@ -790,8 +795,8 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
       role: 'assistant',
       content:
         config.learningMode === 'self_directed'
-          ? `你好！👋 欢迎来到「${config.title}」的学习空间！\n\n我是你的AI学习助手，在这里我会**待命**，等你有问题时随时帮助你。\n\n📚 **学习建议**：\n1. 左侧是你的学习资料，可以自由浏览\n2. 有任何疑问随时在这里问我\n3. 右侧可以记录你的学习笔记\n\n开始你的探索之旅吧！有什么想了解的？`
-          : `你好！👋 欢迎来到「${config.title}」的学习空间！\n\n我是你的AI学习导师，我会**主动引导**你完成学习目标。\n\n🗺️ **学习路径**：\n我已经为你规划好了学习路径，右侧可以看到完整的知识点地图。\n\n让我们从第一个知识点「${learningPath[0]?.title}」开始吧！\n\n你对这个主题有什么了解吗？或者我们直接开始学习？`,
+          ? `${t('你好！👋 欢迎来到「')}${config.title}${t('」的学习空间！')}\n\n${t('我是你的AI学习助手，在这里我会**待命**，等你有问题时随时帮助你。')}\n\n📚 **${t('学习建议')}**：\n1. ${t('左侧是你的学习资料，可以自由浏览')}\n2. ${t('有任何疑问随时在这里问我')}\n3. ${t('右侧可以记录你的学习笔记')}\n\n${t('开始你的探索之旅吧！有什么想了解的？')}`
+          : `${t('你好！👋 欢迎来到「')}${config.title}${t('」的学习空间！')}\n\n${t('我是你的AI学习导师，我会**主动引导**你完成学习目标。')}\n\n🗺️ **${t('学习路径')}**：\n${t('我已经为你规划好了学习路径，右侧可以看到完整的知识点地图。')}\n\n${t('让我们从第一个知识点「')}${learningPath[0]?.title}${t('」开始吧！')}\n\n${t('你对这个主题有什么了解吗？或者我们直接开始学习？')}`,
       timestamp: new Date(),
     };
     setMessages([welcomeMessage]);
@@ -829,27 +834,27 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
       if (config.learningMode === 'self_directed') {
         // 自由探索模式的回复
         if (userInput.includes('搜索') || userInput.includes('概念')) {
-          aiContent = `🔍 **概念解析**\n\n让我帮你搜索相关概念...\n\n根据知识库检索，这个概念的核心要点是：\n\n1. **定义**：...\n2. **特征**：...\n3. **应用场景**：...\n\n你想深入了解哪个方面？`;
+          aiContent = `🔍 **${t('概念解析')}**\n\n${t('让我帮你搜索相关概念...')}\n\n${t('根据知识库检索，这个概念的核心要点是：')}\n\n1. **${t('定义')}**：...\n2. **${t('特征')}**：...\n3. **${t('应用场景')}**：...\n\n${t('你想深入了解哪个方面？')}`;
         } else if (userInput.includes('总结') || userInput.includes('要点')) {
-          aiContent = `📋 **要点总结**\n\n根据你目前的学习内容，我来帮你梳理关键要点：\n\n**核心概念**\n- 要点一：...\n- 要点二：...\n\n**重要公式**\n- 公式一：...\n\n**常见误区**\n- 注意事项：...\n\n需要我详细解释某个要点吗？`;
+          aiContent = `📋 **${t('要点总结')}**\n\n${t('根据你目前的学习内容，我来帮你梳理关键要点：')}\n\n**${t('核心概念')}**\n- ${t('要点一：...')}\n- ${t('要点二：...')}\n\n**${t('重要公式')}**\n- ${t('公式一：...')}\n\n**${t('常见误区')}**\n- ${t('注意事项：...')}\n\n${t('需要我详细解释某个要点吗？')}`;
         } else if (userInput.includes('例子') || userInput.includes('举例')) {
-          aiContent = `💡 **实例说明**\n\n让我用一个生活中的例子来解释：\n\n想象一下...\n\n这就像是...\n\n通过这个例子，你能理解核心原理了吗？`;
+          aiContent = `💡 **${t('实例说明')}**\n\n${t('让我用一个生活中的例子来解释：')}\n\n${t('想象一下...')}\n\n${t('这就像是...')}\n\n${t('通过这个例子，你能理解核心原理了吗？')}`;
         } else {
-          aiContent = `这是一个很好的问题！让我来帮你解答...\n\n根据你的问题，我认为关键点在于：\n\n1. **首先**，我们需要理解...\n2. **其次**，要注意...\n3. **最后**，可以这样应用...\n\n你还有其他想了解的吗？`;
+          aiContent = `${t('这是一个很好的问题！让我来帮你解答...')}\n\n${t('根据你的问题，我认为关键点在于：')}\n\n1. **${t('首先')}**，${t('我们需要理解...')}\n2. **${t('其次')}**，${t('要注意...')}\n3. **${t('最后')}**，${t('可以这样应用...')}\n\n${t('你还有其他想了解的吗？')}`;
         }
       } else {
         // 目标导向模式的回复
         if (userInput.includes('考考') || userInput.includes('测试')) {
-          aiContent = `🧪 **知识检测**\n\n好的，让我来考考你！\n\n**问题**：关于「${learningPath.find(n => n.id === currentNodeId)?.title}」，请回答：\n\n这个概念的核心定义是什么？它与前面学过的内容有什么联系？\n\n💭 *提示：可以结合之前学习的基础概念来思考*`;
+          aiContent = `🧪 **${t('知识检测')}**\n\n${t('好的，让我来考考你！')}\n\n**${t('问题')}**：${t('关于「')}${learningPath.find(n => n.id === currentNodeId)?.title}${t('」，请回答：')}\n\n${t('这个概念的核心定义是什么？它与前面学过的内容有什么联系？')}\n\n💭 *${t('提示：可以结合之前学习的基础概念来思考')}*`;
         } else if (userInput.includes('下一') || userInput.includes('继续')) {
-          aiContent = `⏭️ **进入下一知识点**\n\n很好！你已经掌握了当前内容。\n\n📍 正在为你准备下一个知识点：「${learningPath.find(n => n.status === 'pending')?.title || '综合应用'}」\n\n🔄 *正在从知识库加载相关资源...*\n\n准备好了吗？让我们开始吧！`;
+          aiContent = `⏭️ **${t('进入下一知识点')}**\n\n${t('很好！你已经掌握了当前内容。')}\n\n📍 ${t('正在为你准备下一个知识点：「')}${learningPath.find(n => n.status === 'pending')?.title || t('综合应用')}${t('」')}\n\n🔄 *${t('正在从知识库加载相关资源...')}*\n\n${t('准备好了吗？让我们开始吧！')}`;
         } else if (userInput.includes('路径') || userInput.includes('进度')) {
           const mastered = learningPath.filter(n => n.status === 'mastered').length;
-          aiContent = `🗺️ **学习路径概览**\n\n**当前进度**：${mastered}/${learningPath.length} 个知识点已掌握\n\n**学习路径**：\n${learningPath.map((n, i) => `${n.status === 'mastered' ? '✅' : n.id === currentNodeId ? '📍' : '⬜'} ${i + 1}. ${n.title}`).join('\n')}\n\n继续加油！你已经完成了 ${Math.round((mastered / learningPath.length) * 100)}%`;
+          aiContent = `🗺️ **${t('学习路径概览')}**\n\n**${t('当前进度')}**：${mastered}/${learningPath.length} ${t('个知识点已掌握')}\n\n**${t('学习路径')}**：\n${learningPath.map((n, i) => `${n.status === 'mastered' ? '✅' : n.id === currentNodeId ? '📍' : '⬜'} ${i + 1}. ${n.title}`).join('\n')}\n\n${t('继续加油！你已经完成了')} ${Math.round((mastered / learningPath.length) * 100)}%`;
         } else if (userInput.includes('提示') || userInput.includes('帮助')) {
-          aiContent = `💡 **学习提示**\n\n关于「${learningPath.find(n => n.id === currentNodeId)?.title}」，这里有一些提示：\n\n1. 🔑 **关键词**：注意理解核心术语的含义\n2. 🔗 **联系**：思考与前面知识点的关联\n3. 📝 **练习**：尝试用自己的话复述\n\n需要更具体的帮助吗？`;
+          aiContent = `💡 **${t('学习提示')}**\n\n${t('关于「')}${learningPath.find(n => n.id === currentNodeId)?.title}${t('」，这里有一些提示：')}\n\n1. 🔑 **${t('关键词')}**：${t('注意理解核心术语的含义')}\n2. 🔗 **${t('联系')}**：${t('思考与前面知识点的关联')}\n3. 📝 **${t('练习')}**：${t('尝试用自己的话复述')}\n\n${t('需要更具体的帮助吗？')}`;
         } else {
-          aiContent = `很好的思考！👍\n\n让我来引导你深入理解这个概念...\n\n**关键点**：\n1. 首先，我们需要明确...\n2. 其次，要理解...\n3. 最后，可以这样应用...\n\n🎯 **小测验**：现在，你能用自己的话解释一下吗？这样我可以确认你是否理解了。`;
+          aiContent = `${t('很好的思考！👍')}\n\n${t('让我来引导你深入理解这个概念...')}\n\n**${t('关键点')}**：\n1. ${t('首先，我们需要明确...')}\n2. ${t('其次，要理解...')}\n3. ${t('最后，可以这样应用...')}\n\n🎯 **${t('小测验')}**：${t('现在，你能用自己的话解释一下吗？这样我可以确认你是否理解了。')}`;
         }
       }
 
@@ -886,7 +891,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
             className="flex items-center gap-2 text-gray-500 hover:text-gray-700 transition-colors"
           >
             <ArrowLeft size={18} />
-            <span className="text-sm">返回</span>
+            <span className="text-sm">{t('返回')}</span>
           </button>
           <div className="w-px h-6 bg-gray-200" />
           <div className="flex items-center gap-2">
@@ -903,14 +908,14 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
           <button
             onClick={toggleTimer}
             className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-            title={isTimerRunning ? '暂停计时' : '继续计时'}
+            title={isTimerRunning ? t('暂停计时') : t('继续计时')}
           >
             {isTimerRunning ? <Pause size={16} className="text-gray-700" /> : <Play size={16} className="text-gray-700" />}
           </button>
           <button
             onClick={resetTimer}
             className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-            title="重置计时器"
+            title={t('重置计时器')}
           >
             <RotateCcw size={16} className="text-gray-700" />
           </button>
@@ -922,7 +927,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
           </button>
           <button className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 transition-colors">
             <Save size={16} />
-            保存进度
+            {t('保存进度')}
           </button>
         </div>
       </header>
@@ -939,12 +944,12 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
                 <div className="p-3 border-b border-gray-100 bg-gradient-to-r from-purple-50 to-pink-50">
                   <h2 className="text-sm font-bold text-gray-700 flex items-center gap-2">
                     <Sparkles size={16} className="text-purple-500" />
-                    AI 智能资源
+                    {t('AI 智能资源')}
                   </h2>
                   <p className="text-xs text-gray-500 mt-1">
                     <span className="inline-flex items-center gap-1">
                       <Activity size={10} className="animate-pulse text-purple-500" />
-                      根据学习进度动态生成
+                      {t('根据学习进度动态生成')}
                     </span>
                   </p>
                 </div>
@@ -979,12 +984,12 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
                           {resource.status === 'generating' ? (
                             <span className="text-purple-600 flex items-center gap-1">
                               <Activity size={10} className="animate-spin" />
-                              正在生成...
+                              {t('正在生成...')}
                             </span>
                           ) : resource.status === 'ready' ? (
-                            <span className="text-emerald-600">✓ 已就绪</span>
+                            <span className="text-emerald-600">✓ {t('已就绪')}</span>
                           ) : (
-                            '待生成'
+                            t('待生成')
                           )}
                         </p>
                       </div>
@@ -1009,7 +1014,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
                     <div>
                       <h3 className="text-sm font-bold text-gray-700 flex items-center gap-2">
                         <ListChecks size={16} className="text-amber-500" />
-                        学习任务
+                        {t('学习任务')}
                         {generatedTasks.length > 0 && (
                           <span className="text-xs bg-amber-200 text-amber-700 px-1.5 py-0.5 rounded-full">
                             {generatedTasks.length}
@@ -1019,7 +1024,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
                       <p className="text-xs text-gray-500 mt-1">
                         <span className="inline-flex items-center gap-1">
                           <Activity size={10} className="animate-pulse text-amber-500" />
-                          AI 动态生成的学习任务
+                          {t('AI 动态生成的学习任务')}
                         </span>
                       </p>
                     </div>
@@ -1036,12 +1041,12 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
                           {isGeneratingTask ? (
                             <>
                               <Activity size={12} className="animate-spin" />
-                              生成中...
+                              {t('生成中...')}
                             </>
                           ) : (
                             <>
                               <Zap size={12} />
-                              生成任务
+                              {t('生成任务')}
                             </>
                           )}
                         </button>
@@ -1061,7 +1066,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
                     {generatedTasks.length === 0 ? (
                       <div className="text-center py-6 text-gray-400">
                         <Zap size={24} className="mx-auto mb-2 opacity-50" />
-                        <p className="text-xs mb-3">点击"生成任务"创建学习任务</p>
+                        <p className="text-xs mb-3">{t('点击"生成任务"创建学习任务')}</p>
                         <button
                           onClick={handleGenerateTest}
                           disabled={isGeneratingTask}
@@ -1070,12 +1075,12 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
                           {isGeneratingTask ? (
                             <>
                               <Activity size={14} className="animate-spin" />
-                              生成中...
+                              {t('生成中...')}
                             </>
                           ) : (
                             <>
                               <Zap size={14} />
-                              生成任务
+                              {t('生成任务')}
                             </>
                           )}
                         </button>
@@ -1099,7 +1104,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
                             <p className="text-sm font-medium text-gray-700 truncate">{task.title}</p>
                             <div className="flex items-center gap-2 text-xs text-gray-400 mt-0.5">
                               {task.type === 'quiz' && task.questionCount && (
-                                <span>{task.questionCount} 道题</span>
+                                <span>{task.questionCount} {t('道题')}</span>
                               )}
                               <span>•</span>
                               <span>{new Date(task.generatedAt).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}</span>
@@ -1120,12 +1125,12 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
                         {isGeneratingTask ? (
                           <>
                             <Activity size={14} className="animate-spin" />
-                            生成中...
+                            {t('生成中...')}
                           </>
                         ) : (
                           <>
                             <Sparkles size={14} />
-                            AI 生成更多任务
+                            {t('AI 生成更多任务')}
                           </>
                         )}
                       </button>
@@ -1144,23 +1149,23 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
                     <FolderOpen size={16} className="text-primary-500" />
                     Sources
                   </h2>
-                  <p className="text-xs text-gray-500 mt-1">自由浏览，随时提问</p>
+                  <p className="text-xs text-gray-500 mt-1">{t('自由浏览，随时提问')}</p>
                 </div>
 
                 {/* 添加资源入口 */}
                 <div className="p-3 border-b border-gray-100 space-y-2">
                   <button className="w-full px-3 py-2.5 border-2 border-dashed border-gray-300 rounded-xl text-sm text-gray-500 hover:border-primary-400 hover:text-primary-600 hover:bg-primary-50 transition-all flex items-center justify-center gap-2">
                     <Plus size={16} />
-                    添加资料来源
+                    {t('添加资料来源')}
                   </button>
                   <div className="flex gap-2">
                     <button className="flex-1 px-2 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-600 hover:bg-gray-100 transition-colors flex items-center justify-center gap-1">
                       <Upload size={12} />
-                      上传文件
+                      {t('上传文件')}
                     </button>
                     <button className="flex-1 px-2 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-600 hover:bg-gray-100 transition-colors flex items-center justify-center gap-1">
                       <Link size={12} />
-                      粘贴链接
+                      {t('粘贴链接')}
                     </button>
                   </div>
                 </div>
@@ -1169,8 +1174,8 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
                 <div className="flex-1 overflow-y-auto p-3 space-y-2">
                   {/* 全选控制 */}
                   <div className="flex items-center justify-between px-1 mb-1">
-                    <span className="text-xs text-gray-500">{mockResources.length} 个来源</span>
-                    <button className="text-xs text-primary-600 hover:text-primary-700 font-medium">全选</button>
+                    <span className="text-xs text-gray-500">{mockResources.length} {t('个来源')}</span>
+                    <button className="text-xs text-primary-600 hover:text-primary-700 font-medium">{t('全选')}</button>
                   </div>
 
                   {mockResources.map((resource) => (
@@ -1218,14 +1223,14 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
                     <div>
                       <h3 className="text-sm font-bold text-gray-700 flex items-center gap-2">
                         <ListChecks size={16} className="text-amber-500" />
-                        学习任务
+                        {t('学习任务')}
                         {generatedTasks.length > 0 && (
                           <span className="text-xs bg-amber-200 text-amber-700 px-1.5 py-0.5 rounded-full">
                             {generatedTasks.length}
                           </span>
                         )}
                       </h3>
-                      <p className="text-xs text-gray-500 mt-1">AI 生成的测试和练习</p>
+                      <p className="text-xs text-gray-500 mt-1">{t('AI 生成的测试和练习')}</p>
                     </div>
                     <div className="flex items-center gap-2">
                       {collapsedPanels.tasks && generatedTasks.length === 0 && (
@@ -1240,12 +1245,12 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
                           {isGeneratingTask ? (
                             <>
                               <Activity size={12} className="animate-spin" />
-                              生成中...
+                              {t('生成中...')}
                             </>
                           ) : (
                             <>
                               <Zap size={12} />
-                              生成测试
+                              {t('生成测试')}
                             </>
                           )}
                         </button>
@@ -1265,7 +1270,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
                     {generatedTasks.length === 0 ? (
                       <div className="text-center py-6 text-gray-400">
                         <Zap size={24} className="mx-auto mb-2 opacity-50" />
-                        <p className="text-xs mb-3">点击"生成测试"创建学习任务</p>
+                        <p className="text-xs mb-3">{t('点击"生成测试"创建学习任务')}</p>
                         <button
                           onClick={handleGenerateTest}
                           disabled={isGeneratingTask}
@@ -1274,12 +1279,12 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
                           {isGeneratingTask ? (
                             <>
                               <Activity size={14} className="animate-spin" />
-                              生成中...
+                              {t('生成中...')}
                             </>
                           ) : (
                             <>
                               <Zap size={14} />
-                              生成测试
+                              {t('生成测试')}
                             </>
                           )}
                         </button>
@@ -1303,7 +1308,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
                             <p className="text-sm font-medium text-gray-700 truncate">{task.title}</p>
                             <div className="flex items-center gap-2 text-xs text-gray-400 mt-0.5">
                               {task.type === 'quiz' && task.questionCount && (
-                                <span>{task.questionCount} 道题</span>
+                                <span>{task.questionCount} {t('道题')}</span>
                               )}
                               <span>•</span>
                               <span>{new Date(task.generatedAt).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}</span>
@@ -1324,12 +1329,12 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
                         {isGeneratingTask ? (
                           <>
                             <Activity size={14} className="animate-spin" />
-                            生成中...
+                            {t('生成中...')}
                           </>
                         ) : (
                           <>
                             <Sparkles size={14} />
-                            AI 生成更多任务
+                            {t('AI 生成更多任务')}
                           </>
                         )}
                       </button>
@@ -1356,7 +1361,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
             <div className="flex items-center justify-between mb-3">
               <h2 className="font-bold text-gray-700 flex items-center gap-2">
                 <MessageSquare size={18} className="text-accent-600" />
-                AI 学习对话
+                {t('AI 学习对话')}
               </h2>
             </div>
 
@@ -1371,7 +1376,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
                 }`}
               >
                 <MessageCircle size={14} className="inline mr-1" />
-                自由探索
+                {t('自由探索')}
               </button>
               <button
                 onClick={() => handleModeChange('ai_guided')}
@@ -1382,7 +1387,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
                 }`}
               >
                 <GitBranch size={14} className="inline mr-1" />
-                AI 自适应学习
+                {t('AI 自适应学习')}
               </button>
             </div>
           </div>
@@ -1423,7 +1428,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
                 <div className="bg-white border border-gray-200 rounded-2xl rounded-tl-none p-4">
                   <div className="flex items-center gap-2 text-gray-500">
                     <Activity size={14} className="animate-spin" />
-                    <span className="text-sm">思考中...</span>
+                    <span className="text-sm">{t('思考中...')}</span>
                   </div>
                 </div>
               </div>
@@ -1437,33 +1442,33 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
                     <Lightbulb size={18} className="text-amber-600" />
                   </div>
                   <div className="flex-1">
-                    <h4 className="text-sm font-semibold text-amber-900 mb-2">💭 阶段性反思时间</h4>
+                    <h4 className="text-sm font-semibold text-amber-900 mb-2">💭 {t('阶段性反思时间')}</h4>
                     <p className="text-xs text-amber-700 mb-3">
-                      你已经学习了一段时间，让我们暂停一下，回顾总结学到的内容。
+                      {t('你已经学习了一段时间，让我们暂停一下，回顾总结学到的内容。')}
                     </p>
                     <div className="space-y-2">
                       <div className="flex items-start gap-2">
                         <div className="w-5 h-5 rounded-full bg-amber-200 flex items-center justify-center flex-shrink-0 mt-0.5">
                           <span className="text-xs font-bold text-amber-700">1</span>
                         </div>
-                        <p className="text-xs text-amber-800">今天学习的最重要的三个知识点是什么？</p>
+                        <p className="text-xs text-amber-800">{t('今天学习的最重要的三个知识点是什么？')}</p>
                       </div>
                       <div className="flex items-start gap-2">
                         <div className="w-5 h-5 rounded-full bg-amber-200 flex items-center justify-center flex-shrink-0 mt-0.5">
                           <span className="text-xs font-bold text-amber-700">2</span>
                         </div>
-                        <p className="text-xs text-amber-800">你遇到了哪些困难？是如何解决的？</p>
+                        <p className="text-xs text-amber-800">{t('你遇到了哪些困难？是如何解决的？')}</p>
                       </div>
                       <div className="flex items-start gap-2">
                         <div className="w-5 h-5 rounded-full bg-amber-200 flex items-center justify-center flex-shrink-0 mt-0.5">
                           <span className="text-xs font-bold text-amber-700">3</span>
                         </div>
-                        <p className="text-xs text-amber-800">这些知识可以在生活中的哪些地方应用？</p>
+                        <p className="text-xs text-amber-800">{t('这些知识可以在生活中的哪些地方应用？')}</p>
                       </div>
                     </div>
                     <button className="mt-3 w-full px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white text-xs font-medium rounded-lg transition-colors flex items-center justify-center gap-1.5">
                       <MessageCircle size={14} />
-                      开始反思
+                      {t('开始反思')}
                     </button>
                   </div>
                 </div>
@@ -1503,8 +1508,8 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
                 onKeyPress={(e) => e.key === 'Enter' && !isLoading && handleSendMessage()}
                 placeholder={
                   config.learningMode === 'self_directed'
-                    ? '有什么问题？随时问我...'
-                    : '回答问题或提出疑问...'
+                    ? t('有什么问题？随时问我...')
+                    : t('回答问题或提出疑问...')
                 }
                 disabled={isLoading}
                 className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-4 pr-12 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-50"
@@ -1541,7 +1546,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
               }`}
             >
               <Pencil size={12} className="inline mr-1" />
-              工作区
+              {t('工作区')}
             </button>
             <button
               onClick={() => setRightTab('status')}
@@ -1552,7 +1557,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
               }`}
             >
               <Activity size={12} className="inline mr-1" />
-              学习状态
+              {t('学习状态')}
             </button>
           </div>
 
@@ -1573,7 +1578,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
                         <Sparkles size={14} className="text-purple-600" />
                         Studio
                       </h3>
-                      <span className="text-xs text-purple-500">AI 学习工具</span>
+                      <span className="text-xs text-purple-500">{t('AI 学习工具')}</span>
                     </div>
                   </div>
                   <div className="p-3 overflow-y-auto" style={{ maxHeight: 'calc(100% - 48px)' }}>
@@ -1597,7 +1602,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
                               {tool.status === 'generating' ? (
                                 <p className="text-xs text-purple-600 flex items-center gap-1 mt-0.5">
                                   <Activity size={10} className="animate-spin" />
-                                  生成中...
+                                  {t('生成中...')}
                                 </p>
                               ) : (
                                 <p className="text-xs text-gray-400 mt-0.5 truncate">{tool.description}</p>
@@ -1611,7 +1616,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
                       ))}
                     </div>
                     <p className="text-xs text-center text-gray-400 mt-3">
-                      添加资料后，点击生成学习工具
+                      {t('添加资料后，点击生成学习工具')}
                     </p>
                   </div>
                 </div>
@@ -1622,6 +1627,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
               elapsedTime={elapsedTime}
               learningMode={config.learningMode}
               learningPath={learningPath}
+              observations={MOCK_AI_OBSERVATIONS}
             />
           )}
         </div>

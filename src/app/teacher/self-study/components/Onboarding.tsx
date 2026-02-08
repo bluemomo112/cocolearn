@@ -25,6 +25,7 @@ import {
   CheckCircle2,
   Circle,
 } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface OnboardingProps {
   onComplete: (config: SpaceConfig) => void;
@@ -33,10 +34,11 @@ interface OnboardingProps {
 
 // Self-directed mode preview component
 function SelfDirectedPreview({ topic }: { topic: string }) {
+  const { t } = useLanguage();
   return (
     <div className="rounded-xl border border-blue-200 bg-gradient-to-br from-blue-50 to-white overflow-hidden">
       <div className="px-4 py-3 bg-blue-100/50 border-b border-blue-200">
-        <span className="text-sm font-medium text-blue-800">💬 自由探索模式预览</span>
+        <span className="text-sm font-medium text-blue-800">💬 {t('自由探索模式预览')}</span>
       </div>
       <div className="p-4 space-y-3">
         {/* AI message */}
@@ -46,14 +48,14 @@ function SelfDirectedPreview({ topic }: { topic: string }) {
           </div>
           <div className="bg-gray-100 rounded-xl rounded-tl-none px-3 py-2 max-w-[85%]">
             <p className="text-sm text-gray-700">
-              你好！关于「{topic}」，你可以随时问我任何问题。有什么想了解的吗？
+              {t('你好！关于')}「{topic}」{t('，你可以随时问我任何问题。有什么想了解的吗？')}
             </p>
           </div>
         </div>
         {/* User message */}
         <div className="flex justify-end">
           <div className="bg-primary-600 text-white rounded-xl rounded-tr-none px-3 py-2 max-w-[85%]">
-            <p className="text-sm">什么是量子纠缠？</p>
+            <p className="text-sm">{t('什么是量子纠缠？')}</p>
           </div>
         </div>
         {/* AI response */}
@@ -63,19 +65,19 @@ function SelfDirectedPreview({ topic }: { topic: string }) {
           </div>
           <div className="bg-gray-100 rounded-xl rounded-tl-none px-3 py-2 max-w-[85%]">
             <p className="text-sm text-gray-700">
-              量子纠缠是指两个粒子之间存在一种神奇的关联...
+              {t('量子纠缠是指两个粒子之间存在一种神奇的关联...')}
               <br />
-              <span className="text-gray-500">你还想了解哪些方面？</span>
+              <span className="text-gray-500">{t('你还想了解哪些方面？')}</span>
             </p>
           </div>
         </div>
         {/* Quick actions */}
         <div className="pt-2 border-t border-gray-100">
-          <p className="text-xs text-gray-500 mb-2">快捷操作:</p>
+          <p className="text-xs text-gray-500 mb-2">{t('快捷操作:')}</p>
           <div className="flex flex-wrap gap-2">
-            <span className="px-2 py-1 bg-white border border-gray-200 rounded-lg text-xs text-gray-600 hover:bg-gray-50 cursor-pointer">🔍 搜索概念</span>
-            <span className="px-2 py-1 bg-white border border-gray-200 rounded-lg text-xs text-gray-600 hover:bg-gray-50 cursor-pointer">📋 总结要点</span>
-            <span className="px-2 py-1 bg-white border border-gray-200 rounded-lg text-xs text-gray-600 hover:bg-gray-50 cursor-pointer">💡 举个例子</span>
+            <span className="px-2 py-1 bg-white border border-gray-200 rounded-lg text-xs text-gray-600 hover:bg-gray-50 cursor-pointer">🔍 {t('搜索概念')}</span>
+            <span className="px-2 py-1 bg-white border border-gray-200 rounded-lg text-xs text-gray-600 hover:bg-gray-50 cursor-pointer">📋 {t('总结要点')}</span>
+            <span className="px-2 py-1 bg-white border border-gray-200 rounded-lg text-xs text-gray-600 hover:bg-gray-50 cursor-pointer">💡 {t('举个例子')}</span>
           </div>
         </div>
       </div>
@@ -85,16 +87,17 @@ function SelfDirectedPreview({ topic }: { topic: string }) {
 
 // AI-guided mode preview component
 function AiGuidedPreview({ topic }: { topic: string }) {
+  const { t } = useLanguage();
   return (
     <div className="rounded-xl border border-purple-200 bg-gradient-to-br from-purple-50 to-white overflow-hidden">
       <div className="px-4 py-3 bg-purple-100/50 border-b border-purple-200">
-        <span className="text-sm font-medium text-purple-800">🗺️ AI 自适应学习模式预览</span>
+        <span className="text-sm font-medium text-purple-800">🗺️ {t('AI 自适应学习模式预览')}</span>
       </div>
       <div className="p-4 space-y-4">
         {/* Learning path progress */}
         <div>
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-700">📊 学习路径 (2/5 已完成)</span>
+            <span className="text-sm font-medium text-gray-700">📊 {t('学习路径 (2/5 已完成)')}</span>
             <span className="text-xs text-purple-600 font-medium">40%</span>
           </div>
           <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
@@ -105,26 +108,26 @@ function AiGuidedPreview({ topic }: { topic: string }) {
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-sm">
             <CheckCircle2 size={16} className="text-green-500" />
-            <span className="text-gray-500 line-through">基础概念与定义</span>
+            <span className="text-gray-500 line-through">{t('基础概念与定义')}</span>
           </div>
           <div className="flex items-center gap-2 text-sm">
             <CheckCircle2 size={16} className="text-green-500" />
-            <span className="text-gray-500 line-through">核心原理解析</span>
+            <span className="text-gray-500 line-through">{t('核心原理解析')}</span>
           </div>
           <div className="flex items-center gap-2 text-sm">
             <div className="w-4 h-4 rounded-full bg-purple-500 flex items-center justify-center">
               <div className="w-2 h-2 bg-white rounded-full" />
             </div>
-            <span className="text-purple-700 font-medium">关键公式与推导</span>
-            <span className="text-xs text-purple-500 ml-1">← 当前</span>
+            <span className="text-purple-700 font-medium">{t('关键公式与推导')}</span>
+            <span className="text-xs text-purple-500 ml-1">← {t('当前')}</span>
           </div>
           <div className="flex items-center gap-2 text-sm">
             <Circle size={16} className="text-gray-300" />
-            <span className="text-gray-400">典型例题分析</span>
+            <span className="text-gray-400">{t('典型例题分析')}</span>
           </div>
           <div className="flex items-center gap-2 text-sm">
             <Circle size={16} className="text-gray-300" />
-            <span className="text-gray-400">综合应用与拓展</span>
+            <span className="text-gray-400">{t('综合应用与拓展')}</span>
           </div>
         </div>
         {/* AI guidance message */}
@@ -134,21 +137,21 @@ function AiGuidedPreview({ topic }: { topic: string }) {
           </div>
           <div className="bg-purple-50 rounded-xl rounded-tl-none px-3 py-2 flex-1">
             <p className="text-sm text-gray-700">
-              很好！你已经掌握了基础概念。现在让我们来学习「关键公式与推导」。
+              {t('很好！你已经掌握了基础概念。现在让我们来学习')}「{t('关键公式与推导')}」{t('。')}
               <br />
-              先看看这个公式：<span className="font-mono text-purple-700">E=mc²</span>...
+              {t('先看看这个公式：')}<span className="font-mono text-purple-700">E=mc²</span>...
               <br />
-              <span className="text-purple-600">你能解释一下这个公式的含义吗？</span>
+              <span className="text-purple-600">{t('你能解释一下这个公式的含义吗？')}</span>
             </p>
           </div>
         </div>
         {/* Quick actions */}
         <div className="pt-2 border-t border-gray-100">
-          <p className="text-xs text-gray-500 mb-2">快捷操作:</p>
+          <p className="text-xs text-gray-500 mb-2">{t('快捷操作:')}</p>
           <div className="flex flex-wrap gap-2">
-            <span className="px-2 py-1 bg-white border border-gray-200 rounded-lg text-xs text-gray-600 hover:bg-gray-50 cursor-pointer">🧪 考考我</span>
-            <span className="px-2 py-1 bg-white border border-gray-200 rounded-lg text-xs text-gray-600 hover:bg-gray-50 cursor-pointer">⏭️ 下一个知识点</span>
-            <span className="px-2 py-1 bg-white border border-gray-200 rounded-lg text-xs text-gray-600 hover:bg-gray-50 cursor-pointer">🗺️ 查看完整路径</span>
+            <span className="px-2 py-1 bg-white border border-gray-200 rounded-lg text-xs text-gray-600 hover:bg-gray-50 cursor-pointer">🧪 {t('考考我')}</span>
+            <span className="px-2 py-1 bg-white border border-gray-200 rounded-lg text-xs text-gray-600 hover:bg-gray-50 cursor-pointer">⏭️ {t('下一个知识点')}</span>
+            <span className="px-2 py-1 bg-white border border-gray-200 rounded-lg text-xs text-gray-600 hover:bg-gray-50 cursor-pointer">🗺️ {t('查看完整路径')}</span>
           </div>
         </div>
       </div>
@@ -157,6 +160,7 @@ function AiGuidedPreview({ topic }: { topic: string }) {
 }
 
 export default function Onboarding({ onComplete, onCancel }: OnboardingProps) {
+  const { t } = useLanguage();
   const [state, setState] = useState<OnboardingState>({
     step: 'intent',
   });
@@ -239,12 +243,12 @@ export default function Onboarding({ onComplete, onCancel }: OnboardingProps) {
 
     // 创建配置
     const title = state.intent?.type === 'topic'
-      ? state.intent.value || '新学习空间'
+      ? state.intent.value || t('新学习空间')
       : state.intent?.type === 'scenario'
-      ? PRESET_SCENARIOS.find(s => s.id === state.intent?.scenario)?.title || '新学习空间'
+      ? PRESET_SCENARIOS.find(s => s.id === state.intent?.scenario)?.title || t('新学习空间')
       : uploadedFiles.length > 0
-      ? `学习: ${uploadedFiles[0].name.replace(/\.[^/.]+$/, '')}`
-      : '新学习空间';
+      ? `${t('学习')}: ${uploadedFiles[0].name.replace(/\.[^/.]+$/, '')}`
+      : t('新学习空间');
 
     const config = createDefaultSpaceConfig({
       title,
@@ -289,7 +293,7 @@ export default function Onboarding({ onComplete, onCancel }: OnboardingProps) {
             className="absolute -top-12 right-0 flex items-center gap-2 text-gray-500 hover:text-gray-700 transition-colors"
           >
             <X size={20} />
-            <span className="text-sm">返回</span>
+            <span className="text-sm">{t('返回')}</span>
           </button>
         )}
 
@@ -300,13 +304,13 @@ export default function Onboarding({ onComplete, onCancel }: OnboardingProps) {
             <div className="text-center mb-12">
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary-100 text-primary-700 rounded-full text-sm font-medium mb-6">
                 <Sparkles size={16} />
-                AI 增强型自学工具
+                {t('AI 增强型自学工具')}
               </div>
               <h1 className="text-4xl font-bold text-gray-900 mb-4">
-                你今天想学什么？
+                {t('你今天想学什么？')}
               </h1>
               <p className="text-gray-600 text-lg">
-                输入主题、上传资料，或选择一个学习场景开始
+                {t('输入主题、上传资料，或选择一个学习场景开始')}
               </p>
             </div>
 
@@ -318,7 +322,7 @@ export default function Onboarding({ onComplete, onCancel }: OnboardingProps) {
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleTopicSubmit()}
-                  placeholder="例如：量子力学基础、Python数据分析、CPA考试复习..."
+                  placeholder={t('例如：量子力学基础、Python数据分析、CPA考试复习...')}
                   className="flex-1 text-lg px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 />
                 <button
@@ -326,7 +330,7 @@ export default function Onboarding({ onComplete, onCancel }: OnboardingProps) {
                   disabled={!inputValue.trim()}
                   className="px-6 py-3 bg-primary-600 text-white rounded-xl font-medium hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
-                  开始学习
+                  {t('开始学习')}
                   <ArrowRight size={18} />
                 </button>
               </div>
@@ -334,7 +338,7 @@ export default function Onboarding({ onComplete, onCancel }: OnboardingProps) {
               {/* 分隔线 */}
               <div className="flex items-center gap-4 my-6">
                 <div className="flex-1 h-px bg-gray-200" />
-                <span className="text-sm text-gray-400">或者</span>
+                <span className="text-sm text-gray-400">{t('或者')}</span>
                 <div className="flex-1 h-px bg-gray-200" />
               </div>
 
@@ -353,11 +357,11 @@ export default function Onboarding({ onComplete, onCancel }: OnboardingProps) {
                   className="flex-1 flex items-center justify-center gap-3 px-4 py-4 border-2 border-dashed border-gray-200 rounded-xl text-gray-600 hover:border-primary-300 hover:text-primary-600 hover:bg-primary-50 transition-all"
                 >
                   <Upload size={20} />
-                  <span className="font-medium">上传学习资料</span>
+                  <span className="font-medium">{t('上传学习资料')}</span>
                 </button>
                 <button
                   onClick={() => {
-                    const url = prompt('请输入资料链接：');
+                    const url = prompt(t('请输入资料链接：'));
                     if (url) {
                       setState({
                         step: 'clarify',
@@ -371,7 +375,7 @@ export default function Onboarding({ onComplete, onCancel }: OnboardingProps) {
                   className="flex-1 flex items-center justify-center gap-3 px-4 py-4 border-2 border-dashed border-gray-200 rounded-xl text-gray-600 hover:border-primary-300 hover:text-primary-600 hover:bg-primary-50 transition-all"
                 >
                   <Link size={20} />
-                  <span className="font-medium">导入网页链接</span>
+                  <span className="font-medium">{t('导入网页链接')}</span>
                 </button>
               </div>
             </div>
@@ -404,7 +408,7 @@ export default function Onboarding({ onComplete, onCancel }: OnboardingProps) {
               className="flex items-center gap-2 text-gray-500 hover:text-gray-700 transition-colors mb-8"
             >
               <ArrowLeft size={18} />
-              <span>返回</span>
+              <span>{t('返回')}</span>
             </button>
 
             <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
@@ -422,10 +426,10 @@ export default function Onboarding({ onComplete, onCancel }: OnboardingProps) {
                 <div>
                   <p className="text-sm text-gray-500">
                     {state.intent?.type === 'topic'
-                      ? '学习主题'
+                      ? t('学习主题')
                       : state.intent?.type === 'resource'
-                      ? '学习资料'
-                      : '学习场景'}
+                      ? t('学习资料')
+                      : t('学习场景')}
                   </p>
                   <p className="font-semibold text-gray-900">
                     {state.intent?.type === 'topic'
@@ -448,14 +452,14 @@ export default function Onboarding({ onComplete, onCancel }: OnboardingProps) {
                   <div className="bg-gray-50 rounded-2xl rounded-tl-none p-4">
                     <p className="text-gray-700">
                       {state.clarification?.learningMode === 'self_directed'
-                        ? '好的，我会在旁边待命。你可以自由浏览资料，有任何问题随时问我。'
+                        ? t('好的，我会在旁边待命。你可以自由浏览资料，有任何问题随时问我。')
                         : state.clarification?.learningMode === 'ai_guided'
-                        ? '太好了！我会为你规划学习路径。首先让我了解你的基础，然后一步步带你学。'
+                        ? t('太好了！我会为你规划学习路径。首先让我了解你的基础，然后一步步带你学。')
                         : state.intent?.type === 'resource'
-                        ? '我看到你上传了资料。你希望我怎么帮你？'
+                        ? t('我看到你上传了资料。你希望我怎么帮你？')
                         : state.intent?.type === 'topic'
-                        ? `关于「${state.intent.value}」，你目前了解多少？`
-                        : '你希望以什么方式学习？'}
+                        ? `${t('关于')}「${state.intent.value}」${t('，你目前了解多少？')}`
+                        : t('你希望以什么方式学习？')}
                     </p>
                   </div>
                   {/* Feature tags - shown when a non-diagnostic mode is selected */}
@@ -463,15 +467,15 @@ export default function Onboarding({ onComplete, onCancel }: OnboardingProps) {
                     <div className="flex items-center gap-2 mt-2 animate-fade-in">
                       {state.clarification.learningMode === 'self_directed' ? (
                         <>
-                          <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">📖 自由浏览</span>
-                          <span className="px-3 py-1 bg-green-50 text-green-700 rounded-full text-xs font-medium">💬 随时提问</span>
-                          <span className="px-3 py-1 bg-amber-50 text-amber-700 rounded-full text-xs font-medium">📝 自主笔记</span>
+                          <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">📖 {t('自由浏览')}</span>
+                          <span className="px-3 py-1 bg-green-50 text-green-700 rounded-full text-xs font-medium">💬 {t('随时提问')}</span>
+                          <span className="px-3 py-1 bg-amber-50 text-amber-700 rounded-full text-xs font-medium">📝 {t('自主笔记')}</span>
                         </>
                       ) : (
                         <>
-                          <span className="px-3 py-1 bg-purple-50 text-purple-700 rounded-full text-xs font-medium">🗺️ 学习路径</span>
-                          <span className="px-3 py-1 bg-rose-50 text-rose-700 rounded-full text-xs font-medium">🧪 随堂检测</span>
-                          <span className="px-3 py-1 bg-cyan-50 text-cyan-700 rounded-full text-xs font-medium">📊 进度追踪</span>
+                          <span className="px-3 py-1 bg-purple-50 text-purple-700 rounded-full text-xs font-medium">🗺️ {t('学习路径')}</span>
+                          <span className="px-3 py-1 bg-rose-50 text-rose-700 rounded-full text-xs font-medium">🧪 {t('随堂检测')}</span>
+                          <span className="px-3 py-1 bg-cyan-50 text-cyan-700 rounded-full text-xs font-medium">📊 {t('进度追踪')}</span>
                         </>
                       )}
                     </div>
@@ -481,7 +485,7 @@ export default function Onboarding({ onComplete, onCancel }: OnboardingProps) {
 
               {/* 学习方式选择 */}
               <div className="space-y-4 mb-8">
-                <p className="text-sm font-medium text-gray-700">选择学习方式：</p>
+                <p className="text-sm font-medium text-gray-700">{t('选择学习方式：')}</p>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {(Object.entries(LEARNING_MODE_CONFIG) as [LearningMode, typeof LEARNING_MODE_CONFIG[LearningMode]][]).map(
                     ([mode, config]) => (
@@ -516,12 +520,12 @@ export default function Onboarding({ onComplete, onCancel }: OnboardingProps) {
               {/* 水平选择（仅主题驱动时显示） */}
               {state.intent?.type === 'topic' && (
                 <div className="space-y-4 mb-8">
-                  <p className="text-sm font-medium text-gray-700">你目前的水平：</p>
+                  <p className="text-sm font-medium text-gray-700">{t('你目前的水平：')}</p>
                   <div className="flex gap-4">
                     {[
-                      { value: 'beginner', label: '完全零基础' },
-                      { value: 'intermediate', label: '知道一些基本概念' },
-                      { value: 'advanced', label: '有一定基础，想深入' },
+                      { value: 'beginner', label: t('完全零基础') },
+                      { value: 'intermediate', label: t('知道一些基本概念') },
+                      { value: 'advanced', label: t('有一定基础，想深入') },
                     ].map((level) => (
                       <button
                         key={level.value}
@@ -546,7 +550,7 @@ export default function Onboarding({ onComplete, onCancel }: OnboardingProps) {
                 className="w-full py-4 bg-primary-600 text-white rounded-xl font-medium hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 <Sparkles size={18} />
-                生成学习空间
+                {t('生成学习空间')}
               </button>
             </div>
           </div>
@@ -560,10 +564,10 @@ export default function Onboarding({ onComplete, onCancel }: OnboardingProps) {
                 <Loader2 size={40} className="text-primary-600 animate-spin" />
               </div>
               <h2 className="text-2xl font-bold text-gray-900 mb-3">
-                正在为你准备学习空间...
+                {t('正在为你准备学习空间...')}
               </h2>
               <p className="text-gray-500">
-                AI 正在分析你的需求，生成个性化的学习计划
+                {t('AI 正在分析你的需求，生成个性化的学习计划')}
               </p>
             </div>
           </div>
