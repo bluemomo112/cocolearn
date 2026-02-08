@@ -552,6 +552,9 @@ function LearningStatusPanel({
     { name: '元认知', value: 58, color: 'amber' },
   ];
 
+  // 当前学习节点
+  const currentNode = learningPath.find((n) => n.status === 'learning');
+
   return (
     <div className="flex-1 overflow-y-auto p-3 space-y-4">
       {/* 学习概况 */}
@@ -576,11 +579,86 @@ function LearningStatusPanel({
         </div>
       </div>
 
+      {/* 学习路径 - 仅AI引导模式显示 */}
+      {learningMode === 'ai_guided' && (
+        <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-4 border border-emerald-200">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Map size={14} className="text-emerald-600" />
+              <span className="text-xs font-bold text-emerald-700">学习路径</span>
+            </div>
+            <span className="text-xs text-emerald-600">
+              <Activity size={10} className="inline animate-pulse mr-1" />
+              AI 动态规划
+            </span>
+          </div>
+          <div className="space-y-2">
+            {learningPath.map((node, idx) => (
+              <div
+                key={node.id}
+                className={`flex items-center gap-2 p-2 rounded-lg transition-all ${
+                  node.status === 'learning'
+                    ? 'bg-emerald-100 border border-emerald-300'
+                    : node.status === 'mastered'
+                    ? 'bg-white/60 border border-emerald-100'
+                    : 'bg-white/40 border border-gray-200'
+                }`}
+              >
+                <div
+                  className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${
+                    node.status === 'mastered'
+                      ? 'bg-green-500'
+                      : node.status === 'learning'
+                      ? 'bg-emerald-500'
+                      : 'bg-gray-300'
+                  }`}
+                >
+                  {node.status === 'mastered' ? (
+                    <CheckCircle2 size={12} className="text-white" />
+                  ) : node.status === 'learning' ? (
+                    <Circle size={12} className="text-white" />
+                  ) : (
+                    <span className="text-xs text-white font-medium">{idx + 1}</span>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p
+                    className={`text-xs font-medium truncate ${
+                      node.status === 'mastered'
+                        ? 'text-green-700 line-through'
+                        : node.status === 'learning'
+                        ? 'text-emerald-700'
+                        : 'text-gray-500'
+                    }`}
+                  >
+                    {node.title}
+                  </p>
+                  {node.estimatedTime && node.status !== 'mastered' && (
+                    <p className="text-xs text-gray-400">预计 {node.estimatedTime} 分钟</p>
+                  )}
+                </div>
+                {node.status === 'learning' && (
+                  <span className="text-xs bg-emerald-200 text-emerald-700 px-1.5 py-0.5 rounded-full font-medium animate-pulse">
+                    当前
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* 能力画像 */}
-      <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-4 border border-emerald-200">
-        <div className="flex items-center gap-2 mb-3">
-          <Award size={14} className="text-emerald-600" />
-          <span className="text-xs font-bold text-emerald-700">能力画像</span>
+      <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-4 border border-purple-200">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <Award size={14} className="text-purple-600" />
+            <span className="text-xs font-bold text-purple-700">能力画像</span>
+          </div>
+          <span className="text-xs text-purple-600">
+            <TrendingUp size={10} className="inline mr-1" />
+            实时更新
+          </span>
         </div>
         <div className="space-y-3">
           {competencies.map((comp) => (
@@ -637,8 +715,10 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
   const [isTimerRunning, setIsTimerRunning] = useState(true);
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // 右侧面板标签
-  const [rightTab, setRightTab] = useState<'workspace' | 'status'>('workspace');
+  // 右侧面板标签 - AI引导模式默认显示学习状态
+  const [rightTab, setRightTab] = useState<'workspace' | 'status'>(
+    config.learningMode === 'ai_guided' ? 'status' : 'workspace'
+  );
 
   // 学习路径状态
   const [learningPath, setLearningPath] = useState<LearningPathNode[]>(MOCK_LEARNING_PATH);
@@ -711,11 +791,20 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
       content:
         config.learningMode === 'self_directed'
           ? `你好！👋 欢迎来到「${config.title}」的学习空间！\n\n我是你的AI学习助手，在这里我会**待命**，等你有问题时随时帮助你。\n\n📚 **学习建议**：\n1. 左侧是你的学习资料，可以自由浏览\n2. 有任何疑问随时在这里问我\n3. 右侧可以记录你的学习笔记\n\n开始你的探索之旅吧！有什么想了解的？`
-          : `你好！👋 欢迎来到「${config.title}」的学习空间！\n\n我是你的AI学习导师，我会**主动引导**你完成学习目标。\n\n🗺️ **学习路径**：\n我已经为你规划好了学习路径，左侧可以看到完整的知识点地图。\n\n让我们从第一个知识点「${learningPath[0]?.title}」开始吧！\n\n你对这个主题有什么了解吗？或者我们直接开始学习？`,
+          : `你好！👋 欢迎来到「${config.title}」的学习空间！\n\n我是你的AI学习导师，我会**主动引导**你完成学习目标。\n\n🗺️ **学习路径**：\n我已经为你规划好了学习路径，右侧可以看到完整的知识点地图。\n\n让我们从第一个知识点「${learningPath[0]?.title}」开始吧！\n\n你对这个主题有什么了解吗？或者我们直接开始学习？`,
       timestamp: new Date(),
     };
     setMessages([welcomeMessage]);
   }, []);
+
+  // 学习模式切换时自动切换右侧标签
+  useEffect(() => {
+    if (config.learningMode === 'ai_guided') {
+      setRightTab('status');
+    } else {
+      setRightTab('workspace');
+    }
+  }, [config.learningMode]);
 
   // 发送消息
   const handleSendMessage = async () => {
@@ -843,7 +932,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
         {/* 左侧面板 */}
         <div style={{ width: `${leftWidth}%` }} className="bg-white border-r border-gray-200 flex flex-col flex-shrink-0">
           {config.learningMode === 'ai_guided' ? (
-            // 目标导向模式：上方AI资源 + 下方学习路径（类似学生端布局）
+            // AI引导模式：上方AI资源 + 下方学习任务
             <>
               {/* AI生成资源区域 - 占40% */}
               <div className="flex flex-col min-h-0" style={{ flex: '0 0 40%' }}>
@@ -852,7 +941,12 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
                     <Sparkles size={16} className="text-purple-500" />
                     AI 智能资源
                   </h2>
-                  <p className="text-xs text-gray-500 mt-1">根据学习进度动态生成</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    <span className="inline-flex items-center gap-1">
+                      <Activity size={10} className="animate-pulse text-purple-500" />
+                      根据学习进度动态生成
+                    </span>
+                  </p>
                 </div>
                 <div className="flex-1 overflow-y-auto p-3 space-y-2">
                   {MOCK_AI_RESOURCES.map((resource) => (
@@ -902,70 +996,142 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
                 </div>
               </div>
 
-              {/* 学习路径区域 - 占60% */}
-              <div className="flex-1 flex flex-col min-h-0 border-t-2 border-emerald-200">
-                <div className="p-3 border-b border-gray-100 bg-gradient-to-r from-emerald-50 to-teal-50">
-                  <h2 className="text-sm font-bold text-gray-700 flex items-center gap-2">
-                    <Map size={16} className="text-emerald-500" />
-                    学习路径
-                  </h2>
-                  <p className="text-xs text-gray-500 mt-1">
-                    已完成 {learningPath.filter(n => n.status === 'mastered').length}/{learningPath.length} 个知识点
-                  </p>
-                </div>
-                <div className="flex-1 overflow-y-auto p-3 space-y-2">
-                  {learningPath.map((node, idx) => (
-                    <div
-                      key={node.id}
-                      className={`flex items-center gap-3 p-3 rounded-xl transition-all ${
-                        node.id === currentNodeId
-                          ? 'bg-emerald-50 border-2 border-emerald-300 shadow-md'
-                          : node.status === 'mastered'
-                          ? 'bg-green-50 border border-green-200'
-                          : 'bg-gray-50 border border-gray-200'
-                      }`}
-                    >
-                      <div
-                        className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                          node.status === 'mastered'
-                            ? 'bg-green-500'
-                            : node.id === currentNodeId
-                            ? 'bg-emerald-500'
-                            : 'bg-gray-300'
-                        }`}
-                      >
-                        {node.status === 'mastered' ? (
-                          <CheckCircle2 size={16} className="text-white" />
-                        ) : node.id === currentNodeId ? (
-                          <Circle size={16} className="text-white" />
-                        ) : (
-                          <span className="text-xs text-white font-medium">{idx + 1}</span>
+              {/* 学习任务区域 - 占60%，可折叠 */}
+              <div className={`flex flex-col min-h-0 border-t-2 border-amber-200 transition-all ${
+                collapsedPanels.tasks ? 'h-auto' : 'flex-1'
+              }`}>
+                {/* 可折叠的标题栏 */}
+                <div
+                  className="p-3 border-b border-gray-100 bg-gradient-to-r from-amber-50 to-orange-50 cursor-pointer hover:bg-amber-100/50 transition-colors"
+                  onClick={() => togglePanel('tasks')}
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-sm font-bold text-gray-700 flex items-center gap-2">
+                        <ListChecks size={16} className="text-amber-500" />
+                        学习任务
+                        {generatedTasks.length > 0 && (
+                          <span className="text-xs bg-amber-200 text-amber-700 px-1.5 py-0.5 rounded-full">
+                            {generatedTasks.length}
+                          </span>
                         )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p
-                          className={`text-sm font-medium ${
-                            node.status === 'mastered'
-                              ? 'text-green-700 line-through'
-                              : node.id === currentNodeId
-                              ? 'text-emerald-700'
-                              : 'text-gray-500'
-                          }`}
-                        >
-                          {node.title}
-                        </p>
-                        {node.estimatedTime && (
-                          <p className="text-xs text-gray-400">预计 {node.estimatedTime} 分钟</p>
-                        )}
-                      </div>
-                      {node.id === currentNodeId && (
-                        <span className="text-xs bg-emerald-100 text-emerald-600 px-2 py-0.5 rounded-full font-medium animate-pulse">
-                          当前
+                      </h3>
+                      <p className="text-xs text-gray-500 mt-1">
+                        <span className="inline-flex items-center gap-1">
+                          <Activity size={10} className="animate-pulse text-amber-500" />
+                          AI 动态生成的学习任务
                         </span>
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {collapsedPanels.tasks && generatedTasks.length === 0 && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleGenerateTest();
+                          }}
+                          disabled={isGeneratingTask}
+                          className="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-white text-xs font-medium rounded-lg transition-colors flex items-center gap-1 disabled:opacity-70"
+                        >
+                          {isGeneratingTask ? (
+                            <>
+                              <Activity size={12} className="animate-spin" />
+                              生成中...
+                            </>
+                          ) : (
+                            <>
+                              <Zap size={12} />
+                              生成任务
+                            </>
+                          )}
+                        </button>
+                      )}
+                      {collapsedPanels.tasks ? (
+                        <ChevronDown size={16} className="text-gray-400" />
+                      ) : (
+                        <ChevronUp size={16} className="text-gray-400" />
                       )}
                     </div>
-                  ))}
+                  </div>
                 </div>
+
+                {/* 可折叠的内容区域 */}
+                {!collapsedPanels.tasks && (
+                  <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                    {generatedTasks.length === 0 ? (
+                      <div className="text-center py-6 text-gray-400">
+                        <Zap size={24} className="mx-auto mb-2 opacity-50" />
+                        <p className="text-xs mb-3">点击"生成任务"创建学习任务</p>
+                        <button
+                          onClick={handleGenerateTest}
+                          disabled={isGeneratingTask}
+                          className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2 mx-auto disabled:opacity-70"
+                        >
+                          {isGeneratingTask ? (
+                            <>
+                              <Activity size={14} className="animate-spin" />
+                              生成中...
+                            </>
+                          ) : (
+                            <>
+                              <Zap size={14} />
+                              生成任务
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    ) : (
+                      generatedTasks.map((task) => (
+                        <div
+                          key={task.id}
+                          className="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-xl hover:border-amber-300 hover:shadow-md transition-all cursor-pointer"
+                        >
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                            task.type === 'quiz' ? 'bg-amber-100' : 'bg-purple-100'
+                          }`}>
+                            {task.type === 'quiz' ? (
+                              <Zap size={18} className="text-amber-600" />
+                            ) : (
+                              <Brain size={18} className="text-purple-600" />
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-700 truncate">{task.title}</p>
+                            <div className="flex items-center gap-2 text-xs text-gray-400 mt-0.5">
+                              {task.type === 'quiz' && task.questionCount && (
+                                <span>{task.questionCount} 道题</span>
+                              )}
+                              <span>•</span>
+                              <span>{new Date(task.generatedAt).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}</span>
+                            </div>
+                          </div>
+                          <ChevronRight size={16} className="text-gray-400" />
+                        </div>
+                      ))
+                    )}
+
+                    {/* 生成更多任务按钮 - 仅当已有任务时显示 */}
+                    {generatedTasks.length > 0 && (
+                      <button
+                        onClick={handleGenerateTest}
+                        disabled={isGeneratingTask}
+                        className="w-full px-3 py-2.5 border-2 border-dashed border-amber-300 rounded-xl text-sm text-amber-600 hover:border-amber-400 hover:bg-amber-50 transition-all flex items-center justify-center gap-2 disabled:opacity-70"
+                      >
+                        {isGeneratingTask ? (
+                          <>
+                            <Activity size={14} className="animate-spin" />
+                            生成中...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles size={14} />
+                            AI 生成更多任务
+                          </>
+                        )}
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             </>
           ) : (
@@ -1041,7 +1207,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
 
               {/* 任务区域 - 可折叠 (类似 student-workbench) */}
               <div className={`flex flex-col min-h-0 border-t-2 border-amber-200 transition-all ${
-                collapsedPanels.tasks ? '' : 'flex-1'
+                collapsedPanels.tasks ? 'h-auto' : 'flex-1'
               }`}>
                 {/* 可折叠的标题栏 */}
                 <div
@@ -1049,15 +1215,18 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
                   onClick={() => togglePanel('tasks')}
                 >
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-bold text-gray-700 flex items-center gap-2">
-                      <ListChecks size={16} className="text-amber-500" />
-                      学习任务
-                      {generatedTasks.length > 0 && (
-                        <span className="text-xs bg-amber-200 text-amber-700 px-1.5 py-0.5 rounded-full">
-                          {generatedTasks.length}
-                        </span>
-                      )}
-                    </h3>
+                    <div>
+                      <h3 className="text-sm font-bold text-gray-700 flex items-center gap-2">
+                        <ListChecks size={16} className="text-amber-500" />
+                        学习任务
+                        {generatedTasks.length > 0 && (
+                          <span className="text-xs bg-amber-200 text-amber-700 px-1.5 py-0.5 rounded-full">
+                            {generatedTasks.length}
+                          </span>
+                        )}
+                      </h3>
+                      <p className="text-xs text-gray-500 mt-1">AI 生成的测试和练习</p>
+                    </div>
                     <div className="flex items-center gap-2">
                       {collapsedPanels.tasks && generatedTasks.length === 0 && (
                         <button
@@ -1088,7 +1257,6 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
                       )}
                     </div>
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">AI 生成的测试和练习</p>
                 </div>
 
                 {/* 可折叠的内容区域 */}

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { currentTheme, generateCSSVariables } from "@/config/theme.config";
+import Providers from "@/components/Providers";
 
 export const metadata: Metadata = {
   title: "跨学科AI学习平台",
@@ -21,7 +22,9 @@ export default function RootLayout({
         <style dangerouslySetInnerHTML={{ __html: `:root { ${themeStyles} }` }} />
       </head>
       <body className="antialiased">
-        {children}
+        <Providers>
+          {children}
+        </Providers>
       </body>
     </html>
   );
