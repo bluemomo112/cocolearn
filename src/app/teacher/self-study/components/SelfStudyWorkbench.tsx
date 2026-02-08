@@ -934,8 +934,8 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
           {config.learningMode === 'ai_guided' ? (
             // AI引导模式：上方AI资源 + 下方学习任务
             <>
-              {/* AI生成资源区域 - 占40% */}
-              <div className="flex flex-col min-h-0" style={{ flex: '0 0 40%' }}>
+              {/* AI生成资源区域 - 任务收起时自动扩展 */}
+              <div className="flex flex-col min-h-0" style={{ flex: collapsedPanels.tasks ? '1 1 auto' : '0 0 40%' }}>
                 <div className="p-3 border-b border-gray-100 bg-gradient-to-r from-purple-50 to-pink-50">
                   <h2 className="text-sm font-bold text-gray-700 flex items-center gap-2">
                     <Sparkles size={16} className="text-purple-500" />
@@ -998,7 +998,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
 
               {/* 学习任务区域 - 占60%，可折叠 */}
               <div className={`flex flex-col min-h-0 border-t-2 border-amber-200 transition-all ${
-                collapsedPanels.tasks ? 'h-auto' : 'flex-1'
+                collapsedPanels.tasks ? 'flex-shrink-0' : 'flex-1'
               }`}>
                 {/* 可折叠的标题栏 */}
                 <div
@@ -1137,8 +1137,8 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
           ) : (
             // 自由探索模式：Sources 面板（类似 NotebookLM）+ 任务区（类似 student-workbench）
             <>
-              {/* 资源区域 - 占60% */}
-              <div className="flex flex-col min-h-0" style={{ flex: '0 0 60%' }}>
+              {/* 资源区域 - 任务收起时自动扩展 */}
+              <div className="flex flex-col min-h-0" style={{ flex: collapsedPanels.tasks ? '1 1 auto' : '0 0 60%' }}>
                 <div className="p-3 border-b border-gray-100 bg-gradient-to-r from-primary-50 to-accent-50">
                   <h2 className="text-sm font-bold text-gray-700 flex items-center gap-2">
                     <FolderOpen size={16} className="text-primary-500" />
@@ -1207,7 +1207,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
 
               {/* 任务区域 - 可折叠 (类似 student-workbench) */}
               <div className={`flex flex-col min-h-0 border-t-2 border-amber-200 transition-all ${
-                collapsedPanels.tasks ? 'h-auto' : 'flex-1'
+                collapsedPanels.tasks ? 'flex-shrink-0' : 'flex-1'
               }`}>
                 {/* 可折叠的标题栏 */}
                 <div

@@ -18,6 +18,7 @@ import {
   TrendingUp,
   Calendar,
 } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface SpaceManagerProps {
   spaces: SpaceSummary[];
@@ -34,19 +35,20 @@ export default function SpaceManager({
 }: SpaceManagerProps) {
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const { t } = useLanguage();
 
   // 格式化时间
   const formatTime = (date?: Date) => {
-    if (!date) return '从未访问';
+    if (!date) return t('从未访问');
     const now = new Date();
     const diff = now.getTime() - date.getTime();
     const minutes = Math.floor(diff / 60000);
     const hours = Math.floor(diff / 3600000);
     const days = Math.floor(diff / 86400000);
 
-    if (minutes < 60) return `${minutes} 分钟前`;
-    if (hours < 24) return `${hours} 小时前`;
-    if (days < 7) return `${days} 天前`;
+    if (minutes < 60) return `${minutes} ${t('分钟前')}`;
+    if (hours < 24) return `${hours} ${t('小时前')}`;
+    if (days < 7) return `${days} ${t('天前')}`;
     return date.toLocaleDateString('zh-CN');
   };
 
@@ -83,15 +85,15 @@ export default function SpaceManager({
         {/* 头部 */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">我的学习空间</h1>
-            <p className="text-gray-600">管理你的自主学习项目</p>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">{t('我的学习空间')}</h1>
+            <p className="text-gray-600">{t('管理你的自主学习项目')}</p>
           </div>
           <button
             onClick={onCreateSpace}
             className="flex items-center gap-2 px-5 py-3 bg-primary-600 text-white rounded-xl font-medium hover:bg-primary-700 transition-colors shadow-lg shadow-primary-200"
           >
             <Plus size={20} />
-            新建学习空间
+            {t('新建学习空间')}
           </button>
         </div>
 
@@ -102,7 +104,7 @@ export default function SpaceManager({
               <div className="w-10 h-10 bg-primary-100 rounded-xl flex items-center justify-center">
                 <FolderOpen size={20} className="text-primary-600" />
               </div>
-              <span className="text-sm text-gray-500">学习空间</span>
+              <span className="text-sm text-gray-500">{t('学习空间')}</span>
             </div>
             <p className="text-3xl font-bold text-gray-900">{totalSpaces}</p>
           </div>
@@ -111,7 +113,7 @@ export default function SpaceManager({
               <div className="w-10 h-10 bg-accent-100 rounded-xl flex items-center justify-center">
                 <TrendingUp size={20} className="text-accent-600" />
               </div>
-              <span className="text-sm text-gray-500">平均进度</span>
+              <span className="text-sm text-gray-500">{t('平均进度')}</span>
             </div>
             <p className="text-3xl font-bold text-gray-900">{avgProgress}%</p>
           </div>
@@ -120,7 +122,7 @@ export default function SpaceManager({
               <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center">
                 <Calendar size={20} className="text-amber-600" />
               </div>
-              <span className="text-sm text-gray-500">本周活跃</span>
+              <span className="text-sm text-gray-500">{t('本周活跃')}</span>
             </div>
             <p className="text-3xl font-bold text-gray-900">{recentSpaces}</p>
           </div>
@@ -133,17 +135,17 @@ export default function SpaceManager({
               <Sparkles size={32} className="text-gray-400" />
             </div>
             <h3 className="text-xl font-semibold text-gray-900 mb-2">
-              还没有学习空间
+              {t('还没有学习空间')}
             </h3>
             <p className="text-gray-500 mb-6">
-              创建你的第一个学习空间，开始自主学习之旅
+              {t('创建你的第一个学习空间，开始自主学习之旅')}
             </p>
             <button
               onClick={onCreateSpace}
               className="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-xl font-medium hover:bg-primary-700 transition-colors"
             >
               <Plus size={20} />
-              创建学习空间
+              {t('创建学习空间')}
             </button>
           </div>
         ) : (
@@ -157,7 +159,7 @@ export default function SpaceManager({
                 <Plus size={28} className="text-gray-400 group-hover:text-primary-600 transition-colors" />
               </div>
               <p className="font-medium text-gray-600 group-hover:text-primary-600 transition-colors">
-                新建学习空间
+                {t('新建学习空间')}
               </p>
             </button>
 
@@ -196,7 +198,7 @@ export default function SpaceManager({
                           className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
                         >
                           <BookOpen size={16} />
-                          打开
+                          {t('打开')}
                         </button>
                         <button
                           onClick={(e) => {
@@ -207,7 +209,7 @@ export default function SpaceManager({
                           className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
                         >
                           <Trash2 size={16} />
-                          删除
+                          {t('删除')}
                         </button>
                       </div>
                     )}
@@ -239,7 +241,7 @@ export default function SpaceManager({
                       <span>{formatTime(space.lastAccessedAt)}</span>
                     </div>
                     <span className="px-2 py-1 bg-gray-100 rounded-lg">
-                      {space.progress}% 完成
+                      {space.progress}% {t('完成')}
                     </span>
                   </div>
 
@@ -265,17 +267,17 @@ export default function SpaceManager({
           />
           <div className="relative bg-white rounded-2xl shadow-2xl p-6 max-w-sm mx-4 animate-fade-in-up">
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              确认删除？
+              {t('确认删除？')}
             </h3>
             <p className="text-gray-500 text-sm mb-6">
-              删除后将无法恢复此学习空间的所有内容。
+              {t('删除后将无法恢复此学习空间的所有内容。')}
             </p>
             <div className="flex gap-3">
               <button
                 onClick={() => setDeleteConfirmId(null)}
                 className="flex-1 px-4 py-2 border border-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-colors"
               >
-                取消
+                {t('取消')}
               </button>
               <button
                 onClick={() => {
@@ -284,7 +286,7 @@ export default function SpaceManager({
                 }}
                 className="flex-1 px-4 py-2 bg-red-600 text-white rounded-xl font-medium hover:bg-red-700 transition-colors"
               >
-                删除
+                {t('删除')}
               </button>
             </div>
           </div>
