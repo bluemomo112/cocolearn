@@ -18,8 +18,6 @@ type CompetencyType =
 
 type StudentStatus = 'not_started' | 'in_progress' | 'completed' | 'needs_attention';
 
-type TabType = 'overview' | 'details' | 'students';
-
 interface ClassInfo {
   classId: string;
   className: string;
@@ -319,34 +317,6 @@ function formatDate(date: Date | null): string {
 // ============================================
 // Components
 // ============================================
-
-// Tab 导航组件
-function TabNav({ activeTab, onTabChange }: { activeTab: TabType; onTabChange: (tab: TabType) => void }) {
-  const tabs = [
-    { id: 'overview' as const, label: '班级概览', icon: '📊' },
-    { id: 'details' as const, label: '资源/任务详情', icon: '📋' },
-    { id: 'students' as const, label: '学生列表', icon: '👥' },
-  ]
-
-  return (
-    <div className="flex gap-1 bg-gray-100 p-1 rounded-xl mb-6">
-      {tabs.map(tab => (
-        <button
-          key={tab.id}
-          onClick={() => onTabChange(tab.id)}
-          className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
-            activeTab === tab.id
-              ? 'bg-white text-gray-900 shadow-sm'
-              : 'text-gray-600 hover:text-gray-900'
-          }`}
-        >
-          <span>{tab.icon}</span>
-          {tab.label}
-        </button>
-      ))}
-    </div>
-  )
-}
 
 // 班级多选组件
 function ClassMultiSelect({
@@ -1204,9 +1174,9 @@ interface SpaceResultsPageProps {
 
 export default function SpaceResultsPage({ params }: SpaceResultsPageProps) {
   const { spaceId } = use(params)
-  const [activeTab, setActiveTab] = useState<TabType>('overview')
   const [selectedClasses, setSelectedClasses] = useState<string[]>(mockClasses.map(c => c.classId))
   const [selectedStudent, setSelectedStudent] = useState<StudentDetail | null>(null)
+  const [showResourceTaskDetails, setShowResourceTaskDetails] = useState(false)
 
   // 过滤选中班级的学生
   const filteredStudents = useMemo(() => {
@@ -1292,12 +1262,10 @@ export default function SpaceResultsPage({ params }: SpaceResultsPageProps) {
           </div>
         </div>
 
-        {/* Tab Navigation */}
-        <TabNav activeTab={activeTab} onTabChange={setActiveTab} />
-
-        {/* Tab Content */}
-        {activeTab === 'overview' && (
-          <div className="space-y-6">
+        {/* 左右两栏布局 */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* 左侧概览栏 */}
+          <div className="lg:col-span-1 space-y-6">
             {/* 班级多选 */}
             <ClassMultiSelect
               selectedClasses={selectedClasses}
@@ -1306,13 +1274,13 @@ export default function SpaceResultsPage({ params }: SpaceResultsPageProps) {
             />
 
             {/* 整体统计卡片 */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 gap-3">
               <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
                 <p className="text-xs text-gray-500 mb-1">平均进度</p>
                 <p className="text-2xl font-bold text-gray-900">{overallStats.avgProgress}%</p>
               </div>
               <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
-                <p className="text-xs text-gray-500 mb-1">平均学习时长</p>
+                <p className="text-xs text-gray-500 mb-1">平均时长</p>
                 <p className="text-2xl font-bold text-gray-900">{overallStats.avgDuration}分钟</p>
               </div>
               <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
@@ -1328,8 +1296,8 @@ export default function SpaceResultsPage({ params }: SpaceResultsPageProps) {
             {/* 班级对比卡片 */}
             {selectedClasses.length > 1 && (
               <div>
-                <h3 className="text-lg font-bold text-gray-800 mb-4">班级对比</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <h3 className="text-sm font-bold text-gray-800 mb-3">班级对比</h3>
+                <div className="space-y-3">
                   {selectedClasses.map(classId => {
                     const classInfo = mockClasses.find(c => c.classId === classId)
                     if (!classInfo) return null
@@ -1344,22 +1312,42 @@ export default function SpaceResultsPage({ params }: SpaceResultsPageProps) {
                 </div>
               </div>
             )}
+
+            {/* 资源/任务详情 - 可折叠区域 */}
+            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+              <button
+                onClick={() => setShowResourceTaskDetails(!showResourceTaskDetails)}
+                className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors"
+              >
+                <span className="font-semibold text-gray-800">📋 资源/任务详情</span>
+                <svg
+                  className={`w-5 h-5 text-gray-400 transition-transform ${showResourceTaskDetails ? 'rotate-180' : ''}`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              {showResourceTaskDetails && (
+                <div className="p-4 border-t border-gray-100">
+                  <ResourceTaskDetailsView
+                    students={filteredStudents}
+                    onSelectStudent={setSelectedStudent}
+                  />
+                </div>
+              )}
+            </div>
           </div>
-        )}
 
-        {activeTab === 'details' && (
-          <ResourceTaskDetailsView
-            students={filteredStudents}
-            onSelectStudent={setSelectedStudent}
-          />
-        )}
-
-        {activeTab === 'students' && (
-          <StudentListView
-            students={filteredStudents}
-            onSelectStudent={setSelectedStudent}
-          />
-        )}
+          {/* 右侧学生列表栏 */}
+          <div className="lg:col-span-2">
+            <StudentListView
+              students={filteredStudents}
+              onSelectStudent={setSelectedStudent}
+            />
+          </div>
+        </div>
       </div>
 
       {/* Student Detail Sidebar */}
