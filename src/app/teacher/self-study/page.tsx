@@ -2,9 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { SpaceSummary, SpaceConfig, createDefaultSpaceConfig } from '@/types/self-study';
+import { Resource } from '@/types/shared-context';
 import Onboarding from './components/Onboarding';
 import SpaceManager from './components/SpaceManager';
 import SelfStudyWorkbench from './components/SelfStudyWorkbench';
+import CreationMethodModal from './components/CreationMethodModal';
+import FileUploadModal from './components/FileUploadModal';
+import ResourceLibraryModal from './components/ResourceLibraryModal';
 
 // 模拟存储的学习空间数据
 const mockSpaces: SpaceSummary[] = [
@@ -39,6 +43,9 @@ export default function SelfStudyPage() {
   const [spaces, setSpaces] = useState<SpaceSummary[]>(mockSpaces);
   const [currentSpace, setCurrentSpace] = useState<SpaceConfig | null>(null);
   const [isFirstVisit, setIsFirstVisit] = useState(false);
+  const [showCreationMethodModal, setShowCreationMethodModal] = useState(false);
+  const [showFileUploadModal, setShowFileUploadModal] = useState(false);
+  const [showResourceLibraryModal, setShowResourceLibraryModal] = useState(false);
 
   // 检查是否首次访问
   useEffect(() => {
@@ -51,8 +58,137 @@ export default function SelfStudyPage() {
 
   // 创建新空间
   const handleCreateSpace = () => {
-    setCurrentSpace(null);
-    setViewState('onboarding');
+    setShowCreationMethodModal(true);
+  };
+
+  // 处理创建方式选择
+  const handleCreationMethodSelect = (method: 'ai' | 'upload' | 'library' | 'blank') => {
+    setShowCreationMethodModal(false);
+
+    switch (method) {
+      case 'ai':
+        // 保持现有的AI引导流程
+        setCurrentSpace(null);
+        setViewState('onboarding');
+        break;
+
+      case 'upload':
+        // 创建空白空间并显示上传模态框
+        const uploadSpace = createBlankSpace();
+        setCurrentSpace(uploadSpace);
+        setViewState('workbench');
+        setShowFileUploadModal(true);
+        break;
+
+      case 'library':
+        // 创建空白空间并显示资源库模态框
+        const librarySpace = createBlankSpace();
+        setCurrentSpace(librarySpace);
+        setViewState('workbench');
+        setShowResourceLibraryModal(true);
+        break;
+
+      case 'blank':
+        // 创建空白空间
+        const blankSpace = createBlankSpace();
+        setCurrentSpace(blankSpace);
+        setViewState('workbench');
+        break;
+    }
+  };
+
+  // 创建空白空间
+  const createBlankSpace = (title: string = '未命名空间'): SpaceConfig => {
+    const newSpace = createDefaultSpaceConfig();
+    const newSummary: SpaceSummary = {
+      id: newSpace.id,
+      title,
+      topic: undefined,
+      scenario: undefined,
+      learningMode: 'self_directed',
+      progress: 0,
+      resourceCount: 0,
+      lastAccessedAt: new Date(),
+      createdAt: newSpace.createdAt,
+    };
+    setSpaces(prev => [newSummary, ...prev]);
+    return newSpace;
+  };
+
+  // 处理文件上传
+  const handleFileUpload = (files: File[]) => {
+    if (files.length === 0) {
+      setShowFileUploadModal(false);
+      return;
+    }
+
+    // 从第一个文件名生成空间标题
+    const firstFileName = files[0]?.name || '未命名空间';
+    const title = firstFileName.replace(/\.[^/.]+$/, ''); // 移除文件扩展名
+
+    // 更新空间标题
+    if (currentSpace) {
+      const updatedSpace = { ...currentSpace, title };
+      setCurrentSpace(updatedSpace);
+
+      // 更新spaces列表中的标题
+      setSpaces(prev =>
+        prev.map(s => s.id === currentSpace.id ? { ...s, title, resourceCount: files.length } : s)
+      );
+
+      // 创建mock Resource对象（演示用）
+      const mockResources: Resource[] = files.map((file, index) => {
+        const ext = file.name.split('.').pop()?.toLowerCase() || '';
+        let type: 'document' | 'presentation' | 'video' = 'document';
+        let fileType: 'docx' | 'pptx' | 'mp4' = 'docx';
+
+        if (['ppt', 'pptx'].includes(ext)) {
+          type = 'presentation';
+          fileType = 'pptx';
+        } else if (['mp4', 'avi', 'mov'].includes(ext)) {
+          type = 'video';
+          fileType = 'mp4';
+        }
+
+        return {
+          id: `resource_${Date.now()}_${index}`,
+          title: file.name.replace(/\.[^/.]+$/, ''),
+          type,
+          fileType,
+          path: `/mock/path/${file.name}`,
+          description: `上传的文件：${file.name}`,
+          duration: '10分钟',
+        };
+      });
+
+      // 添加到空间resources
+      setCurrentSpace({
+        ...updatedSpace,
+        resources: [...updatedSpace.resources, ...mockResources],
+      });
+    }
+    setShowFileUploadModal(false);
+  };
+
+  // 处理资源库选择
+  const handleResourceSelect = (resources: Resource[]) => {
+    // 将选中的资源添加到当前空间
+    if (currentSpace && resources.length > 0) {
+      // 从第一个资源标题生成空间标题
+      const title = resources[0]?.title || '未命名空间';
+
+      const updatedSpace = { ...currentSpace, title };
+      setCurrentSpace({
+        ...updatedSpace,
+        resources: [...updatedSpace.resources, ...resources],
+      });
+
+      // 更新spaces列表中的标题和资源数量
+      setSpaces(prev =>
+        prev.map(s => s.id === currentSpace.id ? { ...s, title, resourceCount: resources.length } : s)
+      );
+    }
+    setShowResourceLibraryModal(false);
   };
 
   // 打开已有空间
@@ -139,6 +275,27 @@ export default function SelfStudyPage() {
           onUpdateConfig={(updated) => setCurrentSpace(updated)}
         />
       )}
+
+      {/* 创建方式选择模态框 */}
+      <CreationMethodModal
+        isOpen={showCreationMethodModal}
+        onClose={() => setShowCreationMethodModal(false)}
+        onSelectMethod={handleCreationMethodSelect}
+      />
+
+      {/* 文件上传模态框 */}
+      <FileUploadModal
+        isOpen={showFileUploadModal}
+        onClose={() => setShowFileUploadModal(false)}
+        onUpload={handleFileUpload}
+      />
+
+      {/* 资源库选择模态框 */}
+      <ResourceLibraryModal
+        isOpen={showResourceLibraryModal}
+        onClose={() => setShowResourceLibraryModal(false)}
+        onSelect={handleResourceSelect}
+      />
     </div>
   );
 }
