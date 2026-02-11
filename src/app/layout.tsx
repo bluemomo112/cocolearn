@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { currentTheme, generateCSSVariables } from "@/config/theme.config";
 import Providers from "@/components/Providers";
+import ThemeProvider from "@/components/ThemeProvider";
 
 export const metadata: Metadata = {
   title: "跨学科AI学习平台",
@@ -13,18 +13,14 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // 动态生成主题 CSS 变量
-  const themeStyles = generateCSSVariables(currentTheme);
-
   return (
     <html lang="zh-CN">
-      <head>
-        <style dangerouslySetInnerHTML={{ __html: `:root { ${themeStyles} }` }} />
-      </head>
       <body className="antialiased">
-        <Providers>
-          {children}
-        </Providers>
+        <ThemeProvider>
+          <Providers>
+            {children}
+          </Providers>
+        </ThemeProvider>
       </body>
     </html>
   );

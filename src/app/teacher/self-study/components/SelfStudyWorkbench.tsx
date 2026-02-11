@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import SettingsModal from './SettingsModal';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { TaskEditModal } from '@/app/teacher/note-config/modals';
 
 interface SelfStudyWorkbenchProps {
   config: SpaceConfig;
@@ -680,12 +681,18 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
   ];
 
   const STUDIO_TOOLS = [
-    { id: 'audio_overview', label: t('音频概述'), icon: '🎧', description: t('生成音频摘要'), status: 'ready' as const },
-    { id: 'mind_map', label: t('思维导图'), icon: '🗺️', description: t('可视化知识结构'), status: 'ready' as const },
-    { id: 'flashcards', label: t('记忆卡片'), icon: '🃏', description: t('生成复习卡片'), status: 'ready' as const },
-    { id: 'quiz', label: t('知识测验'), icon: '📝', description: t('生成测试题目'), status: 'ready' as const },
-    { id: 'summary', label: t('学习报告'), icon: '📊', description: t('生成学习总结'), status: 'generating' as const },
-    { id: 'timeline', label: t('时间线'), icon: '📅', description: t('梳理知识脉络'), status: 'pending' as const },
+    // 资源生成类工具
+    { id: 'audio_overview', label: t('音频概述'), icon: '🎧', description: t('生成音频摘要'), status: 'ready' as const, type: 'resource' as const },
+    { id: 'mind_map', label: t('思维导图'), icon: '🗺️', description: t('可视化知识结构'), status: 'ready' as const, type: 'resource' as const },
+    { id: 'flashcards', label: t('记忆卡片'), icon: '🃏', description: t('生成复习卡片'), status: 'ready' as const, type: 'resource' as const },
+    { id: 'timeline', label: t('时间线'), icon: '📅', description: t('梳理知识脉络'), status: 'ready' as const, type: 'resource' as const },
+    { id: 'summary', label: t('学习报告'), icon: '📊', description: t('生成学习总结'), status: 'ready' as const, type: 'resource' as const },
+    { id: 'concept_search', label: t('搜索概念'), icon: '🔍', description: t('智能搜索知识点'), status: 'ready' as const, type: 'resource' as const },
+    { id: 'key_points', label: t('总结要点'), icon: '📋', description: t('提取核心内容'), status: 'ready' as const, type: 'resource' as const },
+    { id: 'examples', label: t('举例说明'), icon: '💡', description: t('生成实例解释'), status: 'ready' as const, type: 'resource' as const },
+    // 任务生成类工具
+    { id: 'quiz', label: t('知识测验'), icon: '📝', description: t('生成测试题目'), status: 'ready' as const, type: 'task' as const },
+    { id: 'practice', label: t('练习题'), icon: '✍️', description: t('生成练习任务'), status: 'ready' as const, type: 'task' as const },
   ];
 
   const MOCK_GENERATED_TASKS = [
@@ -693,15 +700,18 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
       id: 'gen_task_1',
       type: 'quiz' as const,
       title: t('AI生成：植物工厂基础测验'),
-      status: 'available' as const,
+      status: 'optional' as const,
       questionCount: 5,
+      questions: [],
+      passScore: 60,
       generatedAt: new Date(Date.now() - 1000 * 60 * 10),
     },
     {
       id: 'gen_task_2',
-      type: 'reflection' as const,
+      type: 'assignment' as const,
       title: t('AI生成：学习反思'),
-      status: 'available' as const,
+      status: 'optional' as const,
+      teacherHint: '',
       generatedAt: new Date(Date.now() - 1000 * 60 * 5),
     },
   ];
@@ -745,6 +755,29 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
   const [generatedTasks, setGeneratedTasks] = useState<typeof MOCK_GENERATED_TASKS>([]);
   const [isGeneratingTask, setIsGeneratingTask] = useState(false);
 
+  // 任务编辑弹窗
+  const [editingTask, setEditingTask] = useState<typeof MOCK_GENERATED_TASKS[0] | null>(null);
+
+  // AI生成的资源列表
+  const [aiGeneratedResources, setAiGeneratedResources] = useState<Array<{
+    id: string;
+    title: string;
+    type: 'ai_generated';
+    icon: string;
+    status: 'ready' | 'generating';
+    generatedAt: Date;
+    toolId: string;
+  }>>([]);
+
+  // Studio工具配置弹窗
+  const [studioConfigModal, setStudioConfigModal] = useState<{
+    isOpen: boolean;
+    toolId: string | null;
+  }>({ isOpen: false, toolId: null });
+
+  // 正在生成的工具ID
+  const [generatingToolId, setGeneratingToolId] = useState<string | null>(null);
+
   // 生成测试任务
   const handleGenerateTest = () => {
     setIsGeneratingTask(true);
@@ -754,6 +787,63 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
       setCollapsedPanels(prev => ({ ...prev, tasks: false })); // 展开任务区域
       setIsGeneratingTask(false);
     }, 1500);
+  };
+
+  // 处理Studio工具点击
+  const handleStudioToolClick = (tool: typeof STUDIO_TOOLS[0]) => {
+    if (tool.type === 'resource') {
+      // 生成资源
+      setGeneratingToolId(tool.id);
+
+      // 模拟生成过程
+      setTimeout(() => {
+        const newResource = {
+          id: `ai_res_${Date.now()}`,
+          title: `🤖 ${t('AI生成')}：${tool.label}`,
+          type: 'ai_generated' as const,
+          icon: tool.icon,
+          status: 'ready' as const,
+          generatedAt: new Date(),
+          toolId: tool.id,
+        };
+
+        setAiGeneratedResources(prev => [newResource, ...prev]);
+        setGeneratingToolId(null);
+
+        // 展开资源区域（如果是折叠的）
+        if (config.learningMode === 'ai_guided') {
+          setCollapsedPanels(prev => ({ ...prev, aiResources: false }));
+        } else {
+          setCollapsedPanels(prev => ({ ...prev, sources: false }));
+        }
+      }, 2000);
+    } else if (tool.type === 'task') {
+      // 生成任务
+      setGeneratingToolId(tool.id);
+
+      setTimeout(() => {
+        const newTask = {
+          id: `gen_task_${Date.now()}`,
+          type: 'quiz' as const,
+          title: `🤖 ${t('AI生成')}：${tool.label}`,
+          status: 'optional' as const,
+          questionCount: 5,
+          questions: [],
+          passScore: 60,
+          generatedAt: new Date(),
+        };
+
+        setGeneratedTasks(prev => [newTask, ...prev]);
+        setGeneratingToolId(null);
+        setCollapsedPanels(prev => ({ ...prev, tasks: false })); // 展开任务区域
+      }, 2000);
+    }
+  };
+
+  // 打开工具配置弹窗
+  const handleOpenToolConfig = (toolId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setStudioConfigModal({ isOpen: true, toolId });
   };
 
   const togglePanel = (panelId: string) => {
@@ -954,6 +1044,27 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
                   </p>
                 </div>
                 <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                  {/* AI生成的资源 */}
+                  {aiGeneratedResources.map((resource) => (
+                    <div
+                      key={resource.id}
+                      className="flex items-center gap-3 p-3 rounded-xl transition-all cursor-pointer bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 hover:border-purple-300 hover:shadow-md"
+                    >
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg bg-gradient-to-br from-purple-100 to-pink-100">
+                        {resource.icon}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-700 truncate">{resource.title}</p>
+                        <p className="text-xs text-purple-600 flex items-center gap-1">
+                          <Sparkles size={10} />
+                          {new Date(resource.generatedAt).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                      </div>
+                      <ChevronRight size={16} className="text-gray-400" />
+                    </div>
+                  ))}
+
+                  {/* 原有的AI资源 */}
                   {MOCK_AI_RESOURCES.map((resource) => (
                     <div
                       key={resource.id}
@@ -1089,7 +1200,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
                       generatedTasks.map((task) => (
                         <div
                           key={task.id}
-                          className="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-xl hover:border-amber-300 hover:shadow-md transition-all cursor-pointer"
+                          className="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-xl hover:border-amber-300 hover:shadow-md transition-all cursor-pointer group"
                         >
                           <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
                             task.type === 'quiz' ? 'bg-amber-100' : 'bg-purple-100'
@@ -1110,6 +1221,16 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
                               <span>{new Date(task.generatedAt).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}</span>
                             </div>
                           </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingTask(task);
+                            }}
+                            className="opacity-0 group-hover:opacity-100 p-2 hover:bg-amber-50 rounded-lg transition-all"
+                            title={t('编辑任务')}
+                          >
+                            <Pencil size={16} className="text-amber-600" />
+                          </button>
                           <ChevronRight size={16} className="text-gray-400" />
                         </div>
                       ))
@@ -1174,10 +1295,36 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
                 <div className="flex-1 overflow-y-auto p-3 space-y-2">
                   {/* 全选控制 */}
                   <div className="flex items-center justify-between px-1 mb-1">
-                    <span className="text-xs text-gray-500">{mockResources.length} {t('个来源')}</span>
+                    <span className="text-xs text-gray-500">{mockResources.length + aiGeneratedResources.length} {t('个来源')}</span>
                     <button className="text-xs text-primary-600 hover:text-primary-700 font-medium">{t('全选')}</button>
                   </div>
 
+                  {/* AI生成的资源 */}
+                  {aiGeneratedResources.map((resource) => (
+                    <div
+                      key={resource.id}
+                      className="flex items-start gap-3 p-3 bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 rounded-xl hover:border-purple-300 hover:shadow-md transition-all cursor-pointer group"
+                    >
+                      {/* 选中指示器 */}
+                      <div className="w-5 h-5 rounded border-2 border-purple-400 bg-purple-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <Check size={12} className="text-white" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <div className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 bg-purple-100">
+                            <span className="text-sm">{resource.icon}</span>
+                          </div>
+                          <p className="text-sm font-medium text-gray-700 truncate">{resource.title}</p>
+                        </div>
+                        <p className="text-xs text-purple-600 line-clamp-1 ml-8 flex items-center gap-1">
+                          <Sparkles size={10} />
+                          {new Date(resource.generatedAt).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* 原有资源 */}
                   {mockResources.map((resource) => (
                     <div
                       key={resource.id}
@@ -1293,7 +1440,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
                       generatedTasks.map((task) => (
                         <div
                           key={task.id}
-                          className="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-xl hover:border-amber-300 hover:shadow-md transition-all cursor-pointer"
+                          className="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-xl hover:border-amber-300 hover:shadow-md transition-all cursor-pointer group"
                         >
                           <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
                             task.type === 'quiz' ? 'bg-amber-100' : 'bg-purple-100'
@@ -1314,6 +1461,16 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
                               <span>{new Date(task.generatedAt).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}</span>
                             </div>
                           </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingTask(task);
+                            }}
+                            className="opacity-0 group-hover:opacity-100 p-2 hover:bg-amber-50 rounded-lg transition-all"
+                            title={t('编辑任务')}
+                          >
+                            <Pencil size={16} className="text-amber-600" />
+                          </button>
                           <ChevronRight size={16} className="text-gray-400" />
                         </div>
                       ))
@@ -1478,28 +1635,6 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
 
           {/* 输入框 */}
           <div className="p-3 bg-white border-t border-gray-200">
-            {/* Quick Actions - above input */}
-            <div className="mb-3 flex flex-wrap gap-2">
-              {(config.learningMode === 'self_directed' ? SELF_DIRECTED_QUICK_ACTIONS : AI_GUIDED_QUICK_ACTIONS).map((action) => {
-                const IconComp = action.icon;
-                const colorMap: Record<string, string> = {
-                  primary: 'bg-primary-50 text-primary-600 hover:bg-primary-100 border-primary-200',
-                  emerald: 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border-emerald-200',
-                  amber: 'bg-amber-50 text-amber-600 hover:bg-amber-100 border-amber-200',
-                  purple: 'bg-purple-50 text-purple-600 hover:bg-purple-100 border-purple-200',
-                };
-                return (
-                  <button
-                    key={action.id}
-                    onClick={() => setInputMessage(action.label)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${colorMap[action.color]}`}
-                  >
-                    <IconComp size={14} />
-                    {action.label}
-                  </button>
-                );
-              })}
-            </div>
             <div className="relative">
               <input
                 type="text"
@@ -1565,41 +1700,41 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
           {rightTab === 'workspace' ? (
             <div className="flex-1 flex flex-col overflow-hidden">
               {/* 笔记区域 - 上半部分 */}
-              <div className="flex-1 min-h-0 overflow-hidden" style={{ flex: config.learningMode === 'self_directed' ? '0 0 55%' : '1 1 auto' }}>
+              <div className="flex-1 min-h-0 overflow-hidden" style={{ flex: '0 0 50%' }}>
                 <EnhancedNotesPanel learningMode={config.learningMode} />
               </div>
 
-              {/* Studio 工具区域 - 仅自由探索模式显示 (类似 NotebookLM) */}
-              {config.learningMode === 'self_directed' && (
-                <div className="border-t-2 border-purple-200 bg-gradient-to-b from-purple-50/50 to-white" style={{ flex: '0 0 45%' }}>
-                  <div className="p-3 border-b border-purple-100">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-sm font-bold text-purple-800 flex items-center gap-2">
-                        <Sparkles size={14} className="text-purple-600" />
-                        Studio
-                      </h3>
-                      <span className="text-xs text-purple-500">{t('AI 学习工具')}</span>
-                    </div>
+              {/* Studio 工具区域 - 两种模式都显示 */}
+              <div className="border-t-2 border-purple-200 bg-gradient-to-b from-purple-50/50 to-white" style={{ flex: '0 0 50%' }}>
+                <div className="p-3 border-b border-purple-100">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-bold text-purple-800 flex items-center gap-2">
+                      <Sparkles size={14} className="text-purple-600" />
+                      Studio
+                    </h3>
+                    <span className="text-xs text-purple-500">{t('AI 学习工具')}</span>
                   </div>
-                  <div className="p-3 overflow-y-auto" style={{ maxHeight: 'calc(100% - 48px)' }}>
-                    <div className="grid grid-cols-2 gap-2">
-                      {STUDIO_TOOLS.map((tool) => (
+                </div>
+                <div className="p-3 overflow-y-auto" style={{ maxHeight: 'calc(100% - 48px)' }}>
+                  <div className="grid grid-cols-2 gap-2">
+                    {STUDIO_TOOLS.map((tool) => {
+                      const isGenerating = generatingToolId === tool.id;
+                      return (
                         <button
                           key={tool.id}
-                          className={`p-3 rounded-xl border text-left transition-all ${
-                            tool.status === 'generating'
-                              ? 'bg-purple-50 border-purple-200 animate-pulse'
-                              : tool.status === 'ready'
-                              ? 'bg-white border-gray-200 hover:border-purple-300 hover:shadow-md cursor-pointer'
-                              : 'bg-gray-50 border-gray-200 opacity-50 cursor-not-allowed'
+                          onClick={() => !isGenerating && handleStudioToolClick(tool)}
+                          className={`p-3 rounded-xl border text-left transition-all relative group ${
+                            isGenerating
+                              ? 'bg-purple-50 border-purple-200 animate-pulse cursor-wait'
+                              : 'bg-white border-gray-200 hover:border-purple-300 hover:shadow-md cursor-pointer'
                           }`}
-                          disabled={tool.status === 'pending'}
+                          disabled={isGenerating}
                         >
                           <div className="flex items-start gap-2">
                             <span className="text-lg">{tool.icon}</span>
                             <div className="flex-1 min-w-0">
                               <p className="text-xs font-medium text-gray-700 truncate">{tool.label}</p>
-                              {tool.status === 'generating' ? (
+                              {isGenerating ? (
                                 <p className="text-xs text-purple-600 flex items-center gap-1 mt-0.5">
                                   <Activity size={10} className="animate-spin" />
                                   {t('生成中...')}
@@ -1608,19 +1743,25 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
                                 <p className="text-xs text-gray-400 mt-0.5 truncate">{tool.description}</p>
                               )}
                             </div>
-                            {tool.status === 'ready' && (
-                              <Pencil size={12} className="text-gray-400 flex-shrink-0" />
+                            {!isGenerating && (
+                              <button
+                                onClick={(e) => handleOpenToolConfig(tool.id, e)}
+                                className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-purple-100 rounded"
+                                title={t('配置')}
+                              >
+                                <Pencil size={12} className="text-gray-400 hover:text-purple-600" />
+                              </button>
                             )}
                           </div>
                         </button>
-                      ))}
-                    </div>
-                    <p className="text-xs text-center text-gray-400 mt-3">
-                      {t('添加资料后，点击生成学习工具')}
-                    </p>
+                      );
+                    })}
                   </div>
+                  <p className="text-xs text-center text-gray-400 mt-3">
+                    {t('点击工具卡片生成内容，点击编辑图标配置工具')}
+                  </p>
                 </div>
-              )}
+              </div>
             </div>
           ) : (
             <LearningStatusPanel
@@ -1642,6 +1783,126 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
             onUpdateConfig(newConfig);
             setIsSettingsOpen(false);
           }}
+        />
+      )}
+
+      {/* Studio工具配置弹窗 */}
+      {studioConfigModal.isOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[80vh] overflow-hidden">
+            {/* 弹窗头部 */}
+            <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-purple-50 to-pink-50">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                  <Settings size={18} className="text-purple-600" />
+                  {t('工具配置')}
+                </h3>
+                <button
+                  onClick={() => setStudioConfigModal({ isOpen: false, toolId: null })}
+                  className="p-1 hover:bg-white/50 rounded-lg transition-colors"
+                >
+                  <X size={18} className="text-gray-600" />
+                </button>
+              </div>
+            </div>
+
+            {/* 弹窗内容 */}
+            <div className="p-6 space-y-4 overflow-y-auto max-h-[calc(80vh-140px)]">
+              <div className="text-center py-8">
+                <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Sparkles size={32} className="text-purple-600" />
+                </div>
+                <h4 className="text-base font-semibold text-gray-800 mb-2">
+                  {STUDIO_TOOLS.find(t => t.id === studioConfigModal.toolId)?.label}
+                </h4>
+                <p className="text-sm text-gray-500 mb-6">
+                  {t('自定义工具的生成参数和输出格式')}
+                </p>
+
+                {/* 配置选项示例 */}
+                <div className="space-y-3 text-left">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      {t('输出详细程度')}
+                    </label>
+                    <select className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500">
+                      <option>{t('简洁')}</option>
+                      <option selected>{t('标准')}</option>
+                      <option>{t('详细')}</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      {t('生成语言')}
+                    </label>
+                    <select className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500">
+                      <option selected>{t('中文')}</option>
+                      <option>{t('英文')}</option>
+                      <option>{t('双语')}</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      {t('难度级别')}
+                    </label>
+                    <div className="flex gap-2">
+                      {[t('基础'), t('中级'), t('高级')].map((level, idx) => (
+                        <button
+                          key={level}
+                          className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                            idx === 1
+                              ? 'bg-purple-500 text-white'
+                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                          }`}
+                        >
+                          {level}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <span className="text-xs font-medium text-gray-700">{t('包含示例')}</span>
+                    <div className="w-10 h-6 bg-purple-500 rounded-full relative cursor-pointer">
+                      <div className="absolute right-0.5 top-0.5 w-5 h-5 bg-white rounded-full shadow-sm"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 弹窗底部 */}
+            <div className="p-4 border-t border-gray-200 bg-gray-50 flex gap-2">
+              <button
+                onClick={() => setStudioConfigModal({ isOpen: false, toolId: null })}
+                className="flex-1 px-4 py-2 bg-white border border-gray-200 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                {t('取消')}
+              </button>
+              <button
+                onClick={() => setStudioConfigModal({ isOpen: false, toolId: null })}
+                className="flex-1 px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors"
+              >
+                {t('保存配置')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 任务编辑弹窗 */}
+      {editingTask && (
+        <TaskEditModal
+          task={editingTask}
+          onSave={(updatedTask: typeof editingTask) => {
+            setGeneratedTasks(prev =>
+              prev.map(t => t.id === updatedTask.id ? updatedTask : t)
+            );
+            setEditingTask(null);
+          }}
+          onClose={() => setEditingTask(null)}
         />
       )}
     </div>
