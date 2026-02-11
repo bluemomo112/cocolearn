@@ -80,7 +80,7 @@ export default function ResourceLibraryModal({ isOpen, onClose, onSelect }: Reso
             <h3 className="text-xl font-semibold text-gray-900">从资源库选择</h3>
             <button
               onClick={handleClose}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
             >
               <X className="w-5 h-5 text-gray-500" />
             </button>
@@ -94,7 +94,7 @@ export default function ResourceLibraryModal({ isOpen, onClose, onSelect }: Reso
               placeholder="搜索资源..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
           </div>
         </div>
@@ -121,7 +121,7 @@ export default function ResourceLibraryModal({ isOpen, onClose, onSelect }: Reso
                         : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                     }`}
                   >
-                    <div className={`p-2 rounded-lg ${
+                    <div className={`p-2 rounded-xl ${
                       isSelected ? 'bg-primary-100' : 'bg-gray-100'
                     }`}>
                       <Icon className={`w-5 h-5 ${
@@ -142,7 +142,7 @@ export default function ResourceLibraryModal({ isOpen, onClose, onSelect }: Reso
                         {resource.description}
                       </p>
                       <div className="flex items-center gap-2">
-                        <span className={`text-xs px-2 py-0.5 rounded ${
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${
                           resource.source === 'personal'
                             ? 'bg-blue-100 text-blue-700'
                             : 'bg-green-100 text-green-700'
@@ -171,14 +171,14 @@ export default function ResourceLibraryModal({ isOpen, onClose, onSelect }: Reso
           <div className="flex gap-3">
             <button
               onClick={handleClose}
-              className="px-4 py-2 border border-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+              className="px-4 py-2 border border-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-colors"
             >
               取消
             </button>
             <button
               onClick={handleConfirm}
               disabled={selectedResources.size === 0}
-              className="px-4 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+              className="px-4 py-2 bg-primary-600 text-white rounded-xl font-medium hover:bg-primary-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
             >
               确认选择
             </button>

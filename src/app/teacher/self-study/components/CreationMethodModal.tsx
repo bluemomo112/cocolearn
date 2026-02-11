@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import { Sparkles, Upload, Library, FileText, X } from 'lucide-react';
 
 interface CreationMethodModalProps {
@@ -10,38 +9,38 @@ interface CreationMethodModalProps {
 }
 
 export default function CreationMethodModal({ isOpen, onClose, onSelectMethod }: CreationMethodModalProps) {
-  const [activeTab, setActiveTab] = useState<'ai' | 'upload' | 'library' | 'blank'>('ai');
-
   if (!isOpen) return null;
 
-  const tabs = [
+  const methods = [
     {
       id: 'ai' as const,
       icon: Sparkles,
       title: '从AI创建',
-      description: '让AI引导你创建个性化学习空间',
+      description: 'AI自动生成教学内容',
+      recommended: true,
     },
     {
       id: 'upload' as const,
       icon: Upload,
       title: '上传我的文件',
-      description: '上传文档、PPT等资料开始学习',
+      description: '上传PPT、Word或PDF',
+      recommended: false,
     },
     {
       id: 'library' as const,
       icon: Library,
       title: '从资源库导入',
-      description: '从已有资源库中选择学习材料',
+      description: '选择现成的课程模板',
+      recommended: false,
     },
     {
       id: 'blank' as const,
       icon: FileText,
       title: '创建空白',
-      description: '创建空白空间，稍后添加内容',
+      description: '从零开始自定义',
+      recommended: false,
     },
   ];
-
-  const activeTabData = tabs.find(t => t.id === activeTab);
 
   return (
     <>
@@ -49,61 +48,57 @@ export default function CreationMethodModal({ isOpen, onClose, onSelectMethod }:
       <div className="fixed inset-0 bg-black/50 z-50" onClick={onClose} />
 
       {/* 模态框内容 */}
-      <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl shadow-2xl z-50 w-[90%] max-w-3xl">
+      <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl shadow-2xl z-50 w-[90%] max-w-4xl">
         {/* 头部 */}
-        <div className="p-6 border-b border-gray-200 flex items-center justify-between">
-          <h3 className="text-xl font-semibold text-gray-900">创建新课程</h3>
+        <div className="px-8 pt-8 pb-4 flex items-center justify-between">
+          <div className="text-center flex-1">
+            <h3 className="text-2xl font-bold text-gray-900 mb-2">创建新课程</h3>
+            <p className="text-sm text-gray-500">选择一种方式开始创建您的互动课</p>
+          </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors absolute top-6 right-6"
           >
             <X className="w-5 h-5 text-gray-500" />
           </button>
         </div>
 
-        {/* 选项卡导航 */}
-        <div className="flex border-b border-gray-200">
-          {tabs.map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex-1 px-6 py-4 flex flex-col items-center gap-2 transition-all relative ${
-                  isActive
-                    ? 'text-primary-600 bg-primary-50'
-                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                }`}
-              >
-                <Icon className="w-6 h-6" />
-                <span className="text-sm font-medium">{tab.title}</span>
-                {isActive && (
-                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-600" />
-                )}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* 内容区域 */}
-        <div className="p-8">
-          <div className="text-center max-w-md mx-auto">
-            {activeTabData && (
-              <>
-                <div className="w-16 h-16 rounded-full bg-primary-100 flex items-center justify-center mx-auto mb-4">
-                  <activeTabData.icon className="w-8 h-8 text-primary-600" />
-                </div>
-                <h4 className="text-lg font-semibold text-gray-900 mb-2">{activeTabData.title}</h4>
-                <p className="text-sm text-gray-600 mb-6">{activeTabData.description}</p>
+        {/* 2x2 网格内容 */}
+        <div className="px-8 pb-8 pt-4">
+          <div className="grid grid-cols-2 gap-4">
+            {methods.map((method) => {
+              const Icon = method.icon;
+              return (
                 <button
-                  onClick={() => onSelectMethod(activeTab)}
-                  className="w-full px-6 py-3 bg-primary-600 text-white text-base font-medium rounded-xl hover:bg-primary-700 transition-colors shadow-md hover:shadow-lg"
+                  key={method.id}
+                  onClick={() => onSelectMethod(method.id)}
+                  className={`relative p-8 rounded-2xl border-2 transition-all hover:shadow-lg text-center ${
+                    method.recommended
+                      ? 'border-primary-500 bg-primary-50/30 hover:bg-primary-50/50'
+                      : 'border-gray-200 bg-white hover:border-gray-300'
+                  }`}
                 >
-                  继续
+                  {method.recommended && (
+                    <div className="absolute top-4 right-4 px-3 py-1 bg-primary-500 text-white text-xs font-medium rounded-full">
+                      推荐
+                    </div>
+                  )}
+                  <div className="flex flex-col items-center gap-3">
+                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center ${
+                      method.recommended ? 'bg-primary-100' : 'bg-gray-100'
+                    }`}>
+                      <Icon className={`w-8 h-8 ${
+                        method.recommended ? 'text-primary-600' : 'text-gray-600'
+                      }`} />
+                    </div>
+                    <div>
+                      <h4 className="text-lg font-semibold text-gray-900 mb-1">{method.title}</h4>
+                      <p className="text-sm text-gray-500">{method.description}</p>
+                    </div>
+                  </div>
                 </button>
-              </>
-            )}
+              );
+            })}
           </div>
         </div>
       </div>

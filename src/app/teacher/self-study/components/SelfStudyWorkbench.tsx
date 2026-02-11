@@ -702,7 +702,61 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
       title: t('AI生成：植物工厂基础测验'),
       status: 'optional' as const,
       questionCount: 5,
-      questions: [],
+      questions: [
+        {
+          id: 'q1',
+          type: 'choice',
+          content: t('植物工厂的主要优势是什么？'),
+          options: [
+            t('不受气候影响，可全年生产'),
+            t('成本低廉'),
+            t('不需要任何技术'),
+            t('产量低但质量好')
+          ],
+          answer: 0,
+          aiGenerated: true,
+        },
+        {
+          id: 'q2',
+          type: 'choice',
+          content: t('植物工厂中最重要的环境因素是？'),
+          options: [
+            t('温度'),
+            t('光照'),
+            t('湿度'),
+            t('以上都是')
+          ],
+          answer: 3,
+          aiGenerated: true,
+        },
+        {
+          id: 'q3',
+          type: 'trueFalse',
+          content: t('植物工厂可以完全不使用土壤进行种植。'),
+          answer: true,
+          aiGenerated: true,
+        },
+        {
+          id: 'q4',
+          type: 'fillBlank',
+          content: t('植物工厂通常使用___技术来提供植物所需的营养。'),
+          answer: t('水培或营养液'),
+          aiGenerated: true,
+        },
+        {
+          id: 'q5',
+          type: 'choice',
+          content: t('LED灯在植物工厂中的作用是？'),
+          options: [
+            t('装饰美观'),
+            t('提供光合作用所需的光照'),
+            t('加热空气'),
+            t('驱赶害虫')
+          ],
+          answer: 1,
+          aiGenerated: true,
+        },
+      ],
       passScore: 60,
       generatedAt: new Date(Date.now() - 1000 * 60 * 10),
     },
@@ -711,7 +765,8 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
       type: 'assignment' as const,
       title: t('AI生成：学习反思'),
       status: 'optional' as const,
-      teacherHint: '',
+      teacherHint: t('请结合今天学习的内容，思考以下问题：\n1. 你学到了哪些新知识？\n2. 哪些概念你还不太理解？\n3. 你打算如何应用这些知识？'),
+      wordLimit: { min: 200, max: 500 },
       generatedAt: new Date(Date.now() - 1000 * 60 * 5),
     },
   ];
@@ -827,8 +882,31 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
           type: 'quiz' as const,
           title: `🤖 ${t('AI生成')}：${tool.label}`,
           status: 'optional' as const,
-          questionCount: 5,
-          questions: [],
+          questionCount: 3,
+          questions: [
+            {
+              id: `q_${Date.now()}_1`,
+              type: 'choice',
+              content: t('这是一道AI生成的示例题目，请选择正确答案。'),
+              options: [t('选项A'), t('选项B'), t('选项C'), t('选项D')],
+              answer: 0,
+              aiGenerated: true,
+            },
+            {
+              id: `q_${Date.now()}_2`,
+              type: 'trueFalse',
+              content: t('这是一道判断题示例。'),
+              answer: true,
+              aiGenerated: true,
+            },
+            {
+              id: `q_${Date.now()}_3`,
+              type: 'fillBlank',
+              content: t('这是一道填空题示例，请填写___。'),
+              answer: t('答案'),
+              aiGenerated: true,
+            },
+          ],
           passScore: 60,
           generatedAt: new Date(),
         };

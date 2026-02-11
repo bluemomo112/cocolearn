@@ -71,7 +71,7 @@ export default function FileUploadModal({ isOpen, onClose, onUpload }: FileUploa
           <h3 className="text-xl font-semibold text-gray-900">上传学习资料</h3>
           <button
             onClick={handleClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
           >
             <X className="w-5 h-5 text-gray-500" />
           </button>
@@ -84,7 +84,7 @@ export default function FileUploadModal({ isOpen, onClose, onUpload }: FileUploa
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
-            className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors ${
+            className={`border-2 border-dashed rounded-2xl p-8 text-center transition-colors ${
               isDragging
                 ? 'border-primary-500 bg-primary-50'
                 : 'border-gray-300 hover:border-gray-400'
@@ -99,7 +99,7 @@ export default function FileUploadModal({ isOpen, onClose, onUpload }: FileUploa
             </p>
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="px-4 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-colors"
+              className="px-4 py-2 bg-primary-600 text-white rounded-xl font-medium hover:bg-primary-700 transition-colors"
             >
               选择文件
             </button>
@@ -123,7 +123,7 @@ export default function FileUploadModal({ isOpen, onClose, onUpload }: FileUploa
                 {selectedFiles.map((file, index) => (
                   <div
                     key={index}
-                    className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
+                    className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl"
                   >
                     <File className="w-5 h-5 text-gray-400 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
@@ -136,7 +136,7 @@ export default function FileUploadModal({ isOpen, onClose, onUpload }: FileUploa
                     </div>
                     <button
                       onClick={() => handleRemoveFile(index)}
-                      className="p-1 hover:bg-gray-200 rounded transition-colors"
+                      className="p-1 hover:bg-gray-200 rounded-lg transition-colors"
                     >
                       <Trash2 className="w-4 h-4 text-gray-500" />
                     </button>
@@ -151,14 +151,14 @@ export default function FileUploadModal({ isOpen, onClose, onUpload }: FileUploa
         <div className="px-6 py-4 border-t border-gray-200 flex gap-3">
           <button
             onClick={handleClose}
-            className="flex-1 px-4 py-2 border border-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+            className="flex-1 px-4 py-2 border border-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-colors"
           >
             取消
           </button>
           <button
             onClick={handleUpload}
             disabled={selectedFiles.length === 0}
-            className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+            className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-xl font-medium hover:bg-primary-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
           >
             确认上传
           </button>
