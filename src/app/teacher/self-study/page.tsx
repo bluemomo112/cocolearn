@@ -9,6 +9,7 @@ import SelfStudyWorkbench from './components/SelfStudyWorkbench';
 import CreationMethodModal from './components/CreationMethodModal';
 import FileUploadModal from './components/FileUploadModal';
 import ResourceLibraryModal from './components/ResourceLibraryModal';
+import AIGenerateFormModal from './components/AIGenerateFormModal';
 
 // 模拟存储的学习空间数据
 const mockSpaces: SpaceSummary[] = [
@@ -46,6 +47,7 @@ export default function SelfStudyPage() {
   const [showCreationMethodModal, setShowCreationMethodModal] = useState(false);
   const [showFileUploadModal, setShowFileUploadModal] = useState(false);
   const [showResourceLibraryModal, setShowResourceLibraryModal] = useState(false);
+  const [showAIGenerateModal, setShowAIGenerateModal] = useState(false);
 
   // 检查是否首次访问
   useEffect(() => {
@@ -67,9 +69,14 @@ export default function SelfStudyPage() {
 
     switch (method) {
       case 'ai':
-        // 保持现有的AI引导流程
-        setCurrentSpace(null);
-        setViewState('onboarding');
+        // 创建空白空间，进入workbench，然后显示AI生成表单
+        const aiSpace = createBlankSpace('AI 生成中...');
+        setCurrentSpace(aiSpace);
+        setViewState('workbench');
+        // 延迟显示弹窗，确保workbench已经渲染
+        setTimeout(() => {
+          setShowAIGenerateModal(true);
+        }, 100);
         break;
 
       case 'upload':
@@ -191,6 +198,31 @@ export default function SelfStudyPage() {
     setShowResourceLibraryModal(false);
   };
 
+  // 处理AI生成
+  const handleAIGenerate = (data: {
+    topic: string;
+    question: string;
+    learningStyle: string;
+    level: string;
+  }) => {
+    setShowAIGenerateModal(false);
+
+    if (currentSpace) {
+      // 更新空间标题
+      const updatedSpace = { ...currentSpace, title: data.topic };
+      setCurrentSpace(updatedSpace);
+
+      // 更新spaces列表
+      setSpaces(prev =>
+        prev.map(s => s.id === currentSpace.id ? { ...s, title: data.topic } : s)
+      );
+
+      // 这里可以触发异步生成任务
+      // 实际应用中应该调用后端API
+      console.log('开始异步生成学习空间:', data);
+    }
+  };
+
   // 打开已有空间
   const handleOpenSpace = (spaceId: string) => {
     // 实际应用中应该从后端获取完整的 SpaceConfig
@@ -295,6 +327,13 @@ export default function SelfStudyPage() {
         isOpen={showResourceLibraryModal}
         onClose={() => setShowResourceLibraryModal(false)}
         onSelect={handleResourceSelect}
+      />
+
+      {/* AI生成表单模态框 */}
+      <AIGenerateFormModal
+        isOpen={showAIGenerateModal}
+        onClose={() => setShowAIGenerateModal(false)}
+        onGenerate={handleAIGenerate}
       />
     </div>
   );
