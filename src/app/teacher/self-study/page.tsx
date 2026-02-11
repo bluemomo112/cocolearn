@@ -48,6 +48,7 @@ export default function SelfStudyPage() {
   const [showFileUploadModal, setShowFileUploadModal] = useState(false);
   const [showResourceLibraryModal, setShowResourceLibraryModal] = useState(false);
   const [showAIGenerateModal, setShowAIGenerateModal] = useState(false);
+  const [isAIGenerating, setIsAIGenerating] = useState(false);
 
   // 检查是否首次访问
   useEffect(() => {
@@ -208,18 +209,66 @@ export default function SelfStudyPage() {
     setShowAIGenerateModal(false);
 
     if (currentSpace) {
-      // 更新空间标题
-      const updatedSpace = { ...currentSpace, title: data.topic };
+      // 更新空间标题和学习模式
+      const learningMode = data.learningStyle === 'guided' ? 'ai_guided' : 'self_directed';
+      const updatedSpace: SpaceConfig = {
+        ...currentSpace,
+        title: data.topic,
+        learningMode,
+      };
       setCurrentSpace(updatedSpace);
 
       // 更新spaces列表
       setSpaces(prev =>
-        prev.map(s => s.id === currentSpace.id ? { ...s, title: data.topic } : s)
+        prev.map(s => s.id === currentSpace.id ? {
+          ...s,
+          title: data.topic,
+          learningMode,
+          topic: data.topic,
+        } : s)
       );
 
-      // 这里可以触发异步生成任务
-      // 实际应用中应该调用后端API
-      console.log('开始异步生成学习空间:', data);
+      // 开始AI生成过程
+      setIsAIGenerating(true);
+
+      // 模拟AI生成过程（实际应该调用后端API）
+      setTimeout(() => {
+        // 生成完成后，添加一些mock资源和任务
+        const mockGeneratedResources: Resource[] = [
+          {
+            id: `ai_res_${Date.now()}_1`,
+            title: `${data.topic} - 入门指南`,
+            type: 'document',
+            fileType: 'docx',
+            path: '/mock/ai-generated-1',
+            description: 'AI 自动生成的学习资料',
+            duration: '15分钟',
+          },
+          {
+            id: `ai_res_${Date.now()}_2`,
+            title: `${data.topic} - 核心概念`,
+            type: 'presentation',
+            fileType: 'pptx',
+            path: '/mock/ai-generated-2',
+            description: 'AI 自动生成的知识点总结',
+            duration: '20分钟',
+          },
+        ];
+
+        setCurrentSpace(prev => prev ? {
+          ...prev,
+          resources: [...prev.resources, ...mockGeneratedResources],
+        } : null);
+
+        setSpaces(prev =>
+          prev.map(s => s.id === currentSpace.id ? {
+            ...s,
+            resourceCount: mockGeneratedResources.length,
+          } : s)
+        );
+
+        setIsAIGenerating(false);
+      }, 5000); // 5秒模拟生成时间
     }
   };
 
@@ -305,6 +354,8 @@ export default function SelfStudyPage() {
           config={currentSpace}
           onBack={handleBackToManager}
           onUpdateConfig={(updated) => setCurrentSpace(updated)}
+          isAIGenerating={isAIGenerating}
+          onCreateNewSpace={handleCreateSpace}
         />
       )}
 

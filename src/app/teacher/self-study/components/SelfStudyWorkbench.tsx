@@ -13,16 +13,21 @@ import {
   ListChecks, ChevronRight, Play, Download, Eye, Search, BarChart3, Map,
   CheckCircle2, Circle, Bot, MessageSquare, Pause, RotateCcw, GitBranch,
   Edit, Image as ImageIcon, Mic, Trash2, Layers, Award, TrendingUp,
-  ChevronDown, ChevronUp, Layout,
+  ChevronDown, ChevronUp, Layout, Share2,
 } from 'lucide-react';
 import SettingsModal from './SettingsModal';
+import PublishModal from './PublishModal';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { TaskEditModal } from '@/app/teacher/note-config/modals';
+import { useRouter } from 'next/navigation';
+import { PublishMode, PublishScope } from '@/types/self-study';
 
 interface SelfStudyWorkbenchProps {
   config: SpaceConfig;
   onBack: () => void;
   onUpdateConfig: (config: SpaceConfig) => void;
+  isAIGenerating?: boolean;
+  onCreateNewSpace?: () => void;
 }
 
 interface ChatMessage {
@@ -88,7 +93,7 @@ const MOCK_CURRENT_NODE = 'node_3';
 // Mock generated tasks for self-directed mode - will be created inside component with t()
 
 // Enhanced Notes Panel component
-function EnhancedNotesPanel({ learningMode }: { learningMode?: LearningMode }) {
+function EnhancedNotesPanel({ learningMode, isAIGenerating }: { learningMode?: LearningMode; isAIGenerating?: boolean }) {
   const { t } = useLanguage();
   const [notes, setNotes] = useState<Note[]>([
     {
@@ -275,22 +280,26 @@ function EnhancedNotesPanel({ learningMode }: { learningMode?: LearningMode }) {
           )}
         </div>
         {/* Generation progress indicator */}
-        {isGeneratingNote && (
+        {(isGeneratingNote || isAIGenerating) && (
           <div className="px-4 py-2 bg-emerald-50 border-b border-emerald-100">
             <div className="flex items-center gap-2 text-xs text-emerald-700 mb-2">
               <Brain size={14} className="animate-pulse" />
-              <span>{t('AI 正在分析当前学习内容并生成笔记...')}</span>
+              <span>
+                {isAIGenerating
+                  ? t('AI 正在为你生成学习资源和任务...')
+                  : t('AI 正在分析当前学习内容并生成笔记...')}
+              </span>
             </div>
             <div className="h-1.5 bg-emerald-100 rounded-full overflow-hidden">
               <div
-                className="h-full bg-emerald-500 rounded-full transition-all duration-300"
-                style={{ width: `${generationProgress}%` }}
+                className="h-full bg-emerald-500 rounded-full transition-all duration-300 animate-pulse"
+                style={{ width: isAIGenerating ? '100%' : `${generationProgress}%` }}
               />
             </div>
             <div className="flex justify-between text-xs text-emerald-600 mt-1">
-              <span>📖 {t('提取知识点')}</span>
-              <span>🔍 {t('整理结构')}</span>
-              <span>✨ {t('生成笔记')}</span>
+              <span>📖 {t('分析主题')}</span>
+              <span>🔍 {t('匹配资源')}</span>
+              <span>✨ {t('生成任务')}</span>
             </div>
           </div>
         )}
@@ -623,8 +632,9 @@ function LearningStatusPanel({
 }
 
 // 主组件
-export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: SelfStudyWorkbenchProps) {
+export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isAIGenerating = false, onCreateNewSpace }: SelfStudyWorkbenchProps) {
   const { t } = useLanguage();
+  const router = useRouter();
 
   // Mock data with translations
   const MOCK_LEARNING_PATH: LearningPathNode[] = [
@@ -796,6 +806,9 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
 
   // 设置弹窗
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+  // 发布弹窗
+  const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
 
   // 面板折叠状态
   const [collapsedPanels, setCollapsedPanels] = useState<Record<string, boolean>>({
@@ -1044,6 +1057,48 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
     setIsTimerRunning(true);
   };
 
+  // 发布相关函数
+  const handlePublish = async (mode: PublishMode, scope: PublishScope) => {
+    // 生成分享链接和访问码
+    const shareLink = `${window.location.origin}/learn/${config.id}`;
+    const accessCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+
+    // 创建新版本
+    const newVersion: import('@/types/self-study').PublishVersion = {
+      version: (config.publishedVersions?.length || 0) + 1,
+      publishedAt: new Date(),
+      mode,
+      scope,
+      shareLink,
+      accessCode,
+      snapshot: {
+        title: config.title,
+        resources: scope.includeResources ? config.resources : [],
+        tasks: scope.includeTasks ? config.tasks : [],
+        userProfile: scope.includeAISettings ? config.userProfile : undefined,
+        learningPath: scope.includeLearningPath ? config.learningPath : undefined,
+      },
+    };
+
+    // 更新配置
+    onUpdateConfig({
+      ...config,
+      publishStatus: 'published',
+      publishedVersions: [...(config.publishedVersions || []), newVersion],
+      currentPublishVersion: newVersion.version,
+    });
+  };
+
+  const handleSave = () => {
+    // 保存当前配置
+    onUpdateConfig({ ...config, updatedAt: new Date() });
+    // TODO: 显示保存成功提示
+  };
+
+  const handleViewAnalytics = () => {
+    router.push(`/teacher/self-study/${config.id}/results`);
+  };
+
   // 切换学习模式
   const handleModeChange = (mode: LearningMode) => {
     onUpdateConfig({ ...config, learningMode: mode });
@@ -1068,35 +1123,54 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
           </div>
         </div>
         <div className="flex items-center gap-3">
-          {/* 计时器 */}
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-primary-50 rounded-lg">
-            <Clock size={14} className="text-primary-600" />
-            <span className="text-sm font-medium text-primary-700">{formatTime(elapsedTime)}</span>
-          </div>
-          <button
-            onClick={toggleTimer}
-            className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-            title={isTimerRunning ? t('暂停计时') : t('继续计时')}
-          >
-            {isTimerRunning ? <Pause size={16} className="text-gray-700" /> : <Play size={16} className="text-gray-700" />}
-          </button>
-          <button
-            onClick={resetTimer}
-            className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-            title={t('重置计时器')}
-          >
-            <RotateCcw size={16} className="text-gray-700" />
-          </button>
+          {/* 创建新学习空间 */}
+          {onCreateNewSpace && (
+            <button
+              onClick={onCreateNewSpace}
+              className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <Plus size={16} />
+              <span className="text-sm font-medium">{t('创建新学习空间')}</span>
+            </button>
+          )}
+
+          {/* 设置 */}
           <button
             onClick={() => setIsSettingsOpen(true)}
             className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+            title={t('设置')}
           >
             <Settings size={16} className="text-gray-700" />
           </button>
-          <button className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 transition-colors">
+
+          {/* 保存 */}
+          <button
+            onClick={handleSave}
+            className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-lg transition-colors"
+          >
             <Save size={16} />
-            {t('保存进度')}
+            {t('保存')}
           </button>
+
+          {/* 发布/重新发布 */}
+          <button
+            onClick={() => setIsPublishModalOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 transition-colors"
+          >
+            <Share2 size={16} />
+            {config.publishStatus === 'published' ? t('重新发布') : t('发布')}
+          </button>
+
+          {/* 查看分析 - 仅在已发布状态下显示 */}
+          {config.publishStatus === 'published' && (
+            <button
+              onClick={handleViewAnalytics}
+              className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 transition-colors"
+            >
+              <BarChart3 size={16} />
+              {t('查看分析')}
+            </button>
+          )}
         </div>
       </header>
 
@@ -1779,7 +1853,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
             <div className="flex-1 flex flex-col overflow-hidden">
               {/* 笔记区域 - 上半部分 */}
               <div className="flex-1 min-h-0 overflow-hidden" style={{ flex: '0 0 50%' }}>
-                <EnhancedNotesPanel learningMode={config.learningMode} />
+                <EnhancedNotesPanel learningMode={config.learningMode} isAIGenerating={isAIGenerating} />
               </div>
 
               {/* Studio 工具区域 - 两种模式都显示 */}
@@ -1983,6 +2057,16 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig }: S
           onClose={() => setEditingTask(null)}
         />
       )}
+
+      {/* 发布弹窗 */}
+      <PublishModal
+        isOpen={isPublishModalOpen}
+        onClose={() => setIsPublishModalOpen(false)}
+        onPublish={handlePublish}
+        isPublished={config.publishStatus === 'published'}
+        shareLink={config.publishedVersions?.[config.publishedVersions.length - 1]?.shareLink}
+        accessCode={config.publishedVersions?.[config.publishedVersions.length - 1]?.accessCode}
+      />
     </div>
   );
 }

@@ -62,6 +62,28 @@ export interface LearningPath {
   updatedAt: Date;
 }
 
+// 发布模式
+export type PublishMode = 'self_study' | 'for_students';
+
+// 发布配置范围
+export interface PublishScope {
+  includeResources: boolean;
+  includeTasks: boolean;
+  includeAISettings: boolean;
+  includeLearningPath: boolean;
+}
+
+// 发布版本
+export interface PublishVersion {
+  version: number;
+  publishedAt: Date;
+  mode: PublishMode;
+  scope: PublishScope;
+  shareLink: string;
+  accessCode: string;
+  snapshot: Partial<SpaceConfig>; // 发布时的配置快照
+}
+
 // 自学空间配置（SpaceConfig）
 export interface SpaceConfig {
   id: string;
@@ -91,6 +113,11 @@ export interface SpaceConfig {
 
   // 能力追踪维度（通用版可自定义）
   competencyDimensions: CompetencyType[];
+
+  // 发布状态
+  publishStatus: 'unpublished' | 'published';
+  publishedVersions: PublishVersion[];
+  currentPublishVersion?: number;
 
   // 元数据
   createdAt: Date;
@@ -220,6 +247,8 @@ export function createDefaultSpaceConfig(partial?: Partial<SpaceConfig>): SpaceC
     },
     noteTemplate: 'blank',
     competencyDimensions: ['critical_thinking', 'information_synthesis', 'metacognition'],
+    publishStatus: 'unpublished',
+    publishedVersions: [],
     createdAt: now,
     updatedAt: now,
     ...partial,

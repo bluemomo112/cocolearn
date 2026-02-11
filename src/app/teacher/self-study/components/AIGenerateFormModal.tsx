@@ -16,7 +16,6 @@ interface AIGenerateFormModalProps {
 
 export default function AIGenerateFormModal({ isOpen, onClose, onGenerate }: AIGenerateFormModalProps) {
   const [topic, setTopic] = useState('');
-  const [question, setQuestion] = useState('');
   const [learningStyle, setLearningStyle] = useState('self');
   const [level, setLevel] = useState('beginner');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -35,17 +34,16 @@ export default function AIGenerateFormModal({ isOpen, onClose, onGenerate }: AIG
     setTimeout(() => {
       onGenerate({
         topic,
-        question,
+        question: '',
         learningStyle,
         level,
       });
       setIsGenerating(false);
       // 重置表单
       setTopic('');
-      setQuestion('');
       setLearningStyle('self');
       setLevel('beginner');
-    }, 1500);
+    }, 500);
   };
 
   return (
@@ -56,14 +54,14 @@ export default function AIGenerateFormModal({ isOpen, onClose, onGenerate }: AIG
       {/* 模态框内容 */}
       <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl shadow-2xl z-50 w-[90%] max-w-lg">
         {/* 头部 */}
-        <div className="p-6 border-b border-gray-200 flex items-center justify-between bg-gradient-to-r from-primary-50 to-accent-50">
+        <div className="p-6 border-b border-gray-200 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-primary-600" />
             <h3 className="text-xl font-semibold text-gray-900">AI 生成学习空间</h3>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-white/50 rounded-lg transition-colors"
+            className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
           >
             <X className="w-5 h-5 text-gray-500" />
           </button>
@@ -82,20 +80,6 @@ export default function AIGenerateFormModal({ isOpen, onClose, onGenerate }: AIG
               onChange={(e) => setTopic(e.target.value)}
               placeholder="例如：Python 数据分析、量子力学基础..."
               className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            />
-          </div>
-
-          {/* 关于主题的问题 */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              关于主题的问题（可选）
-            </label>
-            <textarea
-              value={question}
-              onChange={(e) => setQuestion(e.target.value)}
-              placeholder="你想了解什么？有什么具体问题吗？"
-              rows={3}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
             />
           </div>
 
@@ -194,7 +178,7 @@ export default function AIGenerateFormModal({ isOpen, onClose, onGenerate }: AIG
             ) : (
               <>
                 <Sparkles size={18} />
-                生成学习空间
+                开始生成学习空间
               </>
             )}
           </button>
