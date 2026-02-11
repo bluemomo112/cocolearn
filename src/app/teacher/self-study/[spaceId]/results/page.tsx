@@ -645,7 +645,7 @@ function ResourceTaskDetailsView({
   onSelectStudent,
 }: {
   students: StudentDetail[];
-  onSelectStudent: (student: StudentDetail) => void;
+  onSelectStudent: (index: number) => void;
 }) {
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [viewType, setViewType] = useState<'resources' | 'tasks'>('resources')
@@ -813,15 +813,18 @@ function ResourceTaskDetailsView({
                         <p className="text-sm text-green-600">✓ 全部学生已查看</p>
                       ) : (
                         <div className="flex flex-wrap gap-2">
-                          {resource.notViewedStudents.slice(0, 10).map(s => (
-                            <button
-                              key={s.studentId}
-                              onClick={() => onSelectStudent(s)}
-                              className="px-2 py-1 bg-white rounded text-xs text-gray-700 hover:bg-primary-50 hover:text-primary-700 transition-colors border border-gray-200"
-                            >
-                              {s.studentName}
-                            </button>
-                          ))}
+                          {resource.notViewedStudents.slice(0, 10).map(s => {
+                            const studentIndex = students.findIndex(st => st.studentId === s.studentId)
+                            return (
+                              <button
+                                key={s.studentId}
+                                onClick={() => onSelectStudent(studentIndex)}
+                                className="px-2 py-1 bg-white rounded text-xs text-gray-700 hover:bg-primary-50 hover:text-primary-700 transition-colors border border-gray-200"
+                              >
+                                {s.studentName}
+                              </button>
+                            )
+                          })}
                           {resource.notViewedStudents.length > 10 && (
                             <span className="px-2 py-1 text-xs text-gray-500">
                               +{resource.notViewedStudents.length - 10}人
@@ -922,15 +925,18 @@ function ResourceTaskDetailsView({
                         <p className="text-sm text-green-600">✓ 全部学生已完成</p>
                       ) : (
                         <div className="flex flex-wrap gap-2">
-                          {task.notSubmittedStudents.slice(0, 10).map(s => (
-                            <button
-                              key={s.studentId}
-                              onClick={() => onSelectStudent(s)}
-                              className="px-2 py-1 bg-white rounded text-xs text-gray-700 hover:bg-primary-50 hover:text-primary-700 transition-colors border border-gray-200"
-                            >
-                              {s.studentName}
-                            </button>
-                          ))}
+                          {task.notSubmittedStudents.slice(0, 10).map(s => {
+                            const studentIndex = students.findIndex(st => st.studentId === s.studentId)
+                            return (
+                              <button
+                                key={s.studentId}
+                                onClick={() => onSelectStudent(studentIndex)}
+                                className="px-2 py-1 bg-white rounded text-xs text-gray-700 hover:bg-primary-50 hover:text-primary-700 transition-colors border border-gray-200"
+                              >
+                                {s.studentName}
+                              </button>
+                            )
+                          })}
                           {task.notSubmittedStudents.length > 10 && (
                             <span className="px-2 py-1 text-xs text-gray-500">
                               +{task.notSubmittedStudents.length - 10}人
@@ -956,7 +962,7 @@ function StudentListView({
   onSelectStudent,
 }: {
   students: StudentDetail[];
-  onSelectStudent: (student: StudentDetail) => void;
+  onSelectStudent: (index: number) => void;
 }) {
   const [sortBy, setSortBy] = useState<'name' | 'progress' | 'score' | 'duration'>('name')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
@@ -1068,7 +1074,7 @@ function StudentListView({
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {filteredStudents.map(student => (
+            {filteredStudents.map((student, index) => (
               <tr key={student.studentId} className="hover:bg-gray-50 transition-colors">
                 <td className="px-4 py-3">
                   <p className="font-medium text-gray-900">{student.studentName}</p>
@@ -1102,7 +1108,7 @@ function StudentListView({
                 </td>
                 <td className="px-4 py-3 text-right">
                   <button
-                    onClick={() => onSelectStudent(student)}
+                    onClick={() => onSelectStudent(index)}
                     className="px-3 py-1.5 bg-primary-50 text-primary-700 rounded-lg text-sm font-medium hover:bg-primary-100 transition-colors"
                   >
                     查看详情
@@ -1117,14 +1123,19 @@ function StudentListView({
   )
 }
 
-// 学生详情侧边栏组件
-function StudentDetailSidebar({
-  student,
+// 学生详情弹窗组件
+function StudentDetailModal({
+  students,
+  currentIndex,
   onClose,
+  onNavigate,
 }: {
-  student: StudentDetail;
+  students: StudentDetail[];
+  currentIndex: number;
   onClose: () => void;
+  onNavigate: (index: number) => void;
 }) {
+  const student = students[currentIndex]
   const [expandedSection, setExpandedSection] = useState<'resources' | 'tasks' | 'chat' | null>('tasks')
 
   const statusConfig = {
@@ -1141,15 +1152,61 @@ function StudentDetailSidebar({
     graded: { label: '已批改', color: 'text-green-600' },
   }
 
-  return (
-    <div className="fixed inset-0 z-50 flex justify-end">
-      {/* 遮罩 */}
-      <div className="absolute inset-0 bg-black/30" onClick={onClose} />
+  const canGoPrev = currentIndex > 0
+  const canGoNext = currentIndex < students.length - 1
 
-      {/* 侧边栏 */}
-      <div className="relative w-full max-w-lg bg-white shadow-2xl overflow-y-auto animate-slide-in-right">
-        {/* 头部 */}
-        <div className="sticky top-0 z-10 bg-gradient-to-r from-primary-500 to-primary-600 text-white p-6">
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* 遮罩 */}
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-fade-in" onClick={onClose} />
+
+      {/* 弹窗 */}
+      <div className="relative w-full max-w-4xl max-h-[90vh] bg-white rounded-2xl shadow-2xl overflow-hidden animate-scale-in">
+        {/* 头部 - 导航栏 */}
+        <div className="sticky top-0 z-10 bg-gradient-to-r from-primary-500 to-primary-600 text-white px-6 py-4">
+          <div className="flex items-center justify-between mb-4">
+            {/* 上一个按钮 */}
+            <button
+              onClick={() => canGoPrev && onNavigate(currentIndex - 1)}
+              disabled={!canGoPrev}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${
+                canGoPrev
+                  ? 'bg-white/20 hover:bg-white/30 active:scale-95'
+                  : 'bg-white/10 text-white/40 cursor-not-allowed'
+              }`}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              上一个
+            </button>
+
+            {/* 学生信息 + 计数 */}
+            <div className="text-center">
+              <h2 className="text-xl font-bold">{student.studentName}</h2>
+              <p className="text-white/80 text-sm">
+                {student.className} · {currentIndex + 1} / {students.length}
+              </p>
+            </div>
+
+            {/* 下一个按钮 */}
+            <button
+              onClick={() => canGoNext && onNavigate(currentIndex + 1)}
+              disabled={!canGoNext}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${
+                canGoNext
+                  ? 'bg-white/20 hover:bg-white/30 active:scale-95'
+                  : 'bg-white/10 text-white/40 cursor-not-allowed'
+              }`}
+            >
+              下一个
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
+
+          {/* 关闭按钮 */}
           <button
             onClick={onClose}
             className="absolute top-4 right-4 p-2 hover:bg-white/20 rounded-lg transition-colors"
@@ -1159,43 +1216,37 @@ function StudentDetailSidebar({
             </svg>
           </button>
 
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center text-2xl font-bold">
-              {student.studentName.charAt(0)}
-            </div>
-            <div>
-              <h2 className="text-xl font-bold">{student.studentName}</h2>
-              <p className="text-white/80">{student.className}</p>
-              <span className={`inline-block mt-1 px-2 py-0.5 rounded text-xs font-medium ${statusConfig[student.status].color}`}>
-                {statusConfig[student.status].label}
-              </span>
-            </div>
-          </div>
-
-          {/* 概览统计 */}
-          <div className="grid grid-cols-3 gap-4 mt-4 pt-4 border-t border-white/20">
-            <div className="text-center">
-              <p className="text-2xl font-bold">{student.progress}%</p>
-              <p className="text-xs text-white/70">学习进度</p>
-            </div>
-            <div className="text-center">
-              <p className="text-2xl font-bold">{student.objectiveScore ?? '-'}</p>
-              <p className="text-xs text-white/70">测验分数</p>
-            </div>
-            <div className="text-center">
-              <p className="text-2xl font-bold">{student.learningDuration}</p>
-              <p className="text-xs text-white/70">学习时长(分钟)</p>
+          {/* 状态标签 + 概览统计 */}
+          <div className="flex items-center justify-center gap-3 pt-3 border-t border-white/20">
+            <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusConfig[student.status].color}`}>
+              {statusConfig[student.status].label}
+            </span>
+            <div className="flex items-center gap-4 text-sm">
+              <div className="text-center">
+                <p className="font-bold">{student.progress}%</p>
+                <p className="text-xs text-white/70">进度</p>
+              </div>
+              <div className="w-px h-8 bg-white/20" />
+              <div className="text-center">
+                <p className="font-bold">{student.objectiveScore ?? '-'}</p>
+                <p className="text-xs text-white/70">分数</p>
+              </div>
+              <div className="w-px h-8 bg-white/20" />
+              <div className="text-center">
+                <p className="font-bold">{student.learningDuration}</p>
+                <p className="text-xs text-white/70">分钟</p>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* 内容区域 */}
-        <div className="p-4 space-y-4">
+        {/* 内容区域 - 可滚动 */}
+        <div className="overflow-y-auto max-h-[calc(90vh-180px)] p-6 space-y-4">
           {/* 资源查看情况 */}
-          <div className="bg-gray-50 rounded-xl overflow-hidden">
+          <div className="glass-card overflow-hidden">
             <button
               onClick={() => setExpandedSection(expandedSection === 'resources' ? null : 'resources')}
-              className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-100 transition-colors"
+              className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50/50 transition-colors"
             >
               <span className="font-semibold text-gray-800">📚 资源查看情况</span>
               <svg className={`w-5 h-5 text-gray-400 transition-transform ${expandedSection === 'resources' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1237,10 +1288,10 @@ function StudentDetailSidebar({
           </div>
 
           {/* 任务完成情况 */}
-          <div className="bg-gray-50 rounded-xl overflow-hidden">
+          <div className="glass-card overflow-hidden">
             <button
               onClick={() => setExpandedSection(expandedSection === 'tasks' ? null : 'tasks')}
-              className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-100 transition-colors"
+              className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50/50 transition-colors"
             >
               <span className="font-semibold text-gray-800">📋 任务完成情况</span>
               <svg className={`w-5 h-5 text-gray-400 transition-transform ${expandedSection === 'tasks' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1318,10 +1369,10 @@ function StudentDetailSidebar({
           </div>
 
           {/* AI 对话记录 */}
-          <div className="bg-gray-50 rounded-xl overflow-hidden">
+          <div className="glass-card overflow-hidden">
             <button
               onClick={() => setExpandedSection(expandedSection === 'chat' ? null : 'chat')}
-              className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-100 transition-colors"
+              className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50/50 transition-colors"
             >
               <span className="font-semibold text-gray-800">💬 AI 对话记录 ({student.aiConversations.length})</span>
               <svg className={`w-5 h-5 text-gray-400 transition-transform ${expandedSection === 'chat' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1367,7 +1418,7 @@ function StudentDetailSidebar({
 
           {/* 能力维度（条件显示） */}
           {student.competencyScores && (
-            <div className="bg-gray-50 rounded-xl p-4">
+            <div className="glass-card p-4">
               <h3 className="font-semibold text-gray-800 mb-3">🎯 能力维度评估</h3>
               <div className="grid grid-cols-2 gap-2">
                 {Object.entries(student.competencyScores).map(([type, rating]) => {
@@ -1402,7 +1453,7 @@ interface SpaceResultsPageProps {
 export default function SpaceResultsPage({ params }: SpaceResultsPageProps) {
   const { spaceId } = use(params)
   const [selectedClasses, setSelectedClasses] = useState<string[]>(mockClasses.map(c => c.classId))
-  const [selectedStudent, setSelectedStudent] = useState<StudentDetail | null>(null)
+  const [selectedStudentIndex, setSelectedStudentIndex] = useState<number | null>(null)
   const [showResourceTaskDetails, setShowResourceTaskDetails] = useState(false)
 
   // 过滤选中班级的学生
@@ -1576,7 +1627,7 @@ export default function SpaceResultsPage({ params }: SpaceResultsPageProps) {
                 <div className="p-4 border-t border-gray-100">
                   <ResourceTaskDetailsView
                     students={filteredStudents}
-                    onSelectStudent={setSelectedStudent}
+                    onSelectStudent={setSelectedStudentIndex}
                   />
                 </div>
               )}
@@ -1587,22 +1638,39 @@ export default function SpaceResultsPage({ params }: SpaceResultsPageProps) {
           <div className="lg:col-span-2">
             <StudentListView
               students={filteredStudents}
-              onSelectStudent={setSelectedStudent}
+              onSelectStudent={setSelectedStudentIndex}
             />
           </div>
         </div>
       </div>
 
-      {/* Student Detail Sidebar */}
-      {selectedStudent && (
-        <StudentDetailSidebar
-          student={selectedStudent}
-          onClose={() => setSelectedStudent(null)}
+      {/* Student Detail Modal */}
+      {selectedStudentIndex !== null && (
+        <StudentDetailModal
+          students={filteredStudents}
+          currentIndex={selectedStudentIndex}
+          onClose={() => setSelectedStudentIndex(null)}
+          onNavigate={setSelectedStudentIndex}
         />
       )}
 
       {/* Animation Styles */}
       <style jsx global>{`
+        /* ============================================ */
+        /* Fade-in Animation */
+        /* ============================================ */
+        @keyframes fade-in {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+        .animate-fade-in {
+          animation: fade-in 0.2s ease-out;
+        }
+
         /* ============================================ */
         /* Slide-in Animation */
         /* ============================================ */
