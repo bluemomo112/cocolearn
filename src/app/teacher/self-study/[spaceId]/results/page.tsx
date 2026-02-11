@@ -1227,7 +1227,7 @@ export default function SpaceResultsPage({ params }: SpaceResultsPageProps) {
         <div className="mb-6">
           <div className="flex items-center gap-4 mb-4">
             <Link
-              href="/teacher/self-study"
+              href={`/teacher/self-study/${spaceId}`}
               className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

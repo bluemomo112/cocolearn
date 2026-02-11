@@ -95,18 +95,8 @@ const MOCK_CURRENT_NODE = 'node_3';
 // Enhanced Notes Panel component
 function EnhancedNotesPanel({ learningMode, isAIGenerating }: { learningMode?: LearningMode; isAIGenerating?: boolean }) {
   const { t } = useLanguage();
-  const [notes, setNotes] = useState<Note[]>([
-    {
-      id: '1',
-      title: t('我的学习笔记'),
-      content: `# ${t('欢迎使用增强笔记')}\n\n${t('你可以：')}\n- ${t('记录Markdown格式的笔记')}\n- ${t('上传图片')}\n- ${t('录制语音笔记')}\n\n${t('开始你的学习之旅吧！')}`,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      images: [],
-      voiceRecordings: [],
-    },
-  ]);
-  const [activeNoteId, setActiveNoteId] = useState('1');
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [activeNoteId, setActiveNoteId] = useState('');
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
@@ -304,31 +294,41 @@ function EnhancedNotesPanel({ learningMode, isAIGenerating }: { learningMode?: L
           </div>
         )}
         <div className="flex-1 overflow-y-auto p-3 space-y-2">
-          {notes.map((note) => (
-            <div
-              key={note.id}
-              onClick={() => {
-                setActiveNoteId(note.id);
-                setShowNoteEditor(true);
-              }}
-              className="p-3 bg-white border border-gray-200 rounded-lg hover:border-primary-300 hover:shadow-md cursor-pointer transition-all"
-            >
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-semibold text-gray-800 truncate mb-1">
-                    {note.title}
-                  </div>
-                  <div className="text-xs text-gray-500 truncate">
-                    {note.content.slice(0, 50) || t('空笔记')}
-                  </div>
-                  <div className="text-xs text-gray-400 mt-1">
-                    {new Date(note.updatedAt).toLocaleString('zh-CN')}
-                  </div>
-                </div>
-                <Edit size={14} className="text-gray-400 flex-shrink-0 mt-1" />
+          {notes.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full text-center py-12">
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                <Pencil size={24} className="text-gray-400" />
               </div>
+              <p className="text-sm text-gray-500 mb-2">{t('还没有笔记')}</p>
+              <p className="text-xs text-gray-400">{t('点击上方按钮创建第一个笔记')}</p>
             </div>
-          ))}
+          ) : (
+            notes.map((note) => (
+              <div
+                key={note.id}
+                onClick={() => {
+                  setActiveNoteId(note.id);
+                  setShowNoteEditor(true);
+                }}
+                className="p-3 bg-white border border-gray-200 rounded-lg hover:border-primary-300 hover:shadow-md cursor-pointer transition-all"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-semibold text-gray-800 truncate mb-1">
+                      {note.title}
+                    </div>
+                    <div className="text-xs text-gray-500 truncate">
+                      {note.content.slice(0, 50) || t('空笔记')}
+                    </div>
+                    <div className="text-xs text-gray-400 mt-1">
+                      {new Date(note.updatedAt).toLocaleString('zh-CN')}
+                    </div>
+                  </div>
+                  <Edit size={14} className="text-gray-400 flex-shrink-0 mt-1" />
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
     );
@@ -1443,69 +1443,81 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                   </div>
                 </div>
 
-                {/* 资源列表 - 使用 mockResources */}
+                {/* 资源列表 */}
                 <div className="flex-1 overflow-y-auto p-3 space-y-2">
-                  {/* 全选控制 */}
-                  <div className="flex items-center justify-between px-1 mb-1">
-                    <span className="text-xs text-gray-500">{mockResources.length + aiGeneratedResources.length} {t('个来源')}</span>
-                    <button className="text-xs text-primary-600 hover:text-primary-700 font-medium">{t('全选')}</button>
-                  </div>
-
-                  {/* AI生成的资源 */}
-                  {aiGeneratedResources.map((resource) => (
-                    <div
-                      key={resource.id}
-                      className="flex items-start gap-3 p-3 bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 rounded-xl hover:border-purple-300 hover:shadow-md transition-all cursor-pointer group"
-                    >
-                      {/* 选中指示器 */}
-                      <div className="w-5 h-5 rounded border-2 border-purple-400 bg-purple-500 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <Check size={12} className="text-white" />
+                  {config.resources.length === 0 && aiGeneratedResources.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-full text-center py-12">
+                      <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                        <FolderOpen size={24} className="text-gray-400" />
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <div className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 bg-purple-100">
-                            <span className="text-sm">{resource.icon}</span>
-                          </div>
-                          <p className="text-sm font-medium text-gray-700 truncate">{resource.title}</p>
-                        </div>
-                        <p className="text-xs text-purple-600 line-clamp-1 ml-8 flex items-center gap-1">
-                          <Sparkles size={10} />
-                          {new Date(resource.generatedAt).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}
-                        </p>
-                      </div>
+                      <p className="text-sm text-gray-500 mb-2">{t('还没有学习资源')}</p>
+                      <p className="text-xs text-gray-400">{t('点击上方按钮添加资料')}</p>
                     </div>
-                  ))}
+                  ) : (
+                    <>
+                      {/* 全选控制 */}
+                      <div className="flex items-center justify-between px-1 mb-1">
+                        <span className="text-xs text-gray-500">{config.resources.length + aiGeneratedResources.length} {t('个来源')}</span>
+                        <button className="text-xs text-primary-600 hover:text-primary-700 font-medium">{t('全选')}</button>
+                      </div>
 
-                  {/* 原有资源 */}
-                  {mockResources.map((resource) => (
-                    <div
-                      key={resource.id}
-                      className="flex items-start gap-3 p-3 bg-white border border-gray-200 rounded-xl hover:border-primary-300 hover:shadow-md transition-all cursor-pointer group"
-                    >
-                      {/* 选中指示器 */}
-                      <div className="w-5 h-5 rounded border-2 border-primary-400 bg-primary-500 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <Check size={12} className="text-white" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <div className={`w-6 h-6 rounded flex items-center justify-center flex-shrink-0 ${
-                            resource.type === 'video' ? 'bg-red-100' :
-                            resource.type === 'presentation' ? 'bg-orange-100' : 'bg-blue-100'
-                          }`}>
-                            {resource.type === 'video' ? (
-                              <Video size={12} className="text-red-600" />
-                            ) : resource.type === 'presentation' ? (
-                              <FileSpreadsheet size={12} className="text-orange-600" />
-                            ) : (
-                              <FileText size={12} className="text-blue-600" />
-                            )}
+                      {/* AI生成的资源 */}
+                      {aiGeneratedResources.map((resource) => (
+                        <div
+                          key={resource.id}
+                          className="flex items-start gap-3 p-3 bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 rounded-xl hover:border-purple-300 hover:shadow-md transition-all cursor-pointer group"
+                        >
+                          {/* 选中指示器 */}
+                          <div className="w-5 h-5 rounded border-2 border-purple-400 bg-purple-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <Check size={12} className="text-white" />
                           </div>
-                          <p className="text-sm font-medium text-gray-700 truncate">{resource.title}</p>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <div className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 bg-purple-100">
+                                <span className="text-sm">{resource.icon}</span>
+                              </div>
+                              <p className="text-sm font-medium text-gray-700 truncate">{resource.title}</p>
+                            </div>
+                            <p className="text-xs text-purple-600 line-clamp-1 ml-8 flex items-center gap-1">
+                              <Sparkles size={10} />
+                              {new Date(resource.generatedAt).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                          </div>
                         </div>
-                        <p className="text-xs text-gray-400 line-clamp-1 ml-8">{resource.description}</p>
-                      </div>
-                    </div>
-                  ))}
+                      ))}
+
+                      {/* 用户上传的资源 */}
+                      {config.resources.map((resource) => (
+                        <div
+                          key={resource.id}
+                          className="flex items-start gap-3 p-3 bg-white border border-gray-200 rounded-xl hover:border-primary-300 hover:shadow-md transition-all cursor-pointer group"
+                        >
+                          {/* 选中指示器 */}
+                          <div className="w-5 h-5 rounded border-2 border-primary-400 bg-primary-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <Check size={12} className="text-white" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <div className={`w-6 h-6 rounded flex items-center justify-center flex-shrink-0 ${
+                                resource.type === 'video' ? 'bg-red-100' :
+                                resource.type === 'presentation' ? 'bg-orange-100' : 'bg-blue-100'
+                              }`}>
+                                {resource.type === 'video' ? (
+                                  <Video size={12} className="text-red-600" />
+                                ) : resource.type === 'presentation' ? (
+                                  <FileSpreadsheet size={12} className="text-orange-600" />
+                                ) : (
+                                  <FileText size={12} className="text-blue-600" />
+                                )}
+                              </div>
+                              <p className="text-sm font-medium text-gray-700 truncate">{resource.title}</p>
+                            </div>
+                            <p className="text-xs text-gray-400 line-clamp-1 ml-8">{resource.description}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </>
+                  )}
                 </div>
               </div>
 
