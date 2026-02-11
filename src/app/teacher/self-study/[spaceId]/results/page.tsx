@@ -2,6 +2,8 @@
 
 import { useState, useMemo, use } from 'react'
 import Link from 'next/link'
+import CountUp from 'react-countup'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, Legend, ReferenceLine } from 'recharts'
 import { ClassCompetencyDistribution, COMPETENCY_DEFINITIONS, getStarLevelColor } from '../../../note-config/results-view'
 
 // ============================================
@@ -312,6 +314,227 @@ function formatDuration(seconds: number): string {
 function formatDate(date: Date | null): string {
   if (!date) return '-'
   return new Date(date).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+}
+
+// ============================================
+// Data Transformation Functions
+// ============================================
+
+// 生成班级对比数据
+function generateClassComparisonData(selectedClasses: string[], students: StudentDetail[]) {
+  return selectedClasses.map(classId => {
+    const classStudents = students.filter(s => s.classId === classId)
+    const completed = classStudents.filter(s => s.status === 'completed').length
+    const needsAttention = classStudents.filter(s => s.status === 'needs_attention').length
+
+    return {
+      className: mockClasses.find(c => c.classId === classId)?.className || '',
+      avgProgress: Math.round(classStudents.reduce((sum, s) => sum + s.progress, 0) / classStudents.length) || 0,
+      avgDuration: Math.round(classStudents.reduce((sum, s) => sum + s.learningDuration, 0) / classStudents.length) || 0,
+      completionRate: classStudents.length > 0 ? Math.round((completed / classStudents.length) * 100) : 0,
+      needsAttentionRate: classStudents.length > 0 ? Math.round((needsAttention / classStudents.length) * 100) : 0,
+      studentCount: classStudents.length
+    }
+  })
+}
+
+// 生成进度分布数据 (7天趋势)
+function generateProgressDistribution(students: StudentDetail[]) {
+  const days = 7
+  const data = []
+
+  for (let i = days - 1; i >= 0; i--) {
+    const date = new Date()
+    date.setDate(date.getDate() - i)
+    const completionFactor = (days - i) / days
+
+    data.push({
+      date: date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' }),
+      completed: Math.round(students.filter(s => s.status === 'completed').length * completionFactor),
+      inProgress: Math.round(students.filter(s => s.status === 'in_progress').length * (1 - completionFactor * 0.5)),
+      notStarted: Math.round(students.filter(s => s.status === 'not_started').length * (1 - completionFactor)),
+      needsAttention: students.filter(s => s.status === 'needs_attention').length
+    })
+  }
+
+  return data
+}
+
+// 生成任务表现对比数据 (学生 vs 班级平均)
+function generateTaskComparisonData(student: StudentDetail, allStudents: StudentDetail[]) {
+  return mockTasks.map(task => {
+    const studentSubmission = student.taskSubmissions.find(t => t.taskId === task.taskId)
+    const studentScore = studentSubmission?.score || 0
+
+    const allSubmissions = allStudents
+      .map(s => s.taskSubmissions.find(t => t.taskId === task.taskId))
+      .filter(sub => sub && sub.score !== undefined)
+
+    const classAverage = allSubmissions.length > 0
+      ? Math.round(allSubmissions.reduce((sum, sub) => sum + (sub!.score || 0), 0) / allSubmissions.length)
+      : 0
+
+    return {
+      taskTitle: task.title.length > 15 ? task.title.substring(0, 15) + '...' : task.title,
+      fullTitle: task.title,
+      studentScore,
+      classAverage,
+      difference: studentScore - classAverage
+    }
+  })
+}
+
+// ============================================
+// Chart Components
+// ============================================
+
+// 自定义 Tooltip 组件
+function FancyTooltip({ active, payload, label }: any) {
+  if (!active || !payload || !payload.length) return null
+
+  return (
+    <div className="glass-card p-3 shadow-lg">
+      <p className="font-semibold text-gray-800 mb-2">{label}</p>
+      {payload.map((entry: any, index: number) => (
+        <div key={index} className="flex items-center gap-2 text-sm">
+          <div
+            className="w-3 h-3 rounded-full"
+            style={{ backgroundColor: entry.color }}
+          />
+          <span className="text-gray-600">{entry.name}:</span>
+          <span className="font-semibold text-gray-900">{entry.value}{entry.unit || ''}</span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// 班级对比横向条形图
+function ClassComparisonChart({ data }: { data: ReturnType<typeof generateClassComparisonData> }) {
+  if (data.length === 0) return null
+
+  return (
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+      <h3 className="text-sm font-bold text-gray-800 mb-4 flex items-center gap-2">
+        <span className="text-lg">📊</span>
+        班级对比分析
+      </h3>
+      <ResponsiveContainer width="100%" height={data.length * 80 + 40}>
+        <BarChart data={data} layout="vertical" margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
+          <defs>
+            <linearGradient id="progressGradient" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor="#10b981" />
+              <stop offset="100%" stopColor="#14b8a6" />
+            </linearGradient>
+            <linearGradient id="durationGradient" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor="#667eea" />
+              <stop offset="100%" stopColor="#764ba2" />
+            </linearGradient>
+          </defs>
+          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+          <XAxis type="number" stroke="#6b7280" />
+          <YAxis dataKey="className" type="category" width={60} stroke="#6b7280" />
+          <Tooltip content={<FancyTooltip />} />
+          <Legend />
+          <Bar dataKey="avgProgress" name="平均进度" fill="url(#progressGradient)" radius={[0, 8, 8, 0]} unit="%" />
+          <Bar dataKey="completionRate" name="完成率" fill="#84cc16" radius={[0, 8, 8, 0]} unit="%" />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  )
+}
+
+// 进度分布面积图
+function ProgressDistributionChart({ data }: { data: ReturnType<typeof generateProgressDistribution> }) {
+  return (
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+      <h3 className="text-sm font-bold text-gray-800 mb-4 flex items-center gap-2">
+        <span className="text-lg">📈</span>
+        学习进度趋势 (近7天)
+      </h3>
+      <ResponsiveContainer width="100%" height={200}>
+        <AreaChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+          <defs>
+            <linearGradient id="completedGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#10b981" stopOpacity={0.8} />
+              <stop offset="100%" stopColor="#10b981" stopOpacity={0.1} />
+            </linearGradient>
+            <linearGradient id="inProgressGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.8} />
+              <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.1} />
+            </linearGradient>
+            <linearGradient id="notStartedGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#94a3b8" stopOpacity={0.8} />
+              <stop offset="100%" stopColor="#94a3b8" stopOpacity={0.1} />
+            </linearGradient>
+          </defs>
+          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+          <XAxis dataKey="date" stroke="#6b7280" style={{ fontSize: '12px' }} />
+          <YAxis stroke="#6b7280" />
+          <Tooltip content={<FancyTooltip />} />
+          <Legend />
+          <Area
+            type="monotone"
+            dataKey="completed"
+            name="已完成"
+            stackId="1"
+            stroke="#10b981"
+            fill="url(#completedGradient)"
+          />
+          <Area
+            type="monotone"
+            dataKey="inProgress"
+            name="进行中"
+            stackId="1"
+            stroke="#3b82f6"
+            fill="url(#inProgressGradient)"
+          />
+          <Area
+            type="monotone"
+            dataKey="notStarted"
+            name="未开始"
+            stackId="1"
+            stroke="#94a3b8"
+            fill="url(#notStartedGradient)"
+          />
+        </AreaChart>
+      </ResponsiveContainer>
+    </div>
+  )
+}
+
+// 任务表现对比图 (用于学生详情侧边栏)
+function TaskComparisonChart({ data }: { data: ReturnType<typeof generateTaskComparisonData> }) {
+  return (
+    <div className="mt-4">
+      <h4 className="text-sm font-semibold text-gray-700 mb-3">任务表现对比</h4>
+      <ResponsiveContainer width="100%" height={250}>
+        <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+          <defs>
+            <linearGradient id="studentGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#10b981" />
+              <stop offset="100%" stopColor="#14b8a6" />
+            </linearGradient>
+          </defs>
+          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+          <XAxis
+            dataKey="taskTitle"
+            angle={-45}
+            textAnchor="end"
+            height={80}
+            stroke="#6b7280"
+            style={{ fontSize: '11px' }}
+          />
+          <YAxis stroke="#6b7280" domain={[0, 100]} />
+          <Tooltip content={<FancyTooltip />} />
+          <Legend />
+          <ReferenceLine y={60} stroke="#f59e0b" strokeDasharray="3 3" label="及格线" />
+          <Bar dataKey="studentScore" name="学生得分" fill="url(#studentGradient)" radius={[8, 8, 0, 0]} />
+          <Bar dataKey="classAverage" name="班级平均" fill="#94a3b8" radius={[8, 8, 0, 0]} />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  )
 }
 
 // ============================================
@@ -1026,6 +1249,10 @@ function StudentDetailSidebar({
             </button>
             {expandedSection === 'tasks' && (
               <div className="px-4 pb-4 space-y-3">
+                {/* 任务对比图表 */}
+                <TaskComparisonChart data={generateTaskComparisonData(student, mockStudents)} />
+
+                {/* 任务列表 */}
                 {student.taskSubmissions.map(submission => {
                   const task = mockTasks.find(t => t.taskId === submission.taskId)
                   if (!task) return null
@@ -1275,21 +1502,29 @@ export default function SpaceResultsPage({ params }: SpaceResultsPageProps) {
 
             {/* 整体统计卡片 */}
             <div className="grid grid-cols-2 gap-3">
-              <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
+              <div className="glass-card hover-card p-4">
                 <p className="text-xs text-gray-500 mb-1">平均进度</p>
-                <p className="text-2xl font-bold text-gray-900">{overallStats.avgProgress}%</p>
+                <p className="text-2xl font-bold gradient-text">
+                  <CountUp end={overallStats.avgProgress} duration={2} suffix="%" />
+                </p>
               </div>
-              <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
+              <div className="glass-card hover-card p-4">
                 <p className="text-xs text-gray-500 mb-1">平均时长</p>
-                <p className="text-2xl font-bold text-gray-900">{overallStats.avgDuration}分钟</p>
+                <p className="text-2xl font-bold gradient-text">
+                  <CountUp end={overallStats.avgDuration} duration={2} suffix="分钟" />
+                </p>
               </div>
-              <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
+              <div className="glass-card hover-card p-4">
                 <p className="text-xs text-gray-500 mb-1">已完成</p>
-                <p className="text-2xl font-bold text-green-600">{overallStats.completedCount}人</p>
+                <p className="text-2xl font-bold text-green-600">
+                  <CountUp end={overallStats.completedCount} duration={2} suffix="人" />
+                </p>
               </div>
-              <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
+              <div className="glass-card hover-card p-4">
                 <p className="text-xs text-gray-500 mb-1">需关注</p>
-                <p className="text-2xl font-bold text-orange-600">{overallStats.needsAttentionCount}人</p>
+                <p className="text-2xl font-bold text-orange-600">
+                  <CountUp end={overallStats.needsAttentionCount} duration={2} suffix="人" />
+                </p>
               </div>
             </div>
 
@@ -1312,6 +1547,14 @@ export default function SpaceResultsPage({ params }: SpaceResultsPageProps) {
                 </div>
               </div>
             )}
+
+            {/* 班级对比图表 */}
+            {selectedClasses.length > 0 && (
+              <ClassComparisonChart data={generateClassComparisonData(selectedClasses, filteredStudents)} />
+            )}
+
+            {/* 进度分布图表 */}
+            <ProgressDistributionChart data={generateProgressDistribution(filteredStudents)} />
 
             {/* 资源/任务详情 - 可折叠区域 */}
             <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
@@ -1360,6 +1603,9 @@ export default function SpaceResultsPage({ params }: SpaceResultsPageProps) {
 
       {/* Animation Styles */}
       <style jsx global>{`
+        /* ============================================ */
+        /* Slide-in Animation */
+        /* ============================================ */
         @keyframes slide-in-right {
           from {
             transform: translateX(100%);
@@ -1370,6 +1616,167 @@ export default function SpaceResultsPage({ params }: SpaceResultsPageProps) {
         }
         .animate-slide-in-right {
           animation: slide-in-right 0.3s ease-out;
+        }
+
+        /* ============================================ */
+        /* Glassmorphism (玻璃态) */
+        /* ============================================ */
+        .glass-card {
+          background: rgba(255, 255, 255, 0.7);
+          backdrop-filter: blur(10px) saturate(180%);
+          -webkit-backdrop-filter: blur(10px) saturate(180%);
+          border: 1px solid rgba(255, 255, 255, 0.3);
+          border-radius: 16px;
+          box-shadow:
+            0 8px 32px 0 rgba(31, 38, 135, 0.15),
+            inset 0 1px 0 0 rgba(255, 255, 255, 0.5);
+        }
+
+        /* ============================================ */
+        /* Gradient Text */
+        /* ============================================ */
+        .gradient-text {
+          background: linear-gradient(135deg, #10b981, #14b8a6, #84cc16);
+          background-size: 200% 200%;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          animation: gradient-flow 3s ease infinite;
+        }
+
+        @keyframes gradient-flow {
+          0%, 100% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+        }
+
+        /* ============================================ */
+        /* Hover Card Animation */
+        /* ============================================ */
+        .hover-card {
+          transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+          position: relative;
+        }
+
+        .hover-card:hover {
+          transform: translateY(-4px) scale(1.02);
+          box-shadow:
+            0 20px 40px rgba(16, 185, 129, 0.2),
+            0 0 60px rgba(16, 185, 129, 0.1);
+        }
+
+        .hover-card::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          border-radius: inherit;
+          padding: 2px;
+          background: linear-gradient(135deg, #10b981, #14b8a6, #84cc16);
+          -webkit-mask:
+            linear-gradient(#fff 0 0) content-box,
+            linear-gradient(#fff 0 0);
+          -webkit-mask-composite: xor;
+          mask-composite: exclude;
+          opacity: 0;
+          transition: opacity 0.3s;
+        }
+
+        .hover-card:hover::before {
+          opacity: 0.6;
+        }
+
+        /* ============================================ */
+        /* Fade-in Animations */
+        /* ============================================ */
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        @keyframes scaleIn {
+          from {
+            opacity: 0;
+            transform: scale(0.8);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+
+        .animate-fade-in-up {
+          animation: fadeInUp 0.6s ease-out forwards;
+        }
+
+        .animate-scale-in {
+          animation: scaleIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+
+        /* ============================================ */
+        /* Glow Effects */
+        /* ============================================ */
+        .glow-green {
+          box-shadow:
+            0 0 20px rgba(16, 185, 129, 0.3),
+            0 0 40px rgba(16, 185, 129, 0.2);
+        }
+
+        .glow-pulse {
+          animation: pulse-glow 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-glow {
+          0%, 100% {
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+          }
+          50% {
+            box-shadow: 0 0 40px rgba(16, 185, 129, 0.6);
+          }
+        }
+
+        /* ============================================ */
+        /* Floating Animation */
+        /* ============================================ */
+        @keyframes float {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-10px); }
+        }
+
+        .floating-icon {
+          animation: float 3s ease-in-out infinite;
+        }
+
+        /* ============================================ */
+        /* Recharts Custom Styles */
+        /* ============================================ */
+        .recharts-tooltip-wrapper {
+          z-index: 1000;
+        }
+
+        .recharts-default-tooltip {
+          background: rgba(255, 255, 255, 0.95) !important;
+          backdrop-filter: blur(20px);
+          border: 2px solid rgba(16, 185, 129, 0.2) !important;
+          border-radius: 12px !important;
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1) !important;
+        }
+
+        .recharts-tooltip-label {
+          color: #1f2937 !important;
+          font-weight: 600 !important;
+          margin-bottom: 8px !important;
+        }
+
+        .recharts-tooltip-item {
+          color: #4b5563 !important;
         }
       `}</style>
     </div>

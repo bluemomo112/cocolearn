@@ -17,6 +17,7 @@
     "openai": "^6.15.0",
     "opencc-js": "^1.0.5",
     "react": "19.2.3",
+    "react-countup": "^6.5.3",
     "react-dom": "19.2.3",
     "react-markdown": "^10.1.0",
     "recharts": "^2.15.3",
