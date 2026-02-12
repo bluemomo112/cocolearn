@@ -1353,20 +1353,35 @@ function ResourceTaskDetailsView({
 function StudentListView({
   students,
   onSelectStudent,
+  classes,
 }: {
   students: StudentDetail[];
   onSelectStudent: (index: number) => void;
+  classes: ClassInfo[];
 }) {
   const [sortBy, setSortBy] = useState<'name' | 'progress' | 'score' | 'duration'>('name')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
   const [filterStatus, setFilterStatus] = useState<StudentStatus | 'all'>('all')
+  const [filterClass, setFilterClass] = useState<string>('all')
+  const [searchQuery, setSearchQuery] = useState('')
 
   const filteredStudents = useMemo(() => {
     let result = [...students]
 
-    // 筛选
+    // 状态筛选
     if (filterStatus !== 'all') {
       result = result.filter(s => s.status === filterStatus)
+    }
+
+    // 班级筛选
+    if (filterClass !== 'all') {
+      result = result.filter(s => s.classId === filterClass)
+    }
+
+    // 搜索
+    if (searchQuery.trim()) {
+      const query = searchQuery.trim().toLowerCase()
+      result = result.filter(s => s.studentName.toLowerCase().includes(query))
     }
 
     // 排序
@@ -1390,7 +1405,7 @@ function StudentListView({
     })
 
     return result
-  }, [students, sortBy, sortOrder, filterStatus])
+  }, [students, sortBy, sortOrder, filterStatus, filterClass, searchQuery])
 
   const toggleSort = (field: typeof sortBy) => {
     if (sortBy === field) {
@@ -1410,26 +1425,59 @@ function StudentListView({
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-      {/* 筛选和排序 */}
-      <div className="p-4 border-b border-gray-100 flex flex-wrap items-center gap-4">
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-600">状态筛选:</span>
+      {/* 搜索和筛选 */}
+      <div className="p-4 border-b border-gray-100 space-y-3">
+        {/* 搜索栏 */}
+        <div className="relative">
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input
+            type="text"
+            placeholder="搜索学生姓名..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          )}
+        </div>
+        {/* 筛选行 */}
+        <div className="flex flex-wrap items-center gap-3">
+          <select
+            value={filterClass}
+            onChange={(e) => setFilterClass(e.target.value)}
+            className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+          >
+            <option value="all">全部班级</option>
+            {classes.map(c => (
+              <option key={c.classId} value={c.classId}>{c.className}</option>
+            ))}
+          </select>
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value as StudentStatus | 'all')}
             className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
           >
-            <option value="all">全部 ({students.length})</option>
-            <option value="completed">已完成 ({students.filter(s => s.status === 'completed').length})</option>
-            <option value="in_progress">进行中 ({students.filter(s => s.status === 'in_progress').length})</option>
-            <option value="not_started">未开始 ({students.filter(s => s.status === 'not_started').length})</option>
-            <option value="needs_attention">需关注 ({students.filter(s => s.status === 'needs_attention').length})</option>
+            <option value="all">全部状态</option>
+            <option value="completed">已完成</option>
+            <option value="in_progress">进行中</option>
+            <option value="not_started">未开始</option>
+            <option value="needs_attention">需关注</option>
           </select>
+          <div className="flex-1" />
+          <span className="text-sm text-gray-500">
+            {filteredStudents.length} / {students.length} 名学生
+          </span>
         </div>
-        <div className="flex-1" />
-        <span className="text-sm text-gray-500">
-          显示 {filteredStudents.length} / {students.length} 名学生
-        </span>
       </div>
 
       {/* 表格 */}
@@ -1437,74 +1485,74 @@ function StudentListView({
         <table className="w-full">
           <thead className="bg-gray-50 border-b border-gray-100">
             <tr>
-              <th className="px-4 py-3 text-left">
+              <th className="pl-4 pr-2 py-3 text-left">
                 <button onClick={() => toggleSort('name')} className="flex items-center gap-1 text-xs font-semibold text-gray-600 uppercase tracking-wider hover:text-gray-900">
                   姓名
                   {sortBy === 'name' && <span>{sortOrder === 'asc' ? '↑' : '↓'}</span>}
                 </button>
               </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">班级</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">状态</th>
-              <th className="px-4 py-3 text-left">
+              <th className="px-2 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">状态</th>
+              <th className="px-2 py-3 text-left">
                 <button onClick={() => toggleSort('progress')} className="flex items-center gap-1 text-xs font-semibold text-gray-600 uppercase tracking-wider hover:text-gray-900">
                   进度
                   {sortBy === 'progress' && <span>{sortOrder === 'asc' ? '↑' : '↓'}</span>}
                 </button>
               </th>
-              <th className="px-4 py-3 text-left">
+              <th className="px-2 py-3 text-left">
                 <button onClick={() => toggleSort('score')} className="flex items-center gap-1 text-xs font-semibold text-gray-600 uppercase tracking-wider hover:text-gray-900">
-                  测验分数
+                  分数
                   {sortBy === 'score' && <span>{sortOrder === 'asc' ? '↑' : '↓'}</span>}
                 </button>
               </th>
-              <th className="px-4 py-3 text-left">
+              <th className="px-2 py-3 text-left">
                 <button onClick={() => toggleSort('duration')} className="flex items-center gap-1 text-xs font-semibold text-gray-600 uppercase tracking-wider hover:text-gray-900">
-                  学习时长
+                  时长
                   {sortBy === 'duration' && <span>{sortOrder === 'asc' ? '↑' : '↓'}</span>}
                 </button>
               </th>
-              <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">操作</th>
+              <th className="pl-2 pr-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
             {filteredStudents.map((student, index) => (
-              <tr key={student.studentId} className="hover:bg-gray-50 transition-colors">
-                <td className="px-4 py-3">
-                  <p className="font-medium text-gray-900">{student.studentName}</p>
+              <tr key={student.studentId} className="hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => onSelectStudent(index)}>
+                <td className="pl-4 pr-2 py-3">
+                  <p className="font-medium text-gray-900 text-sm">{student.studentName}</p>
+                  <p className="text-xs text-gray-400">{student.className}</p>
                 </td>
-                <td className="px-4 py-3">
-                  <span className="text-sm text-gray-600">{student.className}</span>
-                </td>
-                <td className="px-4 py-3">
-                  <span className={`px-2 py-1 rounded text-xs font-medium ${statusConfig[student.status].color}`}>
+                <td className="px-2 py-3">
+                  <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium whitespace-nowrap ${statusConfig[student.status].color}`}>
                     {statusConfig[student.status].label}
                   </span>
                 </td>
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-2">
-                    <div className="w-16 h-2 bg-gray-100 rounded-full overflow-hidden">
+                <td className="px-2 py-3">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-12 h-1.5 bg-gray-100 rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-primary-500"
+                        className="h-full bg-primary-500 rounded-full"
                         style={{ width: `${student.progress}%` }}
                       />
                     </div>
-                    <span className="text-sm text-gray-600">{student.progress}%</span>
+                    <span className="text-xs text-gray-600 tabular-nums">{student.progress}%</span>
                   </div>
                 </td>
-                <td className="px-4 py-3">
-                  <span className="text-sm text-gray-900">
-                    {student.objectiveScore !== undefined ? `${student.objectiveScore}分` : '-'}
+                <td className="px-2 py-3">
+                  <span className="text-sm tabular-nums text-gray-900">
+                    {student.objectiveScore !== undefined ? student.objectiveScore : '-'}
                   </span>
                 </td>
-                <td className="px-4 py-3">
-                  <span className="text-sm text-gray-600">{student.learningDuration}分钟</span>
+                <td className="px-2 py-3">
+                  <span className="text-xs text-gray-600 tabular-nums whitespace-nowrap">{student.learningDuration}min</span>
                 </td>
-                <td className="px-4 py-3 text-right">
+                <td className="pl-2 pr-4 py-3 text-right">
                   <button
-                    onClick={() => onSelectStudent(index)}
-                    className="px-3 py-1.5 bg-primary-50 text-primary-700 rounded-lg text-sm font-medium hover:bg-primary-100 transition-colors"
+                    onClick={(e) => { e.stopPropagation(); onSelectStudent(index) }}
+                    className="text-primary-600 hover:text-primary-800 transition-colors"
+                    title="查看详情"
                   >
-                    查看详情
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
                   </button>
                 </td>
               </tr>
@@ -2050,6 +2098,7 @@ export default function SpaceResultsPage({ params }: SpaceResultsPageProps) {
             <StudentListView
               students={filteredStudents}
               onSelectStudent={setSelectedStudentIndex}
+              classes={mockClasses}
             />
           </div>
         </div>
