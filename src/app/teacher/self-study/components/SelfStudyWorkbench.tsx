@@ -10,7 +10,7 @@ import {
   ArrowLeft, Send, Settings, BookOpen, Brain, Sparkles, FileText, Video,
   FileSpreadsheet, Plus, Upload, Link, GripVertical, X, Check, Zap, FileEdit,
   Activity, Pencil, Save, Target, Lightbulb, MessageCircle, Clock, FolderOpen,
-  ListChecks, ChevronRight, Play, Download, Eye, Search, BarChart3, Map,
+  ListChecks, ChevronRight, ChevronLeft, Play, Download, Eye, Search, BarChart3, Map,
   CheckCircle2, Circle, Bot, MessageSquare, Pause, RotateCcw, GitBranch,
   Edit, Image as ImageIcon, Mic, Trash2, Layers, Award, TrendingUp,
   ChevronDown, ChevronUp, Layout, Share2,
@@ -775,6 +775,11 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
   // 布局状态
   const [leftWidth, setLeftWidth] = useState(28);
   const [rightWidth, setRightWidth] = useState(25);
+  const [isLeftCollapsed, setIsLeftCollapsed] = useState(false);
+  const [isRightCollapsed, setIsRightCollapsed] = useState(false);
+
+  // 折叠宽度（像素）
+  const COLLAPSED_WIDTH = 40;
 
   // 聊天状态
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -1096,7 +1101,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
   };
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50">
+    <div className="h-full flex flex-col bg-gray-50">
       {/* 顶部状态栏 */}
       <header className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-6 shrink-0">
         <div className="flex items-center gap-4">
@@ -1168,23 +1173,53 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
       {/* 主内容区 - 三栏布局 */}
       <div className="flex-1 flex overflow-hidden">
         {/* 左侧面板 */}
-        <div style={{ width: `${leftWidth}%` }} className="bg-white border-r border-gray-200 flex flex-col flex-shrink-0">
-          {config.learningMode === 'ai_guided' ? (
+        <div
+          style={{
+            width: isLeftCollapsed ? `${COLLAPSED_WIDTH}px` : `${leftWidth}%`,
+            transition: 'width 0.3s ease-in-out'
+          }}
+          className="bg-white border-r border-gray-200 flex flex-col flex-shrink-0"
+        >
+          {isLeftCollapsed ? (
+            // 折叠状态：只显示展开按钮
+            <div className="flex-1 flex items-center justify-center">
+              <button
+                onClick={() => setIsLeftCollapsed(false)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors group"
+                title={t('展开面板')}
+              >
+                <ChevronRight size={20} className="text-gray-600 group-hover:text-primary-600" />
+              </button>
+            </div>
+          ) : (
+            <>
+            {config.learningMode === 'ai_guided' ? (
             // AI引导模式：上方AI资源 + 下方学习任务
             <>
               {/* AI生成资源区域 - 任务收起时自动扩展 */}
               <div className="flex flex-col min-h-0" style={{ flex: collapsedPanels.tasks ? '1 1 auto' : '0 0 40%' }}>
                 <div className="p-3 border-b border-gray-100 bg-gradient-to-r from-purple-50 to-pink-50">
-                  <h2 className="text-sm font-bold text-gray-700 flex items-center gap-2">
-                    <Sparkles size={16} className="text-purple-500" />
-                    {t('AI 智能资源')}
-                  </h2>
-                  <p className="text-xs text-gray-500 mt-1">
-                    <span className="inline-flex items-center gap-1">
-                      <Activity size={10} className="animate-pulse text-purple-500" />
-                      {t('根据学习进度动态生成')}
-                    </span>
-                  </p>
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <h2 className="text-sm font-bold text-gray-700 flex items-center gap-2">
+                        <Sparkles size={16} className="text-purple-500" />
+                        {t('AI 智能资源')}
+                      </h2>
+                      <p className="text-xs text-gray-500 mt-1">
+                        <span className="inline-flex items-center gap-1">
+                          <Activity size={10} className="animate-pulse text-purple-500" />
+                          {t('根据学习进度动态生成')}
+                        </span>
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setIsLeftCollapsed(true)}
+                      className="p-1.5 hover:bg-white/50 rounded-lg transition-colors"
+                      title={t('折叠面板')}
+                    >
+                      <ChevronLeft size={16} className="text-gray-600" />
+                    </button>
+                  </div>
                 </div>
                 {/* AI生成进度指示器 */}
                 {isAIGenerating && (
@@ -1441,11 +1476,22 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
               {/* 资源区域 - 任务收起时自动扩展 */}
               <div className="flex flex-col min-h-0" style={{ flex: collapsedPanels.tasks ? '1 1 auto' : '0 0 60%' }}>
                 <div className="p-3 border-b border-gray-100 bg-gradient-to-r from-primary-50 to-accent-50">
-                  <h2 className="text-sm font-bold text-gray-700 flex items-center gap-2">
-                    <FolderOpen size={16} className="text-primary-500" />
-                    Sources
-                  </h2>
-                  <p className="text-xs text-gray-500 mt-1">{t('自由浏览，随时提问')}</p>
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <h2 className="text-sm font-bold text-gray-700 flex items-center gap-2">
+                        <FolderOpen size={16} className="text-primary-500" />
+                        Sources
+                      </h2>
+                      <p className="text-xs text-gray-500 mt-1">{t('自由浏览，随时提问')}</p>
+                    </div>
+                    <button
+                      onClick={() => setIsLeftCollapsed(true)}
+                      className="p-1.5 hover:bg-white/50 rounded-lg transition-colors"
+                      title={t('折叠面板')}
+                    >
+                      <ChevronLeft size={16} className="text-gray-600" />
+                    </button>
+                  </div>
                 </div>
 
                 {/* 添加资源入口 */}
@@ -1721,18 +1767,22 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
               </div>
             </>
           )}
+          </>
+          )}
         </div>
 
-        {/* 左侧调整器 */}
-        <Resizer
-          onResize={(delta) => {
-            const newLeftWidth = Math.max(18, Math.min(35, leftWidth + delta));
-            setLeftWidth(newLeftWidth);
-          }}
-        />
+        {/* 左侧调整器 - 仅在未折叠时显示 */}
+        {!isLeftCollapsed && (
+          <Resizer
+            onResize={(delta) => {
+              const newLeftWidth = Math.max(18, Math.min(35, leftWidth + delta));
+              setLeftWidth(newLeftWidth);
+            }}
+          />
+        )}
 
         {/* 中间聊天面板 */}
-        <div style={{ width: `${100 - leftWidth - rightWidth}%` }} className="flex flex-col bg-gray-50">
+        <div className="flex-1 flex flex-col bg-gray-50">
           {/* 对话区头部 + 模式切换 */}
           <div className="p-3 bg-white border-b border-gray-200">
             <div className="flex items-center justify-between mb-3">
@@ -1880,18 +1930,39 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
           </div>
         </div>
 
-        {/* 右侧调整器 */}
-        <Resizer
-          onResize={(delta) => {
-            const newRightWidth = Math.max(18, Math.min(35, rightWidth - delta));
-            setRightWidth(newRightWidth);
-          }}
-        />
+        {/* 右侧调整器 - 仅在未折叠时显示 */}
+        {!isRightCollapsed && (
+          <Resizer
+            onResize={(delta) => {
+              const newRightWidth = Math.max(18, Math.min(35, rightWidth - delta));
+              setRightWidth(newRightWidth);
+            }}
+          />
+        )}
 
         {/* 右侧面板 */}
-        <div style={{ width: `${rightWidth}%` }} className="bg-white border-l border-gray-200 flex flex-col flex-shrink-0">
-          {/* 标签切换 */}
-          <div className="flex border-b border-gray-200 bg-gray-50">
+        <div
+          style={{
+            width: isRightCollapsed ? `${COLLAPSED_WIDTH}px` : `${rightWidth}%`,
+            transition: 'width 0.3s ease-in-out'
+          }}
+          className="bg-white border-l border-gray-200 flex flex-col flex-shrink-0"
+        >
+          {isRightCollapsed ? (
+            // 折叠状态：只显示展开按钮
+            <div className="flex-1 flex items-center justify-center">
+              <button
+                onClick={() => setIsRightCollapsed(false)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors group"
+                title={t('展开面板')}
+              >
+                <ChevronLeft size={20} className="text-gray-600 group-hover:text-primary-600" />
+              </button>
+            </div>
+          ) : (
+            <>
+              {/* 标签切换 */}
+              <div className="flex border-b border-gray-200 bg-gray-50">
             <button
               onClick={() => setRightTab('workspace')}
               className={`flex-1 px-3 py-2 text-xs font-medium transition-colors ${
@@ -1913,6 +1984,13 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
             >
               <Activity size={12} className="inline mr-1" />
               {t('学习状态')}
+            </button>
+            <button
+              onClick={() => setIsRightCollapsed(true)}
+              className="px-2 py-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+              title={t('折叠面板')}
+            >
+              <ChevronRight size={16} />
             </button>
           </div>
 
@@ -1990,6 +2068,8 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
               learningPath={learningPath}
               observations={MOCK_AI_OBSERVATIONS}
             />
+          )}
+          </>
           )}
         </div>
       </div>

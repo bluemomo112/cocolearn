@@ -332,7 +332,7 @@ export default function SelfStudyPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="h-full bg-gray-50 overflow-hidden">
       {viewState === 'manager' && (
         <SpaceManager
           spaces={spaces}

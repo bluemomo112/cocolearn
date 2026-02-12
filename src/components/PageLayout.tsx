@@ -13,9 +13,9 @@ interface PageLayoutProps {
 
 export default function PageLayout({ children, user }: PageLayoutProps) {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="h-screen flex flex-col bg-gray-50">
       <TopNavbar user={user} />
-      <main className="min-h-[calc(100vh-4rem)]">
+      <main className="flex-1 overflow-auto">
         {children}
       </main>
     </div>
