@@ -17,6 +17,8 @@ import {
 } from 'lucide-react';
 import SettingsModal from './SettingsModal';
 import PublishModal from './PublishModal';
+import FileUploadModal from './FileUploadModal';
+import LinkInputModal from './LinkInputModal';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { TaskEditModal } from '@/app/teacher/note-config/modals';
 import { useRouter } from 'next/navigation';
@@ -806,6 +808,16 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
   // 发布弹窗
   const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
 
+  // 文件上传弹窗
+  const [isFileUploadOpen, setIsFileUploadOpen] = useState(false);
+
+  // 链接输入弹窗
+  const [isLinkInputOpen, setIsLinkInputOpen] = useState(false);
+
+  // 空间名称编辑状态
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editedTitle, setEditedTitle] = useState(config.title);
+
   // 面板折叠状态
   const [collapsedPanels, setCollapsedPanels] = useState<Record<string, boolean>>({
     sources: false,
@@ -988,6 +1000,23 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
     }
   }, [config.learningMode]);
 
+  // 监听 isAIGenerating 变化，自动展开任务面板并填充数据
+  useEffect(() => {
+    if (isAIGenerating && generatedTasks.length === 0) {
+      // 立即展开任务面板
+      setCollapsedPanels(prev => ({ ...prev, tasks: false }));
+      setIsGeneratingTask(true);
+
+      // 模拟AI生成过程，延迟后填充mock数据
+      const timer = setTimeout(() => {
+        setGeneratedTasks(MOCK_GENERATED_TASKS);
+        setIsGeneratingTask(false);
+      }, 2000); // 2秒后完成生成
+
+      return () => clearTimeout(timer);
+    }
+  }, [isAIGenerating, generatedTasks.length]);
+
   // 发送消息
   const handleSendMessage = async () => {
     if (!inputMessage.trim() || isLoading) return;
@@ -1095,6 +1124,56 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
     router.push(`/teacher/self-study/${config.id}/results`);
   };
 
+  // 处理文件上传
+  const handleFileUpload = (files: File[]) => {
+    const newResources: Resource[] = files.map((file) => ({
+      id: `resource_${Date.now()}_${Math.random()}`,
+      title: file.name,
+      type: file.type.includes('video') ? 'video' :
+            file.type.includes('presentation') ? 'presentation' : 'document',
+      description: `上传于 ${new Date().toLocaleString('zh-CN')}`,
+    }));
+
+    onUpdateConfig({
+      ...config,
+      resources: [...config.resources, ...newResources],
+    });
+    setIsFileUploadOpen(false);
+  };
+
+  // 处理链接添加
+  const handleLinkAdd = (url: string, title?: string) => {
+    const newResource: Resource = {
+      id: `resource_${Date.now()}`,
+      title: title || url,
+      type: 'document',
+      description: url,
+    };
+
+    onUpdateConfig({
+      ...config,
+      resources: [...config.resources, newResource],
+    });
+    setIsLinkInputOpen(false);
+  };
+
+  // 处理空间名称保存
+  const handleTitleSave = () => {
+    if (editedTitle.trim() && editedTitle !== config.title) {
+      onUpdateConfig({
+        ...config,
+        title: editedTitle.trim(),
+      });
+    }
+    setIsEditingTitle(false);
+  };
+
+  // 处理空间名称取消
+  const handleTitleCancel = () => {
+    setEditedTitle(config.title);
+    setIsEditingTitle(false);
+  };
+
   // 切换学习模式
   const handleModeChange = (mode: LearningMode) => {
     onUpdateConfig({ ...config, learningMode: mode });
@@ -1115,7 +1194,46 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
           <div className="w-px h-6 bg-gray-200" />
           <div className="flex items-center gap-2">
             <Brain size={20} className="text-primary-600" />
-            <h1 className="text-base font-semibold text-gray-900">{config.title}</h1>
+            {isEditingTitle ? (
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={editedTitle}
+                  onChange={(e) => setEditedTitle(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleTitleSave();
+                    if (e.key === 'Escape') handleTitleCancel();
+                  }}
+                  className="text-base font-semibold text-gray-900 border border-primary-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  autoFocus
+                />
+                <button
+                  onClick={handleTitleSave}
+                  className="p-1 text-green-600 hover:bg-green-50 rounded transition-colors"
+                  title={t('保存')}
+                >
+                  <Check size={16} />
+                </button>
+                <button
+                  onClick={handleTitleCancel}
+                  className="p-1 text-gray-500 hover:bg-gray-100 rounded transition-colors"
+                  title={t('取消')}
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 group">
+                <h1 className="text-base font-semibold text-gray-900">{config.title}</h1>
+                <button
+                  onClick={() => setIsEditingTitle(true)}
+                  className="p-1 opacity-0 group-hover:opacity-100 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-all"
+                  title={t('编辑名称')}
+                >
+                  <Pencil size={14} />
+                </button>
+              </div>
+            )}
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -1277,7 +1395,12 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
             // AI引导模式：上方AI资源 + 下方学习任务
             <>
               {/* AI生成资源区域 - 任务收起时自动扩展 */}
-              <div className="flex flex-col min-h-0" style={{ flex: collapsedPanels.tasks ? '1 1 auto' : '0 0 40%' }}>
+              <div
+                className="flex flex-col min-h-0"
+                style={{
+                  flex: collapsedPanels.tasks ? '1 1 auto' : '0 0 50%'
+                }}
+              >
                 <div className="p-3 border-b border-gray-100 bg-gradient-to-r from-accent-50 to-accent-100">
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
@@ -1386,10 +1509,13 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                 </div>
               </div>
 
-              {/* 学习任务区域 - 占60%，可折叠 */}
-              <div className={`flex flex-col min-h-0 border-t-2 border-fresh-200 transition-all ${
-                collapsedPanels.tasks ? 'flex-shrink-0' : 'flex-1'
-              }`}>
+              {/* 学习任务区域 - 可折叠，展开时占50% */}
+              <div
+                className="flex flex-col min-h-0 border-t-2 border-fresh-200 transition-all"
+                style={{
+                  flex: collapsedPanels.tasks ? '0 0 auto' : '0 0 50%'
+                }}
+              >
                 {/* 可折叠的标题栏 */}
                 <div
                   className="p-3 border-b border-gray-100 bg-gradient-to-r from-fresh-50 to-fresh-100 cursor-pointer hover:bg-fresh-100/50 transition-colors"
@@ -1554,7 +1680,12 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
             // 自由探索模式：Sources 面板（类似 NotebookLM）+ 任务区（类似 student-workbench）
             <>
               {/* 资源区域 - 任务收起时自动扩展 */}
-              <div className="flex flex-col min-h-0" style={{ flex: collapsedPanels.tasks ? '1 1 auto' : '0 0 60%' }}>
+              <div
+                className="flex flex-col min-h-0"
+                style={{
+                  flex: collapsedPanels.tasks ? '1 1 auto' : '0 0 50%'
+                }}
+              >
                 <div className="p-3 border-b border-gray-100 bg-gradient-to-r from-primary-50 to-accent-50">
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
@@ -1576,16 +1707,25 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
 
                 {/* 添加资源入口 */}
                 <div className="p-3 border-b border-gray-100 space-y-2">
-                  <button className="w-full px-3 py-2.5 border-2 border-dashed border-gray-300 rounded-xl text-sm text-gray-500 hover:border-primary-400 hover:text-primary-600 hover:bg-primary-50 transition-all flex items-center justify-center gap-2">
+                  <button
+                    onClick={() => setIsFileUploadOpen(true)}
+                    className="w-full px-3 py-2.5 border-2 border-dashed border-gray-300 rounded-xl text-sm text-gray-500 hover:border-primary-400 hover:text-primary-600 hover:bg-primary-50 transition-all flex items-center justify-center gap-2"
+                  >
                     <Plus size={16} />
                     {t('添加资料来源')}
                   </button>
                   <div className="flex gap-2">
-                    <button className="flex-1 px-2 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-600 hover:bg-gray-100 transition-colors flex items-center justify-center gap-1">
+                    <button
+                      onClick={() => setIsFileUploadOpen(true)}
+                      className="flex-1 px-2 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-600 hover:bg-gray-100 transition-colors flex items-center justify-center gap-1"
+                    >
                       <Upload size={12} />
                       {t('上传文件')}
                     </button>
-                    <button className="flex-1 px-2 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-600 hover:bg-gray-100 transition-colors flex items-center justify-center gap-1">
+                    <button
+                      onClick={() => setIsLinkInputOpen(true)}
+                      className="flex-1 px-2 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-600 hover:bg-gray-100 transition-colors flex items-center justify-center gap-1"
+                    >
                       <Link size={12} />
                       {t('粘贴链接')}
                     </button>
@@ -1687,10 +1827,13 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                 </div>
               </div>
 
-              {/* 任务区域 - 可折叠 (类似 student-workbench) */}
-              <div className={`flex flex-col min-h-0 border-t-2 border-fresh-200 transition-all ${
-                collapsedPanels.tasks ? 'flex-shrink-0' : 'flex-1'
-              }`}>
+              {/* 任务区域 - 可折叠，展开时占50% */}
+              <div
+                className="flex flex-col min-h-0 border-t-2 border-fresh-200 transition-all"
+                style={{
+                  flex: collapsedPanels.tasks ? '0 0 auto' : '0 0 50%'
+                }}
+              >
                 {/* 可折叠的标题栏 */}
                 <div
                   className="p-3 border-b border-gray-100 bg-gradient-to-r from-fresh-50 to-fresh-100 cursor-pointer hover:bg-fresh-100/50 transition-colors"
@@ -2099,24 +2242,50 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
           {/* 内容区 */}
           {rightTab === 'workspace' ? (
             <div className="flex-1 flex flex-col overflow-hidden">
-              {/* 笔记区域 - 上半部分 */}
-              <div className="flex-1 min-h-0 overflow-hidden" style={{ flex: '0 0 50%' }}>
+              {/* 笔记区域 - Studio收起时自动扩展 */}
+              <div
+                className="flex-1 min-h-0 overflow-hidden transition-all"
+                style={{
+                  flex: collapsedPanels.studio ? '1 1 auto' : '0 0 50%'
+                }}
+              >
                 <EnhancedNotesPanel learningMode={config.learningMode} isAIGenerating={isAIGenerating} />
               </div>
 
-              {/* Studio 工具区域 - 两种模式都显示 */}
-              <div className="border-t-2 border-accent-200 bg-gradient-to-b from-purple-50/50 to-white" style={{ flex: '0 0 50%' }}>
-                <div className="p-3 border-b border-accent-100">
+              {/* Studio 工具区域 - 可折叠，展开时占50% */}
+              <div
+                className="border-t-2 border-accent-200 bg-gradient-to-b from-purple-50/50 to-white transition-all flex flex-col min-h-0"
+                style={{
+                  flex: collapsedPanels.studio ? '0 0 auto' : '0 0 50%'
+                }}
+              >
+                {/* 可折叠的标题栏 */}
+                <div
+                  className="p-3 border-b border-accent-100 cursor-pointer hover:bg-accent-50/50 transition-colors"
+                  onClick={() => togglePanel('studio')}
+                >
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-bold text-accent-600 flex items-center gap-2">
-                      <Sparkles size={14} className="text-accent-600" />
-                      Studio
-                    </h3>
-                    <span className="text-xs text-accent-500">{t('AI 学习工具')}</span>
+                    <div>
+                      <h3 className="text-sm font-bold text-accent-600 flex items-center gap-2">
+                        <Sparkles size={14} className="text-accent-600" />
+                        Studio
+                      </h3>
+                      <p className="text-xs text-accent-500 mt-1">{t('AI 学习工具')}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {collapsedPanels.studio ? (
+                        <ChevronDown size={16} className="text-gray-400" />
+                      ) : (
+                        <ChevronUp size={16} className="text-gray-400" />
+                      )}
+                    </div>
                   </div>
                 </div>
-                <div className="p-3 overflow-y-auto" style={{ maxHeight: 'calc(100% - 48px)' }}>
-                  <div className="grid grid-cols-2 gap-2">
+
+                {/* 可折叠的内容区域 */}
+                {!collapsedPanels.studio && (
+                  <div className="flex-1 overflow-y-auto p-3">
+                    <div className="grid grid-cols-2 gap-2">
                     {STUDIO_TOOLS.map((tool) => {
                       const isGenerating = generatingToolId === tool.id;
                       return (
@@ -2161,6 +2330,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                     {t('点击工具卡片生成内容，点击编辑图标配置工具')}
                   </p>
                 </div>
+                )}
               </div>
             </div>
           ) : (
@@ -2316,6 +2486,20 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
         isPublished={config.publishStatus === 'published'}
         shareLink={config.publishedVersions?.[config.publishedVersions.length - 1]?.shareLink}
         accessCode={config.publishedVersions?.[config.publishedVersions.length - 1]?.accessCode}
+      />
+
+      {/* 文件上传弹窗 */}
+      <FileUploadModal
+        isOpen={isFileUploadOpen}
+        onClose={() => setIsFileUploadOpen(false)}
+        onUpload={handleFileUpload}
+      />
+
+      {/* 链接输入弹窗 */}
+      <LinkInputModal
+        isOpen={isLinkInputOpen}
+        onClose={() => setIsLinkInputOpen(false)}
+        onAdd={handleLinkAdd}
       />
     </div>
   );
