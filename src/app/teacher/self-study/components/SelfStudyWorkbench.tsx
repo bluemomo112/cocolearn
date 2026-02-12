@@ -269,27 +269,18 @@ function EnhancedNotesPanel({ learningMode, isAIGenerating }: { learningMode?: L
             </button>
           )}
         </div>
-        {/* Generation progress indicator */}
-        {(isGeneratingNote || isAIGenerating) && (
+        {/* Generation progress indicator - 仅显示笔记生成进度 */}
+        {isGeneratingNote && (
           <div className="px-4 py-2 bg-emerald-50 border-b border-emerald-100">
             <div className="flex items-center gap-2 text-xs text-emerald-700 mb-2">
               <Brain size={14} className="animate-pulse" />
-              <span>
-                {isAIGenerating
-                  ? t('AI 正在为你生成学习资源和任务...')
-                  : t('AI 正在分析当前学习内容并生成笔记...')}
-              </span>
+              <span>{t('AI 正在分析当前学习内容并生成笔记...')}</span>
             </div>
             <div className="h-1.5 bg-emerald-100 rounded-full overflow-hidden">
               <div
                 className="h-full bg-emerald-500 rounded-full transition-all duration-300 animate-pulse"
-                style={{ width: isAIGenerating ? '100%' : `${generationProgress}%` }}
+                style={{ width: `${generationProgress}%` }}
               />
-            </div>
-            <div className="flex justify-between text-xs text-emerald-600 mt-1">
-              <span>📖 {t('分析主题')}</span>
-              <span>🔍 {t('匹配资源')}</span>
-              <span>✨ {t('生成任务')}</span>
             </div>
           </div>
         )}
@@ -1195,6 +1186,22 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                     </span>
                   </p>
                 </div>
+                {/* AI生成进度指示器 */}
+                {isAIGenerating && (
+                  <div className="px-3 py-2 bg-purple-50 border-b border-purple-100">
+                    <div className="flex items-center gap-2 text-xs text-purple-700 mb-2">
+                      <Brain size={14} className="animate-pulse" />
+                      <span>{t('AI 正在为你生成学习资源...')}</span>
+                    </div>
+                    <div className="h-1.5 bg-purple-100 rounded-full overflow-hidden">
+                      <div className="h-full bg-purple-500 rounded-full transition-all duration-300 animate-pulse" style={{ width: '100%' }} />
+                    </div>
+                    <div className="flex justify-between text-xs text-purple-600 mt-1">
+                      <span>📖 {t('分析主题')}</span>
+                      <span>🔍 {t('匹配资源')}</span>
+                    </div>
+                  </div>
+                )}
                 <div className="flex-1 overflow-y-auto p-3 space-y-2">
                   {/* AI生成的资源 */}
                   {aiGeneratedResources.map((resource) => (
@@ -1326,6 +1333,22 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                 {/* 可折叠的内容区域 */}
                 {!collapsedPanels.tasks && (
                   <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                    {/* AI生成进度指示器 */}
+                    {isAIGenerating && (
+                      <div className="px-3 py-3 bg-amber-50 border border-amber-200 rounded-xl">
+                        <div className="flex items-center gap-2 text-xs text-amber-700 mb-2">
+                          <Brain size={14} className="animate-pulse" />
+                          <span>{t('AI 正在为你生成学习任务...')}</span>
+                        </div>
+                        <div className="h-1.5 bg-amber-100 rounded-full overflow-hidden">
+                          <div className="h-full bg-amber-500 rounded-full transition-all duration-300 animate-pulse" style={{ width: '100%' }} />
+                        </div>
+                        <div className="flex justify-between text-xs text-amber-600 mt-1">
+                          <span>✨ {t('生成任务')}</span>
+                          <span>🎯 {t('设置目标')}</span>
+                        </div>
+                      </div>
+                    )}
                     {generatedTasks.length === 0 ? (
                       <div className="text-center py-6 text-gray-400">
                         <Zap size={24} className="mx-auto mb-2 opacity-50" />
@@ -1442,6 +1465,23 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                     </button>
                   </div>
                 </div>
+
+                {/* AI生成进度指示器 */}
+                {isAIGenerating && (
+                  <div className="px-3 py-2 bg-primary-50 border-b border-primary-100">
+                    <div className="flex items-center gap-2 text-xs text-primary-700 mb-2">
+                      <Brain size={14} className="animate-pulse" />
+                      <span>{t('AI 正在为你生成学习资源...')}</span>
+                    </div>
+                    <div className="h-1.5 bg-primary-100 rounded-full overflow-hidden">
+                      <div className="h-full bg-primary-500 rounded-full transition-all duration-300 animate-pulse" style={{ width: '100%' }} />
+                    </div>
+                    <div className="flex justify-between text-xs text-primary-600 mt-1">
+                      <span>📖 {t('分析主题')}</span>
+                      <span>🔍 {t('匹配资源')}</span>
+                    </div>
+                  </div>
+                )}
 
                 {/* 资源列表 */}
                 <div className="flex-1 overflow-y-auto p-3 space-y-2">
@@ -1578,6 +1618,22 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                 {/* 可折叠的内容区域 */}
                 {!collapsedPanels.tasks && (
                   <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                    {/* AI生成进度指示器 */}
+                    {isAIGenerating && (
+                      <div className="px-3 py-3 bg-amber-50 border border-amber-200 rounded-xl">
+                        <div className="flex items-center gap-2 text-xs text-amber-700 mb-2">
+                          <Brain size={14} className="animate-pulse" />
+                          <span>{t('AI 正在为你生成学习任务...')}</span>
+                        </div>
+                        <div className="h-1.5 bg-amber-100 rounded-full overflow-hidden">
+                          <div className="h-full bg-amber-500 rounded-full transition-all duration-300 animate-pulse" style={{ width: '100%' }} />
+                        </div>
+                        <div className="flex justify-between text-xs text-amber-600 mt-1">
+                          <span>✨ {t('生成任务')}</span>
+                          <span>🎯 {t('设置目标')}</span>
+                        </div>
+                      </div>
+                    )}
                     {generatedTasks.length === 0 ? (
                       <div className="text-center py-6 text-gray-400">
                         <Zap size={24} className="mx-auto mb-2 opacity-50" />

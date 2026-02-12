@@ -3,7 +3,7 @@
 import { useState, useMemo, use } from 'react'
 import Link from 'next/link'
 import CountUp from 'react-countup'
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, Legend, ReferenceLine } from 'recharts'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, Legend, ReferenceLine, PieChart, Pie, Cell, ScatterChart, Scatter } from 'recharts'
 import { ClassCompetencyDistribution, COMPETENCY_DEFINITIONS, getStarLevelColor } from '../../../note-config/results-view'
 
 // ============================================
@@ -384,6 +384,122 @@ function generateTaskComparisonData(student: StudentDetail, allStudents: Student
   })
 }
 
+// 生成资源/任务完成度数据
+function generateCompletionData(students: StudentDetail[]) {
+  // 资源查看完成度
+  const totalResourceViews = students.length * mockResources.length
+  const viewedResources = students.reduce((sum, s) =>
+    sum + s.resourceViews.filter(v => v.viewCount > 0).length, 0
+  )
+
+  // 任务完成度
+  const totalTasks = students.length * mockTasks.length
+  const completedTasks = students.reduce((sum, s) =>
+    sum + s.taskSubmissions.filter(t => t.status === 'graded' || t.status === 'submitted').length, 0
+  )
+  const inProgressTasks = students.reduce((sum, s) =>
+    sum + s.taskSubmissions.filter(t => t.status === 'in_progress').length, 0
+  )
+
+  // 按资源类型统计
+  const resourceByType = mockResources.reduce((acc, resource) => {
+    const viewed = students.filter(s => {
+      const view = s.resourceViews.find(v => v.resourceId === resource.resourceId)
+      return view && view.viewCount > 0
+    }).length
+
+    if (!acc[resource.type]) {
+      acc[resource.type] = { viewed: 0, total: 0 }
+    }
+    acc[resource.type].viewed += viewed
+    acc[resource.type].total += students.length
+    return acc
+  }, {} as Record<string, { viewed: number; total: number }>)
+
+  // 按任务类型统计
+  const taskByType = mockTasks.reduce((acc, task) => {
+    const completed = students.filter(s => {
+      const submission = s.taskSubmissions.find(t => t.taskId === task.taskId)
+      return submission && (submission.status === 'graded' || submission.status === 'submitted')
+    }).length
+
+    if (!acc[task.type]) {
+      acc[task.type] = { completed: 0, total: 0 }
+    }
+    acc[task.type].completed += completed
+    acc[task.type].total += students.length
+    return acc
+  }, {} as Record<string, { completed: number; total: number }>)
+
+  return {
+    resourceOverall: {
+      viewed: viewedResources,
+      notViewed: totalResourceViews - viewedResources,
+      percentage: Math.round((viewedResources / totalResourceViews) * 100)
+    },
+    taskOverall: {
+      completed: completedTasks,
+      inProgress: inProgressTasks,
+      notStarted: totalTasks - completedTasks - inProgressTasks,
+      completedPercentage: Math.round((completedTasks / totalTasks) * 100)
+    },
+    resourceByType,
+    taskByType
+  }
+}
+
+// 生成 AI 对话活跃度数据
+function generateAIActivityData(students: StudentDetail[]) {
+  return students
+    .filter(s => s.progress > 0) // 只包含已开始学习的学生
+    .map(s => ({
+      studentId: s.studentId,
+      studentName: s.studentName,
+      progress: s.progress,
+      messageCount: s.aiConversations.length,
+      learningDuration: s.learningDuration,
+      status: s.status
+    }))
+}
+
+// 生成成绩分布数据
+function generateScoreDistribution(students: StudentDetail[]) {
+  const scores = students
+    .filter(s => s.objectiveScore !== undefined)
+    .map(s => s.objectiveScore!)
+    .sort((a, b) => a - b)
+
+  if (scores.length === 0) return null
+
+  // 计算统计值
+  const min = scores[0]
+  const max = scores[scores.length - 1]
+  const median = scores[Math.floor(scores.length / 2)]
+  const q1 = scores[Math.floor(scores.length * 0.25)]
+  const q3 = scores[Math.floor(scores.length * 0.75)]
+  const mean = Math.round(scores.reduce((sum, s) => sum + s, 0) / scores.length)
+
+  // 生成分布数据（分组）
+  const bins = [
+    { range: '0-59', min: 0, max: 59, count: 0 },
+    { range: '60-69', min: 60, max: 69, count: 0 },
+    { range: '70-79', min: 70, max: 79, count: 0 },
+    { range: '80-89', min: 80, max: 89, count: 0 },
+    { range: '90-100', min: 90, max: 100, count: 0 },
+  ]
+
+  scores.forEach(score => {
+    const bin = bins.find(b => score >= b.min && score <= b.max)
+    if (bin) bin.count++
+  })
+
+  return {
+    stats: { min, max, median, q1, q3, mean },
+    distribution: bins,
+    scores
+  }
+}
+
 // ============================================
 // Chart Components
 // ============================================
@@ -533,6 +649,283 @@ function TaskComparisonChart({ data }: { data: ReturnType<typeof generateTaskCom
           <Bar dataKey="classAverage" name="班级平均" fill="#94a3b8" radius={[8, 8, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
+    </div>
+  )
+}
+
+// 资源/任务完成度环形图仪表盘
+function CompletionDonutCharts({ data }: { data: ReturnType<typeof generateCompletionData> }) {
+  // 统一使用绿色系渐变色
+  const PRIMARY_COLOR = '#10b981'
+  const GRAY_COLOR = '#e5e7eb'
+
+  // 自定义标签组件 - 显示中心百分比
+  const renderCenterLabel = (percentage: number) => ({
+    cx,
+    cy,
+  }: any) => {
+    return (
+      <text x={cx} y={cy} textAnchor="middle" dominantBaseline="middle">
+        <tspan x={cx} fontSize="20" fontWeight="bold" fill="#1f2937">
+          {percentage}%
+        </tspan>
+      </text>
+    )
+  }
+
+  const charts = [
+    {
+      title: '资源查看',
+      data: [
+        { name: '已查看', value: data.resourceOverall.viewed },
+        { name: '未查看', value: data.resourceOverall.notViewed }
+      ],
+      percentage: data.resourceOverall.percentage
+    },
+    {
+      title: '任务完成',
+      data: [
+        { name: '已完成', value: data.taskOverall.completed },
+        { name: '进行中', value: data.taskOverall.inProgress },
+        { name: '未开始', value: data.taskOverall.notStarted }
+      ],
+      percentage: data.taskOverall.completedPercentage
+    },
+    {
+      title: '文档查看率',
+      data: [
+        { name: '已查看', value: data.resourceByType.document?.viewed || 0 },
+        { name: '未查看', value: (data.resourceByType.document?.total || 0) - (data.resourceByType.document?.viewed || 0) }
+      ],
+      percentage: data.resourceByType.document ? Math.round((data.resourceByType.document.viewed / data.resourceByType.document.total) * 100) : 0
+    },
+    {
+      title: '课件查看率',
+      data: [
+        { name: '已查看', value: data.resourceByType.presentation?.viewed || 0 },
+        { name: '未查看', value: (data.resourceByType.presentation?.total || 0) - (data.resourceByType.presentation?.viewed || 0) }
+      ],
+      percentage: data.resourceByType.presentation ? Math.round((data.resourceByType.presentation.viewed / data.resourceByType.presentation.total) * 100) : 0
+    },
+    {
+      title: '视频查看率',
+      data: [
+        { name: '已查看', value: data.resourceByType.video?.viewed || 0 },
+        { name: '未查看', value: (data.resourceByType.video?.total || 0) - (data.resourceByType.video?.viewed || 0) }
+      ],
+      percentage: data.resourceByType.video ? Math.round((data.resourceByType.video.viewed / data.resourceByType.video.total) * 100) : 0
+    },
+    {
+      title: '测验完成率',
+      data: [
+        { name: '已完成', value: data.taskByType.quiz?.completed || 0 },
+        { name: '未完成', value: (data.taskByType.quiz?.total || 0) - (data.taskByType.quiz?.completed || 0) }
+      ],
+      percentage: data.taskByType.quiz ? Math.round((data.taskByType.quiz.completed / data.taskByType.quiz.total) * 100) : 0
+    }
+  ]
+
+  return (
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+      <h3 className="text-sm font-bold text-gray-800 mb-4 flex items-center gap-2">
+        <span className="text-lg">🎯</span>
+        完成度分析
+      </h3>
+      <div className="grid grid-cols-2 gap-4">
+        {charts.map((chart, index) => (
+          <div
+            key={index}
+            className={`glass-card p-3 transition-all hover:scale-105 ${
+              chart.percentage < 50 ? 'animate-pulse-slow' : ''
+            }`}
+          >
+            <p className="text-xs font-medium text-gray-600 mb-2 text-center">{chart.title}</p>
+            <ResponsiveContainer width="100%" height={130}>
+              <PieChart>
+                <Pie
+                  data={chart.data}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={38}
+                  outerRadius={55}
+                  paddingAngle={2}
+                  dataKey="value"
+                  label={renderCenterLabel(chart.percentage)}
+                  labelLine={false}
+                >
+                  {chart.data.map((entry, i) => (
+                    <Cell
+                      key={`cell-${i}`}
+                      fill={i === 0 ? PRIMARY_COLOR : (i === 1 && chart.data.length === 3) ? '#60a5fa' : GRAY_COLOR}
+                    />
+                  ))}
+                </Pie>
+                <Tooltip
+                  content={({ active, payload }) => {
+                    if (!active || !payload || !payload.length) return null
+                    return (
+                      <div className="glass-card p-2 shadow-lg">
+                        <p className="text-xs font-semibold text-gray-800">{payload[0].name}</p>
+                        <p className="text-xs text-gray-600">{payload[0].value} 次</p>
+                      </div>
+                    )
+                  }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// AI 对话活跃度气泡图
+function AIActivityBubbleChart({ data }: { data: ReturnType<typeof generateAIActivityData> }) {
+  // 统一使用绿色系渐变
+  const statusColors = {
+    completed: '#10b981',
+    in_progress: '#14b8a6',
+    needs_attention: '#f59e0b',
+    not_started: '#94a3b8'
+  }
+
+  return (
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+      <h3 className="text-sm font-bold text-gray-800 mb-4 flex items-center gap-2">
+        <span className="text-lg">💬</span>
+        AI 对话活跃度分析
+      </h3>
+      <ResponsiveContainer width="100%" height={300}>
+        <ScatterChart margin={{ top: 20, right: 20, bottom: 30, left: 20 }}>
+          <defs>
+            {Object.entries(statusColors).map(([status, color]) => (
+              <radialGradient key={status} id={`bubble-${status}`}>
+                <stop offset="0%" stopColor={color} stopOpacity={0.8} />
+                <stop offset="100%" stopColor={color} stopOpacity={0.4} />
+              </radialGradient>
+            ))}
+          </defs>
+          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+          <XAxis
+            type="number"
+            dataKey="progress"
+            name="学习进度"
+            unit="%"
+            stroke="#6b7280"
+            label={{ value: '学习进度 (%)', position: 'insideBottom', offset: -15, style: { fontSize: '12px' } }}
+          />
+          <YAxis
+            type="number"
+            dataKey="messageCount"
+            name="对话数"
+            stroke="#6b7280"
+            label={{ value: 'AI 对话数', angle: -90, position: 'insideLeft', style: { fontSize: '12px' } }}
+          />
+          <Tooltip
+            content={({ active, payload }) => {
+              if (!active || !payload || !payload.length) return null
+              const data = payload[0].payload
+              return (
+                <div className="glass-card p-3 shadow-lg">
+                  <p className="font-semibold text-gray-800 mb-1">{data.studentName}</p>
+                  <div className="text-xs text-gray-600 space-y-1">
+                    <p>进度: {data.progress}%</p>
+                    <p>对话: {data.messageCount} 条</p>
+                    <p>时长: {data.learningDuration} 分钟</p>
+                  </div>
+                </div>
+              )
+            }}
+          />
+          <Scatter
+            data={data}
+            fill="#8884d8"
+          >
+            {data.map((entry, index) => (
+              <Cell
+                key={`cell-${index}`}
+                fill={`url(#bubble-${entry.status})`}
+                r={Math.max(5, Math.min(15, entry.learningDuration / 5))}
+              />
+            ))}
+          </Scatter>
+        </ScatterChart>
+      </ResponsiveContainer>
+      <div className="mt-3 flex items-center justify-center gap-4 text-xs">
+        <div className="flex items-center gap-1">
+          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: statusColors.completed }} />
+          <span className="text-gray-600">已完成</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: statusColors.in_progress }} />
+          <span className="text-gray-600">进行中</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: statusColors.needs_attention }} />
+          <span className="text-gray-600">需关注</span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// 成绩分布图表
+function ScoreDistributionChart({ data }: { data: ReturnType<typeof generateScoreDistribution> }) {
+  if (!data) return null
+
+  return (
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+      <h3 className="text-sm font-bold text-gray-800 mb-4 flex items-center gap-2">
+        <span className="text-lg">📊</span>
+        成绩分布分析
+      </h3>
+      <ResponsiveContainer width="100%" height={280}>
+        <BarChart data={data.distribution} margin={{ top: 20, right: 20, left: 10, bottom: 40 }}>
+          <defs>
+            <linearGradient id="scoreGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#10b981" />
+              <stop offset="100%" stopColor="#14b8a6" />
+            </linearGradient>
+          </defs>
+          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+          <XAxis
+            dataKey="range"
+            stroke="#6b7280"
+            angle={-15}
+            textAnchor="end"
+            height={60}
+            style={{ fontSize: '12px' }}
+          />
+          <YAxis stroke="#6b7280" />
+          <Tooltip
+            content={({ active, payload }) => {
+              if (!active || !payload || !payload.length) return null
+              return (
+                <div className="glass-card p-3 shadow-lg">
+                  <p className="text-xs font-semibold text-gray-800">{payload[0].payload.range} 分</p>
+                  <p className="text-xs text-gray-600">{payload[0].value} 人</p>
+                </div>
+              )
+            }}
+          />
+          <Bar dataKey="count" fill="url(#scoreGradient)" radius={[8, 8, 0, 0]} />
+        </BarChart>
+      </ResponsiveContainer>
+      <div className="mt-4 grid grid-cols-3 gap-3 text-center">
+        <div className="glass-card p-2">
+          <p className="text-xs text-gray-500">平均分</p>
+          <p className="text-lg font-bold text-green-600">{data.stats.mean}</p>
+        </div>
+        <div className="glass-card p-2">
+          <p className="text-xs text-gray-500">中位数</p>
+          <p className="text-lg font-bold text-green-600">{data.stats.median}</p>
+        </div>
+        <div className="glass-card p-2">
+          <p className="text-xs text-gray-500">最高分</p>
+          <p className="text-lg font-bold text-green-600">{data.stats.max}</p>
+        </div>
+      </div>
     </div>
   )
 }
@@ -1485,6 +1878,15 @@ export default function SpaceResultsPage({ params }: SpaceResultsPageProps) {
     }
   }, [filteredStudents])
 
+  // 计算完成度数据
+  const completionData = useMemo(() => generateCompletionData(filteredStudents), [filteredStudents])
+
+  // 计算 AI 活跃度数据
+  const aiActivityData = useMemo(() => generateAIActivityData(filteredStudents), [filteredStudents])
+
+  // 计算成绩分布数据
+  const scoreDistributionData = useMemo(() => generateScoreDistribution(filteredStudents), [filteredStudents])
+
   const space = {
     id: spaceId,
     title: 'Python 数据分析入门',
@@ -1541,9 +1943,9 @@ export default function SpaceResultsPage({ params }: SpaceResultsPageProps) {
         </div>
 
         {/* 左右两栏布局 */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-[2fr_3fr] gap-6">
           {/* 左侧概览栏 */}
-          <div className="lg:col-span-1 space-y-6">
+          <div className="space-y-6">
             {/* 班级多选 */}
             <ClassMultiSelect
               selectedClasses={selectedClasses}
@@ -1579,6 +1981,12 @@ export default function SpaceResultsPage({ params }: SpaceResultsPageProps) {
               </div>
             </div>
 
+            {/* 完成度环形图 */}
+            <CompletionDonutCharts data={completionData} />
+
+            {/* 成绩分布图表 */}
+            {scoreDistributionData && <ScoreDistributionChart data={scoreDistributionData} />}
+
             {/* 班级对比卡片 */}
             {selectedClasses.length > 1 && (
               <div>
@@ -1606,6 +2014,9 @@ export default function SpaceResultsPage({ params }: SpaceResultsPageProps) {
 
             {/* 进度分布图表 */}
             <ProgressDistributionChart data={generateProgressDistribution(filteredStudents)} />
+
+            {/* AI 对话活跃度气泡图 */}
+            <AIActivityBubbleChart data={aiActivityData} />
 
             {/* 资源/任务详情 - 可折叠区域 */}
             <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
@@ -1635,7 +2046,7 @@ export default function SpaceResultsPage({ params }: SpaceResultsPageProps) {
           </div>
 
           {/* 右侧学生列表栏 */}
-          <div className="lg:col-span-2">
+          <div>
             <StudentListView
               students={filteredStudents}
               onSelectStudent={setSelectedStudentIndex}
@@ -1820,6 +2231,24 @@ export default function SpaceResultsPage({ params }: SpaceResultsPageProps) {
 
         .floating-icon {
           animation: float 3s ease-in-out infinite;
+        }
+
+        /* ============================================ */
+        /* Pulse Slow Animation */
+        /* ============================================ */
+        @keyframes pulse-slow {
+          0%, 100% {
+            opacity: 1;
+            transform: scale(1);
+          }
+          50% {
+            opacity: 0.9;
+            transform: scale(1.02);
+          }
+        }
+
+        .animate-pulse-slow {
+          animation: pulse-slow 3s ease-in-out infinite;
         }
 
         /* ============================================ */
