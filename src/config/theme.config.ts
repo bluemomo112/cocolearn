@@ -29,12 +29,20 @@ export interface ThemeColors {
   };
   // 辅色 (用于渐变搭配)
   accent: {
+    50: string;
+    100: string;
+    200: string;
+    300: string;
     400: string;
     500: string;
     600: string;
   };
   // 活力色 (用于强调、装饰)
   fresh: {
+    50: string;
+    100: string;
+    200: string;
+    300: string;
     400: string;
     500: string;
     600: string;
@@ -93,11 +101,19 @@ export const greenTheme: Theme = {
       900: '#064e3b',
     },
     accent: {
+      50: '#f0fdfa',
+      100: '#ccfbf1',
+      200: '#99f6e4',
+      300: '#5eead4',
       400: '#2dd4bf',
       500: '#14b8a6',  // 青绿色
       600: '#0d9488',
     },
     fresh: {
+      50: '#f7fee7',
+      100: '#ecfccb',
+      200: '#d9f99d',
+      300: '#bef264',
       400: '#a3e635',
       500: '#84cc16',  // 黄绿色 - 活力
       600: '#65a30d',
@@ -144,11 +160,19 @@ export const blueTheme: Theme = {
       900: '#1e3a8a',
     },
     accent: {
+      50: '#eff6ff',
+      100: '#dbeafe',
+      200: '#bfdbfe',
+      300: '#93c5fd',
       400: '#38bdf8',
       500: '#0ea5e9',  // 天蓝色
       600: '#0284c7',
     },
     fresh: {
+      50: '#faf5ff',
+      100: '#f3e8ff',
+      200: '#e9d5ff',
+      300: '#d8b4fe',
       400: '#a78bfa',
       500: '#8b5cf6',  // 紫色 - 活力
       600: '#7c3aed',
@@ -194,11 +218,19 @@ export const purpleTheme: Theme = {
       900: '#581c87',
     },
     accent: {
+      50: '#fce7f3',
+      100: '#fbcfe8',
+      200: '#f9a8d4',
+      300: '#f472b6',
       400: '#f472b6',
       500: '#ec4899',  // 粉色
       600: '#db2777',
     },
     fresh: {
+      50: '#eff6ff',
+      100: '#dbeafe',
+      200: '#bfdbfe',
+      300: '#93c5fd',
       400: '#60a5fa',
       500: '#3b82f6',  // 蓝色 - 活力
       600: '#2563eb',
@@ -249,11 +281,19 @@ export function generateCSSVariables(theme: Theme): string {
   --primary-900: ${colors.primary[900]};
 
   /* 辅色 - Accent */
+  --accent-50: ${colors.accent[50]};
+  --accent-100: ${colors.accent[100]};
+  --accent-200: ${colors.accent[200]};
+  --accent-300: ${colors.accent[300]};
   --accent-400: ${colors.accent[400]};
   --accent-500: ${colors.accent[500]};
   --accent-600: ${colors.accent[600]};
 
   /* 活力色 - Fresh */
+  --fresh-50: ${colors.fresh[50]};
+  --fresh-100: ${colors.fresh[100]};
+  --fresh-200: ${colors.fresh[200]};
+  --fresh-300: ${colors.fresh[300]};
   --fresh-400: ${colors.fresh[400]};
   --fresh-500: ${colors.fresh[500]};
   --fresh-600: ${colors.fresh[600]};

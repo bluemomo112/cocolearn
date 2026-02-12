@@ -1121,9 +1121,9 @@ function ResourceTaskDetailsView({
     document: { icon: '📄', label: '文档' },
     presentation: { icon: '📊', label: '课件' },
     video: { icon: '🎬', label: '视频' },
-    quiz: { icon: '❓', label: '测验', color: 'bg-purple-100 text-purple-700' },
-    assignment: { icon: '📝', label: '作业', color: 'bg-blue-100 text-blue-700' },
-    reflection: { icon: '💭', label: '反思', color: 'bg-green-100 text-green-700' },
+    quiz: { icon: '❓', label: '测验', color: 'bg-accent-100 text-accent-600' },
+    assignment: { icon: '📝', label: '作业', color: 'bg-primary-100 text-primary-700' },
+    reflection: { icon: '💭', label: '反思', color: 'bg-primary-100 text-primary-700' },
   }
 
   return (
@@ -1293,8 +1293,8 @@ function ResourceTaskDetailsView({
                         <p className="text-sm font-medium text-gray-700 mb-2">AI 评估分布</p>
                         <div className="flex gap-2">
                           {[
-                            { level: 'excellent', label: '优秀', color: 'bg-green-500', count: task.assessmentDistribution.excellent },
-                            { level: 'good', label: '良好', color: 'bg-blue-500', count: task.assessmentDistribution.good },
+                            { level: 'excellent', label: '优秀', color: 'bg-primary-500', count: task.assessmentDistribution.excellent },
+                            { level: 'good', label: '良好', color: 'bg-primary-500', count: task.assessmentDistribution.good },
                             { level: 'pass', label: '及格', color: 'bg-yellow-500', count: task.assessmentDistribution.pass },
                             { level: 'fail', label: '待改进', color: 'bg-red-500', count: task.assessmentDistribution.fail },
                           ].map(item => (
@@ -1402,10 +1402,10 @@ function StudentListView({
   }
 
   const statusConfig = {
-    completed: { label: '已完成', color: 'bg-green-100 text-green-700' },
-    in_progress: { label: '进行中', color: 'bg-blue-100 text-blue-700' },
+    completed: { label: '已完成', color: 'bg-primary-100 text-primary-700' },
+    in_progress: { label: '进行中', color: 'bg-primary-100 text-primary-700' },
     not_started: { label: '未开始', color: 'bg-gray-100 text-gray-700' },
-    needs_attention: { label: '需关注', color: 'bg-orange-100 text-orange-700' },
+    needs_attention: { label: '需关注', color: 'bg-fresh-100 text-fresh-600' },
   }
 
   return (
@@ -1532,10 +1532,10 @@ function StudentDetailModal({
   const [expandedSection, setExpandedSection] = useState<'resources' | 'tasks' | 'chat' | null>('tasks')
 
   const statusConfig = {
-    completed: { label: '已完成', color: 'bg-green-100 text-green-700' },
-    in_progress: { label: '进行中', color: 'bg-blue-100 text-blue-700' },
+    completed: { label: '已完成', color: 'bg-primary-100 text-primary-700' },
+    in_progress: { label: '进行中', color: 'bg-primary-100 text-primary-700' },
     not_started: { label: '未开始', color: 'bg-gray-100 text-gray-700' },
-    needs_attention: { label: '需关注', color: 'bg-orange-100 text-orange-700' },
+    needs_attention: { label: '需关注', color: 'bg-fresh-100 text-fresh-600' },
   }
 
   const taskStatusConfig = {
@@ -1716,12 +1716,12 @@ function StudentDetailModal({
 
                       {/* AI 评估 */}
                       {submission.assessment && (
-                        <div className="mt-2 p-2 bg-purple-50 rounded-lg">
+                        <div className="mt-2 p-2 bg-accent-50 rounded-lg">
                           <div className="flex items-center gap-2 mb-1">
                             <span className="text-xs text-purple-600 font-medium">AI 评估</span>
                             <span className={`px-1.5 py-0.5 rounded text-xs ${
-                              submission.assessment.level === 'excellent' ? 'bg-green-100 text-green-700' :
-                              submission.assessment.level === 'good' ? 'bg-blue-100 text-blue-700' :
+                              submission.assessment.level === 'excellent' ? 'bg-primary-100 text-primary-700' :
+                              submission.assessment.level === 'good' ? 'bg-primary-100 text-primary-700' :
                               submission.assessment.level === 'pass' ? 'bg-yellow-100 text-yellow-700' :
                               'bg-red-100 text-red-700'
                             }`}>

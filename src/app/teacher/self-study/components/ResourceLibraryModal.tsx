@@ -144,8 +144,8 @@ export default function ResourceLibraryModal({ isOpen, onClose, onSelect }: Reso
                       <div className="flex items-center gap-2">
                         <span className={`text-xs px-2 py-0.5 rounded-full ${
                           resource.source === 'personal'
-                            ? 'bg-blue-100 text-blue-700'
-                            : 'bg-green-100 text-green-700'
+                            ? 'bg-primary-100 text-primary-700'
+                            : 'bg-primary-100 text-primary-700'
                         }`}>
                           {resource.source === 'personal' ? '我的资源' : '共享资源'}
                         </span>

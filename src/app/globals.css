@@ -24,12 +24,20 @@
   --primary-800: #065f46;
   --primary-900: #064e3b;
 
-  /* 辅色 - Accent (青绿) */
+  /* Accent 辅色 */
+  --accent-50: #f0fdfa;
+  --accent-100: #ccfbf1;
+  --accent-200: #99f6e4;
+  --accent-300: #5eead4;
   --accent-400: #2dd4bf;
   --accent-500: #14b8a6;
   --accent-600: #0d9488;
 
   /* 活力色 - Fresh (黄绿) */
+  --fresh-50: #f7fee7;
+  --fresh-100: #ecfccb;
+  --fresh-200: #d9f99d;
+  --fresh-300: #bef264;
   --fresh-400: #a3e635;
   --fresh-500: #84cc16;
   --fresh-600: #65a30d;
@@ -78,11 +86,19 @@
   --color-primary-900: var(--primary-900);
 
   /* Accent 辅色 */
+  --color-accent-50: var(--accent-50);
+  --color-accent-100: var(--accent-100);
+  --color-accent-200: var(--accent-200);
+  --color-accent-300: var(--accent-300);
   --color-accent-400: var(--accent-400);
   --color-accent-500: var(--accent-500);
   --color-accent-600: var(--accent-600);
 
   /* Fresh 活力色 */
+  --color-fresh-50: var(--fresh-50);
+  --color-fresh-100: var(--fresh-100);
+  --color-fresh-200: var(--fresh-200);
+  --color-fresh-300: var(--fresh-300);
   --color-fresh-400: var(--fresh-400);
   --color-fresh-500: var(--fresh-500);
   --color-fresh-600: var(--fresh-600);

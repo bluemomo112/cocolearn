@@ -119,8 +119,8 @@ export default function SpaceManager({
           </div>
           <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center">
-                <Calendar size={20} className="text-amber-600" />
+              <div className="w-10 h-10 bg-fresh-100 rounded-xl flex items-center justify-center">
+                <Calendar size={20} className="text-fresh-600" />
               </div>
               <span className="text-sm text-gray-500">{t('本周活跃')}</span>
             </div>

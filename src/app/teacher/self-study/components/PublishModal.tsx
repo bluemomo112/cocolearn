@@ -172,8 +172,8 @@ export default function PublishModal({
             <>
               {/* 发布成功 */}
               <div className="text-center py-6">
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Check size={32} className="text-green-600" />
+                <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Check size={32} className="text-primary-600" />
                 </div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
                   发布成功！
@@ -229,7 +229,7 @@ export default function PublishModal({
               </div>
 
               {/* 提示 */}
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="bg-primary-50 border border-primary-200 rounded-lg p-4">
                 <div className="flex gap-3">
                   <BarChart3 size={20} className="text-blue-600 flex-shrink-0 mt-0.5" />
                   <div className="text-sm text-blue-900">

@@ -213,13 +213,13 @@ export default function SettingsModal({ config, onSave, onClose }: SettingsModal
                 {!expertModeUnlocked ? (
                   <button
                     onClick={(e) => { e.stopPropagation(); setExpertModeUnlocked(true); }}
-                    className="flex items-center gap-1 text-xs px-2 py-0.5 bg-amber-100 text-amber-700 rounded hover:bg-amber-200"
+                    className="flex items-center gap-1 text-xs px-2 py-0.5 bg-fresh-100 text-fresh-600 rounded hover:bg-fresh-200"
                   >
                     <Lock size={12} />
                     {t('点击解锁')}
                   </button>
                 ) : (
-                  <span className="flex items-center gap-1 text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded">
+                  <span className="flex items-center gap-1 text-xs px-2 py-0.5 bg-primary-100 text-primary-700 rounded">
                     <Unlock size={12} />
                     {t('已解锁')}
                   </span>
