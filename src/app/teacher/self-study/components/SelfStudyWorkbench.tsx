@@ -113,7 +113,7 @@ const MOCK_CURRENT_NODE = 'node_3';
 // Mock generated tasks for self-directed mode - will be created inside component with t()
 
 // Enhanced Notes Panel component
-function EnhancedNotesPanel({ learningMode, isAIGenerating }: { learningMode?: LearningMode; isAIGenerating?: boolean }) {
+function EnhancedNotesPanel({ learningMode, isAIGenerating, getThemeClass }: { learningMode?: LearningMode; isAIGenerating?: boolean; getThemeClass: (type: 'bg' | 'bgHover' | 'text' | 'border' | 'icon') => string }) {
   const { t } = useLanguage();
   const [notes, setNotes] = useState<Note[]>([]);
   const [activeNoteId, setActiveNoteId] = useState('');
@@ -264,7 +264,7 @@ function EnhancedNotesPanel({ learningMode, isAIGenerating }: { learningMode?: L
         <div className="p-4 border-b border-gray-200 space-y-2">
           <button
             onClick={createNote}
-            className="w-full px-4 py-3 bg-gradient-to-r from-primary-600 to-accent-600 text-white text-sm font-medium rounded-lg hover:from-primary-700 hover:to-accent-700 transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+            className={`w-full px-4 py-3 ${getThemeClass('bg')} ${getThemeClass('bgHover')} text-white text-sm font-medium rounded-lg transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2`}
           >
             <Plus size={18} />
             {t('添加笔记')}
@@ -321,7 +321,7 @@ function EnhancedNotesPanel({ learningMode, isAIGenerating }: { learningMode?: L
                   setActiveNoteId(note.id);
                   setShowNoteEditor(true);
                 }}
-                className="p-3 bg-white border border-gray-200 rounded-lg hover:border-primary-300 hover:shadow-md cursor-pointer transition-all"
+                className={`p-3 bg-white border border-gray-200 rounded-lg hover:${getThemeClass('border')} hover:shadow-md cursor-pointer transition-all`}
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
@@ -1204,7 +1204,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
         <div className="flex items-center gap-4">
           <button
             onClick={onBack}
-            className="flex items-center gap-2 text-gray-500 hover:text-gray-700 transition-colors"
+            className="flex items-center gap-2 text-gray-500 hover:text-gray-700 transition-colors p-2 rounded-lg"
           >
             <ArrowLeft size={18} />
             <span className="text-sm">{t('返回')}</span>
@@ -1227,14 +1227,14 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                 />
                 <button
                   onClick={handleTitleSave}
-                  className="p-1 text-green-600 hover:bg-green-50 rounded transition-colors"
+                  className="p-1 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
                   title={t('保存')}
                 >
                   <Check size={16} />
                 </button>
                 <button
                   onClick={handleTitleCancel}
-                  className="p-1 text-gray-500 hover:bg-gray-100 rounded transition-colors"
+                  className="p-1 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
                   title={t('取消')}
                 >
                   <X size={16} />
@@ -1245,7 +1245,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                 <h1 className="text-base font-semibold text-gray-900">{config.title}</h1>
                 <button
                   onClick={() => setIsEditingTitle(true)}
-                  className="p-1 opacity-0 group-hover:opacity-100 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-all"
+                  className="p-1 opacity-0 group-hover:opacity-100 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all"
                   title={t('编辑名称')}
                 >
                   <Pencil size={14} />
@@ -1278,7 +1278,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
           {/* 保存 */}
           <button
             onClick={handleSave}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-lg transition-colors"
+            className={`flex items-center gap-2 px-4 py-2 ${getThemeClass('bg')} ${getThemeClass('bgHover')} text-white text-sm font-medium rounded-lg transition-colors`}
           >
             <Save size={16} />
             {t('保存')}
@@ -1287,7 +1287,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
           {/* 发布/重新发布 */}
           <button
             onClick={() => setIsPublishModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 transition-colors"
+            className={`flex items-center gap-2 px-4 py-2 ${getThemeClass('bg')} text-white text-sm font-medium rounded-lg ${getThemeClass('bgHover')} transition-colors`}
           >
             <Share2 size={16} />
             {config.publishStatus === 'published' ? t('重新发布') : t('发布')}
@@ -1297,7 +1297,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
           {config.publishStatus === 'published' && (
             <button
               onClick={handleViewAnalytics}
-              className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 transition-colors"
+              className={`flex items-center gap-2 px-4 py-2 ${getThemeClass('bg')} text-white text-sm font-medium rounded-lg ${getThemeClass('bgHover')} transition-colors`}
             >
               <BarChart3 size={16} />
               {t('查看分析')}
@@ -1314,7 +1314,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
             width: isLeftCollapsed ? `${COLLAPSED_WIDTH}px` : `${leftWidth}%`,
             transition: 'width 0.3s ease-in-out'
           }}
-          className="bg-white border-r border-gray-200 flex flex-col flex-shrink-0"
+          className="bg-white border-r border-gray-200 flex flex-col flex-shrink-0 overflow-hidden"
         >
           {isLeftCollapsed ? (
             // 折叠状态：显示竖向的资源/任务图标列表（参考 NotebookLM）
@@ -1339,7 +1339,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                       <button
                         key={resource.id}
                         onClick={() => setIsLeftCollapsed(false)}
-                        className="w-full px-3 py-3 hover:bg-gray-100 transition-colors flex flex-col items-center gap-1 group"
+                        className="w-full px-3 py-3 hover:bg-gray-100 transition-colors flex flex-col items-center gap-1 group rounded-lg"
                         title={resource.title}
                       >
                         <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -1351,7 +1351,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                       <button
                         key={resource.id}
                         onClick={() => setIsLeftCollapsed(false)}
-                        className="w-full px-3 py-3 hover:bg-gray-100 transition-colors flex flex-col items-center gap-1 group"
+                        className="w-full px-3 py-3 hover:bg-gray-100 transition-colors flex flex-col items-center gap-1 group rounded-lg"
                         title={resource.title}
                       >
                         <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -1368,7 +1368,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                         <button
                           key={task.id}
                           onClick={() => setIsLeftCollapsed(false)}
-                          className="w-full px-3 py-3 hover:bg-gray-100 transition-colors flex flex-col items-center gap-1 group"
+                          className="w-full px-3 py-3 hover:bg-gray-100 transition-colors flex flex-col items-center gap-1 group rounded-lg"
                           title={task.title}
                         >
                           <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -1390,7 +1390,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                     <button
                       key={resource.id}
                       onClick={() => setIsLeftCollapsed(false)}
-                      className="w-full px-3 py-3 hover:bg-primary-100 transition-colors flex flex-col items-center gap-1 group"
+                      className="w-full px-3 py-3 hover:bg-primary-100 transition-colors flex flex-col items-center gap-1 group rounded-lg"
                       title={resource.title}
                     >
                       <div className="w-10 h-10 rounded-lg bg-primary-100 flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -1409,33 +1409,34 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
             </div>
           ) : (
             <>
+            {/* 面板顶部标题栏 - 与右侧面板tab栏高度对齐 */}
+            <div className="h-12 px-4 border-b border-gray-200 flex items-center justify-between flex-shrink-0">
+              <h2 className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+                {config.learningMode === 'ai_guided' ? (
+                  <><Sparkles size={16} className={getThemeClass('icon')} />{t('AI 智能资源')}</>
+                ) : (
+                  <><FolderOpen size={16} className="text-gray-500" />Sources</>
+                )}
+              </h2>
+              <button
+                onClick={() => setIsLeftCollapsed(true)}
+                className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
+                title={t('折叠面板')}
+              >
+                <ChevronLeft size={16} className="text-gray-400" />
+              </button>
+            </div>
+            <div className="flex-1 flex flex-col overflow-hidden">
             {config.learningMode === 'ai_guided' ? (
             // AI引导模式：上方AI资源 + 下方学习任务
             <>
               {/* AI生成资源区域 - 任务收起时自动扩展 */}
               <div
-                className="flex flex-col min-h-0"
+                className="flex flex-col min-h-0 overflow-hidden"
                 style={{
                   flex: collapsedPanels.tasks ? '1 1 auto' : '0 0 50%'
                 }}
               >
-                <div className="px-4 py-3 border-b border-gray-200">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <h2 className="text-sm font-semibold text-gray-800 flex items-center gap-2">
-                        <Sparkles size={16} className="text-gray-500" />
-                        {t('AI 智能资源')}
-                      </h2>
-                    </div>
-                    <button
-                      onClick={() => setIsLeftCollapsed(true)}
-                      className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
-                      title={t('折叠面板')}
-                    >
-                      <ChevronLeft size={16} className="text-gray-400" />
-                    </button>
-                  </div>
-                </div>
                 {/* AI生成进度指示器 */}
                 {isAIGenerating && (
                   <div className="px-3 py-2 bg-gray-50 border-b border-gray-200">
@@ -1457,7 +1458,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                   {aiGeneratedResources.map((resource) => (
                     <div
                       key={resource.id}
-                      className="flex items-center gap-3 p-3 rounded-lg transition-all cursor-pointer bg-white border border-gray-200 hover:border-gray-300 hover:shadow-sm"
+                      className={`flex items-center gap-3 p-3 rounded-lg transition-all cursor-pointer bg-white border border-gray-200 hover:${getThemeClass('border')} hover:shadow-sm`}
                     >
                       <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg bg-gray-100">
                         {resource.icon}
@@ -1481,7 +1482,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                         resource.status === 'generating'
                           ? 'bg-accent-50 border border-gray-200 animate-pulse'
                           : resource.status === 'ready'
-                          ? 'bg-white border border-gray-200 hover:border-gray-300 hover:shadow-sm'
+                          ? `bg-white border border-gray-200 hover:${getThemeClass('border')} hover:shadow-sm`
                           : 'bg-gray-50 border border-gray-200 opacity-60'
                       }`}
                     >
@@ -1523,7 +1524,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
 
               {/* 学习任务区域 - 可折叠，展开时占50% */}
               <div
-                className="flex flex-col min-h-0 border-t border-gray-200 transition-all"
+                className="flex flex-col min-h-0 border-t border-gray-200 transition-all overflow-hidden"
                 style={{
                   flex: collapsedPanels.tasks ? '0 0 auto' : '0 0 50%'
                 }}
@@ -1622,7 +1623,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                       generatedTasks.map((task) => (
                         <div
                           key={task.id}
-                          className="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg hover:border-gray-300 hover:shadow-sm transition-all cursor-pointer group"
+                          className={`flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg hover:${getThemeClass('border')} hover:shadow-sm transition-all cursor-pointer group`}
                         >
                           <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gray-100">
                             {task.type === 'quiz' ? (
@@ -1685,28 +1686,11 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
             <>
               {/* 资源区域 - 任务收起时自动扩展 */}
               <div
-                className="flex flex-col min-h-0"
+                className="flex flex-col min-h-0 overflow-hidden"
                 style={{
                   flex: collapsedPanels.tasks ? '1 1 auto' : '0 0 50%'
                 }}
               >
-                <div className="h-12 px-4 py-3 border-b border-gray-200">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <h2 className="text-sm font-semibold text-gray-800 flex items-center gap-2">
-                        <FolderOpen size={16} className="text-gray-500" />
-                        Sources
-                      </h2>
-                    </div>
-                    <button
-                      onClick={() => setIsLeftCollapsed(true)}
-                      className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
-                      title={t('折叠面板')}
-                    >
-                      <ChevronLeft size={16} className="text-gray-400" />
-                    </button>
-                  </div>
-                </div>
 
                 {/* 添加资源入口 */}
                 <div className="p-3 border-b border-gray-100 space-y-2">
@@ -1767,14 +1751,14 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                       {/* 全选控制 */}
                       <div className="flex items-center justify-between px-1 mb-1">
                         <span className="text-xs text-gray-500">{config.resources.length + aiGeneratedResources.length} {t('个来源')}</span>
-                        <button className="text-xs text-gray-600 hover:text-gray-800 font-medium">{t('全选')}</button>
+                        <button className="text-xs text-gray-600 hover:text-gray-800 font-medium p-2 rounded-lg">{t('全选')}</button>
                       </div>
 
                       {/* AI生成的资源 */}
                       {aiGeneratedResources.map((resource) => (
                         <div
                           key={resource.id}
-                          className="flex items-start gap-3 p-3 bg-white border border-gray-200 rounded-lg hover:border-gray-300 hover:shadow-sm transition-all cursor-pointer group"
+                          className={`flex items-start gap-3 p-3 bg-white border border-gray-200 rounded-lg hover:${getThemeClass('border')} hover:shadow-sm transition-all cursor-pointer group`}
                         >
                           {/* 选中指示器 */}
                           <div className="w-5 h-5 rounded border-2 border-gray-400 bg-gray-500 flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -1799,7 +1783,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                       {config.resources.map((resource) => (
                         <div
                           key={resource.id}
-                          className="flex items-start gap-3 p-3 bg-white border border-gray-200 rounded-lg hover:border-gray-300 hover:shadow-sm transition-all cursor-pointer group"
+                          className={`flex items-start gap-3 p-3 bg-white border border-gray-200 rounded-lg hover:${getThemeClass('border')} hover:shadow-sm transition-all cursor-pointer group`}
                         >
                           {/* 选中指示器 */}
                           <div className="w-5 h-5 rounded border-2 border-gray-400 bg-gray-500 flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -1932,7 +1916,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                       generatedTasks.map((task) => (
                         <div
                           key={task.id}
-                          className="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg hover:border-gray-300 hover:shadow-sm transition-all cursor-pointer group"
+                          className={`flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg hover:${getThemeClass('border')} hover:shadow-sm transition-all cursor-pointer group`}
                         >
                           <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gray-100">
                             {task.type === 'quiz' ? (
@@ -1991,7 +1975,8 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
               </div>
             </>
           )}
-          </>
+            </div>
+            </>
           )}
         </div>
 
@@ -2010,7 +1995,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
           {/* 对话区头部 */}
           <div className="h-12 px-4 border-b border-gray-200 flex items-center justify-between">
             <h2 className="text-sm font-semibold text-gray-800 flex items-center gap-2">
-              <MessageSquare size={16} className="text-gray-500" />
+              <MessageSquare size={16} className={getThemeClass('icon')} />
               {t('AI 学习对话')}
             </h2>
 
@@ -2020,7 +2005,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                 onClick={() => handleModeChange('self_directed')}
                 className={`px-2 py-1 rounded text-xs font-medium transition-all ${
                   config.learningMode === 'self_directed'
-                    ? 'bg-white text-gray-800 shadow-sm'
+                    ? `${getThemeClass('bg')} text-white shadow-sm`
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
@@ -2031,7 +2016,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                 onClick={() => handleModeChange('ai_guided')}
                 className={`px-2 py-1 rounded text-xs font-medium transition-all ${
                   config.learningMode === 'ai_guided'
-                    ? 'bg-white text-gray-800 shadow-sm'
+                    ? `${getThemeClass('bg')} text-white shadow-sm`
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
@@ -2168,7 +2153,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
             width: isRightCollapsed ? `${COLLAPSED_WIDTH}px` : `${rightWidth}%`,
             transition: 'width 0.3s ease-in-out'
           }}
-          className="bg-white border-l border-gray-200 flex flex-col flex-shrink-0"
+          className="bg-white border-l border-gray-200 flex flex-col flex-shrink-0 overflow-hidden"
         >
           {isRightCollapsed ? (
             // 折叠状态：显示竖向的工具图标列表（参考 NotebookLM）
@@ -2193,11 +2178,11 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                       setIsRightCollapsed(false);
                       // 如果需要，可以在这里触发工具的默认行为
                     }}
-                    className="w-full px-3 py-3 hover:bg-gray-100 transition-colors flex flex-col items-center gap-1 group"
+                    className="w-full px-3 py-3 hover:bg-gray-100 transition-colors flex flex-col items-center gap-1 group rounded-lg"
                     title={tool.label}
                   >
                     <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center group-hover:scale-110 transition-transform">
-                      <Sparkles size={20} className="text-gray-500" />
+                      <Sparkles size={20} className={getThemeClass('icon')} />
                     </div>
                   </button>
                 ))}
@@ -2211,7 +2196,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
               onClick={() => setRightTab('workspace')}
               className={`flex-1 h-12 px-4 text-xs font-medium transition-colors flex items-center justify-center gap-1 ${
                 rightTab === 'workspace'
-                  ? 'text-gray-800 border-b-2 border-gray-800 bg-white'
+                  ? `${getThemeClass('text')} border-b-2 ${getThemeClass('border')} bg-white`
                   : 'text-gray-400 hover:text-gray-600'
               }`}
             >
@@ -2222,7 +2207,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
               onClick={() => setRightTab('status')}
               className={`flex-1 h-12 px-4 text-xs font-medium transition-colors flex items-center justify-center gap-1 ${
                 rightTab === 'status'
-                  ? 'text-gray-800 border-b-2 border-gray-800 bg-white'
+                  ? `${getThemeClass('text')} border-b-2 ${getThemeClass('border')} bg-white`
                   : 'text-gray-400 hover:text-gray-600'
               }`}
             >
@@ -2231,7 +2216,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
             </button>
             <button
               onClick={() => setIsRightCollapsed(true)}
-              className="px-2 py-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+              className="px-2 py-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors rounded-lg"
               title={t('折叠面板')}
             >
               <ChevronRight size={16} />
@@ -2248,12 +2233,12 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                   flex: collapsedPanels.studio ? '1 1 auto' : '0 0 50%'
                 }}
               >
-                <EnhancedNotesPanel learningMode={config.learningMode} isAIGenerating={isAIGenerating} />
+                <EnhancedNotesPanel learningMode={config.learningMode} isAIGenerating={isAIGenerating} getThemeClass={getThemeClass} />
               </div>
 
               {/* Studio 工具区域 - 可折叠，展开时占50% */}
               <div
-                className="border-t border-gray-200 bg-white transition-all flex flex-col min-h-0"
+                className="border-t border-gray-200 bg-white transition-all flex flex-col min-h-0 overflow-hidden"
                 style={{
                   flex: collapsedPanels.studio ? '0 0 auto' : '0 0 50%'
                 }}
@@ -2293,7 +2278,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                           className={`p-3 rounded-lg border text-left transition-all relative group ${
                             isGenerating
                               ? 'bg-gray-50 border-gray-200 animate-pulse cursor-wait'
-                              : 'bg-white border-gray-200 hover:border-gray-300 hover:shadow-sm cursor-pointer'
+                              : `bg-white border-gray-200 hover:${getThemeClass('border')} hover:shadow-sm cursor-pointer`
                           }`}
                           disabled={isGenerating}
                         >
@@ -2313,7 +2298,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                             {!isGenerating && (
                               <button
                                 onClick={(e) => handleOpenToolConfig(tool.id, e)}
-                                className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-gray-100 rounded"
+                                className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-gray-100 rounded-lg"
                                 title={t('配置')}
                               >
                                 <Pencil size={12} className="text-gray-400 hover:text-gray-600" />
@@ -2339,10 +2324,8 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
               observations={MOCK_AI_OBSERVATIONS}
             />
           )}
-          </>
-          )}
-        </div>
-      </div>
+        </>
+      )}
 
       {/* 设置弹窗 */}
       {isSettingsOpen && (

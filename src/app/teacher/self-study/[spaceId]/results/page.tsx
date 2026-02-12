@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, use } from 'react'
+import { useState, useMemo, use, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import CountUp from 'react-countup'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, Legend, ReferenceLine, PieChart, Pie, Cell, ScatterChart, Scatter } from 'recharts'
@@ -780,14 +780,22 @@ function CompletionDonutCharts({ data }: { data: ReturnType<typeof generateCompl
   )
 }
 
-// AI 对话活跃度气泡图
+// AI 对话活跃度柱状图
 function AIActivityBubbleChart({ data }: { data: ReturnType<typeof generateAIActivityData> }) {
-  // 统一使用绿色系渐变
-  const statusColors = {
-    completed: '#10b981',
-    in_progress: '#14b8a6',
-    needs_attention: '#f59e0b',
-    not_started: '#94a3b8'
+  // 按对话数量排序
+  const sortedData = [...data].sort((a, b) => b.messageCount - a.messageCount).slice(0, 15) // 只显示前15名
+
+  // 计算平均对话数
+  const avgMessageCount = data.length > 0
+    ? Math.round(data.reduce((sum, s) => sum + s.messageCount, 0) / data.length)
+    : 0
+
+  // 根据对话数量分级
+  const getActivityLevel = (count: number) => {
+    if (count >= avgMessageCount * 1.5) return { label: '非常活跃', color: '#10b981' }
+    if (count >= avgMessageCount) return { label: '活跃', color: '#14b8a6' }
+    if (count >= avgMessageCount * 0.5) return { label: '一般', color: '#f59e0b' }
+    return { label: '较少', color: '#94a3b8' }
   }
 
   return (
@@ -796,29 +804,40 @@ function AIActivityBubbleChart({ data }: { data: ReturnType<typeof generateAIAct
         <span className="text-lg">💬</span>
         AI 对话活跃度分析
       </h3>
+      <div className="mb-3 flex items-center gap-4 text-xs text-gray-600">
+        <span>平均对话数: <span className="font-semibold text-primary-600">{avgMessageCount}</span> 条</span>
+        <span>参与学生: <span className="font-semibold text-primary-600">{data.length}</span> 人</span>
+      </div>
       <ResponsiveContainer width="100%" height={300}>
-        <ScatterChart margin={{ top: 20, right: 20, bottom: 30, left: 20 }}>
+        <BarChart data={sortedData} margin={{ top: 20, right: 20, bottom: 60, left: 20 }}>
           <defs>
-            {Object.entries(statusColors).map(([status, color]) => (
-              <radialGradient key={status} id={`bubble-${status}`}>
-                <stop offset="0%" stopColor={color} stopOpacity={0.8} />
-                <stop offset="100%" stopColor={color} stopOpacity={0.4} />
-              </radialGradient>
-            ))}
+            <linearGradient id="activityGradient1" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#10b981" stopOpacity={0.9} />
+              <stop offset="100%" stopColor="#10b981" stopOpacity={0.6} />
+            </linearGradient>
+            <linearGradient id="activityGradient2" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#14b8a6" stopOpacity={0.9} />
+              <stop offset="100%" stopColor="#14b8a6" stopOpacity={0.6} />
+            </linearGradient>
+            <linearGradient id="activityGradient3" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#f59e0b" stopOpacity={0.9} />
+              <stop offset="100%" stopColor="#f59e0b" stopOpacity={0.6} />
+            </linearGradient>
+            <linearGradient id="activityGradient4" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#94a3b8" stopOpacity={0.9} />
+              <stop offset="100%" stopColor="#94a3b8" stopOpacity={0.6} />
+            </linearGradient>
           </defs>
           <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
           <XAxis
-            type="number"
-            dataKey="progress"
-            name="学习进度"
-            unit="%"
+            dataKey="studentName"
+            angle={-45}
+            textAnchor="end"
+            height={80}
             stroke="#6b7280"
-            label={{ value: '学习进度 (%)', position: 'insideBottom', offset: -15, style: { fontSize: '12px' } }}
+            style={{ fontSize: '11px' }}
           />
           <YAxis
-            type="number"
-            dataKey="messageCount"
-            name="对话数"
             stroke="#6b7280"
             label={{ value: 'AI 对话数', angle: -90, position: 'insideLeft', style: { fontSize: '12px' } }}
           />
@@ -826,44 +845,48 @@ function AIActivityBubbleChart({ data }: { data: ReturnType<typeof generateAIAct
             content={({ active, payload }) => {
               if (!active || !payload || !payload.length) return null
               const data = payload[0].payload
+              const level = getActivityLevel(data.messageCount)
               return (
                 <div className="glass-card p-3 shadow-lg">
                   <p className="font-semibold text-gray-800 mb-1">{data.studentName}</p>
                   <div className="text-xs text-gray-600 space-y-1">
+                    <p>对话数: <span className="font-semibold">{data.messageCount}</span> 条</p>
+                    <p>活跃度: <span className="font-semibold" style={{ color: level.color }}>{level.label}</span></p>
                     <p>进度: {data.progress}%</p>
-                    <p>对话: {data.messageCount} 条</p>
                     <p>时长: {data.learningDuration} 分钟</p>
                   </div>
                 </div>
               )
             }}
           />
-          <Scatter
-            data={data}
-            fill="#8884d8"
-          >
-            {data.map((entry, index) => (
-              <Cell
-                key={`cell-${index}`}
-                fill={`url(#bubble-${entry.status})`}
-                r={Math.max(5, Math.min(15, entry.learningDuration / 5))}
-              />
-            ))}
-          </Scatter>
-        </ScatterChart>
+          <ReferenceLine y={avgMessageCount} stroke="#10b981" strokeDasharray="5 5" label={{ value: '平均值', position: 'right', style: { fontSize: '11px', fill: '#10b981' } }} />
+          <Bar dataKey="messageCount" radius={[8, 8, 0, 0]}>
+            {sortedData.map((entry, index) => {
+              const level = getActivityLevel(entry.messageCount)
+              const gradientId = level.color === '#10b981' ? 'activityGradient1' :
+                                 level.color === '#14b8a6' ? 'activityGradient2' :
+                                 level.color === '#f59e0b' ? 'activityGradient3' : 'activityGradient4'
+              return <Cell key={`cell-${index}`} fill={`url(#${gradientId})`} />
+            })}
+          </Bar>
+        </BarChart>
       </ResponsiveContainer>
       <div className="mt-3 flex items-center justify-center gap-4 text-xs">
         <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: statusColors.completed }} />
-          <span className="text-gray-600">已完成</span>
+          <div className="w-3 h-3 rounded-full bg-[#10b981]" />
+          <span className="text-gray-600">非常活跃</span>
         </div>
         <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: statusColors.in_progress }} />
-          <span className="text-gray-600">进行中</span>
+          <div className="w-3 h-3 rounded-full bg-[#14b8a6]" />
+          <span className="text-gray-600">活跃</span>
         </div>
         <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: statusColors.needs_attention }} />
-          <span className="text-gray-600">需关注</span>
+          <div className="w-3 h-3 rounded-full bg-[#f59e0b]" />
+          <span className="text-gray-600">一般</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <div className="w-3 h-3 rounded-full bg-[#94a3b8]" />
+          <span className="text-gray-600">较少</span>
         </div>
       </div>
     </div>
@@ -1365,6 +1388,29 @@ function StudentListView({
   const [filterClass, setFilterClass] = useState<string>('all')
   const [searchQuery, setSearchQuery] = useState('')
 
+  // 计算学习态度
+  const getLearningAttitude = (student: StudentDetail) => {
+    // 计算活跃度分数（0-100）
+    const avgMessageCount = students.reduce((sum, s) => sum + s.aiConversations.length, 0) / students.length
+    const messageScore = Math.min(100, (student.aiConversations.length / (avgMessageCount * 1.5)) * 100)
+
+    // 计算进度分数
+    const progressScore = student.progress
+
+    // 计算时长分数
+    const avgDuration = students.reduce((sum, s) => sum + s.learningDuration, 0) / students.length
+    const durationScore = Math.min(100, (student.learningDuration / (avgDuration * 1.2)) * 100)
+
+    // 综合分数
+    const totalScore = (messageScore * 0.4 + progressScore * 0.3 + durationScore * 0.3)
+
+    // 根据分数返回态度
+    if (totalScore >= 75) return { emoji: '😊', label: '积极投入', color: 'text-green-600' }
+    if (totalScore >= 50) return { emoji: '😐', label: '平稳学习', color: 'text-blue-600' }
+    if (totalScore >= 25) return { emoji: '😟', label: '需要鼓励', color: 'text-orange-600' }
+    return { emoji: '😴', label: '注意力不足', color: 'text-gray-500' }
+  }
+
   const filteredStudents = useMemo(() => {
     let result = [...students]
 
@@ -1424,9 +1470,9 @@ function StudentListView({
   }
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-      {/* 搜索和筛选 */}
-      <div className="p-4 border-b border-gray-100 space-y-3">
+    <div className="h-full flex flex-col">
+      {/* 搜索和筛选 - 固定在顶部 */}
+      <div className="p-4 border-b border-gray-200 space-y-3 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
         {/* 搜索栏 */}
         <div className="relative">
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1480,10 +1526,10 @@ function StudentListView({
         </div>
       </div>
 
-      {/* 表格 */}
-      <div className="overflow-x-auto">
+      {/* 表格 - 可滚动区域 */}
+      <div className="flex-1 overflow-x-auto overflow-y-auto">
         <table className="w-full">
-          <thead className="bg-gray-50 border-b border-gray-100">
+          <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200 sticky top-0 z-10">
             <tr>
               <th className="pl-4 pr-2 py-3 text-left">
                 <button onClick={() => toggleSort('name')} className="flex items-center gap-1 text-xs font-semibold text-gray-600 uppercase tracking-wider hover:text-gray-900">
@@ -1492,6 +1538,7 @@ function StudentListView({
                 </button>
               </th>
               <th className="px-2 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">状态</th>
+              <th className="px-2 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">态度</th>
               <th className="px-2 py-3 text-left">
                 <button onClick={() => toggleSort('progress')} className="flex items-center gap-1 text-xs font-semibold text-gray-600 uppercase tracking-wider hover:text-gray-900">
                   进度
@@ -1524,6 +1571,17 @@ function StudentListView({
                   <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium whitespace-nowrap ${statusConfig[student.status].color}`}>
                     {statusConfig[student.status].label}
                   </span>
+                </td>
+                <td className="px-2 py-3">
+                  {(() => {
+                    const attitude = getLearningAttitude(student)
+                    return (
+                      <div className="flex items-center gap-1.5" title={attitude.label}>
+                        <span className="text-lg">{attitude.emoji}</span>
+                        <span className={`text-xs font-medium ${attitude.color}`}>{attitude.label}</span>
+                      </div>
+                    )
+                  })()}
                 </td>
                 <td className="px-2 py-3">
                   <div className="flex items-center gap-1.5">
@@ -1896,6 +1954,11 @@ export default function SpaceResultsPage({ params }: SpaceResultsPageProps) {
   const [selectedClasses, setSelectedClasses] = useState<string[]>(mockClasses.map(c => c.classId))
   const [selectedStudentIndex, setSelectedStudentIndex] = useState<number | null>(null)
   const [showResourceTaskDetails, setShowResourceTaskDetails] = useState(false)
+  const [showScrollTop, setShowScrollTop] = useState(false)
+
+  // 滚动容器引用
+  const leftScrollRef = useRef<HTMLDivElement>(null)
+  const rightScrollRef = useRef<HTMLDivElement>(null)
 
   // 过滤选中班级的学生
   const filteredStudents = useMemo(() => {
@@ -1935,6 +1998,60 @@ export default function SpaceResultsPage({ params }: SpaceResultsPageProps) {
   // 计算成绩分布数据
   const scoreDistributionData = useMemo(() => generateScoreDistribution(filteredStudents), [filteredStudents])
 
+  // 监听滚动，显示/隐藏回到顶部按钮
+  useEffect(() => {
+    const handleScroll = (e: Event) => {
+      const target = e.target as HTMLElement
+      if (target.scrollTop > 300) {
+        setShowScrollTop(true)
+      } else {
+        setShowScrollTop(false)
+      }
+    }
+
+    const leftScroll = leftScrollRef.current
+    const rightScroll = rightScrollRef.current
+
+    if (leftScroll) {
+      leftScroll.addEventListener('scroll', handleScroll)
+    }
+    if (rightScroll) {
+      rightScroll.addEventListener('scroll', handleScroll)
+    }
+
+    return () => {
+      if (leftScroll) {
+        leftScroll.removeEventListener('scroll', handleScroll)
+      }
+      if (rightScroll) {
+        rightScroll.removeEventListener('scroll', handleScroll)
+      }
+    }
+  }, [])
+
+  // 禁用 body 滚动
+  useEffect(() => {
+    // 保存原始样式
+    const originalStyle = window.getComputedStyle(document.body).overflow
+    // 禁用滚动
+    document.body.style.overflow = 'hidden'
+
+    // 组件卸载时恢复
+    return () => {
+      document.body.style.overflow = originalStyle
+    }
+  }, [])
+
+  // 回到顶部函数
+  const scrollToTop = () => {
+    if (leftScrollRef.current) {
+      leftScrollRef.current.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+    if (rightScrollRef.current) {
+      rightScrollRef.current.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  }
+
   const space = {
     id: spaceId,
     title: 'Python 数据分析入门',
@@ -1943,17 +2060,17 @@ export default function SpaceResultsPage({ params }: SpaceResultsPageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="h-screen bg-gray-50 overflow-hidden flex flex-col">
       {/* Background */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-20 right-10 w-96 h-96 bg-primary-200/20 rounded-full blur-3xl" />
         <div className="absolute bottom-20 left-10 w-72 h-72 bg-accent-200/20 rounded-full blur-3xl" />
       </div>
 
-      <div className="relative z-10 max-w-6xl mx-auto px-6 py-8">
-        {/* Header */}
-        <div className="mb-6">
-          <div className="flex items-center gap-4 mb-4">
+      <div className="relative z-10 max-w-6xl mx-auto px-6 py-8 flex-1 flex flex-col overflow-hidden">
+        {/* Header - 紧凑版 */}
+        <div className="mb-4 flex-shrink-0">
+          <div className="flex items-center gap-4 mb-3">
             <Link
               href="/teacher/self-study"
               className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
@@ -1967,7 +2084,7 @@ export default function SpaceResultsPage({ params }: SpaceResultsPageProps) {
 
           <div className="flex items-start justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">{space.title}</h1>
+              <h1 className="text-2xl font-bold text-gray-900 mb-1">{space.title}</h1>
               <div className="flex items-center gap-4 text-sm text-gray-600">
                 <span>{overallStats.totalStudents} 名学生</span>
                 <span>{space.isPublished ? '已发布' : '草稿'}</span>
@@ -1990,10 +2107,10 @@ export default function SpaceResultsPage({ params }: SpaceResultsPageProps) {
           </div>
         </div>
 
-        {/* 左右两栏布局 */}
-        <div className="grid grid-cols-1 lg:grid-cols-[2fr_3fr] gap-6">
+        {/* 左右两栏布局 - 固定高度 + 内部滚动 */}
+        <div className="grid grid-cols-1 lg:grid-cols-[2fr_3fr] gap-6 flex-1 overflow-hidden">
           {/* 左侧概览栏 */}
-          <div className="space-y-6">
+          <div ref={leftScrollRef} className="fancy-scroll-container space-y-6 overflow-y-auto pr-2 border-2 border-gray-200 rounded-2xl p-4 bg-white/50">
             {/* 班级多选 */}
             <ClassMultiSelect
               selectedClasses={selectedClasses}
@@ -2094,7 +2211,7 @@ export default function SpaceResultsPage({ params }: SpaceResultsPageProps) {
           </div>
 
           {/* 右侧学生列表栏 */}
-          <div>
+          <div ref={rightScrollRef} className="fancy-scroll-container overflow-y-auto border-2 border-gray-200 rounded-2xl bg-white/50">
             <StudentListView
               students={filteredStudents}
               onSelectStudent={setSelectedStudentIndex}
@@ -2103,6 +2220,29 @@ export default function SpaceResultsPage({ params }: SpaceResultsPageProps) {
           </div>
         </div>
       </div>
+
+      {/* 回到顶部按钮 */}
+      {showScrollTop && (
+        <button
+          onClick={scrollToTop}
+          className="fixed bottom-8 right-8 z-50 glass-card p-4 rounded-full shadow-2xl hover:scale-110 transition-all duration-300 group"
+          aria-label="回到顶部"
+        >
+          <svg
+            className="w-6 h-6 text-primary-600 group-hover:text-primary-700 transition-colors"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M5 10l7-7m0 0l7 7m-7-7v18"
+            />
+          </svg>
+        </button>
+      )}
 
       {/* Student Detail Modal */}
       {selectedStudentIndex !== null && (
@@ -2147,17 +2287,30 @@ export default function SpaceResultsPage({ params }: SpaceResultsPageProps) {
         }
 
         /* ============================================ */
-        /* Glassmorphism (玻璃态) */
+        /* Glassmorphism (玻璃态) - 增强版 */
         /* ============================================ */
         .glass-card {
-          background: rgba(255, 255, 255, 0.7);
-          backdrop-filter: blur(10px) saturate(180%);
-          -webkit-backdrop-filter: blur(10px) saturate(180%);
-          border: 1px solid rgba(255, 255, 255, 0.3);
+          background: rgba(255, 255, 255, 0.75);
+          backdrop-filter: blur(12px) saturate(180%);
+          -webkit-backdrop-filter: blur(12px) saturate(180%);
+          border: 1px solid rgba(255, 255, 255, 0.4);
           border-radius: 16px;
           box-shadow:
-            0 8px 32px 0 rgba(31, 38, 135, 0.15),
-            inset 0 1px 0 0 rgba(255, 255, 255, 0.5);
+            0 8px 32px 0 rgba(31, 38, 135, 0.12),
+            0 2px 8px 0 rgba(31, 38, 135, 0.08),
+            inset 0 1px 0 0 rgba(255, 255, 255, 0.6),
+            inset 0 -1px 0 0 rgba(255, 255, 255, 0.2);
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          /* 性能优化 */
+          will-change: transform, box-shadow;
+        }
+
+        .glass-card:hover {
+          border-color: rgba(16, 185, 129, 0.3);
+          box-shadow:
+            0 12px 40px 0 rgba(16, 185, 129, 0.15),
+            0 4px 12px 0 rgba(31, 38, 135, 0.1),
+            inset 0 1px 0 0 rgba(255, 255, 255, 0.7);
         }
 
         /* ============================================ */
@@ -2178,18 +2331,22 @@ export default function SpaceResultsPage({ params }: SpaceResultsPageProps) {
         }
 
         /* ============================================ */
-        /* Hover Card Animation */
+        /* Hover Card Animation - 增强版 */
         /* ============================================ */
         .hover-card {
-          transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+          transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+                      box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
           position: relative;
+          /* 性能优化 */
+          will-change: transform;
         }
 
         .hover-card:hover {
-          transform: translateY(-4px) scale(1.02);
+          transform: translateY(-6px) scale(1.02);
           box-shadow:
-            0 20px 40px rgba(16, 185, 129, 0.2),
-            0 0 60px rgba(16, 185, 129, 0.1);
+            0 24px 48px rgba(16, 185, 129, 0.18),
+            0 12px 24px rgba(16, 185, 129, 0.12),
+            0 0 80px rgba(16, 185, 129, 0.08);
         }
 
         .hover-card::before {
@@ -2208,11 +2365,34 @@ export default function SpaceResultsPage({ params }: SpaceResultsPageProps) {
           -webkit-mask-composite: xor;
           mask-composite: exclude;
           opacity: 0;
-          transition: opacity 0.3s;
+          transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .hover-card:hover::before {
-          opacity: 0.6;
+          opacity: 0.7;
+        }
+
+        /* 添加微妙的光泽效果 */
+        .hover-card::after {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(
+            90deg,
+            transparent,
+            rgba(255, 255, 255, 0.3),
+            transparent
+          );
+          transition: left 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+          border-radius: inherit;
+          pointer-events: none;
+        }
+
+        .hover-card:hover::after {
+          left: 100%;
         }
 
         /* ============================================ */
@@ -2323,6 +2503,115 @@ export default function SpaceResultsPage({ params }: SpaceResultsPageProps) {
 
         .recharts-tooltip-item {
           color: #4b5563 !important;
+        }
+
+        /* ============================================ */
+        /* Fancy Scroll Container - 现代滚动效果 */
+        /* ============================================ */
+        .fancy-scroll-container {
+          /* 平滑滚动 */
+          scroll-behavior: smooth;
+          /* 防止横向滚动 */
+          overflow-x: hidden;
+          /* 模态框内滚动不影响外部 */
+          overscroll-behavior: contain;
+          /* 滚动阴影效果 - 顶部和底部渐变 */
+          background:
+            /* 顶部阴影 */
+            linear-gradient(white 30%, rgba(255, 255, 255, 0)) center top,
+            /* 底部阴影 */
+            linear-gradient(rgba(255, 255, 255, 0), white 70%) center bottom,
+            /* 顶部滚动指示器 */
+            radial-gradient(farthest-side at 50% 0, rgba(16, 185, 129, 0.3), rgba(0, 0, 0, 0)) center top,
+            /* 底部滚动指示器 */
+            radial-gradient(farthest-side at 50% 100%, rgba(16, 185, 129, 0.3), rgba(0, 0, 0, 0)) center bottom;
+          background-repeat: no-repeat;
+          background-size: 100% 40px, 100% 40px, 100% 14px, 100% 14px;
+          background-attachment: local, local, scroll, scroll;
+          /* 性能优化 */
+          will-change: transform;
+        }
+
+        /* 自定义滚动条样式 */
+        .fancy-scroll-container::-webkit-scrollbar {
+          width: 8px;
+        }
+
+        .fancy-scroll-container::-webkit-scrollbar-track {
+          background: rgba(243, 244, 246, 0.5);
+          border-radius: 10px;
+          margin: 8px 0;
+        }
+
+        .fancy-scroll-container::-webkit-scrollbar-thumb {
+          background: linear-gradient(135deg, #10b981, #14b8a6);
+          border-radius: 10px;
+          transition: background 0.3s ease;
+        }
+
+        .fancy-scroll-container::-webkit-scrollbar-thumb:hover {
+          background: linear-gradient(135deg, #059669, #0d9488);
+          box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+        }
+
+        /* Firefox 滚动条样式 */
+        .fancy-scroll-container {
+          scrollbar-width: thin;
+          scrollbar-color: #10b981 rgba(243, 244, 246, 0.5);
+        }
+
+        /* 支持 prefers-reduced-motion */
+        @media (prefers-reduced-motion: reduce) {
+          .fancy-scroll-container {
+            scroll-behavior: auto;
+          }
+          .hover-card {
+            transition: none;
+          }
+          .hover-card:hover {
+            transform: none;
+          }
+          .gradient-text {
+            animation: none;
+          }
+          .animate-fade-in-up,
+          .animate-scale-in,
+          .floating-icon,
+          .animate-pulse-slow,
+          .glow-pulse {
+            animation: none;
+          }
+        }
+
+        /* ============================================ */
+        /* 响应式调整 */
+        /* ============================================ */
+        @media (max-width: 1024px) {
+          .fancy-scroll-container {
+            /* 移动端使用更小的固定高度 */
+            height: auto;
+            max-height: 70vh;
+          }
+        }
+
+        /* ============================================ */
+        /* 滚动容器边框增强 */
+        /* ============================================ */
+        .fancy-scroll-container {
+          /* 添加内阴影增强边框感 */
+          box-shadow:
+            inset 0 0 0 1px rgba(16, 185, 129, 0.1),
+            0 4px 6px -1px rgba(0, 0, 0, 0.05),
+            0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        }
+
+        /* 卡片间距优化 */
+        .fancy-scroll-container .glass-card {
+          margin-bottom: 1rem;
+        }
+
+        .fancy-scroll-container .glass-card:last-child {
+          margin-bottom: 0;
         }
       `}</style>
     </div>
