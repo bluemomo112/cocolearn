@@ -31,10 +31,12 @@ export default function SettingsModal({ config, onSave, onClose }: SettingsModal
   return (
     <>
       {/* 背景遮罩 */}
-      <div className="fixed inset-0 bg-black/30 z-40" onClick={onClose} />
-
-      {/* 右侧滑出面板 */}
-      <div className="fixed right-0 top-0 h-full w-[400px] bg-white shadow-2xl z-50 flex flex-col animate-slide-in-right">
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 flex items-center justify-center p-4" onClick={onClose}>
+        {/* 弹窗容器 */}
+        <div
+          className="w-full max-w-4xl max-h-[85vh] bg-white rounded-2xl shadow-2xl z-50 flex flex-col animate-fade-in-up"
+          onClick={(e) => e.stopPropagation()}
+        >
         {/* 头部 */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
           <h2 className="text-lg font-semibold text-gray-900">{t('设置')}</h2>
@@ -286,13 +288,14 @@ export default function SettingsModal({ config, onSave, onClose }: SettingsModal
         </div>
 
         {/* 底部按钮 */}
-        <div className="px-6 py-4 border-t border-gray-200 flex gap-3">
+        <div className="px-6 py-4 border-t border-gray-200 flex gap-3 flex-shrink-0">
           <button onClick={onClose} className="flex-1 px-4 py-2 border border-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-50">
             {t('取消')}
           </button>
           <button onClick={handleSave} className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700">
             {t('保存')}
           </button>
+        </div>
         </div>
       </div>
     </>
