@@ -24,6 +24,28 @@ import { TaskEditModal } from '@/app/teacher/note-config/modals';
 import { useRouter } from 'next/navigation';
 import { PublishMode, PublishScope } from '@/types/self-study';
 
+// 主题配置 - 修改这里即可改变整体风格
+const THEME = {
+  // 强调色 - 使用主题变量（会随 globals.css 中的主题改变）
+  accent: {
+    bg: 'bg-primary-600',
+    bgHover: 'hover:bg-primary-700',
+    text: 'text-primary-600',
+    textHover: 'hover:text-primary-700',
+    border: 'border-primary-300',
+    borderHover: 'hover:border-primary-400',
+  },
+  // 中性色 - 用于大部分 UI
+  neutral: {
+    bg: 'bg-gray-50',
+    bgHover: 'hover:bg-gray-100',
+    text: 'text-gray-600',
+    textLight: 'text-gray-400',
+    border: 'border-gray-200',
+    borderHover: 'hover:border-gray-300',
+  },
+};
+
 interface SelfStudyWorkbenchProps {
   config: SpaceConfig;
   onBack: () => void;
@@ -242,7 +264,7 @@ function EnhancedNotesPanel({ learningMode, isAIGenerating }: { learningMode?: L
         <div className="p-4 border-b border-gray-200 space-y-2">
           <button
             onClick={createNote}
-            className="w-full px-4 py-3 bg-gradient-to-r from-primary-600 to-accent-600 text-white text-sm font-medium rounded-xl hover:from-primary-700 hover:to-accent-700 transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+            className="w-full px-4 py-3 bg-gradient-to-r from-primary-600 to-accent-600 text-white text-sm font-medium rounded-lg hover:from-primary-700 hover:to-accent-700 transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
           >
             <Plus size={18} />
             {t('添加笔记')}
@@ -251,7 +273,7 @@ function EnhancedNotesPanel({ learningMode, isAIGenerating }: { learningMode?: L
             <button
               onClick={generateAINote}
               disabled={isGeneratingNote}
-              className="w-full px-4 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-sm font-medium rounded-xl hover:from-emerald-600 hover:to-teal-600 transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 disabled:opacity-70"
+              className="w-full px-4 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-sm font-medium rounded-lg hover:from-emerald-600 hover:to-teal-600 transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 disabled:opacity-70"
             >
               {isGeneratingNote ? (
                 <>
@@ -282,7 +304,7 @@ function EnhancedNotesPanel({ learningMode, isAIGenerating }: { learningMode?: L
             </div>
           </div>
         )}
-        <div className="flex-1 overflow-y-auto p-3 space-y-2">
+        <div className="flex-1 overflow-y-auto p-4 space-y-2">
           {notes.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center py-12">
               <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
@@ -376,7 +398,7 @@ function EnhancedNotesPanel({ learningMode, isAIGenerating }: { learningMode?: L
       </div>
 
       {/* Editor / Preview area */}
-      <div className="flex-1 overflow-y-auto p-3 bg-white">
+      <div className="flex-1 overflow-y-auto p-4 bg-white">
         <input
           type="text"
           value={activeNote.title}
@@ -477,9 +499,9 @@ function LearningStatusPanel({
   const currentNode = learningPath.find((n) => n.status === 'learning');
 
   return (
-    <div className="flex-1 overflow-y-auto p-3 space-y-4">
+    <div className="flex-1 overflow-y-auto p-4 space-y-4">
       {/* 学习概况 */}
-      <div className="bg-gradient-to-br from-primary-50 to-accent-50 rounded-xl p-4 border border-primary-100">
+      <div className="bg-gradient-to-br from-primary-50 to-accent-50 rounded-lg p-4 border border-primary-100">
         <div className="flex items-center gap-2 mb-3">
           <Activity size={14} className="text-primary-600" />
           <span className="text-xs font-bold text-primary-700">{t('学习概况')}</span>
@@ -502,7 +524,7 @@ function LearningStatusPanel({
 
       {/* 学习路径 - 仅AI引导模式显示 */}
       {learningMode === 'ai_guided' && (
-        <div className="bg-gradient-to-br from-primary-50 to-primary-100 rounded-xl p-4 border border-primary-200">
+        <div className="bg-gradient-to-br from-primary-50 to-primary-100 rounded-lg p-4 border border-primary-200">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <Map size={14} className="text-primary-600" />
@@ -570,7 +592,7 @@ function LearningStatusPanel({
       )}
 
       {/* 能力画像 */}
-      <div className="bg-gradient-to-br from-accent-50 to-accent-100 rounded-xl p-4 border border-accent-200">
+      <div className="bg-gradient-to-br from-accent-50 to-accent-100 rounded-lg p-4 border border-accent-200">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <Award size={14} className="text-accent-600" />
@@ -600,7 +622,7 @@ function LearningStatusPanel({
       </div>
 
       {/* AI 观察记录 */}
-      <div className="bg-gradient-to-br from-accent-50 to-primary-50 rounded-xl p-4 border border-accent-200">
+      <div className="bg-gradient-to-br from-accent-50 to-primary-50 rounded-lg p-4 border border-accent-200">
         <div className="flex items-center gap-2 mb-3">
           <Sparkles size={14} className="text-accent-600" />
           <span className="text-xs font-bold text-accent-700">{t('AI 观察记录')}</span>
@@ -1397,16 +1419,13 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                   flex: collapsedPanels.tasks ? '1 1 auto' : '0 0 50%'
                 }}
               >
-                <div className="p-3 border-b border-gray-200">
+                <div className="px-4 py-3 border-b border-gray-200">
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
                       <h2 className="text-sm font-semibold text-gray-800 flex items-center gap-2">
                         <Sparkles size={16} className="text-gray-500" />
                         {t('AI 智能资源')}
                       </h2>
-                      <p className="text-xs text-gray-400 mt-0.5">
-                        {t('根据学习进度动态生成')}
-                      </p>
                     </div>
                     <button
                       onClick={() => setIsLeftCollapsed(true)}
@@ -1433,12 +1452,12 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                     </div>
                   </div>
                 )}
-                <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                <div className="flex-1 overflow-y-auto p-4 space-y-2">
                   {/* AI生成的资源 */}
                   {aiGeneratedResources.map((resource) => (
                     <div
                       key={resource.id}
-                      className="flex items-center gap-3 p-3 rounded-xl transition-all cursor-pointer bg-white border border-gray-200 hover:border-gray-300 hover:shadow-sm"
+                      className="flex items-center gap-3 p-3 rounded-lg transition-all cursor-pointer bg-white border border-gray-200 hover:border-gray-300 hover:shadow-sm"
                     >
                       <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg bg-gray-100">
                         {resource.icon}
@@ -1458,7 +1477,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                   {MOCK_AI_RESOURCES.map((resource) => (
                     <div
                       key={resource.id}
-                      className={`flex items-center gap-3 p-3 rounded-xl transition-all cursor-pointer ${
+                      className={`flex items-center gap-3 p-3 rounded-lg transition-all cursor-pointer ${
                         resource.status === 'generating'
                           ? 'bg-accent-50 border border-gray-200 animate-pulse'
                           : resource.status === 'ready'
@@ -1511,7 +1530,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
               >
                 {/* 可折叠的标题栏 */}
                 <div
-                  className="p-3 border-b border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors"
+                  className="h-12 px-4 py-3 border-b border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors"
                   onClick={() => togglePanel('tasks')}
                 >
                   <div className="flex items-center justify-between">
@@ -1525,9 +1544,6 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                           </span>
                         )}
                       </h3>
-                      <p className="text-xs text-gray-400 mt-0.5">
-                        {t('AI 动态生成的学习任务')}
-                      </p>
                     </div>
                     <div className="flex items-center gap-2">
                       {collapsedPanels.tasks && generatedTasks.length === 0 && (
@@ -1537,7 +1553,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                             handleGenerateTest();
                           }}
                           disabled={isGeneratingTask}
-                          className="px-2.5 py-1 bg-gray-700 hover:bg-gray-800 text-white text-xs font-medium rounded-lg transition-colors flex items-center gap-1 disabled:opacity-70"
+                          className="px-2.5 py-1 bg-primary-600 hover:bg-primary-700 text-white text-xs font-medium rounded-lg transition-colors flex items-center gap-1 disabled:opacity-70"
                         >
                           {isGeneratingTask ? (
                             <>
@@ -1563,10 +1579,10 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
 
                 {/* 可折叠的内容区域 */}
                 {!collapsedPanels.tasks && (
-                  <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                  <div className="flex-1 overflow-y-auto p-4 space-y-2">
                     {/* AI生成进度指示器 */}
                     {isAIGenerating && (
-                      <div className="px-3 py-3 bg-gray-50 border border-gray-200 rounded-xl">
+                      <div className="px-3 py-3 bg-gray-50 border border-gray-200 rounded-lg">
                         <div className="flex items-center gap-2 text-xs text-gray-600 mb-2">
                           <Brain size={14} className="animate-pulse" />
                           <span>{t('AI 正在为你生成学习任务...')}</span>
@@ -1606,7 +1622,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                       generatedTasks.map((task) => (
                         <div
                           key={task.id}
-                          className="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-xl hover:border-gray-300 hover:shadow-sm transition-all cursor-pointer group"
+                          className="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg hover:border-gray-300 hover:shadow-sm transition-all cursor-pointer group"
                         >
                           <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gray-100">
                             {task.type === 'quiz' ? (
@@ -1645,7 +1661,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                       <button
                         onClick={handleGenerateTest}
                         disabled={isGeneratingTask}
-                        className="w-full px-3 py-2.5 border-2 border-dashed border-gray-300 rounded-xl text-sm text-gray-500 hover:border-gray-400 hover:bg-gray-50 transition-all flex items-center justify-center gap-2 disabled:opacity-70"
+                        className="w-full px-3 py-2.5 border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-gray-400 hover:bg-gray-50 transition-all flex items-center justify-center gap-2 disabled:opacity-70"
                       >
                         {isGeneratingTask ? (
                           <>
@@ -1674,14 +1690,13 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                   flex: collapsedPanels.tasks ? '1 1 auto' : '0 0 50%'
                 }}
               >
-                <div className="p-3 border-b border-gray-200">
+                <div className="h-12 px-4 py-3 border-b border-gray-200">
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
                       <h2 className="text-sm font-semibold text-gray-800 flex items-center gap-2">
                         <FolderOpen size={16} className="text-gray-500" />
                         Sources
                       </h2>
-                      <p className="text-xs text-gray-400 mt-0.5">{t('自由浏览，随时提问')}</p>
                     </div>
                     <button
                       onClick={() => setIsLeftCollapsed(true)}
@@ -1697,7 +1712,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                 <div className="p-3 border-b border-gray-100 space-y-2">
                   <button
                     onClick={() => setIsFileUploadOpen(true)}
-                    className="w-full px-3 py-2.5 border-2 border-dashed border-gray-300 rounded-xl text-sm text-gray-500 hover:border-gray-400 hover:text-gray-700 hover:bg-gray-50 transition-all flex items-center justify-center gap-2"
+                    className="w-full px-3 py-2.5 border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-gray-400 hover:text-gray-700 hover:bg-gray-50 transition-all flex items-center justify-center gap-2"
                   >
                     <Plus size={16} />
                     {t('添加资料来源')}
@@ -1738,7 +1753,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                 )}
 
                 {/* 资源列表 */}
-                <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                <div className="flex-1 overflow-y-auto p-4 space-y-2">
                   {config.resources.length === 0 && aiGeneratedResources.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full text-center py-12">
                       <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
@@ -1759,7 +1774,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                       {aiGeneratedResources.map((resource) => (
                         <div
                           key={resource.id}
-                          className="flex items-start gap-3 p-3 bg-white border border-gray-200 rounded-xl hover:border-gray-300 hover:shadow-sm transition-all cursor-pointer group"
+                          className="flex items-start gap-3 p-3 bg-white border border-gray-200 rounded-lg hover:border-gray-300 hover:shadow-sm transition-all cursor-pointer group"
                         >
                           {/* 选中指示器 */}
                           <div className="w-5 h-5 rounded border-2 border-gray-400 bg-gray-500 flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -1784,7 +1799,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                       {config.resources.map((resource) => (
                         <div
                           key={resource.id}
-                          className="flex items-start gap-3 p-3 bg-white border border-gray-200 rounded-xl hover:border-gray-300 hover:shadow-sm transition-all cursor-pointer group"
+                          className="flex items-start gap-3 p-3 bg-white border border-gray-200 rounded-lg hover:border-gray-300 hover:shadow-sm transition-all cursor-pointer group"
                         >
                           {/* 选中指示器 */}
                           <div className="w-5 h-5 rounded border-2 border-gray-400 bg-gray-500 flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -1824,7 +1839,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
               >
                 {/* 可折叠的标题栏 */}
                 <div
-                  className="p-3 border-b border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors"
+                  className="h-12 px-4 py-3 border-b border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors"
                   onClick={() => togglePanel('tasks')}
                 >
                   <div className="flex items-center justify-between">
@@ -1848,7 +1863,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                             handleGenerateTest();
                           }}
                           disabled={isGeneratingTask}
-                          className="px-2.5 py-1 bg-gray-700 hover:bg-gray-800 text-white text-xs font-medium rounded-lg transition-colors flex items-center gap-1 disabled:opacity-70"
+                          className="px-2.5 py-1 bg-primary-600 hover:bg-primary-700 text-white text-xs font-medium rounded-lg transition-colors flex items-center gap-1 disabled:opacity-70"
                         >
                           {isGeneratingTask ? (
                             <>
@@ -1874,10 +1889,10 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
 
                 {/* 可折叠的内容区域 */}
                 {!collapsedPanels.tasks && (
-                  <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                  <div className="flex-1 overflow-y-auto p-4 space-y-2">
                     {/* AI生成进度指示器 */}
                     {isAIGenerating && (
-                      <div className="px-3 py-3 bg-gray-50 border border-gray-200 rounded-xl">
+                      <div className="px-3 py-3 bg-gray-50 border border-gray-200 rounded-lg">
                         <div className="flex items-center gap-2 text-xs text-gray-600 mb-2">
                           <Brain size={14} className="animate-pulse" />
                           <span>{t('AI 正在为你生成学习任务...')}</span>
@@ -1917,7 +1932,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                       generatedTasks.map((task) => (
                         <div
                           key={task.id}
-                          className="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-xl hover:border-gray-300 hover:shadow-sm transition-all cursor-pointer group"
+                          className="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg hover:border-gray-300 hover:shadow-sm transition-all cursor-pointer group"
                         >
                           <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gray-100">
                             {task.type === 'quiz' ? (
@@ -1956,7 +1971,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                       <button
                         onClick={handleGenerateTest}
                         disabled={isGeneratingTask}
-                        className="w-full px-3 py-2.5 border-2 border-dashed border-gray-300 rounded-xl text-sm text-gray-500 hover:border-gray-400 hover:bg-gray-50 transition-all flex items-center justify-center gap-2 disabled:opacity-70"
+                        className="w-full px-3 py-2.5 border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-gray-400 hover:bg-gray-50 transition-all flex items-center justify-center gap-2 disabled:opacity-70"
                       >
                         {isGeneratingTask ? (
                           <>
@@ -1992,20 +2007,18 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
 
         {/* 中间聊天面板 */}
         <div className="flex-1 flex flex-col bg-white">
-          {/* 对话区头部 + 模式切换 */}
-          <div className="px-4 py-3 border-b border-gray-200">
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="text-sm font-semibold text-gray-800 flex items-center gap-2">
-                <MessageSquare size={16} className="text-gray-500" />
-                {t('AI 学习对话')}
-              </h2>
-            </div>
+          {/* 对话区头部 */}
+          <div className="h-12 px-4 border-b border-gray-200 flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+              <MessageSquare size={16} className="text-gray-500" />
+              {t('AI 学习对话')}
+            </h2>
 
-            {/* 模式切换 - 类似学生端 */}
+            {/* 模式切换 - 紧凑版 */}
             <div className="flex gap-1 bg-gray-100 rounded-lg p-0.5">
               <button
                 onClick={() => handleModeChange('self_directed')}
-                className={`flex-1 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                className={`px-2 py-1 rounded text-xs font-medium transition-all ${
                   config.learningMode === 'self_directed'
                     ? 'bg-white text-gray-800 shadow-sm'
                     : 'text-gray-500 hover:text-gray-700'
@@ -2016,7 +2029,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
               </button>
               <button
                 onClick={() => handleModeChange('ai_guided')}
-                className={`flex-1 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                className={`px-2 py-1 rounded text-xs font-medium transition-all ${
                   config.learningMode === 'ai_guided'
                     ? 'bg-white text-gray-800 shadow-sm'
                     : 'text-gray-500 hover:text-gray-700'
@@ -2033,14 +2046,14 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
             {messages.map((message) => (
               <div key={message.id} className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : ''}`}>
                 {message.role === 'assistant' && (
-                  <div className="w-8 h-8 rounded-full bg-gray-800 flex-shrink-0 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-full bg-primary-600 flex-shrink-0 flex items-center justify-center">
                     <Bot size={16} className="text-white" />
                   </div>
                 )}
                 <div
-                  className={`max-w-[80%] p-4 rounded-2xl ${
+                  className={`max-w-[80%] p-4 rounded-lg ${
                     message.role === 'user'
-                      ? 'bg-gray-800 text-white rounded-tr-none'
+                      ? 'bg-primary-600 text-white rounded-tr-none'
                       : 'bg-white border border-gray-200 rounded-tl-none'
                   }`}
                 >
@@ -2058,10 +2071,10 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
             {/* 加载指示器 */}
             {isLoading && (
               <div className="flex gap-3">
-                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary-500 to-accent-600 flex-shrink-0 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full bg-gray-800 flex-shrink-0 flex items-center justify-center">
                   <Bot size={16} className="text-white" />
                 </div>
-                <div className="bg-white border border-gray-200 rounded-2xl rounded-tl-none p-4">
+                <div className="bg-white border border-gray-200 rounded-lg rounded-tl-none p-4">
                   <div className="flex items-center gap-2 text-gray-500">
                     <Activity size={14} className="animate-spin" />
                     <span className="text-sm">{t('思考中...')}</span>
@@ -2072,7 +2085,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
 
             {/* 阶段性反思引导卡片 */}
             {messages.length >= 6 && (
-              <div className="mt-4 bg-gray-50 border border-gray-200 rounded-xl p-4 shadow-sm">
+              <div className="mt-4 bg-gray-50 border border-gray-200 rounded-lg p-4 shadow-sm">
                 <div className="flex items-start gap-3">
                   <div className="w-9 h-9 rounded-full bg-gray-100 flex-shrink-0 flex items-center justify-center">
                     <Lightbulb size={18} className="text-gray-500" />
@@ -2126,12 +2139,12 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                     : t('回答问题或提出疑问...')
                 }
                 disabled={isLoading}
-                className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-4 pr-12 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 disabled:opacity-50"
+                className="w-full bg-gray-50 border border-gray-200 rounded-lg pl-4 pr-12 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-50"
               />
               <button
                 onClick={handleSendMessage}
                 disabled={isLoading || !inputMessage.trim()}
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-colors disabled:opacity-50"
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50"
               >
                 <Send size={16} />
               </button>
@@ -2196,24 +2209,24 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
               <div className="flex border-b border-gray-200">
             <button
               onClick={() => setRightTab('workspace')}
-              className={`flex-1 px-3 py-2.5 text-xs font-medium transition-colors ${
+              className={`flex-1 h-12 px-4 text-xs font-medium transition-colors flex items-center justify-center gap-1 ${
                 rightTab === 'workspace'
                   ? 'text-gray-800 border-b-2 border-gray-800 bg-white'
                   : 'text-gray-400 hover:text-gray-600'
               }`}
             >
-              <Pencil size={12} className="inline mr-1" />
+              <Pencil size={12} />
               {t('工作区')}
             </button>
             <button
               onClick={() => setRightTab('status')}
-              className={`flex-1 px-3 py-2.5 text-xs font-medium transition-colors ${
+              className={`flex-1 h-12 px-4 text-xs font-medium transition-colors flex items-center justify-center gap-1 ${
                 rightTab === 'status'
                   ? 'text-gray-800 border-b-2 border-gray-800 bg-white'
                   : 'text-gray-400 hover:text-gray-600'
               }`}
             >
-              <Activity size={12} className="inline mr-1" />
+              <Activity size={12} />
               {t('学习状态')}
             </button>
             <button
@@ -2247,7 +2260,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
               >
                 {/* 可折叠的标题栏 */}
                 <div
-                  className="p-3 border-b border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors"
+                  className="h-12 px-4 py-3 border-b border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors"
                   onClick={() => togglePanel('studio')}
                 >
                   <div className="flex items-center justify-between">
@@ -2256,7 +2269,6 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                         <Sparkles size={14} className="text-gray-500" />
                         Studio
                       </h3>
-                      <p className="text-xs text-gray-400 mt-0.5">{t('AI 学习工具')}</p>
                     </div>
                     <div className="flex items-center gap-2">
                       {collapsedPanels.studio ? (
@@ -2270,7 +2282,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
 
                 {/* 可折叠的内容区域 */}
                 {!collapsedPanels.studio && (
-                  <div className="flex-1 overflow-y-auto p-3">
+                  <div className="flex-1 overflow-y-auto p-4">
                     <div className="grid grid-cols-2 gap-2">
                     {STUDIO_TOOLS.map((tool) => {
                       const isGenerating = generatingToolId === tool.id;
@@ -2278,7 +2290,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                         <button
                           key={tool.id}
                           onClick={() => !isGenerating && handleStudioToolClick(tool)}
-                          className={`p-3 rounded-xl border text-left transition-all relative group ${
+                          className={`p-3 rounded-lg border text-left transition-all relative group ${
                             isGenerating
                               ? 'bg-gray-50 border-gray-200 animate-pulse cursor-wait'
                               : 'bg-white border-gray-200 hover:border-gray-300 hover:shadow-sm cursor-pointer'
