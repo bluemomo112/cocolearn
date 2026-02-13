@@ -647,6 +647,18 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
   const { t } = useLanguage();
   const router = useRouter();
 
+  // 主题色工具函数
+  const getThemeClass = (type: 'bg' | 'bgHover' | 'text' | 'border' | 'icon'): string => {
+    const map: Record<string, string> = {
+      bg: 'bg-primary-600',
+      bgHover: 'hover:bg-primary-700',
+      text: 'text-primary-600',
+      border: 'border-primary-500',
+      icon: 'text-primary-600',
+    };
+    return map[type] ?? '';
+  };
+
   // Mock data with translations
   const MOCK_LEARNING_PATH: LearningPathNode[] = [
     { id: 'node_1', title: t('基础概念与定义'), status: 'mastered', estimatedTime: 15 },
@@ -2326,6 +2338,8 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
           )}
         </>
       )}
+        </div>
+      </div>
 
       {/* 设置弹窗 */}
       {isSettingsOpen && (
