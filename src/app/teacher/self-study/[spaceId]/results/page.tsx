@@ -128,7 +128,17 @@ const mockClasses: ClassInfo[] = [
 // Mock Data - 学生完整数据生成
 // ============================================
 
+// 确定性伪随机数生成器，避免 SSR/CSR hydration 不一致
+function createSeededRandom(seed: number) {
+  let s = seed
+  return () => {
+    s = (s * 1664525 + 1013904223) & 0xffffffff
+    return (s >>> 0) / 0xffffffff
+  }
+}
+
 function generateMockStudents(): StudentDetail[] {
+  const rand = createSeededRandom(42)
   const students: StudentDetail[] = []
   const names = [
     '张三', '李四', '王五', '赵六', '孙七', '周八', '吴九', '郑十',
@@ -145,23 +155,23 @@ function generateMockStudents(): StudentDetail[] {
       const statuses: StudentStatus[] = ['completed', 'completed', 'completed', 'in_progress', 'in_progress', 'not_started', 'needs_attention', 'completed']
       const status = statuses[i % statuses.length]
 
-      const progress = status === 'completed' ? 100 : status === 'not_started' ? 0 : Math.floor(Math.random() * 60) + 30
-      const learningDuration = status === 'not_started' ? 0 : Math.floor(Math.random() * 40) + 20
-      const objectiveScore = status !== 'not_started' ? Math.floor(Math.random() * 40) + 60 : undefined
+      const progress = status === 'completed' ? 100 : status === 'not_started' ? 0 : Math.floor(rand() * 60) + 30
+      const learningDuration = status === 'not_started' ? 0 : Math.floor(rand() * 40) + 20
+      const objectiveScore = status !== 'not_started' ? Math.floor(rand() * 40) + 60 : undefined
 
       // 生成资源查看记录
       const resourceViews: StudentResourceView[] = mockResources.map(r => ({
         resourceId: r.resourceId,
-        viewCount: status === 'not_started' ? 0 : Math.floor(Math.random() * 3) + 1,
-        totalViewTime: status === 'not_started' ? 0 : Math.floor(Math.random() * 600) + 120,
-        lastViewedAt: status === 'not_started' ? null : new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000),
+        viewCount: status === 'not_started' ? 0 : Math.floor(rand() * 3) + 1,
+        totalViewTime: status === 'not_started' ? 0 : Math.floor(rand() * 600) + 120,
+        lastViewedAt: status === 'not_started' ? null : new Date(1700000000000 - rand() * 7 * 24 * 60 * 60 * 1000),
       }))
 
       // 生成任务提交记录
       const taskSubmissions: StudentTaskSubmission[] = mockTasks.map(t => {
         const taskStatus = status === 'not_started' ? 'not_started' :
                           status === 'completed' ? 'graded' :
-                          Math.random() > 0.5 ? 'submitted' : 'in_progress'
+                          rand() > 0.5 ? 'submitted' : 'in_progress'
 
         const submission: StudentTaskSubmission = {
           taskId: t.taskId,
@@ -169,21 +179,21 @@ function generateMockStudents(): StudentDetail[] {
         }
 
         if (taskStatus === 'submitted' || taskStatus === 'graded') {
-          submission.submittedAt = new Date(Date.now() - Math.random() * 3 * 24 * 60 * 60 * 1000)
+          submission.submittedAt = new Date(1700000000000 - rand() * 3 * 24 * 60 * 60 * 1000)
 
           if (t.type === 'quiz') {
-            submission.correctCount = Math.floor(Math.random() * 2) + 1
+            submission.correctCount = Math.floor(rand() * 2) + 1
             submission.totalCount = 3
             submission.score = Math.round((submission.correctCount / submission.totalCount) * 100)
             submission.totalScore = 100
           } else if (taskStatus === 'graded') {
-            submission.score = Math.floor(Math.random() * 30) + 70
+            submission.score = Math.floor(rand() * 30) + 70
             submission.totalScore = 100
             submission.assessment = {
               level: submission.score >= 90 ? 'excellent' : submission.score >= 80 ? 'good' : submission.score >= 60 ? 'pass' : 'fail',
               feedback: submission.score >= 80 ? '分析全面，观点清晰，有自己的思考。' : '基本完成任务，但可以更深入分析。',
               competencyRatings: t.hasCompetencyConfig && t.assignedCompetencies ?
-                Object.fromEntries(t.assignedCompetencies.map(c => [c, Math.floor(Math.random() * 2) + 2])) as Record<CompetencyType, number> :
+                Object.fromEntries(t.assignedCompetencies.map(c => [c, Math.floor(rand() * 2) + 2])) as Record<CompetencyType, number> :
                 undefined,
             }
             submission.studentAnswer = '这是学生的作答内容示例。植物工厂是一种通过高科技手段，在密闭环境中实现植物全年连续生产的现代化农业系统...'
@@ -199,26 +209,26 @@ function generateMockStudents(): StudentDetail[] {
           messageId: `${studentId}-msg-1`,
           role: 'user',
           content: '什么是植物工厂？',
-          timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+          timestamp: new Date(1700000000000 - 2 * 24 * 60 * 60 * 1000),
         },
         {
           messageId: `${studentId}-msg-2`,
           role: 'assistant',
           content: '植物工厂是一种通过设施内高精度环境控制实现农作物周年连续生产的高效农业系统。它利用计算机对植物生育的温度、湿度、光照、CO2浓度以及营养液等环境条件进行自动控制。',
-          timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000 + 5000),
+          timestamp: new Date(1700000000000 - 2 * 24 * 60 * 60 * 1000 + 5000),
           agentType: 'tutor',
         },
         {
           messageId: `${studentId}-msg-3`,
           role: 'user',
           content: '水培和土培有什么区别？',
-          timestamp: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+          timestamp: new Date(1700000000000 - 1 * 24 * 60 * 60 * 1000),
         },
         {
           messageId: `${studentId}-msg-4`,
           role: 'assistant',
           content: '水培（Hydroponics）是无土栽培技术，植物根系直接浸泡在营养液中吸收养分。相比土培，水培有几个优势：1. 养分可控 2. 节水90%以上 3. 无土壤病害 4. 生长速度快30%。',
-          timestamp: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000 + 5000),
+          timestamp: new Date(1700000000000 - 1 * 24 * 60 * 60 * 1000 + 5000),
           agentType: 'tutor',
         },
       ]
@@ -227,12 +237,12 @@ function generateMockStudents(): StudentDetail[] {
       let competencyScores: Record<CompetencyType, number> | undefined
       if (status === 'completed') {
         competencyScores = {
-          critical_thinking: Math.floor(Math.random() * 3) + 2,
-          information_synthesis: Math.floor(Math.random() * 3) + 2,
-          metacognition: Math.floor(Math.random() * 3) + 1,
-          question_quality: Math.floor(Math.random() * 3) + 1,
-          creativity: Math.floor(Math.random() * 3) + 1,
-          persistence: Math.floor(Math.random() * 3) + 2,
+          critical_thinking: Math.floor(rand() * 3) + 2,
+          information_synthesis: Math.floor(rand() * 3) + 2,
+          metacognition: Math.floor(rand() * 3) + 1,
+          question_quality: Math.floor(rand() * 3) + 1,
+          creativity: Math.floor(rand() * 3) + 1,
+          persistence: Math.floor(rand() * 3) + 2,
         }
       }
 
@@ -260,8 +270,8 @@ function generateMockStudents(): StudentDetail[] {
     const classIndex = i % 3
     const classInfo = mockClasses[classIndex]
     const statuses: StudentStatus[] = ['completed', 'in_progress', 'not_started', 'needs_attention']
-    const status = statuses[Math.floor(Math.random() * statuses.length)]
-    const progress = status === 'completed' ? 100 : status === 'not_started' ? 0 : Math.floor(Math.random() * 80) + 20
+    const status = statuses[Math.floor(rand() * statuses.length)]
+    const progress = status === 'completed' ? 100 : status === 'not_started' ? 0 : Math.floor(rand() * 80) + 20
 
     students.push({
       studentId: `s${i + 1}`,
@@ -270,21 +280,21 @@ function generateMockStudents(): StudentDetail[] {
       className: classInfo.className,
       status,
       progress,
-      learningDuration: Math.floor(Math.random() * 40) + 20,
-      objectiveScore: status !== 'not_started' ? Math.floor(Math.random() * 40) + 60 : undefined,
+      learningDuration: Math.floor(rand() * 40) + 20,
+      objectiveScore: status !== 'not_started' ? Math.floor(rand() * 40) + 60 : undefined,
       competencyScores: status === 'completed' ? {
-        critical_thinking: Math.floor(Math.random() * 3) + 1,
-        information_synthesis: Math.floor(Math.random() * 3) + 1,
-        metacognition: Math.floor(Math.random() * 3) + 1,
-        question_quality: Math.floor(Math.random() * 3) + 1,
-        creativity: Math.floor(Math.random() * 3) + 1,
-        persistence: Math.floor(Math.random() * 3) + 1,
+        critical_thinking: Math.floor(rand() * 3) + 1,
+        information_synthesis: Math.floor(rand() * 3) + 1,
+        metacognition: Math.floor(rand() * 3) + 1,
+        question_quality: Math.floor(rand() * 3) + 1,
+        creativity: Math.floor(rand() * 3) + 1,
+        persistence: Math.floor(rand() * 3) + 1,
       } : undefined,
       resourceViews: mockResources.map(r => ({
         resourceId: r.resourceId,
-        viewCount: status === 'not_started' ? 0 : Math.floor(Math.random() * 3),
-        totalViewTime: status === 'not_started' ? 0 : Math.floor(Math.random() * 600),
-        lastViewedAt: status === 'not_started' ? null : new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000),
+        viewCount: status === 'not_started' ? 0 : Math.floor(rand() * 3),
+        totalViewTime: status === 'not_started' ? 0 : Math.floor(rand() * 600),
+        lastViewedAt: status === 'not_started' ? null : new Date(1700000000000 - rand() * 7 * 24 * 60 * 60 * 1000),
       })),
       taskSubmissions: mockTasks.map(t => ({
         taskId: t.taskId,
@@ -780,23 +790,36 @@ function CompletionDonutCharts({ data }: { data: ReturnType<typeof generateCompl
   )
 }
 
-// AI 对话活跃度柱状图
+// AI 对话活跃度分布图
 function AIActivityBubbleChart({ data }: { data: ReturnType<typeof generateAIActivityData> }) {
-  // 按对话数量排序
-  const sortedData = [...data].sort((a, b) => b.messageCount - a.messageCount).slice(0, 15) // 只显示前15名
-
   // 计算平均对话数
   const avgMessageCount = data.length > 0
-    ? Math.round(data.reduce((sum, s) => sum + s.messageCount, 0) / data.length)
+    ? data.reduce((sum, s) => sum + s.messageCount, 0) / data.length
     : 0
 
-  // 根据对话数量分级
-  const getActivityLevel = (count: number) => {
-    if (count >= avgMessageCount * 1.5) return { label: '非常活跃', color: '#10b981' }
-    if (count >= avgMessageCount) return { label: '活跃', color: '#14b8a6' }
-    if (count >= avgMessageCount * 0.5) return { label: '一般', color: '#f59e0b' }
-    return { label: '较少', color: '#94a3b8' }
-  }
+  // 活跃度分类定义
+  const activityLevels = [
+    { key: 'veryActive', label: '非常活跃', color: '#10b981', threshold: (avg: number) => avg * 1.5 },
+    { key: 'active', label: '活跃', color: '#14b8a6', threshold: (avg: number) => avg },
+    { key: 'moderate', label: '一般', color: '#f59e0b', threshold: (avg: number) => avg * 0.5 },
+    { key: 'low', label: '较少', color: '#94a3b8', threshold: () => 0 },
+  ]
+
+  // 统计各活跃度类别的学生人数
+  const distribution = activityLevels.map((level, index) => {
+    const count = data.filter(s => {
+      const msgCount = s.messageCount
+      const currentThreshold = level.threshold(avgMessageCount)
+      const nextThreshold = index > 0 ? activityLevels[index - 1].threshold(avgMessageCount) : Infinity
+      return msgCount >= currentThreshold && msgCount < nextThreshold
+    }).length
+    return {
+      label: level.label,
+      count,
+      color: level.color,
+      percentage: data.length > 0 ? Math.round((count / data.length) * 100) : 0
+    }
+  })
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
@@ -804,90 +827,60 @@ function AIActivityBubbleChart({ data }: { data: ReturnType<typeof generateAIAct
         <span className="text-lg">💬</span>
         AI 对话活跃度分析
       </h3>
-      <div className="mb-3 flex items-center gap-4 text-xs text-gray-600">
-        <span>平均对话数: <span className="font-semibold text-primary-600">{avgMessageCount}</span> 条</span>
+      <div className="mb-4 flex items-center gap-4 text-xs text-gray-600">
+        <span>平均对话数: <span className="font-semibold text-primary-600">{avgMessageCount.toFixed(1)}</span> 条</span>
         <span>参与学生: <span className="font-semibold text-primary-600">{data.length}</span> 人</span>
       </div>
-      <ResponsiveContainer width="100%" height={300}>
-        <BarChart data={sortedData} margin={{ top: 20, right: 20, bottom: 60, left: 20 }}>
+      <ResponsiveContainer width="100%" height={260}>
+        <BarChart data={distribution} margin={{ top: 20, right: 20, bottom: 20, left: 20 }} layout="vertical">
           <defs>
-            <linearGradient id="activityGradient1" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#10b981" stopOpacity={0.9} />
-              <stop offset="100%" stopColor="#10b981" stopOpacity={0.6} />
-            </linearGradient>
-            <linearGradient id="activityGradient2" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#14b8a6" stopOpacity={0.9} />
-              <stop offset="100%" stopColor="#14b8a6" stopOpacity={0.6} />
-            </linearGradient>
-            <linearGradient id="activityGradient3" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#f59e0b" stopOpacity={0.9} />
-              <stop offset="100%" stopColor="#f59e0b" stopOpacity={0.6} />
-            </linearGradient>
-            <linearGradient id="activityGradient4" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#94a3b8" stopOpacity={0.9} />
-              <stop offset="100%" stopColor="#94a3b8" stopOpacity={0.6} />
-            </linearGradient>
+            {distribution.map((item, index) => (
+              <linearGradient key={index} id={`activityGradient${index}`} x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor={item.color} stopOpacity={0.9} />
+                <stop offset="100%" stopColor={item.color} stopOpacity={0.6} />
+              </linearGradient>
+            ))}
           </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-          <XAxis
-            dataKey="studentName"
-            angle={-45}
-            textAnchor="end"
-            height={80}
-            stroke="#6b7280"
-            style={{ fontSize: '11px' }}
-          />
+          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" horizontal={false} />
+          <XAxis type="number" stroke="#6b7280" style={{ fontSize: '12px' }} />
           <YAxis
+            type="category"
+            dataKey="label"
             stroke="#6b7280"
-            label={{ value: 'AI 对话数', angle: -90, position: 'insideLeft', style: { fontSize: '12px' } }}
+            style={{ fontSize: '12px' }}
+            width={70}
           />
           <Tooltip
             content={({ active, payload }) => {
               if (!active || !payload || !payload.length) return null
-              const data = payload[0].payload
-              const level = getActivityLevel(data.messageCount)
+              const item = payload[0].payload
               return (
                 <div className="glass-card p-3 shadow-lg">
-                  <p className="font-semibold text-gray-800 mb-1">{data.studentName}</p>
+                  <p className="font-semibold text-gray-800 mb-1" style={{ color: item.color }}>{item.label}</p>
                   <div className="text-xs text-gray-600 space-y-1">
-                    <p>对话数: <span className="font-semibold">{data.messageCount}</span> 条</p>
-                    <p>活跃度: <span className="font-semibold" style={{ color: level.color }}>{level.label}</span></p>
-                    <p>进度: {data.progress}%</p>
-                    <p>时长: {data.learningDuration} 分钟</p>
+                    <p>学生人数: <span className="font-semibold">{item.count}</span> 人</p>
+                    <p>占比: <span className="font-semibold">{item.percentage}%</span></p>
                   </div>
                 </div>
               )
             }}
           />
-          <ReferenceLine y={avgMessageCount} stroke="#10b981" strokeDasharray="5 5" label={{ value: '平均值', position: 'right', style: { fontSize: '11px', fill: '#10b981' } }} />
-          <Bar dataKey="messageCount" radius={[8, 8, 0, 0]}>
-            {sortedData.map((entry, index) => {
-              const level = getActivityLevel(entry.messageCount)
-              const gradientId = level.color === '#10b981' ? 'activityGradient1' :
-                                 level.color === '#14b8a6' ? 'activityGradient2' :
-                                 level.color === '#f59e0b' ? 'activityGradient3' : 'activityGradient4'
-              return <Cell key={`cell-${index}`} fill={`url(#${gradientId})`} />
-            })}
+          <Bar dataKey="count" radius={[0, 8, 8, 0]} barSize={32}>
+            {distribution.map((entry, index) => (
+              <Cell key={`cell-${index}`} fill={`url(#activityGradient${index})`} />
+            ))}
           </Bar>
         </BarChart>
       </ResponsiveContainer>
-      <div className="mt-3 flex items-center justify-center gap-4 text-xs">
-        <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded-full bg-[#10b981]" />
-          <span className="text-gray-600">非常活跃</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded-full bg-[#14b8a6]" />
-          <span className="text-gray-600">活跃</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded-full bg-[#f59e0b]" />
-          <span className="text-gray-600">一般</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded-full bg-[#94a3b8]" />
-          <span className="text-gray-600">较少</span>
-        </div>
+      {/* 各类别占比标签 */}
+      <div className="mt-2 grid grid-cols-4 gap-2 text-center">
+        {distribution.map((item, index) => (
+          <div key={index} className="flex flex-col items-center">
+            <div className="w-3 h-3 rounded-full mb-1" style={{ backgroundColor: item.color }} />
+            <span className="text-xs text-gray-600">{item.label}</span>
+            <span className="text-sm font-semibold" style={{ color: item.color }}>{item.count}人</span>
+          </div>
+        ))}
       </div>
     </div>
   )

@@ -13,7 +13,7 @@ import {
   ListChecks, ChevronRight, ChevronLeft, Play, Download, Eye, Search, BarChart3, Map,
   CheckCircle2, Circle, Bot, MessageSquare, Pause, RotateCcw, GitBranch,
   Edit, Image as ImageIcon, Mic, Trash2, Layers, Award, TrendingUp,
-  ChevronDown, ChevronUp, Layout, Share2,
+  ChevronDown, ChevronUp, Layout, Share2, AlertCircle,
 } from 'lucide-react';
 import SettingsModal from './SettingsModal';
 import PublishModal from './PublishModal';
@@ -59,6 +59,8 @@ interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
+  // 可选：嵌入的任务卡片
+  embeddedTask?: Task;
 }
 
 // Note interfaces for EnhancedNotesPanel
@@ -642,6 +644,244 @@ function LearningStatusPanel({
   );
 }
 
+// 任务展开卡片组件 - 在中间聊天区显示
+function TaskExpandedCard({
+  task,
+  onClose,
+  onComplete,
+  isCompleted,
+  taskStatus,
+  quickResult,
+}: {
+  task: Task;
+  onClose: () => void;
+  onComplete: (taskId: string, answer?: string) => void;
+  isCompleted: boolean;
+  taskStatus?: 'idle' | 'submitting' | 'grading' | 'completed';
+  quickResult?: {
+    allCorrect: boolean;
+    correctCount: number;
+    totalCount: number;
+    details: any[];
+  };
+}) {
+  const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string | string[]>>({});
+  const [submissionText, setSubmissionText] = useState('');
+
+  const handleQuestionAnswer = (questionId: string, answer: string | string[], isMultiple: boolean) => {
+    if (isMultiple) {
+      const currentAnswers = (selectedAnswers[questionId] as string[]) || [];
+      const answerStr = answer as string;
+      const newAnswers = currentAnswers.includes(answerStr)
+        ? currentAnswers.filter(a => a !== answerStr)
+        : [...currentAnswers, answerStr];
+      setSelectedAnswers(prev => ({ ...prev, [questionId]: newAnswers }));
+    } else {
+      setSelectedAnswers(prev => ({ ...prev, [questionId]: answer }));
+    }
+  };
+
+  const handleSubmit = () => {
+    let answer = '';
+    if (task.type === 'quiz') {
+      answer = JSON.stringify(selectedAnswers);
+    } else if (task.type === 'assignment' || task.type === 'reflection') {
+      answer = submissionText;
+    }
+    onComplete(task.id, answer);
+  };
+
+  return (
+    <div className="bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden mb-4">
+      {/* 卡片头部 */}
+      <div className={`px-4 py-3 flex items-center justify-between ${
+        task.type === 'quiz'
+          ? 'bg-gradient-to-r from-amber-50 to-orange-50 border-b border-amber-100'
+          : task.type === 'reflection'
+          ? 'bg-gradient-to-r from-purple-50 to-pink-50 border-b border-purple-100'
+          : 'bg-gradient-to-r from-primary-50 to-accent-50 border-b border-primary-100'
+      }`}>
+        <div className="flex items-center gap-3">
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+            task.type === 'quiz' ? 'bg-amber-100' : task.type === 'reflection' ? 'bg-purple-100' : 'bg-primary-100'
+          }`}>
+            {task.type === 'quiz' ? (
+              <Zap size={18} className="text-amber-600" />
+            ) : task.type === 'reflection' ? (
+              <Brain size={18} className="text-purple-600" />
+            ) : (
+              <FileEdit size={18} className="text-primary-600" />
+            )}
+          </div>
+          <div>
+            <h3 className="font-semibold text-gray-800">{task.title}</h3>
+            <p className="text-xs text-gray-500">
+              {task.required ? '必修任务' : '选修任务'}
+            </p>
+          </div>
+        </div>
+        <button
+          onClick={onClose}
+          className="w-8 h-8 rounded-lg bg-white/80 hover:bg-white flex items-center justify-center transition-colors"
+        >
+          <X size={16} className="text-gray-500" />
+        </button>
+      </div>
+
+      {/* 卡片内容 */}
+      <div className="p-4">
+        {/* 任务描述 */}
+        {task.description && (
+          <p className="text-sm text-gray-600 mb-4 pb-4 border-b border-gray-200">{task.description}</p>
+        )}
+
+        {/* 测验类型任务 */}
+        {task.type === 'quiz' && task.questions && (
+          <div className="space-y-6">
+            {task.questions.map((q, idx) => {
+              const isMultiple = q.type === 'multiple_choice';
+              const currentAnswer = selectedAnswers[q.id];
+
+              return (
+                <div key={q.id} className="space-y-3">
+                  <p className="text-sm text-gray-700 font-medium">
+                    {idx + 1}. {q.content}
+                    {isMultiple && <span className="ml-2 text-xs text-blue-600">(多选题)</span>}
+                  </p>
+                  {q.options && (
+                    <div className="space-y-2">
+                      {q.options.map((option, optIdx) => {
+                        const isSelected = isMultiple
+                          ? Array.isArray(currentAnswer) && currentAnswer.includes(option)
+                          : currentAnswer === option;
+
+                        return (
+                          <label
+                            key={optIdx}
+                            className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
+                              isSelected
+                                ? 'border-primary-500 bg-primary-50'
+                                : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                            }`}
+                          >
+                            <div className={`w-5 h-5 ${isMultiple ? 'rounded' : 'rounded-full'} border-2 flex items-center justify-center ${
+                              isSelected
+                                ? 'border-primary-500 bg-primary-500'
+                                : 'border-gray-300'
+                            }`}>
+                              {isSelected && (
+                                isMultiple ? (
+                                  <Check size={14} className="text-white" />
+                                ) : (
+                                  <div className="w-2 h-2 rounded-full bg-white" />
+                                )
+                              )}
+                            </div>
+                            <button
+                              onClick={() => handleQuestionAnswer(q.id, option, isMultiple)}
+                              className="text-sm text-gray-700 text-left flex-1"
+                            >
+                              {option}
+                            </button>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* 作业/反思类型任务 */}
+        {(task.type === 'assignment' || task.type === 'reflection') && (
+          <div className="space-y-3">
+            {task.prompt && (
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 mb-3">
+                <p className="text-xs text-blue-900 whitespace-pre-line">{task.prompt}</p>
+              </div>
+            )}
+            <textarea
+              value={submissionText}
+              onChange={(e) => setSubmissionText(e.target.value)}
+              placeholder={task.submissionPlaceholder || '请在这里提交你的作业内容...'}
+              className="w-full h-40 p-3 border border-gray-200 rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            />
+          </div>
+        )}
+
+        {/* 快速判题结果 - 仅测验类型显示 */}
+        {task.type === 'quiz' && quickResult && (
+          <div className={`mt-4 p-4 rounded-xl border-2 ${
+            quickResult.allCorrect
+              ? 'bg-green-50 border-green-300'
+              : 'bg-amber-50 border-amber-300'
+          }`}>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                {quickResult.allCorrect ? (
+                  <Check size={20} className="text-green-600" />
+                ) : (
+                  <AlertCircle size={20} className="text-amber-600" />
+                )}
+                <span className={`text-sm font-bold ${
+                  quickResult.allCorrect ? 'text-green-700' : 'text-amber-700'
+                }`}>
+                  {quickResult.allCorrect ? '全部正确！' : '部分正确'}
+                </span>
+              </div>
+              <span className={`text-sm font-medium ${
+                quickResult.allCorrect ? 'text-green-600' : 'text-amber-600'
+              }`}>
+                {quickResult.correctCount}/{quickResult.totalCount} 题正确
+              </span>
+            </div>
+            <p className="text-xs text-gray-600">
+              AI正在为你生成详细的学习反馈...
+            </p>
+          </div>
+        )}
+
+        {/* 提交按钮 */}
+        <button
+          onClick={handleSubmit}
+          disabled={taskStatus === 'submitting' || taskStatus === 'grading'}
+          className={`mt-4 w-full py-3 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2 ${
+            taskStatus === 'submitting' || taskStatus === 'grading'
+              ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
+              : isCompleted && quickResult?.allCorrect
+              ? 'bg-green-100 text-green-700 cursor-not-allowed'
+              : 'bg-primary-600 text-white hover:bg-primary-700'
+          }`}
+        >
+          {taskStatus === 'submitting' ? (
+            <>
+              <Activity size={16} className="animate-spin" />
+              提交中...
+            </>
+          ) : taskStatus === 'grading' ? (
+            <>
+              <Activity size={16} className="animate-spin" />
+              批改中...
+            </>
+          ) : isCompleted && quickResult?.allCorrect ? (
+            <>
+              <Check size={16} />
+              已完成
+            </>
+          ) : (
+            <>
+              <Check size={16} />
+              {quickResult && !quickResult.allCorrect ? '重新提交' : '提交任务'}
+            </>
+          )}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // 主组件
 export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isAIGenerating = false, onCreateNewSpace }: SelfStudyWorkbenchProps) {
   const { t } = useLanguage();
@@ -817,6 +1057,18 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [sessionId] = useState(`session_${Date.now()}`);
+
+  // 任务交互状态
+  const [expandedTask, setExpandedTask] = useState<Task | null>(null);
+  const [taskStatus, setTaskStatus] = useState<'idle' | 'submitting' | 'grading' | 'completed'>('idle');
+  const [quickResult, setQuickResult] = useState<{
+    allCorrect: boolean;
+    correctCount: number;
+    totalCount: number;
+    details: any[];
+  } | null>(null);
+  const [completedTasks, setCompletedTasks] = useState<Set<string>>(new Set());
 
   // 计时器状态
   const [elapsedTime, setElapsedTime] = useState(0);
@@ -1209,6 +1461,210 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
     onUpdateConfig({ ...config, learningMode: mode });
   };
 
+  // 处理用户点击任务 - 将任务作为智能体推送的消息嵌入对话
+  const handleTaskClick = (task: any) => {
+    // 创建一条智能体消息，嵌入任务卡片
+    const taskIntroMessage: ChatMessage = {
+      id: `msg_task_${task.id}_${Date.now()}`,
+      role: 'assistant',
+      content: task.type === 'quiz'
+        ? `好的，让我们来做一个知识测验，检验一下你的掌握情况：`
+        : task.type === 'reflection'
+        ? `现在是一个很好的时机来反思你的学习过程。请认真思考以下问题：`
+        : `接下来让我们完成这个任务，这将帮助你更深入地理解所学内容：`,
+      timestamp: new Date(),
+      embeddedTask: task,
+    };
+
+    setMessages(prev => [...prev, taskIntroMessage]);
+    setExpandedTask(task);
+  };
+
+  // 切换任务完成状态 - 两阶段提交
+  const toggleTaskCompletion = async (taskId: string, answer?: string) => {
+    // 如果正在提交或批改中，不再处理
+    if (taskStatus === 'submitting' || taskStatus === 'grading') {
+      return;
+    }
+
+    // 找到任务信息（从 generatedTasks 中查找）
+    const task = generatedTasks.find(t => t.id === taskId);
+    if (!task) return;
+
+    // 第一阶段：标记为提交中
+    setTaskStatus('submitting');
+    setIsLoading(true);
+
+    try {
+      // 主观题：先标记为批改中状态
+      if (task.type === 'assignment' || task.type === 'reflection') {
+        setTaskStatus('grading');
+      }
+
+      // 调用任务提交API
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sessionId,
+          action: 'submit_task',
+          taskId,
+          taskAnswer: answer || '已完成任务',
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('任务提交失败');
+      }
+
+      const data = await response.json();
+
+      // 处理客观题（quiz）- 两阶段流程
+      if (data.taskType === 'quiz' && data.quickResult) {
+        // 立即显示快速判题结果
+        setQuickResult(data.quickResult);
+
+        // 只有全对才标记任务为已完成
+        if (data.quickResult.allCorrect) {
+          setTaskStatus('completed');
+          setCompletedTasks((prev) => {
+            const newSet = new Set(prev);
+            newSet.add(taskId);
+            return newSet;
+          });
+        } else {
+          // 未全对，重置状态允许重做
+          setTimeout(() => {
+            setTaskStatus('idle');
+          }, 2000); // 2秒后重置，让用户看到结果
+        }
+
+        // 添加loading消息到对话区
+        const loadingMessage: ChatMessage = {
+          id: `msg_${Date.now()}_loading`,
+          role: 'assistant',
+          content: '正在为你生成详细的学习反馈，请稍候...',
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, loadingMessage]);
+
+        // 异步调用AI分析（不阻塞）
+        setTimeout(async () => {
+          try {
+            const analysisResponse = await fetch('/api/analyze-quiz', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                taskId,
+                taskTitle: task.title,
+                questions: task.questions,
+                userAnswers: JSON.parse(answer || '{}'),
+                results: data.quickResult.details,
+                attemptNumber: data.attemptNumber,
+              }),
+            });
+
+            if (!analysisResponse.ok) {
+              throw new Error('AI分析请求失败');
+            }
+
+            // 处理流式响应
+            const reader = analysisResponse.body?.getReader();
+            const decoder = new TextDecoder();
+            let aiAnalysis = '';
+
+            if (reader) {
+              while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                const chunk = decoder.decode(value, { stream: true });
+                aiAnalysis += chunk;
+
+                // 实时更新消息（替换loading消息和之前的分析消息）
+                setMessages((prev) => {
+                  const analysisMessageId = `msg_${taskId}_analysis`;
+                  const filtered = prev.filter(m =>
+                    m.id !== loadingMessage.id && m.id !== analysisMessageId
+                  );
+                  return [
+                    ...filtered,
+                    {
+                      id: analysisMessageId,
+                      role: 'assistant',
+                      content: aiAnalysis,
+                      timestamp: new Date(),
+                    },
+                  ];
+                });
+              }
+            }
+          } catch (error) {
+            console.error('AI分析失败:', error);
+            // 移除loading消息，显示错误
+            setMessages((prev) => {
+              const filtered = prev.filter(m => m.id !== loadingMessage.id);
+              return [
+                ...filtered,
+                {
+                  id: `msg_${Date.now()}_error`,
+                  role: 'assistant',
+                  content: 'AI分析暂时无法完成，但你的答题结果已经保存。',
+                  timestamp: new Date(),
+                },
+              ];
+            });
+          }
+        }, 500); // 短暂延迟，让用户看到快速判题结果
+      }
+      // 处理主观题（assignment/reflection）
+      else if (data.taskType === 'assignment' || data.taskType === 'reflection') {
+        // 主观题批改完成
+        setTaskStatus('completed');
+
+        // 标记任务为已完成
+        setCompletedTasks((prev) => {
+          const newSet = new Set(prev);
+          newSet.add(taskId);
+          return newSet;
+        });
+
+        // 显示评估反馈
+        if (data.message) {
+          const feedbackMessage: ChatMessage = {
+            id: `msg_${Date.now()}_feedback`,
+            role: 'assistant',
+            content: data.message,
+            timestamp: new Date(),
+          };
+          setMessages((prev) => [...prev, feedbackMessage]);
+        }
+      }
+
+    } catch (error) {
+      console.error('任务提交失败:', error);
+
+      // 重置状态
+      setTaskStatus('idle');
+      setQuickResult(null);
+
+      // 显示错误消息
+      const errorMessage: ChatMessage = {
+        id: `msg_${Date.now()}_error`,
+        role: 'assistant',
+        content: '任务提交失败，请稍后再试。',
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="h-full flex flex-col bg-gray-50">
       {/* 顶部状态栏 */}
@@ -1541,9 +1997,9 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                   flex: collapsedPanels.tasks ? '0 0 auto' : '0 0 50%'
                 }}
               >
-                {/* 可折叠的标题栏 */}
+                {/* 可折叠的标题栏 - 收起时高度与中间对话区输入框对齐 */}
                 <div
-                  className="h-12 px-4 py-3 border-b border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors"
+                  className={`px-4 border-b border-gray-200 cursor-pointer hover:bg-gray-50 transition-all flex flex-col justify-center ${collapsedPanels.tasks ? 'h-[70px]' : 'h-12'}`}
                   onClick={() => togglePanel('tasks')}
                 >
                   <div className="flex items-center justify-between">
@@ -1635,6 +2091,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                       generatedTasks.map((task) => (
                         <div
                           key={task.id}
+                          onClick={() => handleTaskClick(task)}
                           className={`flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg hover:${getThemeClass('border')} hover:shadow-sm transition-all cursor-pointer group`}
                         >
                           <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gray-100">
@@ -1828,14 +2285,14 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
 
               {/* 任务区域 - 可折叠，展开时占50% */}
               <div
-                className="flex flex-col min-h-0 border-t border-gray-200 transition-all"
+                className="flex flex-col min-h-0 border-t border-gray-200 transition-all overflow-hidden"
                 style={{
                   flex: collapsedPanels.tasks ? '0 0 auto' : '0 0 50%'
                 }}
               >
-                {/* 可折叠的标题栏 */}
+                {/* 可折叠的标题栏 - 收起时高度与中间对话区输入框对齐 */}
                 <div
-                  className="h-12 px-4 py-3 border-b border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors"
+                  className={`px-4 border-b border-gray-200 cursor-pointer hover:bg-gray-50 transition-all flex flex-col justify-center ${collapsedPanels.tasks ? 'h-[70px]' : 'h-12'}`}
                   onClick={() => togglePanel('tasks')}
                 >
                   <div className="flex items-center justify-between">
@@ -1928,6 +2385,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                       generatedTasks.map((task) => (
                         <div
                           key={task.id}
+                          onClick={() => handleTaskClick(task)}
                           className={`flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg hover:${getThemeClass('border')} hover:shadow-sm transition-all cursor-pointer group`}
                         >
                           <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gray-100">
@@ -2047,20 +2505,37 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                     <Bot size={16} className="text-white" />
                   </div>
                 )}
-                <div
-                  className={`max-w-[80%] p-4 rounded-lg ${
-                    message.role === 'user'
-                      ? 'bg-primary-600 text-white rounded-tr-none'
-                      : 'bg-white border border-gray-200 rounded-tl-none'
-                  }`}
-                >
+                <div className={`${message.role === 'user' ? 'max-w-[80%]' : 'flex flex-col gap-2 max-w-[80%]'}`}>
+                  {/* 消息内容 */}
                   <div
-                    className={`text-sm leading-relaxed whitespace-pre-line ${
-                      message.role === 'user' ? 'text-white' : 'text-gray-700'
+                    className={`p-4 rounded-lg ${
+                      message.role === 'user'
+                        ? 'bg-primary-600 text-white rounded-tr-none'
+                        : 'bg-white border border-gray-200 rounded-tl-none'
                     }`}
                   >
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
+                    <div
+                      className={`text-sm leading-relaxed whitespace-pre-line ${
+                        message.role === 'user' ? 'text-white' : 'text-gray-700'
+                      }`}
+                    >
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
+                    </div>
                   </div>
+
+                  {/* 嵌入的任务卡片 (作为智能体消息的一部分) */}
+                  {message.role === 'assistant' && (message as any).embeddedTask && (
+                    <div className="mt-2">
+                      <TaskExpandedCard
+                        task={(message as any).embeddedTask}
+                        onClose={() => {}}
+                        onComplete={toggleTaskCompletion}
+                        isCompleted={completedTasks.has((message as any).embeddedTask.id)}
+                        taskStatus={taskStatus}
+                        quickResult={quickResult}
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
@@ -2255,9 +2730,9 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                   flex: collapsedPanels.studio ? '0 0 auto' : '0 0 50%'
                 }}
               >
-                {/* 可折叠的标题栏 */}
+                {/* 可折叠的标题栏 - 收起时高度与中间对话区输入框对齐 */}
                 <div
-                  className="h-12 px-4 py-3 border-b border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors"
+                  className={`px-4 border-b border-gray-200 cursor-pointer hover:bg-gray-50 transition-all flex flex-col justify-center ${collapsedPanels.studio ? 'h-[70px]' : 'h-12'}`}
                   onClick={() => togglePanel('studio')}
                 >
                   <div className="flex items-center justify-between">
@@ -2284,7 +2759,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                     {STUDIO_TOOLS.map((tool) => {
                       const isGenerating = generatingToolId === tool.id;
                       return (
-                        <button
+                        <div
                           key={tool.id}
                           onClick={() => !isGenerating && handleStudioToolClick(tool)}
                           className={`p-3 rounded-lg border text-left transition-all relative group ${
@@ -2292,7 +2767,6 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                               ? 'bg-gray-50 border-gray-200 animate-pulse cursor-wait'
                               : `bg-white border-gray-200 hover:${getThemeClass('border')} hover:shadow-sm cursor-pointer`
                           }`}
-                          disabled={isGenerating}
                         >
                           <div className="flex items-start gap-2">
                             <span className="text-lg">{tool.icon}</span>
@@ -2317,7 +2791,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                               </button>
                             )}
                           </div>
-                        </button>
+                        </div>
                       );
                     })}
                   </div>
