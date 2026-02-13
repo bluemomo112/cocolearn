@@ -27,11 +27,12 @@ export interface Resource {
 
 export interface TaskQuestion {
   id: string;
-  type: 'single_choice' | 'multiple_choice';
+  type: 'single_choice' | 'multiple_choice' | 'fill_in_blank';
   content: string;
-  options: string[];
+  options?: string[]; // 选择题的选项
   answer: string | string[];
   explanation?: string;
+  blanks?: number; // 填空题的空格数量
 }
 
 export interface TaskRubric {

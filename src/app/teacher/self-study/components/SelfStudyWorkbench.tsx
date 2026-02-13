@@ -758,6 +758,7 @@ function TaskExpandedCard({
                 {(() => {
                   const q = task.questions[currentQuestionIndex];
                   const isMultiple = q.type === 'multiple_choice';
+                  const isFillBlank = q.type === 'fill_in_blank';
                   const currentAnswer = selectedAnswers[q.id];
 
                   return (
@@ -765,7 +766,7 @@ function TaskExpandedCard({
                       {/* 题目标签 */}
                       <div className="flex items-center gap-3">
                         <span className="px-3 py-1 bg-blue-50 text-blue-600 text-sm font-medium rounded-full">
-                          {isMultiple ? '多选题' : '单选题'}
+                          {isFillBlank ? '填空题' : isMultiple ? '多选题' : '单选题'}
                         </span>
                       </div>
 
@@ -774,8 +775,20 @@ function TaskExpandedCard({
                         {q.content}
                       </h2>
 
+                      {/* 填空题输入框 */}
+                      {isFillBlank && (
+                        <div className="space-y-4">
+                          <textarea
+                            value={currentAnswer as string || ''}
+                            onChange={(e) => handleQuestionAnswer(q.id, e.target.value, false)}
+                            placeholder="请在此输入你的答案..."
+                            className="w-full h-32 p-4 border-2 border-gray-200 rounded-xl focus:border-primary-500 focus:outline-none resize-none text-lg"
+                          />
+                        </div>
+                      )}
+
                       {/* 选项列表 */}
-                      {q.options && (
+                      {q.options && !isFillBlank && (
                         <div className="space-y-4">
                           {q.options.map((option, optIdx) => {
                             const isSelected = isMultiple
@@ -1737,11 +1750,10 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
     setTaskDisplayMode(prev => prev === 'fullscreen' ? 'embedded' : 'fullscreen');
   };
 
-  // 关闭任务
+  // 关闭任务 - 只关闭全屏，不删除对话中的任务卡片
   const closeTask = () => {
     setExpandedTask(null);
-    setTaskStatus('idle');
-    setQuickResult(null);
+    setTaskDisplayMode('embedded'); // 切换到嵌入式模式，保留在对话中
   };
 
   // 切换任务完成状态 - 两阶段提交
@@ -1997,59 +2009,42 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                 >
                   <Pencil size={14} />
                 </button>
+                {config.publishStatus === 'published' && config.publishedVersions.length > 0 && (
+                  <span className="px-2 py-0.5 text-xs font-mono text-primary-600 bg-primary-50 border border-primary-200 rounded">
+                    {config.publishedVersions[config.publishedVersions.length - 1].accessCode}
+                  </span>
+                )}
               </div>
             )}
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          {/* 创建新学习空间 */}
-          {onCreateNewSpace && (
-            <button
-              onClick={onCreateNewSpace}
-              className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <Plus size={16} />
-              <span className="text-sm font-medium">{t('创建新学习空间')}</span>
-            </button>
-          )}
-
+        <div className="flex items-center gap-2">
           {/* 设置 */}
           <button
             onClick={() => setIsSettingsOpen(true)}
-            className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-            title={t('设置')}
+            className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
           >
-            <Settings size={16} className="text-gray-700" />
+            <Settings size={15} />
+            {t('设置')}
           </button>
 
-          {/* 保存 */}
-          <button
-            onClick={handleSave}
-            className={`flex items-center gap-2 px-4 py-2 ${getThemeClass('bg')} ${getThemeClass('bgHover')} text-white text-sm font-medium rounded-lg transition-colors`}
-          >
-            <Save size={16} />
-            {t('保存')}
-          </button>
-
-          {/* 发布/重新发布 */}
+          {/* 发布 */}
           <button
             onClick={() => setIsPublishModalOpen(true)}
-            className={`flex items-center gap-2 px-4 py-2 ${getThemeClass('bg')} text-white text-sm font-medium rounded-lg ${getThemeClass('bgHover')} transition-colors`}
+            className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
           >
-            <Share2 size={16} />
-            {config.publishStatus === 'published' ? t('重新发布') : t('发布')}
+            <Share2 size={15} />
+            {t('发布')}
           </button>
 
-          {/* 查看分析 - 仅在已发布状态下显示 */}
-          {config.publishStatus === 'published' && (
-            <button
-              onClick={handleViewAnalytics}
-              className={`flex items-center gap-2 px-4 py-2 ${getThemeClass('bg')} text-white text-sm font-medium rounded-lg ${getThemeClass('bgHover')} transition-colors`}
-            >
-              <BarChart3 size={16} />
-              {t('查看分析')}
-            </button>
-          )}
+          {/* 分析 */}
+          <button
+            onClick={handleViewAnalytics}
+            className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+          >
+            <BarChart3 size={15} />
+            {t('分析')}
+          </button>
         </div>
       </header>
 

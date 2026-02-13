@@ -1948,6 +1948,7 @@ export default function SpaceResultsPage({ params }: SpaceResultsPageProps) {
   const [selectedStudentIndex, setSelectedStudentIndex] = useState<number | null>(null)
   const [showResourceTaskDetails, setShowResourceTaskDetails] = useState(false)
   const [showScrollTop, setShowScrollTop] = useState(false)
+  const [expandedPanel, setExpandedPanel] = useState<'none' | 'left' | 'right'>('none')
 
   // 滚动容器引用
   const leftScrollRef = useRef<HTMLDivElement>(null)
@@ -2060,7 +2061,7 @@ export default function SpaceResultsPage({ params }: SpaceResultsPageProps) {
         <div className="absolute bottom-20 left-10 w-72 h-72 bg-accent-200/20 rounded-full blur-3xl" />
       </div>
 
-      <div className="relative z-10 max-w-6xl mx-auto px-6 py-8 flex-1 flex flex-col overflow-hidden">
+      <div className={`relative z-10 mx-auto py-8 flex-1 flex flex-col overflow-hidden transition-all duration-300 ${expandedPanel === 'none' ? 'max-w-6xl px-6' : 'px-8 w-full'}`}>
         {/* Header - 紧凑版 */}
         <div className="mb-4 flex-shrink-0">
           <div className="flex items-center gap-4 mb-3">
@@ -2101,9 +2102,35 @@ export default function SpaceResultsPage({ params }: SpaceResultsPageProps) {
         </div>
 
         {/* 左右两栏布局 - 固定高度 + 内部滚动 */}
-        <div className="grid grid-cols-1 lg:grid-cols-[2fr_3fr] gap-6 flex-1 overflow-hidden">
+        <div className={`grid grid-cols-1 gap-6 flex-1 overflow-hidden transition-all duration-300 ${
+          expandedPanel === 'left' ? 'lg:grid-cols-[1fr]' :
+          expandedPanel === 'right' ? 'lg:grid-cols-[1fr]' :
+          'lg:grid-cols-[2fr_3fr]'
+        }`}>
           {/* 左侧概览栏 */}
-          <div ref={leftScrollRef} className="fancy-scroll-container space-y-6 overflow-y-auto pr-2 border-2 border-gray-200 rounded-2xl p-4 bg-white/50">
+          <div ref={leftScrollRef} className={`fancy-scroll-container space-y-6 overflow-y-auto pr-2 border-2 border-gray-200 rounded-2xl p-4 bg-white/50 relative transition-all duration-300 ${expandedPanel === 'right' ? 'hidden' : ''}`}>
+            {/* 展开/收起按钮 */}
+            <button
+              onClick={() => setExpandedPanel(expandedPanel === 'left' ? 'none' : 'left')}
+              className="sticky top-0 z-10 ml-auto flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-500 hover:text-gray-700 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-lg hover:bg-gray-50 transition-all shadow-sm"
+              title={expandedPanel === 'left' ? '恢复双栏' : '展开此栏'}
+            >
+              {expandedPanel === 'left' ? (
+                <>
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25" />
+                  </svg>
+                  收起
+                </>
+              ) : (
+                <>
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
+                  </svg>
+                  展开
+                </>
+              )}
+            </button>
             {/* 班级多选 */}
             <ClassMultiSelect
               selectedClasses={selectedClasses}
@@ -2204,7 +2231,31 @@ export default function SpaceResultsPage({ params }: SpaceResultsPageProps) {
           </div>
 
           {/* 右侧学生列表栏 */}
-          <div ref={rightScrollRef} className="fancy-scroll-container overflow-y-auto border-2 border-gray-200 rounded-2xl bg-white/50">
+          <div ref={rightScrollRef} className={`fancy-scroll-container overflow-y-auto border-2 border-gray-200 rounded-2xl bg-white/50 relative transition-all duration-300 ${expandedPanel === 'left' ? 'hidden' : ''}`}>
+            {/* 展开/收起按钮 */}
+            <div className="sticky top-0 z-10 flex justify-end p-2">
+              <button
+                onClick={() => setExpandedPanel(expandedPanel === 'right' ? 'none' : 'right')}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-500 hover:text-gray-700 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-lg hover:bg-gray-50 transition-all shadow-sm"
+                title={expandedPanel === 'right' ? '恢复双栏' : '展开此栏'}
+              >
+                {expandedPanel === 'right' ? (
+                  <>
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25" />
+                    </svg>
+                    收起
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
+                    </svg>
+                    展开
+                  </>
+                )}
+              </button>
+            </div>
             <StudentListView
               students={filteredStudents}
               onSelectStudent={setSelectedStudentIndex}
