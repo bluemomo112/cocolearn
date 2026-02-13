@@ -332,7 +332,7 @@ export default function SelfStudyPage() {
   };
 
   return (
-    <div className="h-full bg-gray-50 overflow-hidden">
+    <div className="fixed inset-0 z-50 bg-gray-50 overflow-hidden">
       {viewState === 'manager' && (
         <SpaceManager
           spaces={spaces}
