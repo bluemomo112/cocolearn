@@ -671,6 +671,7 @@ function TaskExpandedCard({
 }) {
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string | string[]>>({});
   const [submissionText, setSubmissionText] = useState('');
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 
   const handleQuestionAnswer = (questionId: string, answer: string | string[], isMultiple: boolean) => {
     if (isMultiple) {
@@ -695,208 +696,233 @@ function TaskExpandedCard({
     onComplete(task.id, answer);
   };
 
-  // 全屏模式的容器
+  const goToNextQuestion = () => {
+    if (task.questions && currentQuestionIndex < task.questions.length - 1) {
+      setCurrentQuestionIndex(prev => prev + 1);
+    }
+  };
+
+  const goToPreviousQuestion = () => {
+    if (currentQuestionIndex > 0) {
+      setCurrentQuestionIndex(prev => prev - 1);
+    }
+  };
+
+  const goToQuestion = (index: number) => {
+    setCurrentQuestionIndex(index);
+  };
+
+  // 全屏模式的容器 - 沉浸式单题显示
   if (displayMode === 'fullscreen') {
     return (
-      <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-2xl overflow-hidden w-full max-w-4xl max-h-[90vh] flex flex-col">
-          {/* 卡片头部 */}
-          <div className={`px-6 py-4 flex items-center justify-between border-b ${
-            task.type === 'quiz'
-              ? 'bg-gradient-to-r from-amber-50 to-orange-50 border-amber-100'
-              : task.type === 'reflection'
-              ? 'bg-gradient-to-r from-purple-50 to-pink-50 border-purple-100'
-              : 'bg-gradient-to-r from-primary-50 to-accent-50 border-primary-100'
-          }`}>
-            <div className="flex items-center gap-3">
-              <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                task.type === 'quiz' ? 'bg-amber-100' : task.type === 'reflection' ? 'bg-purple-100' : 'bg-primary-100'
-              }`}>
-                {task.type === 'quiz' ? (
-                  <Zap size={20} className="text-amber-600" />
-                ) : task.type === 'reflection' ? (
-                  <Brain size={20} className="text-purple-600" />
-                ) : (
-                  <FileEdit size={20} className="text-primary-600" />
-                )}
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-gray-800">{task.title}</h3>
-                <p className="text-sm text-gray-500">
-                  {task.required ? '必修任务' : '选修任务'}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              {onToggleMode && (
-                <button
-                  onClick={onToggleMode}
-                  className="w-10 h-10 rounded-lg bg-white/80 hover:bg-white flex items-center justify-center transition-colors"
-                  title="缩小到对话区"
-                >
-                  <ChevronDown size={18} className="text-gray-500" />
-                </button>
-              )}
-              <button
-                onClick={onClose}
-                className="w-10 h-10 rounded-lg bg-white/80 hover:bg-white flex items-center justify-center transition-colors"
-              >
-                <X size={18} className="text-gray-500" />
-              </button>
-            </div>
+      <div className="fixed inset-0 z-50 bg-white flex flex-col">
+        {/* 顶部导航栏 */}
+        <div className="h-16 px-8 flex items-center justify-between border-b border-gray-200 bg-white">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={onClose}
+              className="flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors"
+            >
+              <ChevronLeft size={20} />
+              <span className="text-sm font-medium">退出</span>
+            </button>
           </div>
 
-          {/* 卡片内容 - 可滚动 */}
-          <div className="flex-1 overflow-y-auto p-6">
-            {/* 任务描述 */}
-            {task.description && (
-              <p className="text-sm text-gray-600 mb-6 pb-6 border-b border-gray-200">{task.description}</p>
+          <div className="flex items-center gap-6">
+            {/* 进度指示 */}
+            {task.type === 'quiz' && task.questions && (
+              <div className="text-sm text-gray-600 font-medium">
+                {currentQuestionIndex + 1} / {task.questions.length}
+              </div>
             )}
 
-            {/* 测验类型任务 */}
-            {task.type === 'quiz' && task.questions && (
+            {/* 缩小按钮 */}
+            {onToggleMode && (
+              <button
+                onClick={onToggleMode}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                title="缩小到对话区"
+              >
+                <ChevronDown size={20} className="text-gray-600" />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* 主内容区 - 居中显示单题 */}
+        <div className="flex-1 overflow-hidden flex items-center justify-center p-8 bg-gray-50">
+          <div className="w-full max-w-3xl">
+            {/* 测验类型任务 - 单题显示 */}
+            {task.type === 'quiz' && task.questions && task.questions[currentQuestionIndex] && (
               <div className="space-y-8">
-                {task.questions.map((q, idx) => {
+                {(() => {
+                  const q = task.questions[currentQuestionIndex];
                   const isMultiple = q.type === 'multiple_choice';
                   const currentAnswer = selectedAnswers[q.id];
 
                   return (
-                    <div key={q.id} className="space-y-4">
-                      <p className="text-base text-gray-800 font-medium">
-                        {idx + 1}. {q.content}
-                        {isMultiple && <span className="ml-2 text-sm text-blue-600">(多选题)</span>}
-                      </p>
+                    <div className="space-y-8">
+                      {/* 题目标签 */}
+                      <div className="flex items-center gap-3">
+                        <span className="px-3 py-1 bg-blue-50 text-blue-600 text-sm font-medium rounded-full">
+                          {isMultiple ? '多选题' : '单选题'}
+                        </span>
+                      </div>
+
+                      {/* 题目内容 */}
+                      <h2 className="text-3xl font-medium text-gray-900 leading-relaxed">
+                        {q.content}
+                      </h2>
+
+                      {/* 选项列表 */}
                       {q.options && (
-                        <div className="space-y-3">
+                        <div className="space-y-4">
                           {q.options.map((option, optIdx) => {
                             const isSelected = isMultiple
                               ? Array.isArray(currentAnswer) && currentAnswer.includes(option)
                               : currentAnswer === option;
+                            const optionLabel = String.fromCharCode(65 + optIdx);
 
                             return (
-                              <label
+                              <button
                                 key={optIdx}
-                                className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                                onClick={() => handleQuestionAnswer(q.id, option, isMultiple)}
+                                className={`w-full text-left p-6 rounded-2xl border-2 transition-all ${
                                   isSelected
-                                    ? 'border-primary-500 bg-primary-50'
-                                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                                    ? 'border-primary-500 bg-primary-50 shadow-md'
+                                    : 'border-gray-200 hover:border-gray-300 hover:bg-white bg-white'
                                 }`}
                               >
-                                <div className={`w-6 h-6 ${isMultiple ? 'rounded' : 'rounded-full'} border-2 flex items-center justify-center ${
-                                  isSelected
-                                    ? 'border-primary-500 bg-primary-500'
-                                    : 'border-gray-300'
-                                }`}>
-                                  {isSelected && (
-                                    isMultiple ? (
-                                      <Check size={16} className="text-white" />
-                                    ) : (
-                                      <div className="w-3 h-3 rounded-full bg-white" />
-                                    )
-                                  )}
+                                <div className="flex items-center gap-4">
+                                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold flex-shrink-0 ${
+                                    isSelected
+                                      ? 'bg-primary-500 text-white'
+                                      : 'bg-gray-100 text-gray-600'
+                                  }`}>
+                                    {optionLabel}
+                                  </div>
+                                  <span className="text-lg text-gray-800">{option}</span>
                                 </div>
-                                <button
-                                  onClick={() => handleQuestionAnswer(q.id, option, isMultiple)}
-                                  className="text-sm text-gray-700 text-left flex-1"
-                                >
-                                  {option}
-                                </button>
-                              </label>
+                              </button>
                             );
                           })}
                         </div>
                       )}
                     </div>
                   );
-                })}
+                })()}
               </div>
             )}
 
             {/* 作业/反思类型任务 */}
             {(task.type === 'assignment' || task.type === 'reflection') && (
-              <div className="space-y-4">
-                {task.prompt && (
-                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
-                    <p className="text-sm text-blue-900 whitespace-pre-line">{task.prompt}</p>
-                  </div>
+              <div className="space-y-6">
+                <h2 className="text-2xl font-medium text-gray-900">{task.title}</h2>
+                {task.description && (
+                  <p className="text-base text-gray-600 leading-relaxed">{task.description}</p>
                 )}
                 <textarea
                   value={submissionText}
                   onChange={(e) => setSubmissionText(e.target.value)}
-                  placeholder={task.submissionPlaceholder || '请在这里提交你的作业内容...'}
-                  className="w-full h-64 p-4 border border-gray-200 rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  placeholder="请输入你的答案..."
+                  className="w-full h-64 p-4 border-2 border-gray-200 rounded-xl focus:border-primary-500 focus:outline-none resize-none text-base"
                 />
               </div>
             )}
+          </div>
+        </div>
 
-            {/* 快速判题结果 - 仅测验类型显示 */}
-            {task.type === 'quiz' && quickResult && (
-              <div className={`mt-6 p-5 rounded-xl border-2 ${
-                quickResult.allCorrect
-                  ? 'bg-green-50 border-green-300'
-                  : 'bg-amber-50 border-amber-300'
-              }`}>
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    {quickResult.allCorrect ? (
-                      <Check size={22} className="text-green-600" />
-                    ) : (
-                      <AlertCircle size={22} className="text-amber-600" />
-                    )}
-                    <span className={`text-base font-bold ${
-                      quickResult.allCorrect ? 'text-green-700' : 'text-amber-700'
-                    }`}>
-                      {quickResult.allCorrect ? '全部正确！' : '部分正确'}
-                    </span>
-                  </div>
-                  <span className={`text-base font-medium ${
-                    quickResult.allCorrect ? 'text-green-600' : 'text-amber-600'
-                  }`}>
-                    {quickResult.correctCount}/{quickResult.totalCount} 题正确
-                  </span>
-                </div>
-                <p className="text-sm text-gray-600">
-                  AI正在为你生成详细的学习反馈...
-                </p>
+        {/* 底部导航栏 */}
+        <div className="h-20 px-8 flex items-center justify-between border-t border-gray-200 bg-white">
+          <div className="flex items-center gap-4">
+            {/* 上一题按钮 */}
+            {task.type === 'quiz' && task.questions && (
+              <button
+                onClick={goToPreviousQuestion}
+                disabled={currentQuestionIndex === 0}
+                className="px-6 py-3 rounded-xl border-2 border-gray-200 text-gray-700 font-medium hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                <ChevronLeft size={18} />
+                上一题
+              </button>
+            )}
+
+            {/* 题目导航点 */}
+            {task.type === 'quiz' && task.questions && task.questions.length > 1 && (
+              <div className="flex items-center gap-2">
+                {task.questions.map((_, idx) => {
+                  const isAnswered = task.questions && selectedAnswers[task.questions[idx].id];
+                  const isCurrent = idx === currentQuestionIndex;
+
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => goToQuestion(idx)}
+                      className={`w-8 h-8 rounded-full text-xs font-medium transition-all ${
+                        isCurrent
+                          ? 'bg-primary-500 text-white'
+                          : isAnswered
+                          ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                    >
+                      {idx + 1}
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>
 
-          {/* 底部提交按钮 */}
-          <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
-            <button
-              onClick={handleSubmit}
-              disabled={taskStatus === 'submitting' || taskStatus === 'grading'}
-              className={`w-full py-4 rounded-xl text-base font-medium transition-all flex items-center justify-center gap-2 ${
-                taskStatus === 'submitting' || taskStatus === 'grading'
-                  ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
-                  : isCompleted && quickResult?.allCorrect
-                  ? 'bg-green-100 text-green-700 cursor-not-allowed'
-                  : 'bg-primary-600 text-white hover:bg-primary-700 shadow-lg'
-              }`}
-            >
-              {taskStatus === 'submitting' ? (
-                <>
-                  <Activity size={18} className="animate-spin" />
-                  提交中...
-                </>
-              ) : taskStatus === 'grading' ? (
-                <>
-                  <Activity size={18} className="animate-spin" />
-                  批改中...
-                </>
-              ) : isCompleted && quickResult?.allCorrect ? (
-                <>
-                  <Check size={18} />
-                  已完成
-                </>
-              ) : (
-                <>
-                  <Check size={18} />
-                  {quickResult && !quickResult.allCorrect ? '重新提交' : '提交任务'}
-                </>
-              )}
-            </button>
+          <div className="flex items-center gap-4">
+            {/* 下一题按钮 */}
+            {task.type === 'quiz' && task.questions && currentQuestionIndex < task.questions.length - 1 && (
+              <button
+                onClick={goToNextQuestion}
+                className="px-6 py-3 rounded-xl bg-primary-600 text-white font-medium hover:bg-primary-700 transition-colors flex items-center gap-2"
+              >
+                下一题
+                <ChevronRight size={18} />
+              </button>
+            )}
+
+            {/* 提交按钮 - 最后一题或非测验任务显示 */}
+            {((task.type === 'quiz' && task.questions && currentQuestionIndex === task.questions.length - 1) ||
+              task.type !== 'quiz') && (
+              <button
+                onClick={handleSubmit}
+                disabled={taskStatus === 'submitting' || taskStatus === 'grading'}
+                className={`px-8 py-3 rounded-xl font-medium transition-colors flex items-center gap-2 ${
+                  taskStatus === 'submitting' || taskStatus === 'grading'
+                    ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
+                    : isCompleted && quickResult?.allCorrect
+                    ? 'bg-green-500 text-white cursor-not-allowed'
+                    : 'bg-primary-600 text-white hover:bg-primary-700'
+                }`}
+              >
+                {taskStatus === 'submitting' ? (
+                  <>
+                    <Activity size={18} className="animate-spin" />
+                    提交中...
+                  </>
+                ) : taskStatus === 'grading' ? (
+                  <>
+                    <Activity size={18} className="animate-spin" />
+                    批改中...
+                  </>
+                ) : isCompleted && quickResult?.allCorrect ? (
+                  <>
+                    <Check size={18} />
+                    已完成
+                  </>
+                ) : (
+                  <>
+                    <Check size={18} />
+                    {quickResult && !quickResult.allCorrect ? '重新提交' : '提交答案'}
+                  </>
+                )}
+              </button>
+            )}
           </div>
         </div>
       </div>
