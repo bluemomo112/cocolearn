@@ -652,6 +652,8 @@ function TaskExpandedCard({
   isCompleted,
   taskStatus,
   quickResult,
+  displayMode = 'embedded',
+  onToggleMode,
 }: {
   task: Task;
   onClose: () => void;
@@ -664,6 +666,8 @@ function TaskExpandedCard({
     totalCount: number;
     details: any[];
   };
+  displayMode?: 'fullscreen' | 'embedded';
+  onToggleMode?: () => void;
 }) {
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string | string[]>>({});
   const [submissionText, setSubmissionText] = useState('');
@@ -691,6 +695,215 @@ function TaskExpandedCard({
     onComplete(task.id, answer);
   };
 
+  // 全屏模式的容器
+  if (displayMode === 'fullscreen') {
+    return (
+      <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-2xl overflow-hidden w-full max-w-4xl max-h-[90vh] flex flex-col">
+          {/* 卡片头部 */}
+          <div className={`px-6 py-4 flex items-center justify-between border-b ${
+            task.type === 'quiz'
+              ? 'bg-gradient-to-r from-amber-50 to-orange-50 border-amber-100'
+              : task.type === 'reflection'
+              ? 'bg-gradient-to-r from-purple-50 to-pink-50 border-purple-100'
+              : 'bg-gradient-to-r from-primary-50 to-accent-50 border-primary-100'
+          }`}>
+            <div className="flex items-center gap-3">
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                task.type === 'quiz' ? 'bg-amber-100' : task.type === 'reflection' ? 'bg-purple-100' : 'bg-primary-100'
+              }`}>
+                {task.type === 'quiz' ? (
+                  <Zap size={20} className="text-amber-600" />
+                ) : task.type === 'reflection' ? (
+                  <Brain size={20} className="text-purple-600" />
+                ) : (
+                  <FileEdit size={20} className="text-primary-600" />
+                )}
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800">{task.title}</h3>
+                <p className="text-sm text-gray-500">
+                  {task.required ? '必修任务' : '选修任务'}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {onToggleMode && (
+                <button
+                  onClick={onToggleMode}
+                  className="w-10 h-10 rounded-lg bg-white/80 hover:bg-white flex items-center justify-center transition-colors"
+                  title="缩小到对话区"
+                >
+                  <ChevronDown size={18} className="text-gray-500" />
+                </button>
+              )}
+              <button
+                onClick={onClose}
+                className="w-10 h-10 rounded-lg bg-white/80 hover:bg-white flex items-center justify-center transition-colors"
+              >
+                <X size={18} className="text-gray-500" />
+              </button>
+            </div>
+          </div>
+
+          {/* 卡片内容 - 可滚动 */}
+          <div className="flex-1 overflow-y-auto p-6">
+            {/* 任务描述 */}
+            {task.description && (
+              <p className="text-sm text-gray-600 mb-6 pb-6 border-b border-gray-200">{task.description}</p>
+            )}
+
+            {/* 测验类型任务 */}
+            {task.type === 'quiz' && task.questions && (
+              <div className="space-y-8">
+                {task.questions.map((q, idx) => {
+                  const isMultiple = q.type === 'multiple_choice';
+                  const currentAnswer = selectedAnswers[q.id];
+
+                  return (
+                    <div key={q.id} className="space-y-4">
+                      <p className="text-base text-gray-800 font-medium">
+                        {idx + 1}. {q.content}
+                        {isMultiple && <span className="ml-2 text-sm text-blue-600">(多选题)</span>}
+                      </p>
+                      {q.options && (
+                        <div className="space-y-3">
+                          {q.options.map((option, optIdx) => {
+                            const isSelected = isMultiple
+                              ? Array.isArray(currentAnswer) && currentAnswer.includes(option)
+                              : currentAnswer === option;
+
+                            return (
+                              <label
+                                key={optIdx}
+                                className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                                  isSelected
+                                    ? 'border-primary-500 bg-primary-50'
+                                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                                }`}
+                              >
+                                <div className={`w-6 h-6 ${isMultiple ? 'rounded' : 'rounded-full'} border-2 flex items-center justify-center ${
+                                  isSelected
+                                    ? 'border-primary-500 bg-primary-500'
+                                    : 'border-gray-300'
+                                }`}>
+                                  {isSelected && (
+                                    isMultiple ? (
+                                      <Check size={16} className="text-white" />
+                                    ) : (
+                                      <div className="w-3 h-3 rounded-full bg-white" />
+                                    )
+                                  )}
+                                </div>
+                                <button
+                                  onClick={() => handleQuestionAnswer(q.id, option, isMultiple)}
+                                  className="text-sm text-gray-700 text-left flex-1"
+                                >
+                                  {option}
+                                </button>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* 作业/反思类型任务 */}
+            {(task.type === 'assignment' || task.type === 'reflection') && (
+              <div className="space-y-4">
+                {task.prompt && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
+                    <p className="text-sm text-blue-900 whitespace-pre-line">{task.prompt}</p>
+                  </div>
+                )}
+                <textarea
+                  value={submissionText}
+                  onChange={(e) => setSubmissionText(e.target.value)}
+                  placeholder={task.submissionPlaceholder || '请在这里提交你的作业内容...'}
+                  className="w-full h-64 p-4 border border-gray-200 rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                />
+              </div>
+            )}
+
+            {/* 快速判题结果 - 仅测验类型显示 */}
+            {task.type === 'quiz' && quickResult && (
+              <div className={`mt-6 p-5 rounded-xl border-2 ${
+                quickResult.allCorrect
+                  ? 'bg-green-50 border-green-300'
+                  : 'bg-amber-50 border-amber-300'
+              }`}>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    {quickResult.allCorrect ? (
+                      <Check size={22} className="text-green-600" />
+                    ) : (
+                      <AlertCircle size={22} className="text-amber-600" />
+                    )}
+                    <span className={`text-base font-bold ${
+                      quickResult.allCorrect ? 'text-green-700' : 'text-amber-700'
+                    }`}>
+                      {quickResult.allCorrect ? '全部正确！' : '部分正确'}
+                    </span>
+                  </div>
+                  <span className={`text-base font-medium ${
+                    quickResult.allCorrect ? 'text-green-600' : 'text-amber-600'
+                  }`}>
+                    {quickResult.correctCount}/{quickResult.totalCount} 题正确
+                  </span>
+                </div>
+                <p className="text-sm text-gray-600">
+                  AI正在为你生成详细的学习反馈...
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* 底部提交按钮 */}
+          <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
+            <button
+              onClick={handleSubmit}
+              disabled={taskStatus === 'submitting' || taskStatus === 'grading'}
+              className={`w-full py-4 rounded-xl text-base font-medium transition-all flex items-center justify-center gap-2 ${
+                taskStatus === 'submitting' || taskStatus === 'grading'
+                  ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
+                  : isCompleted && quickResult?.allCorrect
+                  ? 'bg-green-100 text-green-700 cursor-not-allowed'
+                  : 'bg-primary-600 text-white hover:bg-primary-700 shadow-lg'
+              }`}
+            >
+              {taskStatus === 'submitting' ? (
+                <>
+                  <Activity size={18} className="animate-spin" />
+                  提交中...
+                </>
+              ) : taskStatus === 'grading' ? (
+                <>
+                  <Activity size={18} className="animate-spin" />
+                  批改中...
+                </>
+              ) : isCompleted && quickResult?.allCorrect ? (
+                <>
+                  <Check size={18} />
+                  已完成
+                </>
+              ) : (
+                <>
+                  <Check size={18} />
+                  {quickResult && !quickResult.allCorrect ? '重新提交' : '提交任务'}
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 嵌入式模式（原有样式）
   return (
     <div className="bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden mb-4">
       {/* 卡片头部 */}
@@ -720,12 +933,23 @@ function TaskExpandedCard({
             </p>
           </div>
         </div>
-        <button
-          onClick={onClose}
-          className="w-8 h-8 rounded-lg bg-white/80 hover:bg-white flex items-center justify-center transition-colors"
-        >
-          <X size={16} className="text-gray-500" />
-        </button>
+        <div className="flex items-center gap-2">
+          {onToggleMode && (
+            <button
+              onClick={onToggleMode}
+              className="w-8 h-8 rounded-lg bg-white/80 hover:bg-white flex items-center justify-center transition-colors"
+              title="放大到全屏"
+            >
+              <ChevronUp size={16} className="text-gray-500" />
+            </button>
+          )}
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-lg bg-white/80 hover:bg-white flex items-center justify-center transition-colors"
+          >
+            <X size={16} className="text-gray-500" />
+          </button>
+        </div>
       </div>
 
       {/* 卡片内容 */}
@@ -1061,6 +1285,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
 
   // 任务交互状态
   const [expandedTask, setExpandedTask] = useState<Task | null>(null);
+  const [taskDisplayMode, setTaskDisplayMode] = useState<'fullscreen' | 'embedded'>('fullscreen');
   const [taskStatus, setTaskStatus] = useState<'idle' | 'submitting' | 'grading' | 'completed'>('idle');
   const [quickResult, setQuickResult] = useState<{
     allCorrect: boolean;
@@ -1478,6 +1703,19 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
 
     setMessages(prev => [...prev, taskIntroMessage]);
     setExpandedTask(task);
+    setTaskDisplayMode('fullscreen'); // 默认以全屏模式打开
+  };
+
+  // 切换任务显示模式
+  const toggleTaskDisplayMode = () => {
+    setTaskDisplayMode(prev => prev === 'fullscreen' ? 'embedded' : 'fullscreen');
+  };
+
+  // 关闭任务
+  const closeTask = () => {
+    setExpandedTask(null);
+    setTaskStatus('idle');
+    setQuickResult(null);
   };
 
   // 切换任务完成状态 - 两阶段提交
@@ -1666,7 +1904,22 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
   };
 
   return (
-    <div className="h-full flex flex-col bg-gray-50">
+    <>
+      {/* 全屏任务弹窗 */}
+      {expandedTask && taskDisplayMode === 'fullscreen' && (
+        <TaskExpandedCard
+          task={expandedTask}
+          onClose={closeTask}
+          onComplete={toggleTaskCompletion}
+          isCompleted={completedTasks.has(expandedTask.id)}
+          taskStatus={taskStatus}
+          quickResult={quickResult}
+          displayMode="fullscreen"
+          onToggleMode={toggleTaskDisplayMode}
+        />
+      )}
+
+      <div className="h-full flex flex-col bg-gray-50">
       {/* 顶部状态栏 */}
       <header className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-6 shrink-0">
         <div className="flex items-center gap-4">
@@ -2523,16 +2776,18 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                     </div>
                   </div>
 
-                  {/* 嵌入的任务卡片 (作为智能体消息的一部分) */}
-                  {message.role === 'assistant' && (message as any).embeddedTask && (
+                  {/* 嵌入的任务卡片 (作为智能体消息的一部分) - 仅在嵌入式模式下显示 */}
+                  {message.role === 'assistant' && (message as any).embeddedTask && taskDisplayMode === 'embedded' && (
                     <div className="mt-2">
                       <TaskExpandedCard
                         task={(message as any).embeddedTask}
-                        onClose={() => {}}
+                        onClose={closeTask}
                         onComplete={toggleTaskCompletion}
                         isCompleted={completedTasks.has((message as any).embeddedTask.id)}
                         taskStatus={taskStatus}
                         quickResult={quickResult}
+                        displayMode="embedded"
+                        onToggleMode={toggleTaskDisplayMode}
                       />
                     </div>
                   )}
@@ -2971,5 +3226,6 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
         onAdd={handleLinkAdd}
       />
     </div>
+    </>
   );
 }
