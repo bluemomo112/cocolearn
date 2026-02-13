@@ -1370,10 +1370,12 @@ function StudentListView({
   students,
   onSelectStudent,
   classes,
+  isExpanded = false,
 }: {
   students: StudentDetail[];
   onSelectStudent: (index: number) => void;
   classes: ClassInfo[];
+  isExpanded?: boolean;
 }) {
   const [sortBy, setSortBy] = useState<'name' | 'progress' | 'score' | 'duration'>('name')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
@@ -1464,37 +1466,27 @@ function StudentListView({
 
   return (
     <div className="h-full flex flex-col">
-      {/* 搜索和筛选 - 固定在顶部 */}
-      <div className="p-4 border-b border-gray-200 space-y-3 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
-        {/* 搜索栏 */}
-        <div className="relative">
-          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-          <input
-            type="text"
-            placeholder="搜索学生姓名..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          )}
-        </div>
-        {/* 筛选行 */}
-        <div className="flex flex-wrap items-center gap-3">
+      {/* 搜索和筛选 - 单行紧凑布局 */}
+      <div className="px-3 py-2 border-b border-gray-200 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
+        <div className="flex items-center gap-2">
+          {/* 搜索框 */}
+          <div className="relative flex-1 max-w-[200px]">
+            <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              type="text"
+              placeholder="搜索学生..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-8 pr-2 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-transparent"
+            />
+          </div>
+          {/* 筛选 */}
           <select
             value={filterClass}
             onChange={(e) => setFilterClass(e.target.value)}
-            className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="px-2 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-primary-500"
           >
             <option value="all">全部班级</option>
             {classes.map(c => (
@@ -1504,7 +1496,7 @@ function StudentListView({
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value as StudentStatus | 'all')}
-            className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="px-2 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-primary-500"
           >
             <option value="all">全部状态</option>
             <option value="completed">已完成</option>
@@ -1512,105 +1504,182 @@ function StudentListView({
             <option value="not_started">未开始</option>
             <option value="needs_attention">需关注</option>
           </select>
-          <div className="flex-1" />
-          <span className="text-sm text-gray-500">
-            {filteredStudents.length} / {students.length} 名学生
+          <span className="text-xs text-gray-400 ml-auto">
+            {filteredStudents.length}/{students.length}
           </span>
         </div>
       </div>
 
-      {/* 表格 - 可滚动区域 */}
-      <div className="flex-1 overflow-x-auto overflow-y-auto">
-        <table className="w-full">
-          <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200 sticky top-0 z-10">
-            <tr>
-              <th className="pl-4 pr-2 py-3 text-left">
-                <button onClick={() => toggleSort('name')} className="flex items-center gap-1 text-xs font-semibold text-gray-600 uppercase tracking-wider hover:text-gray-900">
-                  姓名
-                  {sortBy === 'name' && <span>{sortOrder === 'asc' ? '↑' : '↓'}</span>}
-                </button>
-              </th>
-              <th className="px-2 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">状态</th>
-              <th className="px-2 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">态度</th>
-              <th className="px-2 py-3 text-left">
-                <button onClick={() => toggleSort('progress')} className="flex items-center gap-1 text-xs font-semibold text-gray-600 uppercase tracking-wider hover:text-gray-900">
-                  进度
-                  {sortBy === 'progress' && <span>{sortOrder === 'asc' ? '↑' : '↓'}</span>}
-                </button>
-              </th>
-              <th className="px-2 py-3 text-left">
-                <button onClick={() => toggleSort('score')} className="flex items-center gap-1 text-xs font-semibold text-gray-600 uppercase tracking-wider hover:text-gray-900">
-                  分数
-                  {sortBy === 'score' && <span>{sortOrder === 'asc' ? '↑' : '↓'}</span>}
-                </button>
-              </th>
-              <th className="px-2 py-3 text-left">
-                <button onClick={() => toggleSort('duration')} className="flex items-center gap-1 text-xs font-semibold text-gray-600 uppercase tracking-wider hover:text-gray-900">
-                  时长
-                  {sortBy === 'duration' && <span>{sortOrder === 'asc' ? '↑' : '↓'}</span>}
-                </button>
-              </th>
-              <th className="pl-2 pr-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider"></th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {filteredStudents.map((student, index) => (
-              <tr key={student.studentId} className="hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => onSelectStudent(index)}>
-                <td className="pl-4 pr-2 py-3">
-                  <p className="font-medium text-gray-900 text-sm">{student.studentName}</p>
-                  <p className="text-xs text-gray-400">{student.className}</p>
-                </td>
-                <td className="px-2 py-3">
-                  <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium whitespace-nowrap ${statusConfig[student.status].color}`}>
-                    {statusConfig[student.status].label}
-                  </span>
-                </td>
-                <td className="px-2 py-3">
-                  {(() => {
-                    const attitude = getLearningAttitude(student)
-                    return (
-                      <div className="flex items-center gap-1.5" title={attitude.label}>
-                        <span className="text-lg">{attitude.emoji}</span>
-                        <span className={`text-xs font-medium ${attitude.color}`}>{attitude.label}</span>
-                      </div>
-                    )
-                  })()}
-                </td>
-                <td className="px-2 py-3">
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-12 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+      {/* 展开模式 - 卡片网格视图 */}
+      {isExpanded ? (
+        <div className="flex-1 overflow-y-auto p-4">
+          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+            {filteredStudents.map((student, index) => {
+              const attitude = getLearningAttitude(student)
+              const avgCompetency = student.competencyScores
+                ? Math.round(Object.values(student.competencyScores).reduce((a, b) => a + b, 0) / Object.values(student.competencyScores).length)
+                : null
+              return (
+                <div
+                  key={student.studentId}
+                  onClick={() => onSelectStudent(index)}
+                  className="glass-card p-4 cursor-pointer hover:scale-[1.02] transition-all duration-200 group"
+                >
+                  {/* 头部：姓名 + 状态 */}
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <p className="font-semibold text-gray-900">{student.studentName}</p>
+                      <p className="text-xs text-gray-400">{student.className}</p>
+                    </div>
+                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${statusConfig[student.status].color}`}>
+                      {statusConfig[student.status].label}
+                    </span>
+                  </div>
+
+                  {/* 进度条 */}
+                  <div className="mb-3">
+                    <div className="flex items-center justify-between text-xs mb-1">
+                      <span className="text-gray-500">学习进度</span>
+                      <span className="font-medium text-gray-700">{student.progress}%</span>
+                    </div>
+                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-primary-500 rounded-full"
+                        className="h-full bg-gradient-to-r from-primary-400 to-primary-600 rounded-full transition-all"
                         style={{ width: `${student.progress}%` }}
                       />
                     </div>
-                    <span className="text-xs text-gray-600 tabular-nums">{student.progress}%</span>
                   </div>
-                </td>
-                <td className="px-2 py-3">
-                  <span className="text-sm tabular-nums text-gray-900">
-                    {student.objectiveScore !== undefined ? student.objectiveScore : '-'}
-                  </span>
-                </td>
-                <td className="px-2 py-3">
-                  <span className="text-xs text-gray-600 tabular-nums whitespace-nowrap">{student.learningDuration}min</span>
-                </td>
-                <td className="pl-2 pr-4 py-3 text-right">
-                  <button
-                    onClick={(e) => { e.stopPropagation(); onSelectStudent(index) }}
-                    className="text-primary-600 hover:text-primary-800 transition-colors"
-                    title="查看详情"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
+
+                  {/* 数据网格 */}
+                  <div className="grid grid-cols-2 gap-2 mb-3">
+                    <div className="bg-gray-50 rounded-lg p-2 text-center">
+                      <p className="text-lg font-bold text-gray-900">{student.objectiveScore ?? '-'}</p>
+                      <p className="text-xs text-gray-500">分数</p>
+                    </div>
+                    <div className="bg-gray-50 rounded-lg p-2 text-center">
+                      <p className="text-lg font-bold text-gray-900">{student.learningDuration}</p>
+                      <p className="text-xs text-gray-500">分钟</p>
+                    </div>
+                  </div>
+
+                  {/* 学习态度 + 能力均分 */}
+                  <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-base">{attitude.emoji}</span>
+                      <span className={`text-xs font-medium ${attitude.color}`}>{attitude.label}</span>
+                    </div>
+                    {avgCompetency !== null && (
+                      <div className="flex items-center gap-1">
+                        <svg className="w-3.5 h-3.5 text-amber-500" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                        </svg>
+                        <span className="text-xs font-medium text-gray-600">{avgCompetency}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Hover 提示 */}
+                  <div className="absolute inset-0 flex items-center justify-center bg-primary-600/90 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity">
+                    <span className="text-white font-medium text-sm">查看详情 →</span>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      ) : (
+        /* 普通模式 - 紧凑表格 */
+        <div className="flex-1 overflow-x-auto overflow-y-auto">
+          <table className="w-full">
+            <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200 sticky top-0 z-10">
+              <tr>
+                <th className="pl-4 pr-2 py-2 text-left">
+                  <button onClick={() => toggleSort('name')} className="flex items-center gap-1 text-xs font-semibold text-gray-600 uppercase tracking-wider hover:text-gray-900">
+                    姓名
+                    {sortBy === 'name' && <span>{sortOrder === 'asc' ? '↑' : '↓'}</span>}
                   </button>
-                </td>
+                </th>
+                <th className="px-2 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">状态</th>
+                <th className="px-2 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">态度</th>
+                <th className="px-2 py-2 text-left">
+                  <button onClick={() => toggleSort('progress')} className="flex items-center gap-1 text-xs font-semibold text-gray-600 uppercase tracking-wider hover:text-gray-900">
+                    进度
+                    {sortBy === 'progress' && <span>{sortOrder === 'asc' ? '↑' : '↓'}</span>}
+                  </button>
+                </th>
+                <th className="px-2 py-2 text-left">
+                  <button onClick={() => toggleSort('score')} className="flex items-center gap-1 text-xs font-semibold text-gray-600 uppercase tracking-wider hover:text-gray-900">
+                    分数
+                    {sortBy === 'score' && <span>{sortOrder === 'asc' ? '↑' : '↓'}</span>}
+                  </button>
+                </th>
+                <th className="px-2 py-2 text-left">
+                  <button onClick={() => toggleSort('duration')} className="flex items-center gap-1 text-xs font-semibold text-gray-600 uppercase tracking-wider hover:text-gray-900">
+                    时长
+                    {sortBy === 'duration' && <span>{sortOrder === 'asc' ? '↑' : '↓'}</span>}
+                  </button>
+                </th>
+                <th className="pl-2 pr-4 py-2 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider"></th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {filteredStudents.map((student, index) => (
+                <tr key={student.studentId} className="hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => onSelectStudent(index)}>
+                  <td className="pl-4 pr-2 py-2">
+                    <p className="font-medium text-gray-900 text-sm">{student.studentName}</p>
+                    <p className="text-xs text-gray-400">{student.className}</p>
+                  </td>
+                  <td className="px-2 py-2">
+                    <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium whitespace-nowrap ${statusConfig[student.status].color}`}>
+                      {statusConfig[student.status].label}
+                    </span>
+                  </td>
+                  <td className="px-2 py-2">
+                    {(() => {
+                      const attitude = getLearningAttitude(student)
+                      return (
+                        <div className="flex items-center gap-1" title={attitude.label}>
+                          <span className="text-sm">{attitude.emoji}</span>
+                        </div>
+                      )
+                    })()}
+                  </td>
+                  <td className="px-2 py-2">
+                    <div className="flex items-center gap-1">
+                      <div className="w-10 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-primary-500 rounded-full"
+                          style={{ width: `${student.progress}%` }}
+                        />
+                      </div>
+                      <span className="text-xs text-gray-600 tabular-nums">{student.progress}%</span>
+                    </div>
+                  </td>
+                  <td className="px-2 py-2">
+                    <span className="text-sm tabular-nums text-gray-900">
+                      {student.objectiveScore !== undefined ? student.objectiveScore : '-'}
+                    </span>
+                  </td>
+                  <td className="px-2 py-2">
+                    <span className="text-xs text-gray-600 tabular-nums whitespace-nowrap">{student.learningDuration}m</span>
+                  </td>
+                  <td className="pl-2 pr-4 py-2 text-right">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); onSelectStudent(index) }}
+                      className="text-primary-600 hover:text-primary-800 transition-colors"
+                      title="查看详情"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   )
 }
@@ -2108,27 +2177,21 @@ export default function SpaceResultsPage({ params }: SpaceResultsPageProps) {
           'lg:grid-cols-[2fr_3fr]'
         }`}>
           {/* 左侧概览栏 */}
-          <div ref={leftScrollRef} className={`fancy-scroll-container space-y-6 overflow-y-auto pr-2 border-2 border-gray-200 rounded-2xl p-4 bg-white/50 relative transition-all duration-300 ${expandedPanel === 'right' ? 'hidden' : ''}`}>
-            {/* 展开/收起按钮 */}
+          <div ref={leftScrollRef} className={`fancy-scroll-container space-y-4 overflow-y-auto pr-2 border-2 border-gray-200 rounded-2xl p-4 bg-white/50 relative transition-all duration-300 ${expandedPanel === 'right' ? 'hidden' : ''}`}>
+            {/* 展开/收起按钮 - 浮动在右上角 */}
             <button
               onClick={() => setExpandedPanel(expandedPanel === 'left' ? 'none' : 'left')}
-              className="sticky top-0 z-10 ml-auto flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-500 hover:text-gray-700 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-lg hover:bg-gray-50 transition-all shadow-sm"
+              className="absolute top-2 right-2 z-20 p-1.5 text-gray-400 hover:text-gray-600 bg-white/90 backdrop-blur-sm border border-gray-200 rounded-lg hover:bg-gray-50 transition-all shadow-sm"
               title={expandedPanel === 'left' ? '恢复双栏' : '展开此栏'}
             >
               {expandedPanel === 'left' ? (
-                <>
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25" />
-                  </svg>
-                  收起
-                </>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25" />
+                </svg>
               ) : (
-                <>
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
-                  </svg>
-                  展开
-                </>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
+                </svg>
               )}
             </button>
             {/* 班级多选 */}
@@ -2232,34 +2295,27 @@ export default function SpaceResultsPage({ params }: SpaceResultsPageProps) {
 
           {/* 右侧学生列表栏 */}
           <div ref={rightScrollRef} className={`fancy-scroll-container overflow-y-auto border-2 border-gray-200 rounded-2xl bg-white/50 relative transition-all duration-300 ${expandedPanel === 'left' ? 'hidden' : ''}`}>
-            {/* 展开/收起按钮 */}
-            <div className="sticky top-0 z-10 flex justify-end p-2">
-              <button
-                onClick={() => setExpandedPanel(expandedPanel === 'right' ? 'none' : 'right')}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-500 hover:text-gray-700 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-lg hover:bg-gray-50 transition-all shadow-sm"
-                title={expandedPanel === 'right' ? '恢复双栏' : '展开此栏'}
-              >
-                {expandedPanel === 'right' ? (
-                  <>
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25" />
-                    </svg>
-                    收起
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
-                    </svg>
-                    展开
-                  </>
-                )}
-              </button>
-            </div>
+            {/* 展开/收起按钮 - 浮动在右上角 */}
+            <button
+              onClick={() => setExpandedPanel(expandedPanel === 'right' ? 'none' : 'right')}
+              className="absolute top-2 right-2 z-20 p-1.5 text-gray-400 hover:text-gray-600 bg-white/90 backdrop-blur-sm border border-gray-200 rounded-lg hover:bg-gray-50 transition-all shadow-sm"
+              title={expandedPanel === 'right' ? '恢复双栏' : '展开此栏'}
+            >
+              {expandedPanel === 'right' ? (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25" />
+                </svg>
+              ) : (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
+                </svg>
+              )}
+            </button>
             <StudentListView
               students={filteredStudents}
               onSelectStudent={setSelectedStudentIndex}
               classes={mockClasses}
+              isExpanded={expandedPanel === 'right'}
             />
           </div>
         </div>
