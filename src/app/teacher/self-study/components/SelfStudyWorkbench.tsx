@@ -61,6 +61,19 @@ interface ChatMessage {
   timestamp: Date;
   // 可选：嵌入的任务卡片
   embeddedTask?: Task;
+  // 任务状态（用于保持答题进度）
+  taskState?: {
+    currentQuestionIndex: number;
+    selectedAnswers: Record<string, string | string[]>;
+    submissionText: string;
+    status: 'idle' | 'in_progress' | 'submitting' | 'grading' | 'completed';
+    quickResult?: {
+      allCorrect: boolean;
+      correctCount: number;
+      totalCount: number;
+      details: any[];
+    };
+  };
 }
 
 // Note interfaces for EnhancedNotesPanel
@@ -654,6 +667,8 @@ function TaskExpandedCard({
   quickResult,
   displayMode = 'embedded',
   onToggleMode,
+  taskState,
+  onStateUpdate,
 }: {
   task: Task;
   onClose: () => void;
@@ -668,10 +683,18 @@ function TaskExpandedCard({
   };
   displayMode?: 'fullscreen' | 'embedded';
   onToggleMode?: () => void;
+  taskState?: {
+    currentQuestionIndex: number;
+    selectedAnswers: Record<string, string | string[]>;
+    submissionText: string;
+    status: string;
+  };
+  onStateUpdate?: (stateUpdate: Partial<typeof taskState>) => void;
 }) {
-  const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string | string[]>>({});
-  const [submissionText, setSubmissionText] = useState('');
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  // 使用 props 中的状态，如果没有则使用默认值
+  const selectedAnswers = taskState?.selectedAnswers || {};
+  const submissionText = taskState?.submissionText || '';
+  const currentQuestionIndex = taskState?.currentQuestionIndex || 0;
 
   const handleQuestionAnswer = (questionId: string, answer: string | string[], isMultiple: boolean) => {
     if (isMultiple) {
@@ -680,9 +703,9 @@ function TaskExpandedCard({
       const newAnswers = currentAnswers.includes(answerStr)
         ? currentAnswers.filter(a => a !== answerStr)
         : [...currentAnswers, answerStr];
-      setSelectedAnswers(prev => ({ ...prev, [questionId]: newAnswers }));
+      onStateUpdate?.({ selectedAnswers: { ...selectedAnswers, [questionId]: newAnswers } });
     } else {
-      setSelectedAnswers(prev => ({ ...prev, [questionId]: answer }));
+      onStateUpdate?.({ selectedAnswers: { ...selectedAnswers, [questionId]: answer } });
     }
   };
 
@@ -698,18 +721,18 @@ function TaskExpandedCard({
 
   const goToNextQuestion = () => {
     if (task.questions && currentQuestionIndex < task.questions.length - 1) {
-      setCurrentQuestionIndex(prev => prev + 1);
+      onStateUpdate?.({ currentQuestionIndex: currentQuestionIndex + 1 });
     }
   };
 
   const goToPreviousQuestion = () => {
     if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex(prev => prev - 1);
+      onStateUpdate?.({ currentQuestionIndex: currentQuestionIndex - 1 });
     }
   };
 
   const goToQuestion = (index: number) => {
-    setCurrentQuestionIndex(index);
+    onStateUpdate?.({ currentQuestionIndex: index });
   };
 
   // 全屏模式的容器 - 沉浸式单题显示
@@ -836,7 +859,7 @@ function TaskExpandedCard({
                 )}
                 <textarea
                   value={submissionText}
-                  onChange={(e) => setSubmissionText(e.target.value)}
+                  onChange={(e) => onStateUpdate?.({ submissionText: e.target.value })}
                   placeholder="请输入你的答案..."
                   className="w-full h-64 p-4 border-2 border-gray-200 rounded-xl focus:border-primary-500 focus:outline-none resize-none text-base"
                 />
@@ -1067,7 +1090,7 @@ function TaskExpandedCard({
             )}
             <textarea
               value={submissionText}
-              onChange={(e) => setSubmissionText(e.target.value)}
+              onChange={(e) => onStateUpdate?.({ submissionText: e.target.value })}
               placeholder={task.submissionPlaceholder || '请在这里提交你的作业内容...'}
               className="w-full h-40 p-3 border border-gray-200 rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
@@ -1738,6 +1761,13 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
         : `接下来让我们完成这个任务，这将帮助你更深入地理解所学内容：`,
       timestamp: new Date(),
       embeddedTask: task,
+      // 初始化任务状态
+      taskState: {
+        currentQuestionIndex: 0,
+        selectedAnswers: {},
+        submissionText: '',
+        status: 'idle',
+      },
     };
 
     setMessages(prev => [...prev, taskIntroMessage]);
@@ -1752,8 +1782,24 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
 
   // 关闭任务 - 只关闭全屏，不删除对话中的任务卡片
   const closeTask = () => {
-    setExpandedTask(null);
+    // 不清空 expandedTask，保持任务状态
     setTaskDisplayMode('embedded'); // 切换到嵌入式模式，保留在对话中
+  };
+
+  // 更新任务状态到消息中
+  const updateTaskState = (taskId: string, stateUpdate: Partial<ChatMessage['taskState']>) => {
+    setMessages(prev => prev.map(msg => {
+      if (msg.embeddedTask?.id === taskId) {
+        return {
+          ...msg,
+          taskState: {
+            ...msg.taskState!,
+            ...stateUpdate,
+          },
+        };
+      }
+      return msg;
+    }));
   };
 
   // 切换任务完成状态 - 两阶段提交
@@ -1944,18 +1990,24 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
   return (
     <>
       {/* 全屏任务弹窗 */}
-      {expandedTask && taskDisplayMode === 'fullscreen' && (
-        <TaskExpandedCard
-          task={expandedTask}
-          onClose={closeTask}
-          onComplete={toggleTaskCompletion}
-          isCompleted={completedTasks.has(expandedTask.id)}
-          taskStatus={taskStatus}
-          quickResult={quickResult}
-          displayMode="fullscreen"
-          onToggleMode={toggleTaskDisplayMode}
-        />
-      )}
+      {expandedTask && taskDisplayMode === 'fullscreen' && (() => {
+        // 获取当前任务的消息和状态
+        const taskMessage = messages.find(m => m.embeddedTask?.id === expandedTask.id);
+        return (
+          <TaskExpandedCard
+            task={expandedTask}
+            onClose={closeTask}
+            onComplete={toggleTaskCompletion}
+            isCompleted={completedTasks.has(expandedTask.id)}
+            taskStatus={taskStatus}
+            quickResult={quickResult}
+            displayMode="fullscreen"
+            onToggleMode={toggleTaskDisplayMode}
+            taskState={taskMessage?.taskState}
+            onStateUpdate={(stateUpdate) => updateTaskState(expandedTask.id, stateUpdate)}
+          />
+        );
+      })()}
 
       <div className="h-full flex flex-col bg-gray-50">
       {/* 顶部状态栏 */}
@@ -2797,21 +2849,40 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                     </div>
                   </div>
 
-                  {/* 嵌入的任务卡片 (作为智能体消息的一部分) - 仅在嵌入式模式下显示 */}
-                  {message.role === 'assistant' && (message as any).embeddedTask && taskDisplayMode === 'embedded' && (
-                    <div className="mt-2">
-                      <TaskExpandedCard
-                        task={(message as any).embeddedTask}
-                        onClose={closeTask}
-                        onComplete={toggleTaskCompletion}
-                        isCompleted={completedTasks.has((message as any).embeddedTask.id)}
-                        taskStatus={taskStatus}
-                        quickResult={quickResult}
-                        displayMode="embedded"
-                        onToggleMode={toggleTaskDisplayMode}
-                      />
-                    </div>
-                  )}
+                  {/* 嵌入的任务卡片 (作为智能体消息的一部分) */}
+                  {message.role === 'assistant' && message.embeddedTask && (() => {
+                    const isCurrentTask = expandedTask?.id === message.embeddedTask.id;
+                    const shouldShowEmbedded = !isCurrentTask || taskDisplayMode === 'embedded';
+
+                    if (!shouldShowEmbedded) {
+                      // 当前任务正在全屏显示，显示提示
+                      return (
+                        <div className="mt-2 p-4 bg-gray-50 rounded-xl border border-gray-200">
+                          <div className="flex items-center gap-2 text-sm text-gray-600">
+                            <div className="w-2 h-2 bg-primary-500 rounded-full animate-pulse"></div>
+                            <span>正在全屏做题中...</span>
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div className="mt-2">
+                        <TaskExpandedCard
+                          task={message.embeddedTask}
+                          onClose={closeTask}
+                          onComplete={toggleTaskCompletion}
+                          isCompleted={completedTasks.has(message.embeddedTask.id)}
+                          taskStatus={taskStatus}
+                          quickResult={quickResult}
+                          displayMode="embedded"
+                          onToggleMode={toggleTaskDisplayMode}
+                          taskState={message.taskState}
+                          onStateUpdate={(stateUpdate) => updateTaskState(message.embeddedTask!.id, stateUpdate)}
+                        />
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
             ))}
