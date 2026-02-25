@@ -6,6 +6,7 @@ import remarkGfm from 'remark-gfm';
 interface RichContentProps {
   content: string;
   className?: string;
+  compact?: boolean;
 }
 
 // 预处理自定义嵌入语法：::video[url] 和 ::iframe[url]
@@ -23,7 +24,7 @@ function preprocessContent(content: string): string {
   return processed;
 }
 
-export default function RichContent({ content, className = '' }: RichContentProps) {
+export default function RichContent({ content, className = '', compact = false }: RichContentProps) {
   const processed = preprocessContent(content);
 
   return (
@@ -35,44 +36,30 @@ export default function RichContent({ content, className = '' }: RichContentProp
             <img
               src={src}
               alt={alt || ''}
-              className="rounded-xl max-w-full h-auto my-2"
+              className={compact ? 'rounded-lg max-w-[200px] h-auto my-1' : 'rounded-xl max-w-full h-auto my-2'}
               loading="lazy"
               {...props}
             />
           ),
           p: ({ children, ...props }) => {
-            // 检查是否包含自定义嵌入标记
             const childStr = String(children);
 
-            // 处理 video-embed
             const videoMatch = childStr.match(/<video-embed src="([^"]+)"><\/video-embed>/);
             if (videoMatch) {
               return (
-                <div className="my-4 rounded-xl overflow-hidden bg-black">
-                  <video
-                    src={videoMatch[1]}
-                    controls
-                    className="w-full max-h-[400px]"
-                    preload="metadata"
-                  >
+                <div className={compact ? 'my-2 rounded-lg overflow-hidden bg-black' : 'my-4 rounded-xl overflow-hidden bg-black'}>
+                  <video src={videoMatch[1]} controls className={compact ? 'w-full max-h-[160px]' : 'w-full max-h-[400px]'} preload="metadata">
                     您的浏览器不支持视频播放
                   </video>
                 </div>
               );
             }
 
-            // 处理 iframe-embed
             const iframeMatch = childStr.match(/<iframe-embed src="([^"]+)"><\/iframe-embed>/);
             if (iframeMatch) {
               return (
-                <div className="my-4 rounded-xl overflow-hidden border border-gray-200">
-                  <iframe
-                    src={iframeMatch[1]}
-                    className="w-full h-[400px]"
-                    sandbox="allow-scripts allow-same-origin"
-                    loading="lazy"
-                    title="嵌入内容"
-                  />
+                <div className={compact ? 'my-2 rounded-lg overflow-hidden border border-gray-200' : 'my-4 rounded-xl overflow-hidden border border-gray-200'}>
+                  <iframe src={iframeMatch[1]} className={compact ? 'w-full h-[160px]' : 'w-full h-[400px]'} sandbox="allow-scripts allow-same-origin" loading="lazy" title="嵌入内容" />
                 </div>
               );
             }

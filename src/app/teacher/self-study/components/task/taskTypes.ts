@@ -8,6 +8,7 @@ export interface QuestionProps {
   showResult?: boolean;
   isCorrect?: boolean;
   correctAnswer?: string | string[];
+  compact?: boolean; // 嵌入对话时使用紧凑样式
 }
 
 export interface QuickResultData {

@@ -190,17 +190,17 @@ function EmbeddedMode({ task, selectedAnswers, submissionText, onAnswer, submit,
         {task.description && <p className="text-sm text-gray-600 mb-4 pb-4 border-b border-gray-200">{task.description}</p>}
 
         {task.type === 'quiz' && task.questions && (
-          <div className="space-y-6">
+          <div className="space-y-4">
             {task.questions.map((q: any, i: number) => (
-              <div key={q.id} className="space-y-3">
-                <div className="text-sm text-gray-700 font-medium">
+              <div key={q.id} className="space-y-1.5">
+                <div className="text-xs text-gray-700 font-medium">
                   <span>{i + 1}. </span>
-                  <RichContent content={q.content} className="inline" />
-                  {q.type === 'multiple_choice' && <span className="ml-2 text-xs text-blue-600">(多选题)</span>}
-                  {q.type === 'true_false' && <span className="ml-2 text-xs text-purple-600">(判断题)</span>}
-                  {q.type === 'fill_in_blank' && <span className="ml-2 text-xs text-green-600">(填空题)</span>}
+                  <RichContent content={q.content} className="inline" compact />
+                  {q.type === 'multiple_choice' && <span className="ml-1 text-xs text-blue-600">(多选)</span>}
+                  {q.type === 'true_false' && <span className="ml-1 text-xs text-purple-600">(判断)</span>}
+                  {q.type === 'fill_in_blank' && <span className="ml-1 text-xs text-green-600">(填空)</span>}
                 </div>
-                <QuestionRenderer question={q} selectedAnswer={selectedAnswers[q.id]} onAnswer={onAnswer} />
+                <QuestionRenderer question={q} selectedAnswer={selectedAnswers[q.id]} onAnswer={onAnswer} compact />
               </div>
             ))}
           </div>
@@ -220,19 +220,18 @@ function EmbeddedMode({ task, selectedAnswers, submissionText, onAnswer, submit,
         )}
 
         {task.type === 'quiz' && quickResult && (
-          <div className={`mt-4 p-4 rounded-xl border-2 ${quickResult.allCorrect ? 'bg-green-50 border-green-300' : 'bg-amber-50 border-amber-300'}`}>
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                {quickResult.allCorrect ? <Check size={20} className="text-green-600" /> : <AlertCircle size={20} className="text-amber-600" />}
-                <span className={`text-sm font-bold ${quickResult.allCorrect ? 'text-green-700' : 'text-amber-700'}`}>
+          <div className={`mt-3 p-3 rounded-lg border ${quickResult.allCorrect ? 'bg-green-50 border-green-300' : 'bg-amber-50 border-amber-300'}`}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                {quickResult.allCorrect ? <Check size={14} className="text-green-600" /> : <AlertCircle size={14} className="text-amber-600" />}
+                <span className={`text-xs font-bold ${quickResult.allCorrect ? 'text-green-700' : 'text-amber-700'}`}>
                   {quickResult.allCorrect ? '全部正确！' : '部分正确'}
                 </span>
               </div>
-              <span className={`text-sm font-medium ${quickResult.allCorrect ? 'text-green-600' : 'text-amber-600'}`}>
+              <span className={`text-xs font-medium ${quickResult.allCorrect ? 'text-green-600' : 'text-amber-600'}`}>
                 {quickResult.correctCount}/{quickResult.totalCount} 题正确
               </span>
             </div>
-            <p className="text-xs text-gray-600">AI正在为你生成详细的学习反馈...</p>
           </div>
         )}
 
@@ -244,7 +243,7 @@ function EmbeddedMode({ task, selectedAnswers, submissionText, onAnswer, submit,
 
 function SubmitButton({ taskStatus, isCompleted, quickResult, onSubmit, size }: any) {
   const isSm = size === 'sm';
-  const base = isSm ? 'mt-4 w-full py-3 rounded-xl text-sm' : 'px-8 py-3 rounded-xl';
+  const base = isSm ? 'mt-3 w-full py-2 rounded-lg text-xs' : 'px-8 py-3 rounded-xl';
   const disabled = taskStatus === 'submitting' || taskStatus === 'grading';
   const done = isCompleted && quickResult?.allCorrect;
 
