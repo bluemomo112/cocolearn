@@ -27,12 +27,13 @@ export interface Resource {
 
 export interface TaskQuestion {
   id: string;
-  type: 'single_choice' | 'multiple_choice' | 'fill_in_blank';
-  content: string;
-  options?: string[]; // 选择题的选项
+  type: 'single_choice' | 'multiple_choice' | 'fill_in_blank' | 'true_false';
+  content: string;           // Markdown 格式，支持 ![img](url)、视频嵌入等
+  options?: string[];         // Markdown 格式选项
   answer: string | string[];
-  explanation?: string;
-  blanks?: number; // 填空题的空格数量
+  explanation?: string;       // Markdown 格式解析
+  blanks?: number;            // 填空题的空格数量
+  points?: number;            // 每题分值，默认 1
 }
 
 export interface TaskRubric {

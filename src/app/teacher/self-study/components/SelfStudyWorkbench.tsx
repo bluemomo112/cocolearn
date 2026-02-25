@@ -23,6 +23,9 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { TaskEditModal } from '@/app/teacher/note-config/modals';
 import { useRouter } from 'next/navigation';
 import { PublishMode, PublishScope } from '@/types/self-study';
+import TaskExpandedCard from './task/TaskExpandedCard';
+import TaskResultReview from './task/TaskResultReview';
+import { QuickResultData } from './task/taskTypes';
 
 // 主题配置 - 修改这里即可改变整体风格
 const THEME = {
@@ -657,517 +660,6 @@ function LearningStatusPanel({
   );
 }
 
-// 任务展开卡片组件 - 在中间聊天区显示
-function TaskExpandedCard({
-  task,
-  onClose,
-  onComplete,
-  isCompleted,
-  taskStatus,
-  quickResult,
-  displayMode = 'embedded',
-  onToggleMode,
-  taskState,
-  onStateUpdate,
-}: {
-  task: Task;
-  onClose: () => void;
-  onComplete: (taskId: string, answer?: string) => void;
-  isCompleted: boolean;
-  taskStatus?: 'idle' | 'submitting' | 'grading' | 'completed';
-  quickResult?: {
-    allCorrect: boolean;
-    correctCount: number;
-    totalCount: number;
-    details: any[];
-  };
-  displayMode?: 'fullscreen' | 'embedded';
-  onToggleMode?: () => void;
-  taskState?: {
-    currentQuestionIndex: number;
-    selectedAnswers: Record<string, string | string[]>;
-    submissionText: string;
-    status: string;
-  };
-  onStateUpdate?: (stateUpdate: Partial<typeof taskState>) => void;
-}) {
-  // 使用 props 中的状态，如果没有则使用默认值
-  const selectedAnswers = taskState?.selectedAnswers || {};
-  const submissionText = taskState?.submissionText || '';
-  const currentQuestionIndex = taskState?.currentQuestionIndex || 0;
-
-  const handleQuestionAnswer = (questionId: string, answer: string | string[], isMultiple: boolean) => {
-    if (isMultiple) {
-      const currentAnswers = (selectedAnswers[questionId] as string[]) || [];
-      const answerStr = answer as string;
-      const newAnswers = currentAnswers.includes(answerStr)
-        ? currentAnswers.filter(a => a !== answerStr)
-        : [...currentAnswers, answerStr];
-      onStateUpdate?.({ selectedAnswers: { ...selectedAnswers, [questionId]: newAnswers } });
-    } else {
-      onStateUpdate?.({ selectedAnswers: { ...selectedAnswers, [questionId]: answer } });
-    }
-  };
-
-  const handleSubmit = () => {
-    let answer = '';
-    if (task.type === 'quiz') {
-      answer = JSON.stringify(selectedAnswers);
-    } else if (task.type === 'assignment' || task.type === 'reflection') {
-      answer = submissionText;
-    }
-    onComplete(task.id, answer);
-  };
-
-  const goToNextQuestion = () => {
-    if (task.questions && currentQuestionIndex < task.questions.length - 1) {
-      onStateUpdate?.({ currentQuestionIndex: currentQuestionIndex + 1 });
-    }
-  };
-
-  const goToPreviousQuestion = () => {
-    if (currentQuestionIndex > 0) {
-      onStateUpdate?.({ currentQuestionIndex: currentQuestionIndex - 1 });
-    }
-  };
-
-  const goToQuestion = (index: number) => {
-    onStateUpdate?.({ currentQuestionIndex: index });
-  };
-
-  // 全屏模式的容器 - 沉浸式单题显示
-  if (displayMode === 'fullscreen') {
-    return (
-      <div className="fixed inset-0 z-50 bg-white flex flex-col">
-        {/* 顶部导航栏 */}
-        <div className="h-16 px-8 flex items-center justify-between border-b border-gray-200 bg-white">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={onClose}
-              className="flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors"
-            >
-              <ChevronLeft size={20} />
-              <span className="text-sm font-medium">退出</span>
-            </button>
-          </div>
-
-          <div className="flex items-center gap-6">
-            {/* 进度指示 */}
-            {task.type === 'quiz' && task.questions && (
-              <div className="text-sm text-gray-600 font-medium">
-                {currentQuestionIndex + 1} / {task.questions.length}
-              </div>
-            )}
-
-            {/* 缩小按钮 */}
-            {onToggleMode && (
-              <button
-                onClick={onToggleMode}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                title="缩小到对话区"
-              >
-                <ChevronDown size={20} className="text-gray-600" />
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* 主内容区 - 居中显示单题 */}
-        <div className="flex-1 overflow-hidden flex items-center justify-center p-8 bg-gray-50">
-          <div className="w-full max-w-3xl">
-            {/* 测验类型任务 - 单题显示 */}
-            {task.type === 'quiz' && task.questions && task.questions[currentQuestionIndex] && (
-              <div className="space-y-8">
-                {(() => {
-                  const q = task.questions[currentQuestionIndex];
-                  const isMultiple = q.type === 'multiple_choice';
-                  const isFillBlank = q.type === 'fill_in_blank';
-                  const currentAnswer = selectedAnswers[q.id];
-
-                  return (
-                    <div className="space-y-8">
-                      {/* 题目标签 */}
-                      <div className="flex items-center gap-3">
-                        <span className="px-3 py-1 bg-blue-50 text-blue-600 text-sm font-medium rounded-full">
-                          {isFillBlank ? '填空题' : isMultiple ? '多选题' : '单选题'}
-                        </span>
-                      </div>
-
-                      {/* 题目内容 */}
-                      <h2 className="text-3xl font-medium text-gray-900 leading-relaxed">
-                        {q.content}
-                      </h2>
-
-                      {/* 填空题输入框 */}
-                      {isFillBlank && (
-                        <div className="space-y-4">
-                          <textarea
-                            value={currentAnswer as string || ''}
-                            onChange={(e) => handleQuestionAnswer(q.id, e.target.value, false)}
-                            placeholder="请在此输入你的答案..."
-                            className="w-full h-32 p-4 border-2 border-gray-200 rounded-xl focus:border-primary-500 focus:outline-none resize-none text-lg"
-                          />
-                        </div>
-                      )}
-
-                      {/* 选项列表 */}
-                      {q.options && !isFillBlank && (
-                        <div className="space-y-4">
-                          {q.options.map((option, optIdx) => {
-                            const isSelected = isMultiple
-                              ? Array.isArray(currentAnswer) && currentAnswer.includes(option)
-                              : currentAnswer === option;
-                            const optionLabel = String.fromCharCode(65 + optIdx);
-
-                            return (
-                              <button
-                                key={optIdx}
-                                onClick={() => handleQuestionAnswer(q.id, option, isMultiple)}
-                                className={`w-full text-left p-6 rounded-2xl border-2 transition-all ${
-                                  isSelected
-                                    ? 'border-primary-500 bg-primary-50 shadow-md'
-                                    : 'border-gray-200 hover:border-gray-300 hover:bg-white bg-white'
-                                }`}
-                              >
-                                <div className="flex items-center gap-4">
-                                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold flex-shrink-0 ${
-                                    isSelected
-                                      ? 'bg-primary-500 text-white'
-                                      : 'bg-gray-100 text-gray-600'
-                                  }`}>
-                                    {optionLabel}
-                                  </div>
-                                  <span className="text-lg text-gray-800">{option}</span>
-                                </div>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })()}
-              </div>
-            )}
-
-            {/* 作业/反思类型任务 */}
-            {(task.type === 'assignment' || task.type === 'reflection') && (
-              <div className="space-y-6">
-                <h2 className="text-2xl font-medium text-gray-900">{task.title}</h2>
-                {task.description && (
-                  <p className="text-base text-gray-600 leading-relaxed">{task.description}</p>
-                )}
-                <textarea
-                  value={submissionText}
-                  onChange={(e) => onStateUpdate?.({ submissionText: e.target.value })}
-                  placeholder="请输入你的答案..."
-                  className="w-full h-64 p-4 border-2 border-gray-200 rounded-xl focus:border-primary-500 focus:outline-none resize-none text-base"
-                />
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* 底部导航栏 */}
-        <div className="h-20 px-8 flex items-center justify-between border-t border-gray-200 bg-white">
-          <div className="flex items-center gap-4">
-            {/* 上一题按钮 */}
-            {task.type === 'quiz' && task.questions && (
-              <button
-                onClick={goToPreviousQuestion}
-                disabled={currentQuestionIndex === 0}
-                className="px-6 py-3 rounded-xl border-2 border-gray-200 text-gray-700 font-medium hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
-              >
-                <ChevronLeft size={18} />
-                上一题
-              </button>
-            )}
-
-            {/* 题目导航点 */}
-            {task.type === 'quiz' && task.questions && task.questions.length > 1 && (
-              <div className="flex items-center gap-2">
-                {task.questions.map((_, idx) => {
-                  const isAnswered = task.questions && selectedAnswers[task.questions[idx].id];
-                  const isCurrent = idx === currentQuestionIndex;
-
-                  return (
-                    <button
-                      key={idx}
-                      onClick={() => goToQuestion(idx)}
-                      className={`w-8 h-8 rounded-full text-xs font-medium transition-all ${
-                        isCurrent
-                          ? 'bg-primary-500 text-white'
-                          : isAnswered
-                          ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                      }`}
-                    >
-                      {idx + 1}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          <div className="flex items-center gap-4">
-            {/* 下一题按钮 */}
-            {task.type === 'quiz' && task.questions && currentQuestionIndex < task.questions.length - 1 && (
-              <button
-                onClick={goToNextQuestion}
-                className="px-6 py-3 rounded-xl bg-primary-600 text-white font-medium hover:bg-primary-700 transition-colors flex items-center gap-2"
-              >
-                下一题
-                <ChevronRight size={18} />
-              </button>
-            )}
-
-            {/* 提交按钮 - 最后一题或非测验任务显示 */}
-            {((task.type === 'quiz' && task.questions && currentQuestionIndex === task.questions.length - 1) ||
-              task.type !== 'quiz') && (
-              <button
-                onClick={handleSubmit}
-                disabled={taskStatus === 'submitting' || taskStatus === 'grading'}
-                className={`px-8 py-3 rounded-xl font-medium transition-colors flex items-center gap-2 ${
-                  taskStatus === 'submitting' || taskStatus === 'grading'
-                    ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
-                    : isCompleted && quickResult?.allCorrect
-                    ? 'bg-green-500 text-white cursor-not-allowed'
-                    : 'bg-primary-600 text-white hover:bg-primary-700'
-                }`}
-              >
-                {taskStatus === 'submitting' ? (
-                  <>
-                    <Activity size={18} className="animate-spin" />
-                    提交中...
-                  </>
-                ) : taskStatus === 'grading' ? (
-                  <>
-                    <Activity size={18} className="animate-spin" />
-                    批改中...
-                  </>
-                ) : isCompleted && quickResult?.allCorrect ? (
-                  <>
-                    <Check size={18} />
-                    已完成
-                  </>
-                ) : (
-                  <>
-                    <Check size={18} />
-                    {quickResult && !quickResult.allCorrect ? '重新提交' : '提交答案'}
-                  </>
-                )}
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // 嵌入式模式（原有样式）
-  return (
-    <div className="bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden mb-4">
-      {/* 卡片头部 */}
-      <div className={`px-4 py-3 flex items-center justify-between ${
-        task.type === 'quiz'
-          ? 'bg-gradient-to-r from-amber-50 to-orange-50 border-b border-amber-100'
-          : task.type === 'reflection'
-          ? 'bg-gradient-to-r from-purple-50 to-pink-50 border-b border-purple-100'
-          : 'bg-gradient-to-r from-primary-50 to-accent-50 border-b border-primary-100'
-      }`}>
-        <div className="flex items-center gap-3">
-          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-            task.type === 'quiz' ? 'bg-amber-100' : task.type === 'reflection' ? 'bg-purple-100' : 'bg-primary-100'
-          }`}>
-            {task.type === 'quiz' ? (
-              <Zap size={18} className="text-amber-600" />
-            ) : task.type === 'reflection' ? (
-              <Brain size={18} className="text-purple-600" />
-            ) : (
-              <FileEdit size={18} className="text-primary-600" />
-            )}
-          </div>
-          <div>
-            <h3 className="font-semibold text-gray-800">{task.title}</h3>
-            <p className="text-xs text-gray-500">
-              {task.required ? '必修任务' : '选修任务'}
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          {onToggleMode && (
-            <button
-              onClick={onToggleMode}
-              className="w-8 h-8 rounded-lg bg-white/80 hover:bg-white flex items-center justify-center transition-colors"
-              title="放大到全屏"
-            >
-              <ChevronUp size={16} className="text-gray-500" />
-            </button>
-          )}
-          <button
-            onClick={onClose}
-            className="w-8 h-8 rounded-lg bg-white/80 hover:bg-white flex items-center justify-center transition-colors"
-          >
-            <X size={16} className="text-gray-500" />
-          </button>
-        </div>
-      </div>
-
-      {/* 卡片内容 */}
-      <div className="p-4">
-        {/* 任务描述 */}
-        {task.description && (
-          <p className="text-sm text-gray-600 mb-4 pb-4 border-b border-gray-200">{task.description}</p>
-        )}
-
-        {/* 测验类型任务 */}
-        {task.type === 'quiz' && task.questions && (
-          <div className="space-y-6">
-            {task.questions.map((q, idx) => {
-              const isMultiple = q.type === 'multiple_choice';
-              const currentAnswer = selectedAnswers[q.id];
-
-              return (
-                <div key={q.id} className="space-y-3">
-                  <p className="text-sm text-gray-700 font-medium">
-                    {idx + 1}. {q.content}
-                    {isMultiple && <span className="ml-2 text-xs text-blue-600">(多选题)</span>}
-                  </p>
-                  {q.options && (
-                    <div className="space-y-2">
-                      {q.options.map((option, optIdx) => {
-                        const isSelected = isMultiple
-                          ? Array.isArray(currentAnswer) && currentAnswer.includes(option)
-                          : currentAnswer === option;
-
-                        return (
-                          <label
-                            key={optIdx}
-                            className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
-                              isSelected
-                                ? 'border-primary-500 bg-primary-50'
-                                : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                            }`}
-                          >
-                            <div className={`w-5 h-5 ${isMultiple ? 'rounded' : 'rounded-full'} border-2 flex items-center justify-center ${
-                              isSelected
-                                ? 'border-primary-500 bg-primary-500'
-                                : 'border-gray-300'
-                            }`}>
-                              {isSelected && (
-                                isMultiple ? (
-                                  <Check size={14} className="text-white" />
-                                ) : (
-                                  <div className="w-2 h-2 rounded-full bg-white" />
-                                )
-                              )}
-                            </div>
-                            <button
-                              onClick={() => handleQuestionAnswer(q.id, option, isMultiple)}
-                              className="text-sm text-gray-700 text-left flex-1"
-                            >
-                              {option}
-                            </button>
-                          </label>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* 作业/反思类型任务 */}
-        {(task.type === 'assignment' || task.type === 'reflection') && (
-          <div className="space-y-3">
-            {task.prompt && (
-              <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 mb-3">
-                <p className="text-xs text-blue-900 whitespace-pre-line">{task.prompt}</p>
-              </div>
-            )}
-            <textarea
-              value={submissionText}
-              onChange={(e) => onStateUpdate?.({ submissionText: e.target.value })}
-              placeholder={task.submissionPlaceholder || '请在这里提交你的作业内容...'}
-              className="w-full h-40 p-3 border border-gray-200 rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            />
-          </div>
-        )}
-
-        {/* 快速判题结果 - 仅测验类型显示 */}
-        {task.type === 'quiz' && quickResult && (
-          <div className={`mt-4 p-4 rounded-xl border-2 ${
-            quickResult.allCorrect
-              ? 'bg-green-50 border-green-300'
-              : 'bg-amber-50 border-amber-300'
-          }`}>
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                {quickResult.allCorrect ? (
-                  <Check size={20} className="text-green-600" />
-                ) : (
-                  <AlertCircle size={20} className="text-amber-600" />
-                )}
-                <span className={`text-sm font-bold ${
-                  quickResult.allCorrect ? 'text-green-700' : 'text-amber-700'
-                }`}>
-                  {quickResult.allCorrect ? '全部正确！' : '部分正确'}
-                </span>
-              </div>
-              <span className={`text-sm font-medium ${
-                quickResult.allCorrect ? 'text-green-600' : 'text-amber-600'
-              }`}>
-                {quickResult.correctCount}/{quickResult.totalCount} 题正确
-              </span>
-            </div>
-            <p className="text-xs text-gray-600">
-              AI正在为你生成详细的学习反馈...
-            </p>
-          </div>
-        )}
-
-        {/* 提交按钮 */}
-        <button
-          onClick={handleSubmit}
-          disabled={taskStatus === 'submitting' || taskStatus === 'grading'}
-          className={`mt-4 w-full py-3 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2 ${
-            taskStatus === 'submitting' || taskStatus === 'grading'
-              ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
-              : isCompleted && quickResult?.allCorrect
-              ? 'bg-green-100 text-green-700 cursor-not-allowed'
-              : 'bg-primary-600 text-white hover:bg-primary-700'
-          }`}
-        >
-          {taskStatus === 'submitting' ? (
-            <>
-              <Activity size={16} className="animate-spin" />
-              提交中...
-            </>
-          ) : taskStatus === 'grading' ? (
-            <>
-              <Activity size={16} className="animate-spin" />
-              批改中...
-            </>
-          ) : isCompleted && quickResult?.allCorrect ? (
-            <>
-              <Check size={16} />
-              已完成
-            </>
-          ) : (
-            <>
-              <Check size={16} />
-              {quickResult && !quickResult.allCorrect ? '重新提交' : '提交任务'}
-            </>
-          )}
-        </button>
-      </div>
-    </div>
-  );
-}
-
 // 主组件
 export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isAIGenerating = false, onCreateNewSpace }: SelfStudyWorkbenchProps) {
   const { t } = useLanguage();
@@ -1260,60 +752,103 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
       type: 'quiz' as const,
       title: t('AI生成：植物工厂基础测验'),
       status: 'optional' as const,
-      questionCount: 5,
+      questionCount: 8,
       questions: [
         {
           id: 'q1',
-          type: 'choice',
-          content: t('植物工厂的主要优势是什么？'),
+          type: 'single_choice',
+          content: '观察下面的植物工厂图片，植物工厂的主要优势是什么？\n\n![植物工厂](https://picsum.photos/seed/plant1/600/300)',
           options: [
             t('不受气候影响，可全年生产'),
             t('成本低廉'),
             t('不需要任何技术'),
             t('产量低但质量好')
           ],
-          answer: 0,
-          aiGenerated: true,
+          answer: t('不受气候影响，可全年生产'),
+          explanation: '植物工厂最大的优势在于通过人工控制环境，实现全年不间断生产，不受自然气候条件的限制。',
+          points: 1,
         },
         {
           id: 'q2',
-          type: 'choice',
-          content: t('植物工厂中最重要的环境因素是？'),
+          type: 'multiple_choice',
+          content: t('以下哪些是植物工厂中需要控制的关键环境因素？（多选）'),
           options: [
-            t('温度'),
-            t('光照'),
-            t('湿度'),
-            t('以上都是')
+            t('温度和湿度'),
+            t('光照强度与光谱'),
+            t('CO₂ 浓度'),
+            t('土壤酸碱度')
           ],
-          answer: 3,
-          aiGenerated: true,
+          answer: [t('温度和湿度'), t('光照强度与光谱'), t('CO₂ 浓度')],
+          explanation: '植物工厂通常采用无土栽培，因此不涉及土壤酸碱度。温度、湿度、光照和 CO₂ 浓度是核心控制参数。',
+          points: 2,
         },
         {
           id: 'q3',
-          type: 'trueFalse',
+          type: 'true_false',
           content: t('植物工厂可以完全不使用土壤进行种植。'),
-          answer: true,
-          aiGenerated: true,
+          answer: 'true',
+          explanation: '植物工厂普遍采用水培、气雾培等无土栽培技术，通过营养液直接为植物根系提供养分。',
+          points: 1,
         },
         {
           id: 'q4',
-          type: 'fillBlank',
+          type: 'fill_in_blank',
           content: t('植物工厂通常使用___技术来提供植物所需的营养。'),
-          answer: t('水培或营养液'),
-          aiGenerated: true,
+          answer: t('水培'),
+          explanation: '水培（Hydroponics）是植物工厂最常用的栽培方式，通过营养液循环系统为植物提供所需的水分和矿物质。',
+          blanks: 1,
+          points: 1,
         },
         {
           id: 'q5',
-          type: 'choice',
-          content: t('LED灯在植物工厂中的作用是？'),
+          type: 'single_choice',
+          content: t('LED灯在植物工厂中的主要作用是？'),
           options: [
             t('装饰美观'),
-            t('提供光合作用所需的光照'),
+            t('提供光合作用所需的特定光谱'),
             t('加热空气'),
             t('驱赶害虫')
           ],
-          answer: 1,
-          aiGenerated: true,
+          answer: t('提供光合作用所需的特定光谱'),
+          explanation: 'LED 灯可以精确调节光谱组成（如红光、蓝光比例），为不同生长阶段的植物提供最优光照条件。',
+          points: 1,
+        },
+        {
+          id: 'q6',
+          type: 'multiple_choice',
+          content: t('植物工厂相比传统农业的优势包括哪些？（多选）'),
+          options: [
+            t('单位面积产量更高'),
+            t('可实现农药零使用'),
+            t('初始建设成本更低'),
+            t('生产周期可精确控制')
+          ],
+          answer: [t('单位面积产量更高'), t('可实现农药零使用'), t('生产周期可精确控制')],
+          explanation: '植物工厂的初始建设成本实际上远高于传统农业，但在产量、食品安全和生产可控性方面具有显著优势。',
+          points: 2,
+        },
+        {
+          id: 'q7',
+          type: 'fill_in_blank',
+          content: t('植物工厂中，红光促进植物___，蓝光促进植物___。'),
+          answer: t('开花结果|茎叶生长'),
+          blanks: 2,
+          explanation: '红光（620-780nm）主要促进植物的开花和结果，蓝光（400-500nm）则有利于茎叶的营养生长。',
+          points: 2,
+        },
+        {
+          id: 'q8',
+          type: 'single_choice',
+          content: t('下列哪种作物最适合在植物工厂中种植？'),
+          options: [
+            t('小麦'),
+            t('生菜'),
+            t('苹果树'),
+            t('水稻')
+          ],
+          answer: t('生菜'),
+          explanation: '叶菜类（如生菜）生长周期短、株型小、对光照需求适中，是植物工厂中最常见也最经济的种植品种。',
+          points: 1,
         },
       ],
       passScore: 60,
@@ -1347,7 +882,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
 
   // 任务交互状态
   const [expandedTask, setExpandedTask] = useState<Task | null>(null);
-  const [taskDisplayMode, setTaskDisplayMode] = useState<'fullscreen' | 'embedded'>('fullscreen');
+  const [taskDisplayMode, setTaskDisplayMode] = useState<'fullscreen' | 'embedded' | 'result_review'>('fullscreen');
   const [taskStatus, setTaskStatus] = useState<'idle' | 'submitting' | 'grading' | 'completed'>('idle');
   const [quickResult, setQuickResult] = useState<{
     allCorrect: boolean;
@@ -1476,25 +1011,29 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
           questions: [
             {
               id: `q_${Date.now()}_1`,
-              type: 'choice',
+              type: 'single_choice',
               content: t('这是一道AI生成的示例题目，请选择正确答案。'),
               options: [t('选项A'), t('选项B'), t('选项C'), t('选项D')],
-              answer: 0,
-              aiGenerated: true,
+              answer: t('选项A'),
+              explanation: t('选项A是正确答案。'),
+              points: 1,
             },
             {
               id: `q_${Date.now()}_2`,
-              type: 'trueFalse',
+              type: 'true_false',
               content: t('这是一道判断题示例。'),
-              answer: true,
-              aiGenerated: true,
+              answer: 'true',
+              explanation: t('该说法是正确的。'),
+              points: 1,
             },
             {
               id: `q_${Date.now()}_3`,
-              type: 'fillBlank',
+              type: 'fill_in_blank',
               content: t('这是一道填空题示例，请填写___。'),
               answer: t('答案'),
-              aiGenerated: true,
+              blanks: 1,
+              explanation: t('正确答案是"答案"。'),
+              points: 1,
             },
           ],
           passScore: 60,
@@ -1848,6 +1387,11 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
         // 立即显示快速判题结果
         setQuickResult(data.quickResult);
 
+        // 全屏模式下自动进入结果回顾
+        if (taskDisplayMode === 'fullscreen') {
+          setTaskDisplayMode('result_review');
+        }
+
         // 只有全对才标记任务为已完成
         if (data.quickResult.allCorrect) {
           setTaskStatus('completed');
@@ -2005,6 +1549,19 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
             onToggleMode={toggleTaskDisplayMode}
             taskState={taskMessage?.taskState}
             onStateUpdate={(stateUpdate) => updateTaskState(expandedTask.id, stateUpdate)}
+          />
+        );
+      })()}
+
+      {/* 全屏结果回顾 */}
+      {expandedTask && taskDisplayMode === 'result_review' && quickResult && (() => {
+        const taskMessage = messages.find(m => m.embeddedTask?.id === expandedTask.id);
+        return (
+          <TaskResultReview
+            task={expandedTask}
+            quickResult={quickResult}
+            selectedAnswers={taskMessage?.taskState?.selectedAnswers || {}}
+            onClose={() => { setTaskDisplayMode('embedded'); }}
           />
         );
       })()}
@@ -2855,12 +2412,12 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                     const shouldShowEmbedded = !isCurrentTask || taskDisplayMode === 'embedded';
 
                     if (!shouldShowEmbedded) {
-                      // 当前任务正在全屏显示，显示提示
+                      // 当前任务正在全屏显示或结果回顾中
                       return (
                         <div className="mt-2 p-4 bg-gray-50 rounded-xl border border-gray-200">
                           <div className="flex items-center gap-2 text-sm text-gray-600">
                             <div className="w-2 h-2 bg-primary-500 rounded-full animate-pulse"></div>
-                            <span>正在全屏做题中...</span>
+                            <span>{taskDisplayMode === 'result_review' ? '正在查看结果回顾...' : '正在全屏做题中...'}</span>
                           </div>
                         </div>
                       );
