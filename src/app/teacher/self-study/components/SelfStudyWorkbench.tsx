@@ -1496,19 +1496,54 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
     };
     setMessages(prev => [...prev, transitionMsg]);
 
-    // 切换到 AI 引导时，追加当前知识点的教学内容
+    // 切换到 AI 引导时，逐步追加完整的引导内容
     if (mode === 'ai_guided') {
+      const mastered = learningPath.filter(n => n.status === 'mastered');
       const currentNode = learningPath.find(n => n.status === 'learning');
+      const pendingNodes = learningPath.filter(n => n.status === 'pending');
+
+      // Step 1: 学习进度总结（800ms 后）
+      setTimeout(() => {
+        const summaryMsg: ChatMessage = {
+          id: `msg_guided_summary_${Date.now()}`,
+          role: 'assistant',
+          content: `📊 **${t('学习进度总结')}**\n\n${t('根据你刚才的探索，你已经涉及了以下知识点：')}\n${mastered.map(n => `- ✅ ${n.title}`).join('\n')}\n\n🗺️ **${t('接下来的学习路径')}**：\n${currentNode ? `1. 📍 ${currentNode.title} ← ${t('当前')}` : ''}\n${pendingNodes.map((n, i) => `${currentNode ? i + 2 : i + 1}. ⬜ ${n.title}`).join('\n')}\n\n${currentNode ? t('让我们从「') + currentNode.title + t('」继续吧！') : t('让我们开始吧！')}`,
+          timestamp: new Date(),
+        };
+        setMessages(prev => [...prev, summaryMsg]);
+      }, 800);
+
+      // Step 2: 教学内容（2000ms 后）
       if (currentNode) {
         setTimeout(() => {
-          const guidedMsg: ChatMessage = {
-            id: `msg_guided_${Date.now()}`,
+          const teachMsg: ChatMessage = {
+            id: `msg_guided_teach_${Date.now()}`,
             role: 'assistant',
-            content: `📍 **${t('当前知识点')}：${currentNode.title}**\n\n${t('让我们继续学习这个知识点。根据你之前的探索，我会从你已经了解的部分开始，逐步深入。')}`,
+            content: `📍 **${t('核心原理解析：LED 光谱控制')}**\n\n${t('在植物工厂中，LED 灯不只是"照亮"植物，而是通过精确控制**光谱组成**来调控植物生长。')}\n\n🔴 **${t('红光')}（620-780nm）**：${t('促进开花结果、茎伸长')}\n🔵 **${t('蓝光')}（400-500nm）**：${t('促进叶片生长、气孔开放')}\n🟢 **${t('绿光')}（500-565nm）**：${t('穿透冠层，促进下层叶片光合作用')}\n\n💡 **${t('关键概念')}**：\n${t('不同生长阶段需要不同的红蓝光比例：')}\n- ${t('育苗期')}：${t('红:蓝 = 1:1（促进健壮生长）')}\n- ${t('营养生长期')}：${t('红:蓝 = 3:1（促进叶片扩展）')}\n- ${t('开花结果期')}：${t('红:蓝 = 5:1（促进开花）')}\n\n${t('理解了吗？让我来检查一下你的掌握情况。')}`,
             timestamp: new Date(),
           };
-          setMessages(prev => [...prev, guidedMsg]);
-        }, 800);
+          setMessages(prev => [...prev, teachMsg]);
+        }, 2000);
+
+        // Step 3: 知识检查点（3500ms 后）
+        setTimeout(() => {
+          const checkpointMsg: ChatMessage = {
+            id: `msg_guided_checkpoint_${Date.now()}`,
+            role: 'assistant',
+            content: '',
+            timestamp: new Date(),
+            messageType: 'knowledge_checkpoint',
+            checkpoint: {
+              question: t('在植物工厂中，哪种光谱主要促进植物的叶片生长和气孔开放？'),
+              options: [t('红光（620-780nm）'), t('蓝光（400-500nm）'), t('绿光（500-565nm）'), t('紫外光（<400nm）')],
+              correctAnswer: t('蓝光（400-500nm）'),
+              status: 'pending',
+              explanation: t('蓝光（400-500nm）主要促进叶片的营养生长和气孔开放，是植物营养生长阶段的关键光谱。'),
+              relatedNodeId: currentNode.id,
+            },
+          };
+          setMessages(prev => [...prev, checkpointMsg]);
+        }, 3500);
       }
     }
 
