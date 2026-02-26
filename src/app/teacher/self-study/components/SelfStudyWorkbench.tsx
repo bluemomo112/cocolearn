@@ -2060,10 +2060,30 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
               </div>
 
               {config.learningMode === 'ai_guided' ? (
-                // AI引导模式：显示AI资源和任务图标
+                // AI引导模式：显示AI资源、用户资源和任务图标
                 <>
-                  {/* AI资源图标 */}
+                  {/* 资源图标 */}
                   <div className="flex-1 overflow-y-auto py-2 space-y-1">
+                    {/* 用户上传的资源 */}
+                    {config.resources.map((resource) => (
+                      <button
+                        key={resource.id}
+                        onClick={() => setIsLeftCollapsed(false)}
+                        className="w-full px-3 py-3 hover:bg-primary-100 transition-colors flex flex-col items-center gap-1 group rounded-lg"
+                        title={resource.title}
+                      >
+                        <div className="w-10 h-10 rounded-lg bg-primary-100 flex items-center justify-center group-hover:scale-110 transition-transform">
+                          {resource.type === 'document' ? (
+                            <FileText size={20} className="text-primary-600" />
+                          ) : resource.type === 'presentation' ? (
+                            <FileSpreadsheet size={20} className="text-primary-600" />
+                          ) : (
+                            <Video size={20} className="text-primary-600" />
+                          )}
+                        </div>
+                      </button>
+                    ))}
+                    {/* AI生成的资源 */}
                     {aiGeneratedResources.map((resource) => (
                       <button
                         key={resource.id}
@@ -2142,7 +2162,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
             <div className="h-12 px-4 border-b border-gray-200 flex items-center justify-between flex-shrink-0">
               <h2 className="text-sm font-semibold text-gray-800 flex items-center gap-2">
                 {config.learningMode === 'ai_guided' ? (
-                  <><Sparkles size={16} className={getThemeClass('icon')} />{t('AI 智能资源')}</>
+                  <><Sparkles size={16} className={getThemeClass('icon')} />{t('学习资源')}</>
                 ) : (
                   <><FolderOpen size={16} className="text-gray-500" />Sources</>
                 )}
@@ -2157,15 +2177,42 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
             </div>
             <div className="flex-1 flex flex-col overflow-hidden">
             {config.learningMode === 'ai_guided' ? (
-            // AI引导模式：上方AI资源 + 下方学习任务
+            // AI引导模式：上方资源（用户+AI） + 下方学习任务
             <>
-              {/* AI生成资源区域 - 任务收起时自动扩展 */}
+              {/* 资源区域 - 任务收起时自动扩展 */}
               <div
                 className="flex flex-col min-h-0 overflow-hidden"
                 style={{
                   flex: collapsedPanels.tasks ? '1 1 auto' : '0 0 50%'
                 }}
               >
+                {/* 添加资源入口（与自由探索模式一致） */}
+                <div className="p-3 border-b border-gray-100 space-y-2">
+                  <button
+                    onClick={() => setIsFileUploadOpen(true)}
+                    className="w-full px-3 py-2.5 border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-gray-400 hover:text-gray-700 hover:bg-gray-50 transition-all flex items-center justify-center gap-2"
+                  >
+                    <Plus size={16} />
+                    {t('添加资料来源')}
+                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setIsFileUploadOpen(true)}
+                      className="flex-1 px-2 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-600 hover:bg-gray-100 transition-colors flex items-center justify-center gap-1"
+                    >
+                      <Upload size={12} />
+                      {t('上传文件')}
+                    </button>
+                    <button
+                      onClick={() => setIsLinkInputOpen(true)}
+                      className="flex-1 px-2 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-600 hover:bg-gray-100 transition-colors flex items-center justify-center gap-1"
+                    >
+                      <Link size={12} />
+                      {t('粘贴链接')}
+                    </button>
+                  </div>
+                </div>
+
                 {/* AI生成进度指示器 */}
                 {isAIGenerating && (
                   <div className="px-3 py-2 bg-gray-50 border-b border-gray-200">
@@ -2248,6 +2295,43 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                       )}
                     </div>
                   ))}
+
+                  {/* 用户上传的资源（始终显示） */}
+                  {config.resources.length > 0 && (
+                    <>
+                      <div className="flex items-center gap-2 mt-3 mb-1 px-1">
+                        <div className="h-px flex-1 bg-gray-200" />
+                        <span className="text-xs text-gray-400">{t('我的资料')}</span>
+                        <div className="h-px flex-1 bg-gray-200" />
+                      </div>
+                      {config.resources.map((resource) => (
+                        <div
+                          key={resource.id}
+                          className={`flex items-center gap-3 p-3 rounded-lg transition-all cursor-pointer bg-white border border-gray-200 hover:${getThemeClass('border')} hover:shadow-sm`}
+                        >
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg ${
+                            resource.type === 'video' ? 'bg-red-50' :
+                            resource.type === 'presentation' ? 'bg-orange-50' : 'bg-blue-50'
+                          }`}>
+                            {resource.type === 'video' ? (
+                              <Video size={18} className="text-red-500" />
+                            ) : resource.type === 'presentation' ? (
+                              <FileSpreadsheet size={18} className="text-orange-500" />
+                            ) : (
+                              <FileText size={18} className="text-blue-500" />
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-700 truncate">{resource.title}</p>
+                            {resource.description && (
+                              <p className="text-xs text-gray-400 truncate">{resource.description}</p>
+                            )}
+                          </div>
+                          <ChevronRight size={16} className="text-gray-400" />
+                        </div>
+                      ))}
+                    </>
+                  )}
                 </div>
               </div>
 
