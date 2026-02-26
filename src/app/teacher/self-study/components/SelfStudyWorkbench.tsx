@@ -62,6 +62,37 @@ interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
+  // 消息类型
+  messageType?: 'normal' | 'knowledge_checkpoint' | 'topic_transition' | 'resource_reference' | 'mode_transition';
+  // 知识检查点
+  checkpoint?: {
+    question: string;
+    options?: string[];
+    correctAnswer?: string;
+    userAnswer?: string;
+    status: 'pending' | 'answered' | 'correct' | 'incorrect';
+    explanation?: string;
+    relatedNodeId?: string;
+  };
+  // 主题过渡
+  transition?: {
+    fromTopic: string;
+    toTopic: string;
+    fromNodeId: string;
+    toNodeId: string;
+    summary: string;
+  };
+  // 资源引用
+  resourceRef?: {
+    resourceId: string;
+    resourceTitle: string;
+    excerpt?: string;
+  };
+  // 模式切换
+  modeTransition?: {
+    fromMode: LearningMode;
+    toMode: LearningMode;
+  };
   // 可选：嵌入的任务卡片
   embeddedTask?: Task;
   // 任务状态（用于保持答题进度）
@@ -865,6 +896,141 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
     },
   ];
 
+  // Mock 对话数据 - 模拟从自由探索到 AI 引导的完整流程
+  const MOCK_SELF_DIRECTED_MESSAGES: ChatMessage[] = [
+    // 1. AI 欢迎（待命风格）
+    {
+      id: 'mock_sd_1',
+      role: 'assistant',
+      content: `${t('你好！👋 欢迎来到「')}${config.title}${t('」的学习空间！')}\n\n${t('我是你的AI学习助手，在这里我会**待命**，等你有问题时随时帮助你。')}\n\n📚 **${t('学习建议')}**：\n1. ${t('左侧是你的学习资料，可以自由浏览')}\n2. ${t('有任何疑问随时在这里问我')}\n3. ${t('右侧可以记录你的学习笔记')}\n\n${t('开始你的探索之旅吧！有什么想了解的？')}`,
+      timestamp: new Date(Date.now() - 1000 * 60 * 30),
+    },
+    // 2. 用户问"植物工厂是什么？"
+    {
+      id: 'mock_sd_2',
+      role: 'user',
+      content: t('植物工厂是什么？跟普通温室有什么区别？'),
+      timestamp: new Date(Date.now() - 1000 * 60 * 28),
+    },
+    // 3. AI 解释 + 资源引用
+    {
+      id: 'mock_sd_3',
+      role: 'assistant',
+      content: `${t('好问题！让我来帮你梳理一下。')}\n\n**${t('植物工厂')}** ${t('是一种完全封闭的室内农业系统，通过人工精确控制光照、温度、湿度、CO₂浓度和营养液等环境因素，实现作物的高效生产。')}\n\n| ${t('对比维度')} | ${t('植物工厂')} | ${t('普通温室')} |\n|---------|---------|--------|\n| ${t('环境控制')} | ${t('完全人工控制')} | ${t('半自然+辅助调控')} |\n| ${t('光源')} | LED${t('人工光')} | ${t('自然光为主')} |\n| ${t('种植方式')} | ${t('水培/气雾培')} | ${t('土培为主')} |\n| ${t('产量')} | ${t('极高（多层立体）')} | ${t('中等')} |\n| ${t('能耗')} | ${t('较高')} | ${t('较低')} |\n\n${t('简单来说，植物工厂就像是给植物建了一个"太空舱"，一切条件都可以精确调控。')}`,
+      timestamp: new Date(Date.now() - 1000 * 60 * 27),
+      messageType: 'resource_reference',
+      resourceRef: {
+        resourceId: 'res_1',
+        resourceTitle: t('认识植物工厂学生手册'),
+        excerpt: t('第一章：植物工厂概述与发展历程'),
+      },
+    },
+    // 4. 用户追问水培
+    {
+      id: 'mock_sd_4',
+      role: 'user',
+      content: t('水培技术听起来很有意思，植物没有土壤怎么活？'),
+      timestamp: new Date(Date.now() - 1000 * 60 * 22),
+    },
+    // 5. AI 解释水培原理 + 资源引用
+    {
+      id: 'mock_sd_5',
+      role: 'assistant',
+      content: `${t('这个问题问得好！其实植物需要的不是"土壤"本身，而是土壤中的**水分**和**矿物质营养**。')}\n\n🌱 **${t('水培的核心原理')}**：\n\n${t('把植物需要的营养元素（氮、磷、钾、钙等16种必需元素）溶解在水中，配制成**营养液**，直接供给植物根系。')}\n\n**${t('三种常见水培方式')}**：\n1. **NFT（${t('薄膜技术')}）**：${t('营养液像薄膜一样流过根系')}\n2. **DFT（${t('深液流技术')}）**：${t('根系浸泡在营养液中')}\n3. **${t('气雾培')}**：${t('将营养液雾化喷洒到根系上')}\n\n${t('水培植物的根系通常更发达、更白净，因为它们可以直接高效地吸收养分。')}`,
+      timestamp: new Date(Date.now() - 1000 * 60 * 20),
+      messageType: 'resource_reference',
+      resourceRef: {
+        resourceId: 'res_2',
+        resourceTitle: t('水培植物工厂学生手册'),
+        excerpt: t('第三章：无土栽培技术详解'),
+      },
+    },
+    // 6. 用户追问营养液
+    {
+      id: 'mock_sd_6',
+      role: 'user',
+      content: t('那营养液的配方是怎么确定的？'),
+      timestamp: new Date(Date.now() - 1000 * 60 * 15),
+    },
+  ];
+
+  const MOCK_AI_GUIDED_EXTRA_MESSAGES: ChatMessage[] = [
+    // 7. 模式切换卡片
+    {
+      id: 'mock_ag_7',
+      role: 'assistant',
+      content: t('好的，让我来带你学习！我会根据你之前的探索情况，从当前进度继续引导。'),
+      timestamp: new Date(Date.now() - 1000 * 60 * 14),
+      messageType: 'mode_transition',
+      modeTransition: {
+        fromMode: 'self_directed',
+        toMode: 'ai_guided',
+      },
+    },
+    // 8. AI 总结已学内容 + 学习路径
+    {
+      id: 'mock_ag_8',
+      role: 'assistant',
+      content: `📊 **${t('学习进度总结')}**\n\n${t('根据你刚才的探索，你已经涉及了以下知识点：')}\n- ✅ ${t('植物工厂的基本概念与定义')}\n- ✅ ${t('植物工厂 vs 传统温室的区别')}\n- ✅ ${t('水培技术的基本原理')}\n\n🗺️ **${t('接下来的学习路径')}**：\n1. 📍 ${t('核心原理解析')}（LED${t('光谱控制')}）← ${t('当前')}\n2. ⬜ ${t('关键公式与推导')}\n3. ⬜ ${t('典型例题分析')}\n4. ⬜ ${t('综合应用与拓展')}\n\n${t('让我们从 LED 光谱控制开始吧！')}`,
+      timestamp: new Date(Date.now() - 1000 * 60 * 13),
+    },
+    // 9. AI 教知识点
+    {
+      id: 'mock_ag_9',
+      role: 'assistant',
+      content: `📍 **${t('核心原理解析：LED 光谱控制')}**\n\n${t('在植物工厂中，LED 灯不只是"照亮"植物，而是通过精确控制**光谱组成**来调控植物生长。')}\n\n🔴 **${t('红光')}（620-780nm）**：${t('促进开花结果、茎伸长')}\n🔵 **${t('蓝光')}（400-500nm）**：${t('促进叶片生长、气孔开放')}\n🟢 **${t('绿光')}（500-565nm）**：${t('穿透冠层，促进下层叶片光合作用')}\n\n💡 **${t('关键概念')}**：\n${t('不同生长阶段需要不同的红蓝光比例：')}\n- ${t('育苗期')}：${t('红:蓝 = 1:1（促进健壮生长）')}\n- ${t('营养生长期')}：${t('红:蓝 = 3:1（促进叶片扩展）')}\n- ${t('开花结果期')}：${t('红:蓝 = 5:1（促进开花）')}\n\n${t('理解了吗？让我来检查一下你的掌握情况。')}`,
+      timestamp: new Date(Date.now() - 1000 * 60 * 11),
+    },
+    // 10. 知识检查点（已答对）
+    {
+      id: 'mock_ag_10',
+      role: 'assistant',
+      content: '',
+      timestamp: new Date(Date.now() - 1000 * 60 * 9),
+      messageType: 'knowledge_checkpoint',
+      checkpoint: {
+        question: t('在植物工厂中，哪种光谱主要促进植物的叶片生长和气孔开放？'),
+        options: [t('红光（620-780nm）'), t('蓝光（400-500nm）'), t('绿光（500-565nm）'), t('紫外光（<400nm）')],
+        correctAnswer: t('蓝光（400-500nm）'),
+        userAnswer: t('蓝光（400-500nm）'),
+        status: 'correct',
+        explanation: t('蓝光（400-500nm）主要促进叶片的营养生长和气孔开放，是植物营养生长阶段的关键光谱。'),
+        relatedNodeId: 'node_2',
+      },
+    },
+    // 11. 主题过渡卡片
+    {
+      id: 'mock_ag_11',
+      role: 'assistant',
+      content: '',
+      timestamp: new Date(Date.now() - 1000 * 60 * 7),
+      messageType: 'topic_transition',
+      transition: {
+        fromTopic: t('核心原理解析'),
+        toTopic: t('关键公式与推导'),
+        fromNodeId: 'node_2',
+        toNodeId: 'node_3',
+        summary: t('你已经掌握了 LED 光谱控制的基本原理，包括红蓝绿光的作用和不同生长阶段的配比。'),
+      },
+    },
+    // 12. 待回答的检查点
+    {
+      id: 'mock_ag_12',
+      role: 'assistant',
+      content: '',
+      timestamp: new Date(Date.now() - 1000 * 60 * 5),
+      messageType: 'knowledge_checkpoint',
+      checkpoint: {
+        question: t('植物工厂中，营养液的 EC 值（电导率）主要反映了什么？'),
+        options: [t('营养液的温度'), t('营养液中离子的总浓度'), t('营养液的酸碱度'), t('营养液的溶氧量')],
+        correctAnswer: t('营养液中离子的总浓度'),
+        status: 'pending',
+        explanation: t('EC 值（Electrical Conductivity）即电导率，反映的是营养液中溶解离子的总浓度。EC 值越高，说明营养液中的矿物质含量越多。'),
+        relatedNodeId: 'node_3',
+      },
+    },
+  ];
+
   // 布局状态
   const [leftWidth, setLeftWidth] = useState(25);
   const [rightWidth, setRightWidth] = useState(25);
@@ -964,6 +1130,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
   // 生成的任务列表（初始为空）
   const [generatedTasks, setGeneratedTasks] = useState<typeof MOCK_GENERATED_TASKS>([]);
   const [isGeneratingTask, setIsGeneratingTask] = useState(false);
+  const [isReflectionDismissed, setIsReflectionDismissed] = useState(false);
 
   // 任务编辑弹窗
   const [editingTask, setEditingTask] = useState<typeof MOCK_GENERATED_TASKS[0] | null>(null);
@@ -1116,17 +1283,13 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
 
   // 初始化欢迎消息
   useEffect(() => {
-    const modeConfig = LEARNING_MODE_CONFIG[config.learningMode];
-    const welcomeMessage: ChatMessage = {
-      id: `msg_welcome_${Date.now()}`,
-      role: 'assistant',
-      content:
-        config.learningMode === 'self_directed'
-          ? `${t('你好！👋 欢迎来到「')}${config.title}${t('」的学习空间！')}\n\n${t('我是你的AI学习助手，在这里我会**待命**，等你有问题时随时帮助你。')}\n\n📚 **${t('学习建议')}**：\n1. ${t('左侧是你的学习资料，可以自由浏览')}\n2. ${t('有任何疑问随时在这里问我')}\n3. ${t('右侧可以记录你的学习笔记')}\n\n${t('开始你的探索之旅吧！有什么想了解的？')}`
-          : `${t('你好！👋 欢迎来到「')}${config.title}${t('」的学习空间！')}\n\n${t('我是你的AI学习导师，我会**主动引导**你完成学习目标。')}\n\n🗺️ **${t('学习路径')}**：\n${t('我已经为你规划好了学习路径，右侧可以看到完整的知识点地图。')}\n\n${t('让我们从第一个知识点「')}${learningPath[0]?.title}${t('」开始吧！')}\n\n${t('你对这个主题有什么了解吗？或者我们直接开始学习？')}`,
-      timestamp: new Date(),
-    };
-    setMessages([welcomeMessage]);
+    if (config.learningMode === 'ai_guided') {
+      // AI引导模式：加载完整的 mock 对话（自由探索 + 模式切换 + AI引导）
+      setMessages([...MOCK_SELF_DIRECTED_MESSAGES, ...MOCK_AI_GUIDED_EXTRA_MESSAGES]);
+    } else {
+      // 自由探索模式：只加载自由探索阶段的对话
+      setMessages([...MOCK_SELF_DIRECTED_MESSAGES]);
+    }
   }, []);
 
   // 学习模式切换时自动切换右侧标签
@@ -1185,6 +1348,11 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
           aiContent = `💡 **${t('实例说明')}**\n\n${t('让我用一个生活中的例子来解释：')}\n\n${t('想象一下...')}\n\n${t('这就像是...')}\n\n${t('通过这个例子，你能理解核心原理了吗？')}`;
         } else {
           aiContent = `${t('这是一个很好的问题！让我来帮你解答...')}\n\n${t('根据你的问题，我认为关键点在于：')}\n\n1. **${t('首先')}**，${t('我们需要理解...')}\n2. **${t('其次')}**，${t('要注意...')}\n3. **${t('最后')}**，${t('可以这样应用...')}\n\n${t('你还有其他想了解的吗？')}`;
+        }
+        // 自由探索模式隐性追踪：对话达到一定轮数时偶尔提醒进度
+        const userMsgCount = messages.filter(m => m.role === 'user').length + 1;
+        if (userMsgCount % 4 === 0 && userMsgCount >= 4) {
+          aiContent += `\n\n---\n💡 ${t('顺便说一下，根据你的提问，你已经涉及了')} ${masteredCount}/${totalNodes} ${t('个核心知识点。想看看完整的学习路径吗？')}`;
         }
       } else {
         // 目标导向模式的回复
@@ -1314,7 +1482,55 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
 
   // 切换学习模式
   const handleModeChange = (mode: LearningMode) => {
+    if (mode === config.learningMode) return;
+
+    const transitionMsg: ChatMessage = {
+      id: `msg_transition_${Date.now()}`,
+      role: 'assistant',
+      content: mode === 'ai_guided'
+        ? t('好的，让我来带你学习！我会根据你之前的探索情况，从当前进度继续引导。')
+        : t('好的，切换到自由探索模式。我会在旁边待命，有问题随时问我。'),
+      timestamp: new Date(),
+      messageType: 'mode_transition',
+      modeTransition: { fromMode: config.learningMode, toMode: mode },
+    };
+    setMessages(prev => [...prev, transitionMsg]);
+
+    // 切换到 AI 引导时，追加当前知识点的教学内容
+    if (mode === 'ai_guided') {
+      const currentNode = learningPath.find(n => n.status === 'learning');
+      if (currentNode) {
+        setTimeout(() => {
+          const guidedMsg: ChatMessage = {
+            id: `msg_guided_${Date.now()}`,
+            role: 'assistant',
+            content: `📍 **${t('当前知识点')}：${currentNode.title}**\n\n${t('让我们继续学习这个知识点。根据你之前的探索，我会从你已经了解的部分开始，逐步深入。')}`,
+            timestamp: new Date(),
+          };
+          setMessages(prev => [...prev, guidedMsg]);
+        }, 800);
+      }
+    }
+
     onUpdateConfig({ ...config, learningMode: mode });
+  };
+
+  // 处理检查点答题
+  const handleCheckpointAnswer = (messageId: string, selectedOption: string) => {
+    setMessages(prev => prev.map(msg => {
+      if (msg.id === messageId && msg.checkpoint) {
+        const isCorrect = selectedOption === msg.checkpoint.correctAnswer;
+        return {
+          ...msg,
+          checkpoint: {
+            ...msg.checkpoint,
+            userAnswer: selectedOption,
+            status: isCorrect ? 'correct' as const : 'incorrect' as const,
+          },
+        };
+      }
+      return msg;
+    }));
   };
 
   // 处理用户点击任务 - 将任务作为智能体推送的消息嵌入对话
@@ -1560,6 +1776,138 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
       setIsLoading(false);
     }
   };
+
+  // ===== 内联 UI 子组件 =====
+
+  // 知识检查点卡片
+  const KnowledgeCheckpointCard = ({ message }: { message: ChatMessage }) => {
+    const cp = message.checkpoint;
+    if (!cp) return null;
+    const isAnswered = cp.status !== 'pending';
+
+    return (
+      <div className="flex gap-3">
+        <div className="w-8 h-8 rounded-full bg-amber-500 flex-shrink-0 flex items-center justify-center">
+          <Zap size={16} className="text-white" />
+        </div>
+        <div className="max-w-[80%] w-full">
+          <div className="rounded-lg border-2 border-amber-300 bg-gradient-to-br from-amber-50 to-orange-50 overflow-hidden">
+            <div className="px-4 py-2.5 bg-amber-100/60 border-b border-amber-200">
+              <span className="text-xs font-bold text-amber-800">🧪 {t('知识检查点')}</span>
+            </div>
+            <div className="p-4">
+              <p className="text-sm font-medium text-gray-800 mb-3">{cp.question}</p>
+              <div className="space-y-2">
+                {cp.options?.map((option, idx) => {
+                  const isSelected = cp.userAnswer === option;
+                  const isCorrectOption = cp.correctAnswer === option;
+                  let optionStyle = 'bg-white border-gray-200 hover:border-amber-400 hover:bg-amber-50 cursor-pointer';
+
+                  if (isAnswered) {
+                    if (isCorrectOption) {
+                      optionStyle = 'bg-emerald-50 border-emerald-400 text-emerald-800';
+                    } else if (isSelected && !isCorrectOption) {
+                      optionStyle = 'bg-red-50 border-red-400 text-red-800';
+                    } else {
+                      optionStyle = 'bg-gray-50 border-gray-200 text-gray-400';
+                    }
+                  }
+
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => !isAnswered && handleCheckpointAnswer(message.id, option)}
+                      disabled={isAnswered}
+                      className={`w-full text-left px-3 py-2 rounded-lg border text-sm transition-all flex items-center gap-2 ${optionStyle}`}
+                    >
+                      <span className="w-5 h-5 rounded-full border flex-shrink-0 flex items-center justify-center text-xs font-bold">
+                        {isAnswered && isCorrectOption ? <Check size={12} /> : isAnswered && isSelected ? <X size={12} /> : String.fromCharCode(65 + idx)}
+                      </span>
+                      <span>{option}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              {isAnswered && cp.explanation && (
+                <div className={`mt-3 p-3 rounded-lg text-xs leading-relaxed ${
+                  cp.status === 'correct'
+                    ? 'bg-emerald-50 border border-emerald-200 text-emerald-700'
+                    : 'bg-red-50 border border-red-200 text-red-700'
+                }`}>
+                  <span className="font-bold">{cp.status === 'correct' ? '✅ ' + t('回答正确！') : '❌ ' + t('回答有误')}</span>
+                  <span className="ml-1">{cp.explanation}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // 主题过渡卡片
+  const TopicTransitionCard = ({ message }: { message: ChatMessage }) => {
+    const tr = message.transition;
+    if (!tr) return null;
+
+    return (
+      <div className="flex items-center gap-3 py-2">
+        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-emerald-300 to-transparent" />
+        <div className="flex items-center gap-2 px-4 py-2 bg-white border border-emerald-200 rounded-full shadow-sm">
+          <div className="flex items-center gap-1.5 text-xs text-emerald-700">
+            <CheckCircle2 size={14} className="text-emerald-500" />
+            <span className="font-medium">{tr.fromTopic}</span>
+          </div>
+          <ChevronRight size={14} className="text-gray-400" />
+          <div className="flex items-center gap-1.5 text-xs text-primary-700">
+            <Target size={14} className="text-primary-500" />
+            <span className="font-medium">{tr.toTopic}</span>
+          </div>
+        </div>
+        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-emerald-300 to-transparent" />
+      </div>
+    );
+  };
+
+  // 模式切换提示条
+  const ModeTransitionCard = ({ message }: { message: ChatMessage }) => {
+    const mt = message.modeTransition;
+    if (!mt) return null;
+    const isToGuided = mt.toMode === 'ai_guided';
+
+    return (
+      <div className="flex items-center gap-3 py-1">
+        <div className="flex-1 h-px bg-gray-200" />
+        <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium ${
+          isToGuided
+            ? 'bg-primary-50 text-primary-700 border border-primary-200'
+            : 'bg-gray-50 text-gray-600 border border-gray-200'
+        }`}>
+          <RotateCcw size={12} />
+          <span>
+            {isToGuided ? t('已切换到 AI 引导学习模式') : t('已切换到自由探索模式')}
+          </span>
+        </div>
+        <div className="flex-1 h-px bg-gray-200" />
+      </div>
+    );
+  };
+
+  // 资源引用标签
+  const ResourceReferenceTag = ({ resourceRef }: { resourceRef: NonNullable<ChatMessage['resourceRef']> }) => (
+    <div className="mt-1.5 inline-flex items-center gap-1.5 px-2.5 py-1 bg-gray-100 border border-gray-200 rounded-md text-xs text-gray-500 hover:bg-gray-150 transition-colors">
+      <FileText size={11} className="text-gray-400" />
+      <span>{t('来源')}：{resourceRef.resourceTitle}</span>
+      {resourceRef.excerpt && (
+        <span className="text-gray-400 ml-1">· {resourceRef.excerpt}</span>
+      )}
+    </div>
+  );
+
+  // 学习路径进度计算
+  const masteredCount = learningPath.filter(n => n.status === 'mastered').length;
+  const totalNodes = learningPath.length;
+  const currentLearningNode = learningPath.find(n => n.status === 'learning');
 
   return (
     <>
@@ -2425,42 +2773,87 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
         {/* 中间聊天面板 */}
         <div className="flex-1 flex flex-col bg-white">
           {/* 对话区头部 */}
-          <div className="h-12 px-4 border-b border-gray-200 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-gray-800 flex items-center gap-2">
-              <MessageSquare size={16} className={getThemeClass('icon')} />
-              {t('AI 学习对话')}
-            </h2>
+          <div className="px-4 border-b border-gray-200">
+            <div className="h-12 flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+                <MessageSquare size={16} className={getThemeClass('icon')} />
+                {t('AI 学习对话')}
+              </h2>
 
-            {/* 模式切换 - 紧凑版 */}
-            <div className="flex gap-1 bg-gray-100 rounded-lg p-0.5">
-              <button
-                onClick={() => handleModeChange('self_directed')}
-                className={`px-2 py-1 rounded text-xs font-medium transition-all ${
-                  config.learningMode === 'self_directed'
-                    ? `${getThemeClass('bg')} text-white shadow-sm`
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                <MessageCircle size={12} className="inline mr-1" />
-                {t('自由探索')}
-              </button>
-              <button
-                onClick={() => handleModeChange('ai_guided')}
-                className={`px-2 py-1 rounded text-xs font-medium transition-all ${
-                  config.learningMode === 'ai_guided'
-                    ? `${getThemeClass('bg')} text-white shadow-sm`
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                <GitBranch size={12} className="inline mr-1" />
-                {t('AI 自适应学习')}
-              </button>
+              {/* 模式切换 - 紧凑版 */}
+              <div className="flex gap-1 bg-gray-100 rounded-lg p-0.5">
+                <button
+                  onClick={() => handleModeChange('self_directed')}
+                  className={`px-2 py-1 rounded text-xs font-medium transition-all ${
+                    config.learningMode === 'self_directed'
+                      ? `${getThemeClass('bg')} text-white shadow-sm`
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  <MessageCircle size={12} className="inline mr-1" />
+                  {t('自由探索')}
+                </button>
+                <button
+                  onClick={() => handleModeChange('ai_guided')}
+                  className={`px-2 py-1 rounded text-xs font-medium transition-all ${
+                    config.learningMode === 'ai_guided'
+                      ? `${getThemeClass('bg')} text-white shadow-sm`
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  <GitBranch size={12} className="inline mr-1" />
+                  {t('AI 自适应学习')}
+                </button>
+              </div>
             </div>
+
+            {/* AI引导模式 - 学习路径进度点 */}
+            {config.learningMode === 'ai_guided' && (
+              <div className="pb-2 flex items-center gap-2">
+                <div className="flex items-center gap-1">
+                  {learningPath.map((node, idx) => (
+                    <div key={node.id} className="flex items-center gap-1">
+                      <div
+                        className={`w-2.5 h-2.5 rounded-full transition-colors ${
+                          node.status === 'mastered'
+                            ? 'bg-emerald-500'
+                            : node.status === 'learning'
+                            ? 'bg-primary-500 ring-2 ring-primary-200'
+                            : 'bg-gray-300'
+                        }`}
+                        title={node.title}
+                      />
+                      {idx < learningPath.length - 1 && (
+                        <div className={`w-3 h-0.5 ${
+                          node.status === 'mastered' ? 'bg-emerald-300' : 'bg-gray-200'
+                        }`} />
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <span className="text-xs text-gray-500 ml-1">
+                  {masteredCount}/{totalNodes} {t('已掌握')}
+                </span>
+              </div>
+            )}
           </div>
 
           {/* 消息列表 */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50/50">
-            {messages.map((message) => (
+            {messages.map((message) => {
+              // 特殊卡片类型渲染
+              if (message.messageType === 'knowledge_checkpoint') {
+                return <KnowledgeCheckpointCard key={message.id} message={message} />;
+              }
+              if (message.messageType === 'topic_transition') {
+                return <TopicTransitionCard key={message.id} message={message} />;
+              }
+              if (message.messageType === 'mode_transition') {
+                return <ModeTransitionCard key={message.id} message={message} />;
+              }
+
+              // 普通消息渲染
+              return (
               <div key={message.id} className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : ''}`}>
                 {message.role === 'assistant' && (
                   <div className="w-8 h-8 rounded-full bg-primary-600 flex-shrink-0 flex items-center justify-center">
@@ -2484,6 +2877,11 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
                     </div>
                   </div>
+
+                  {/* 资源引用标签 */}
+                  {message.role === 'assistant' && message.resourceRef && (
+                    <ResourceReferenceTag resourceRef={message.resourceRef} />
+                  )}
 
                   {/* 嵌入的任务卡片 (作为智能体消息的一部分) */}
                   {message.role === 'assistant' && message.embeddedTask && (() => {
@@ -2521,7 +2919,8 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                   })()}
                 </div>
               </div>
-            ))}
+              );
+            })}
 
             {/* 加载指示器 */}
             {isLoading && (
@@ -2539,8 +2938,14 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
             )}
 
             {/* 阶段性反思引导卡片 */}
-            {messages.length >= 6 && (
-              <div className="mt-4 bg-gray-50 border border-gray-200 rounded-lg p-4 shadow-sm">
+            {messages.length >= 6 && !isReflectionDismissed && (
+              <div className="mt-4 bg-gray-50 border border-gray-200 rounded-lg p-4 shadow-sm relative">
+                <button
+                  onClick={() => setIsReflectionDismissed(true)}
+                  className="absolute top-2 right-2 p-1 hover:bg-gray-200 rounded-lg transition-colors"
+                >
+                  <X size={14} className="text-gray-400" />
+                </button>
                 <div className="flex items-start gap-3">
                   <div className="w-9 h-9 rounded-full bg-gray-100 flex-shrink-0 flex items-center justify-center">
                     <Lightbulb size={18} className="text-gray-500" />
@@ -2582,6 +2987,15 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
 
           {/* 输入框 */}
           <div className="p-3 bg-white border-t border-gray-200">
+            {/* AI引导模式 - 当前知识点提示 */}
+            {config.learningMode === 'ai_guided' && currentLearningNode && (
+              <div className="mb-2 flex items-center gap-1.5 px-2 py-1 bg-primary-50 border border-primary-100 rounded-md">
+                <Target size={12} className="text-primary-500 flex-shrink-0" />
+                <span className="text-xs text-primary-600">
+                  {t('AI正在引导学习')}「{currentLearningNode.title}」
+                </span>
+              </div>
+            )}
             <div className="relative">
               <input
                 type="text"
