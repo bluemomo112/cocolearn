@@ -922,6 +922,36 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editedTitle, setEditedTitle] = useState(config.title);
 
+  // 资源和任务选中状态
+  const [selectedResourceIds, setSelectedResourceIds] = useState<Set<string>>(new Set());
+  const [selectedTaskIds, setSelectedTaskIds] = useState<Set<string>>(new Set());
+
+  const toggleResourceSelection = (id: string) => {
+    setSelectedResourceIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleTaskSelection = (id: string) => {
+    setSelectedTaskIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleAllResources = () => {
+    const allIds = [...config.resources.map(r => r.id), ...aiGeneratedResources.map(r => r.id)];
+    setSelectedResourceIds(prev => prev.size === allIds.length ? new Set() : new Set(allIds));
+  };
+
+  const toggleAllTasks = () => {
+    const allIds = generatedTasks.map(t => t.id);
+    setSelectedTaskIds(prev => prev.size === allIds.length ? new Set() : new Set(allIds));
+  };
+
   // 面板折叠状态
   const [collapsedPanels, setCollapsedPanels] = useState<Record<string, boolean>>({
     sources: false,
@@ -1971,15 +2001,29 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                         </button>
                       </div>
                     ) : (
-                      generatedTasks.map((task) => (
+                      <>
+                        {/* 全选控制 */}
+                        <div className="flex items-center justify-between px-1 mb-1">
+                          <span className="text-xs text-gray-500">{generatedTasks.length} {t('个任务')}</span>
+                          <button
+                            onClick={() => toggleAllTasks()}
+                            className="text-xs text-gray-600 hover:text-gray-800 font-medium p-2 rounded-lg"
+                          >
+                            {selectedTaskIds.size === generatedTasks.length ? t('取消全选') : t('全选')}
+                          </button>
+                        </div>
+                        {generatedTasks.map((task) => (
                         <div
                           key={task.id}
                           onClick={() => handleTaskClick(task)}
                           className={`flex items-start gap-3 p-3 bg-white border border-gray-200 rounded-lg hover:${getThemeClass('border')} hover:shadow-sm transition-all cursor-pointer group`}
                         >
                           {/* 选中指示器 */}
-                          <div className="w-5 h-5 rounded border-2 border-gray-400 bg-gray-500 flex items-center justify-center flex-shrink-0 mt-0.5">
-                            <Check size={12} className="text-white" />
+                          <div
+                            onClick={(e) => { e.stopPropagation(); toggleTaskSelection(task.id); }}
+                            className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5 ${selectedTaskIds.has(task.id) ? 'border-gray-400 bg-gray-500' : 'border-gray-300 bg-white'}`}
+                          >
+                            {selectedTaskIds.has(task.id) && <Check size={12} className="text-white" />}
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
@@ -2012,7 +2056,8 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                           </button>
                           <ChevronRight size={16} className="text-gray-400" />
                         </div>
-                      ))
+                      ))}
+                      </>
                     )}
 
                     {/* 生成更多任务按钮 - 仅当已有任务时显示 */}
@@ -2109,18 +2154,24 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                       {/* 全选控制 */}
                       <div className="flex items-center justify-between px-1 mb-1">
                         <span className="text-xs text-gray-500">{config.resources.length + aiGeneratedResources.length} {t('个来源')}</span>
-                        <button className="text-xs text-gray-600 hover:text-gray-800 font-medium p-2 rounded-lg">{t('全选')}</button>
+                        <button
+                          onClick={() => toggleAllResources()}
+                          className="text-xs text-gray-600 hover:text-gray-800 font-medium p-2 rounded-lg"
+                        >
+                          {selectedResourceIds.size === config.resources.length + aiGeneratedResources.length ? t('取消全选') : t('全选')}
+                        </button>
                       </div>
 
                       {/* AI生成的资源 */}
                       {aiGeneratedResources.map((resource) => (
                         <div
                           key={resource.id}
+                          onClick={(e) => { e.stopPropagation(); toggleResourceSelection(resource.id); }}
                           className={`flex items-start gap-3 p-3 bg-white border border-gray-200 rounded-lg hover:${getThemeClass('border')} hover:shadow-sm transition-all cursor-pointer group`}
                         >
                           {/* 选中指示器 */}
-                          <div className="w-5 h-5 rounded border-2 border-gray-400 bg-gray-500 flex items-center justify-center flex-shrink-0 mt-0.5">
-                            <Check size={12} className="text-white" />
+                          <div className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5 ${selectedResourceIds.has(resource.id) ? 'border-gray-400 bg-gray-500' : 'border-gray-300 bg-white'}`}>
+                            {selectedResourceIds.has(resource.id) && <Check size={12} className="text-white" />}
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
@@ -2141,11 +2192,12 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                       {config.resources.map((resource) => (
                         <div
                           key={resource.id}
+                          onClick={(e) => { e.stopPropagation(); toggleResourceSelection(resource.id); }}
                           className={`flex items-start gap-3 p-3 bg-white border border-gray-200 rounded-lg hover:${getThemeClass('border')} hover:shadow-sm transition-all cursor-pointer group`}
                         >
                           {/* 选中指示器 */}
-                          <div className="w-5 h-5 rounded border-2 border-gray-400 bg-gray-500 flex items-center justify-center flex-shrink-0 mt-0.5">
-                            <Check size={12} className="text-white" />
+                          <div className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5 ${selectedResourceIds.has(resource.id) ? 'border-gray-400 bg-gray-500' : 'border-gray-300 bg-white'}`}>
+                            {selectedResourceIds.has(resource.id) && <Check size={12} className="text-white" />}
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
@@ -2271,15 +2323,29 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                         </button>
                       </div>
                     ) : (
-                      generatedTasks.map((task) => (
+                      <>
+                        {/* 全选控制 */}
+                        <div className="flex items-center justify-between px-1 mb-1">
+                          <span className="text-xs text-gray-500">{generatedTasks.length} {t('个任务')}</span>
+                          <button
+                            onClick={() => toggleAllTasks()}
+                            className="text-xs text-gray-600 hover:text-gray-800 font-medium p-2 rounded-lg"
+                          >
+                            {selectedTaskIds.size === generatedTasks.length ? t('取消全选') : t('全选')}
+                          </button>
+                        </div>
+                        {generatedTasks.map((task) => (
                         <div
                           key={task.id}
                           onClick={() => handleTaskClick(task)}
                           className={`flex items-start gap-3 p-3 bg-white border border-gray-200 rounded-lg hover:${getThemeClass('border')} hover:shadow-sm transition-all cursor-pointer group`}
                         >
                           {/* 选中指示器 */}
-                          <div className="w-5 h-5 rounded border-2 border-gray-400 bg-gray-500 flex items-center justify-center flex-shrink-0 mt-0.5">
-                            <Check size={12} className="text-white" />
+                          <div
+                            onClick={(e) => { e.stopPropagation(); toggleTaskSelection(task.id); }}
+                            className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5 ${selectedTaskIds.has(task.id) ? 'border-gray-400 bg-gray-500' : 'border-gray-300 bg-white'}`}
+                          >
+                            {selectedTaskIds.has(task.id) && <Check size={12} className="text-white" />}
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
@@ -2312,7 +2378,8 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                           </button>
                           <ChevronRight size={16} className="text-gray-400" />
                         </div>
-                      ))
+                      ))}
+                      </>
                     )}
 
                     {/* 生成更多任务按钮 - 仅当已有任务时显示 */}
