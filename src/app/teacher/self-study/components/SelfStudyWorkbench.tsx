@@ -1975,18 +1975,24 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                         <div
                           key={task.id}
                           onClick={() => handleTaskClick(task)}
-                          className={`flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg hover:${getThemeClass('border')} hover:shadow-sm transition-all cursor-pointer group`}
+                          className={`flex items-start gap-3 p-3 bg-white border border-gray-200 rounded-lg hover:${getThemeClass('border')} hover:shadow-sm transition-all cursor-pointer group`}
                         >
-                          <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gray-100">
-                            {task.type === 'quiz' ? (
-                              <Zap size={18} className="text-gray-600" />
-                            ) : (
-                              <Brain size={18} className="text-gray-600" />
-                            )}
+                          {/* 选中指示器 */}
+                          <div className="w-5 h-5 rounded border-2 border-gray-400 bg-gray-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <Check size={12} className="text-white" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-700 truncate">{task.title}</p>
-                            <div className="flex items-center gap-2 text-xs text-gray-400 mt-0.5">
+                            <div className="flex items-center gap-2 mb-1">
+                              <div className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 bg-gray-100">
+                                {task.type === 'quiz' ? (
+                                  <Zap size={12} className="text-gray-600" />
+                                ) : (
+                                  <Brain size={12} className="text-gray-600" />
+                                )}
+                              </div>
+                              <p className="text-sm font-medium text-gray-700 truncate">{task.title}</p>
+                            </div>
+                            <div className="flex items-center gap-2 text-xs text-gray-400 ml-8">
                               {task.type === 'quiz' && task.questionCount && (
                                 <span>{task.questionCount} {t('道题')}</span>
                               )}
@@ -2269,18 +2275,24 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                         <div
                           key={task.id}
                           onClick={() => handleTaskClick(task)}
-                          className={`flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg hover:${getThemeClass('border')} hover:shadow-sm transition-all cursor-pointer group`}
+                          className={`flex items-start gap-3 p-3 bg-white border border-gray-200 rounded-lg hover:${getThemeClass('border')} hover:shadow-sm transition-all cursor-pointer group`}
                         >
-                          <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gray-100">
-                            {task.type === 'quiz' ? (
-                              <Zap size={18} className="text-gray-600" />
-                            ) : (
-                              <Brain size={18} className="text-gray-600" />
-                            )}
+                          {/* 选中指示器 */}
+                          <div className="w-5 h-5 rounded border-2 border-gray-400 bg-gray-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <Check size={12} className="text-white" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-700 truncate">{task.title}</p>
-                            <div className="flex items-center gap-2 text-xs text-gray-400 mt-0.5">
+                            <div className="flex items-center gap-2 mb-1">
+                              <div className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 bg-gray-100">
+                                {task.type === 'quiz' ? (
+                                  <Zap size={12} className="text-gray-600" />
+                                ) : (
+                                  <Brain size={12} className="text-gray-600" />
+                                )}
+                              </div>
+                              <p className="text-sm font-medium text-gray-700 truncate">{task.title}</p>
+                            </div>
+                            <div className="flex items-center gap-2 text-xs text-gray-400 ml-8">
                               {task.type === 'quiz' && task.questionCount && (
                                 <span>{task.questionCount} {t('道题')}</span>
                               )}
