@@ -8,6 +8,16 @@ import { Resource } from '@/types/shared-context';
  * 对于demo，使用简单的文本提取方式
  */
 export async function extractResourceContent(resource: Resource): Promise<string> {
+  // 如果是互动网页资源，返回URL
+  if (resource.type === 'interactive' && resource.url) {
+    return `[互动网页: ${resource.title}]\n访问链接: ${resource.url}\n${resource.description}`;
+  }
+
+  // 如果没有path（互动资源），返回空字符串
+  if (!resource.path) {
+    return '';
+  }
+
   const filePath = path.join(process.cwd(), resource.path);
 
   try {

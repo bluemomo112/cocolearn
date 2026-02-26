@@ -13,12 +13,13 @@ import {
   ListChecks, ChevronRight, ChevronLeft, Play, Download, Eye, Search, BarChart3, Map,
   CheckCircle2, Circle, Bot, MessageSquare, Pause, RotateCcw, GitBranch,
   Edit, Image as ImageIcon, Mic, Trash2, Layers, Award, TrendingUp,
-  ChevronDown, ChevronUp, Layout, Share2, AlertCircle,
+  ChevronDown, ChevronUp, Layout, Share2, AlertCircle, Globe,
 } from 'lucide-react';
 import SettingsModal from './SettingsModal';
 import PublishModal from './PublishModal';
 import FileUploadModal from './FileUploadModal';
 import LinkInputModal from './LinkInputModal';
+import InteractiveViewerModal from './InteractiveViewerModal';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { TaskEditModal } from '@/app/teacher/note-config/modals';
 import { useRouter } from 'next/navigation';
@@ -775,6 +776,11 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
     // 任务生成类工具
     { id: 'quiz', label: t('知识测验'), icon: '📝', description: t('生成测试题目'), status: 'ready' as const, type: 'task' as const },
     { id: 'practice', label: t('练习题'), icon: '✍️', description: t('生成练习任务'), status: 'ready' as const, type: 'task' as const },
+    // 互动内容生成类工具
+    { id: 'interactive_animation', label: t('说明动画'), icon: '🎬', description: t('生成互动说明动画'), status: 'ready' as const, type: 'interactive' as const },
+    { id: 'interactive_visualization', label: t('可视化'), icon: '📊', description: t('生成数据可视化'), status: 'ready' as const, type: 'interactive' as const },
+    { id: 'interactive_simulation', label: t('互动模拟'), icon: '🔬', description: t('生成互动模拟实验'), status: 'ready' as const, type: 'interactive' as const },
+    { id: 'interactive_test', label: t('互动测试'), icon: '🧪', description: t('生成互动测试'), status: 'ready' as const, type: 'interactive' as const },
   ];
 
   const MOCK_GENERATED_TASKS = [
@@ -1155,6 +1161,9 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
   // 正在生成的工具ID
   const [generatingToolId, setGeneratingToolId] = useState<string | null>(null);
 
+  // 互动资源查看器
+  const [viewingResource, setViewingResource] = useState<Resource | null>(null);
+
   // 生成测试任务
   const handleGenerateTest = () => {
     setIsGeneratingTask(true);
@@ -1240,6 +1249,39 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
         setGeneratedTasks(prev => [newTask, ...prev]);
         setGeneratingToolId(null);
         setCollapsedPanels(prev => ({ ...prev, tasks: false })); // 展开任务区域
+      }, 2000);
+    } else if (tool.type === 'interactive') {
+      // 生成互动资源
+      setGeneratingToolId(tool.id);
+
+      const categoryMap: Record<string, 'animation' | 'visualization' | 'simulation' | 'test'> = {
+        interactive_animation: 'animation',
+        interactive_visualization: 'visualization',
+        interactive_simulation: 'simulation',
+        interactive_test: 'test',
+      };
+
+      setTimeout(() => {
+        const newResource = {
+          id: `ai_res_${Date.now()}`,
+          title: `🤖 ${t('AI生成')}：${tool.label}`,
+          type: 'ai_generated' as const,
+          icon: tool.icon,
+          status: 'ready' as const,
+          generatedAt: new Date(),
+          toolId: tool.id,
+          interactiveCategory: categoryMap[tool.id],
+          url: `https://example.com/ai-generated/${tool.id}/${Date.now()}`,
+        };
+
+        setAiGeneratedResources(prev => [newResource, ...prev]);
+        setGeneratingToolId(null);
+
+        if (config.learningMode === 'ai_guided') {
+          setCollapsedPanels(prev => ({ ...prev, aiResources: false }));
+        } else {
+          setCollapsedPanels(prev => ({ ...prev, sources: false }));
+        }
       }, 2000);
     }
   };
@@ -1448,12 +1490,16 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
   };
 
   // 处理链接添加
-  const handleLinkAdd = (url: string, title?: string) => {
+  const handleLinkAdd = (url: string, title?: string, resourceType?: string, interactiveCategory?: string) => {
     const newResource: Resource = {
       id: `resource_${Date.now()}`,
       title: title || url,
-      type: 'document',
+      type: resourceType === 'interactive' ? 'interactive' : 'document',
       description: url,
+      ...(resourceType === 'interactive' ? {
+        url,
+        interactiveCategory: interactiveCategory as Resource['interactiveCategory'],
+      } : {}),
     };
 
     onUpdateConfig({
@@ -1639,7 +1685,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
 
     try {
       // 主观题：先标记为批改中状态
-      if (task.type === 'assignment' || task.type === 'reflection') {
+      if ((task.type as string) === 'assignment' || (task.type as string) === 'reflection') {
         setTaskStatus('grading');
       }
 
@@ -2112,6 +2158,8 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                             <FileText size={20} className="text-primary-600" />
                           ) : resource.type === 'presentation' ? (
                             <FileSpreadsheet size={20} className="text-primary-600" />
+                          ) : resource.type === 'interactive' ? (
+                            <Globe size={20} className="text-green-600" />
                           ) : (
                             <Video size={20} className="text-primary-600" />
                           )}
@@ -2182,6 +2230,8 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                           <FileText size={20} className="text-primary-600" />
                         ) : resource.type === 'presentation' ? (
                           <FileSpreadsheet size={20} className="text-primary-600" />
+                        ) : resource.type === 'interactive' ? (
+                          <Globe size={20} className="text-green-600" />
                         ) : (
                           <Video size={20} className="text-primary-600" />
                         )}
@@ -2342,16 +2392,20 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                       {config.resources.map((resource) => (
                         <div
                           key={resource.id}
+                          onClick={() => resource.type === 'interactive' && resource.url ? setViewingResource(resource) : undefined}
                           className={`flex items-center gap-3 p-3 rounded-lg transition-all cursor-pointer bg-white border border-gray-200 hover:${getThemeClass('border')} hover:shadow-sm`}
                         >
                           <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg ${
                             resource.type === 'video' ? 'bg-red-50' :
-                            resource.type === 'presentation' ? 'bg-orange-50' : 'bg-blue-50'
+                            resource.type === 'presentation' ? 'bg-orange-50' :
+                            resource.type === 'interactive' ? 'bg-green-50' : 'bg-blue-50'
                           }`}>
                             {resource.type === 'video' ? (
                               <Video size={18} className="text-red-500" />
                             ) : resource.type === 'presentation' ? (
                               <FileSpreadsheet size={18} className="text-orange-500" />
+                            ) : resource.type === 'interactive' ? (
+                              <Globe size={18} className="text-green-500" />
                             ) : (
                               <FileText size={18} className="text-blue-500" />
                             )}
@@ -2362,6 +2416,18 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                               <p className="text-xs text-gray-400 truncate">{resource.description}</p>
                             )}
                           </div>
+                          {resource.type === 'interactive' && resource.interactiveCategory && (
+                            <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full flex-shrink-0 ${
+                              resource.interactiveCategory === 'animation' ? 'bg-purple-100 text-purple-700' :
+                              resource.interactiveCategory === 'visualization' ? 'bg-blue-100 text-blue-700' :
+                              resource.interactiveCategory === 'simulation' ? 'bg-green-100 text-green-700' :
+                              'bg-amber-100 text-amber-700'
+                            }`}>
+                              {resource.interactiveCategory === 'animation' ? '动画' :
+                               resource.interactiveCategory === 'visualization' ? '可视化' :
+                               resource.interactiveCategory === 'simulation' ? '模拟' : '测试'}
+                            </span>
+                          )}
                           <ChevronRight size={16} className="text-gray-400" />
                         </div>
                       ))}
@@ -2659,7 +2725,14 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                       {config.resources.map((resource) => (
                         <div
                           key={resource.id}
-                          onClick={(e) => { e.stopPropagation(); toggleResourceSelection(resource.id); }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (resource.type === 'interactive' && resource.url) {
+                              setViewingResource(resource);
+                            } else {
+                              toggleResourceSelection(resource.id);
+                            }
+                          }}
                           className={`flex items-start gap-3 p-3 bg-white border border-gray-200 rounded-lg hover:${getThemeClass('border')} hover:shadow-sm transition-all cursor-pointer group`}
                         >
                           {/* 选中指示器 */}
@@ -2670,17 +2743,32 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                             <div className="flex items-center gap-2 mb-1">
                               <div className={`w-6 h-6 rounded flex items-center justify-center flex-shrink-0 ${
                                 resource.type === 'video' ? 'bg-red-100' :
-                                resource.type === 'presentation' ? 'bg-orange-100' : 'bg-blue-100'
+                                resource.type === 'presentation' ? 'bg-orange-100' :
+                                resource.type === 'interactive' ? 'bg-green-100' : 'bg-blue-100'
                               }`}>
                                 {resource.type === 'video' ? (
                                   <Video size={12} className="text-red-600" />
                                 ) : resource.type === 'presentation' ? (
                                   <FileSpreadsheet size={12} className="text-orange-600" />
+                                ) : resource.type === 'interactive' ? (
+                                  <Globe size={12} className="text-green-600" />
                                 ) : (
                                   <FileText size={12} className="text-blue-600" />
                                 )}
                               </div>
                               <p className="text-sm font-medium text-gray-700 truncate">{resource.title}</p>
+                              {resource.type === 'interactive' && resource.interactiveCategory && (
+                                <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full flex-shrink-0 ${
+                                  resource.interactiveCategory === 'animation' ? 'bg-purple-100 text-purple-700' :
+                                  resource.interactiveCategory === 'visualization' ? 'bg-blue-100 text-blue-700' :
+                                  resource.interactiveCategory === 'simulation' ? 'bg-green-100 text-green-700' :
+                                  'bg-amber-100 text-amber-700'
+                                }`}>
+                                  {resource.interactiveCategory === 'animation' ? '动画' :
+                                   resource.interactiveCategory === 'visualization' ? '可视化' :
+                                   resource.interactiveCategory === 'simulation' ? '模拟' : '测试'}
+                                </span>
+                              )}
                             </div>
                             <p className="text-xs text-gray-400 line-clamp-1 ml-8">{resource.description}</p>
                           </div>
@@ -3485,6 +3573,12 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
         isOpen={isLinkInputOpen}
         onClose={() => setIsLinkInputOpen(false)}
         onAdd={handleLinkAdd}
+      />
+
+      {/* 互动资源查看器 */}
+      <InteractiveViewerModal
+        resource={viewingResource}
+        onClose={() => setViewingResource(null)}
       />
     </div>
     </>

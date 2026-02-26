@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { X, Search, FileText, Presentation, Video, Check } from 'lucide-react';
+import { X, Search, FileText, Presentation, Video, Check, Globe } from 'lucide-react';
 import { Resource } from '@/types/shared-context';
 import { mockResources } from '@/data/mockLearningData';
 
@@ -62,6 +62,8 @@ export default function ResourceLibraryModal({ isOpen, onClose, onSelect }: Reso
         return Presentation;
       case 'video':
         return Video;
+      case 'interactive':
+        return Globe;
       default:
         return FileText;
     }

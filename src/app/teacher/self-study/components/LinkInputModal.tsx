@@ -1,31 +1,52 @@
 'use client';
 
 import { useState } from 'react';
-import { X, Link as LinkIcon } from 'lucide-react';
+import { X, Link as LinkIcon, Globe } from 'lucide-react';
+
+type ResourceTypeOption = 'link' | 'interactive';
+type InteractiveCategory = 'animation' | 'visualization' | 'simulation' | 'test';
 
 interface LinkInputModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAdd: (url: string, title?: string) => void;
+  onAdd: (url: string, title?: string, resourceType?: ResourceTypeOption, interactiveCategory?: InteractiveCategory) => void;
 }
+
+const INTERACTIVE_CATEGORIES: { value: InteractiveCategory; label: string; icon: string }[] = [
+  { value: 'animation', label: '说明动画', icon: '🎬' },
+  { value: 'visualization', label: '可视化', icon: '📊' },
+  { value: 'simulation', label: '互动模拟', icon: '🔬' },
+  { value: 'test', label: '互动测试', icon: '🧪' },
+];
 
 export default function LinkInputModal({ isOpen, onClose, onAdd }: LinkInputModalProps) {
   const [url, setUrl] = useState('');
   const [title, setTitle] = useState('');
+  const [resourceType, setResourceType] = useState<ResourceTypeOption>('link');
+  const [interactiveCategory, setInteractiveCategory] = useState<InteractiveCategory>('animation');
 
   if (!isOpen) return null;
 
   const handleAdd = () => {
     if (url.trim()) {
-      onAdd(url.trim(), title.trim() || undefined);
+      onAdd(
+        url.trim(),
+        title.trim() || undefined,
+        resourceType,
+        resourceType === 'interactive' ? interactiveCategory : undefined
+      );
       setUrl('');
       setTitle('');
+      setResourceType('link');
+      setInteractiveCategory('animation');
     }
   };
 
   const handleClose = () => {
     setUrl('');
     setTitle('');
+    setResourceType('link');
+    setInteractiveCategory('animation');
     onClose();
   };
 
@@ -49,6 +70,62 @@ export default function LinkInputModal({ isOpen, onClose, onAdd }: LinkInputModa
 
         {/* 内容 */}
         <div className="p-6 space-y-4">
+          {/* 资源类型选择 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              资源类型
+            </label>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setResourceType('link')}
+                className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border-2 transition-all ${
+                  resourceType === 'link'
+                    ? 'border-primary-500 bg-primary-50 text-primary-700'
+                    : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                }`}
+              >
+                <LinkIcon size={16} />
+                <span className="text-sm font-medium">普通链接</span>
+              </button>
+              <button
+                onClick={() => setResourceType('interactive')}
+                className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border-2 transition-all ${
+                  resourceType === 'interactive'
+                    ? 'border-green-500 bg-green-50 text-green-700'
+                    : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                }`}
+              >
+                <Globe size={16} />
+                <span className="text-sm font-medium">互动网页</span>
+              </button>
+            </div>
+          </div>
+
+          {/* 互动分类选择 */}
+          {resourceType === 'interactive' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                互动类型
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                {INTERACTIVE_CATEGORIES.map((cat) => (
+                  <button
+                    key={cat.value}
+                    onClick={() => setInteractiveCategory(cat.value)}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg border-2 transition-all text-left ${
+                      interactiveCategory === cat.value
+                        ? 'border-green-500 bg-green-50 text-green-700'
+                        : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                    }`}
+                  >
+                    <span>{cat.icon}</span>
+                    <span className="text-sm font-medium">{cat.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* URL 输入 */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">

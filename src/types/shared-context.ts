@@ -17,12 +17,14 @@ export interface Message {
 export interface Resource {
   id: string;
   title: string;
-  type: 'document' | 'presentation' | 'video';
-  fileType: 'docx' | 'pptx' | 'mp4';
-  path: string;
+  type: 'document' | 'presentation' | 'video' | 'interactive';
+  fileType?: 'docx' | 'pptx' | 'mp4';
+  path?: string;
   description: string;
   duration?: string;
   textContent?: string;
+  url?: string;
+  interactiveCategory?: 'animation' | 'visualization' | 'simulation' | 'test';
 }
 
 export interface TaskQuestion {
