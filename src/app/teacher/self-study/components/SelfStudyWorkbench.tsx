@@ -20,6 +20,7 @@ import PublishModal from './PublishModal';
 import FileUploadModal from './FileUploadModal';
 import LinkInputModal from './LinkInputModal';
 import InteractiveViewerModal from './InteractiveViewerModal';
+import ResourceInlineViewer, { InlineViewResource } from './ResourceInlineViewer';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { TaskEditModal } from '@/app/teacher/note-config/modals';
 import { useRouter } from 'next/navigation';
@@ -1150,6 +1151,8 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
     status: 'ready' | 'generating';
     generatedAt: Date;
     toolId: string;
+    interactiveCategory?: 'animation' | 'visualization' | 'simulation' | 'test';
+    url?: string;
   }>>([]);
 
   // Studio工具配置弹窗
@@ -1163,6 +1166,42 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
 
   // 互动资源查看器
   const [viewingResource, setViewingResource] = useState<Resource | null>(null);
+
+  // 左侧面板内联查看的资源
+  const [inlineViewingResource, setInlineViewingResource] = useState<InlineViewResource | null>(null);
+
+  // 统一的资源点击处理
+  const handleResourceClick = (resource: Resource | typeof aiGeneratedResources[0]) => {
+    const hasUrl = 'url' in resource && !!resource.url;
+    const isInteractive = (resource.type === 'interactive' || resource.type === 'ai_generated') && hasUrl &&
+      ('interactiveCategory' in resource && !!resource.interactiveCategory);
+
+    const viewResource: InlineViewResource = {
+      id: resource.id,
+      title: resource.title,
+      type: resource.type,
+      url: 'url' in resource ? resource.url : undefined,
+      interactiveCategory: 'interactiveCategory' in resource ? resource.interactiveCategory as InlineViewResource['interactiveCategory'] : undefined,
+      description: 'description' in resource ? resource.description : undefined,
+      textContent: 'textContent' in resource ? resource.textContent : undefined,
+      icon: 'icon' in resource ? resource.icon : undefined,
+      toolId: 'toolId' in resource ? resource.toolId : undefined,
+    };
+
+    setInlineViewingResource(viewResource);
+
+    if (isInteractive) {
+      // H5 资源默认全屏打开
+      setViewingResource({
+        id: resource.id,
+        title: resource.title,
+        type: 'interactive',
+        description: 'description' in resource ? (resource.description || '') : '',
+        url: 'url' in resource ? resource.url : undefined,
+        interactiveCategory: 'interactiveCategory' in resource ? resource.interactiveCategory as Resource['interactiveCategory'] : undefined,
+      });
+    }
+  };
 
   // 生成测试任务
   const handleGenerateTest = () => {
@@ -2315,10 +2354,32 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                   </div>
                 )}
                 <div className="flex-1 overflow-y-auto p-4 space-y-2">
+                  {inlineViewingResource ? (
+                    <div className="h-full -m-4">
+                      <ResourceInlineViewer
+                        resource={inlineViewingResource}
+                        onBack={() => setInlineViewingResource(null)}
+                        onFullscreen={() => {
+                          if (inlineViewingResource.url) {
+                            setViewingResource({
+                              id: inlineViewingResource.id,
+                              title: inlineViewingResource.title,
+                              type: 'interactive',
+                              description: inlineViewingResource.description || '',
+                              url: inlineViewingResource.url,
+                              interactiveCategory: inlineViewingResource.interactiveCategory,
+                            });
+                          }
+                        }}
+                      />
+                    </div>
+                  ) : (
+                  <>
                   {/* AI生成的资源 */}
                   {aiGeneratedResources.map((resource) => (
                     <div
                       key={resource.id}
+                      onClick={() => handleResourceClick(resource)}
                       className={`flex items-center gap-3 p-3 rounded-lg transition-all cursor-pointer bg-white border border-gray-200 hover:${getThemeClass('border')} hover:shadow-sm`}
                     >
                       <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg bg-gray-100">
@@ -2392,7 +2453,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                       {config.resources.map((resource) => (
                         <div
                           key={resource.id}
-                          onClick={() => resource.type === 'interactive' && resource.url ? setViewingResource(resource) : undefined}
+                          onClick={() => handleResourceClick(resource)}
                           className={`flex items-center gap-3 p-3 rounded-lg transition-all cursor-pointer bg-white border border-gray-200 hover:${getThemeClass('border')} hover:shadow-sm`}
                         >
                           <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg ${
@@ -2432,6 +2493,8 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                         </div>
                       ))}
                     </>
+                  )}
+                  </>
                   )}
                 </div>
               </div>
@@ -2674,6 +2737,27 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
 
                 {/* 资源列表 */}
                 <div className="flex-1 overflow-y-auto p-4 space-y-2">
+                  {inlineViewingResource ? (
+                    <div className="h-full -m-4">
+                      <ResourceInlineViewer
+                        resource={inlineViewingResource}
+                        onBack={() => setInlineViewingResource(null)}
+                        onFullscreen={() => {
+                          if (inlineViewingResource.url) {
+                            setViewingResource({
+                              id: inlineViewingResource.id,
+                              title: inlineViewingResource.title,
+                              type: 'interactive',
+                              description: inlineViewingResource.description || '',
+                              url: inlineViewingResource.url,
+                              interactiveCategory: inlineViewingResource.interactiveCategory,
+                            });
+                          }
+                        }}
+                      />
+                    </div>
+                  ) : (
+                  <>
                   {config.resources.length === 0 && aiGeneratedResources.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full text-center py-12">
                       <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
@@ -2699,11 +2783,14 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                       {aiGeneratedResources.map((resource) => (
                         <div
                           key={resource.id}
-                          onClick={(e) => { e.stopPropagation(); toggleResourceSelection(resource.id); }}
+                          onClick={(e) => { e.stopPropagation(); handleResourceClick(resource); }}
                           className={`flex items-start gap-3 p-3 bg-white border border-gray-200 rounded-lg hover:${getThemeClass('border')} hover:shadow-sm transition-all cursor-pointer group`}
                         >
                           {/* 选中指示器 */}
-                          <div className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5 ${selectedResourceIds.has(resource.id) ? 'border-gray-400 bg-gray-500' : 'border-gray-300 bg-white'}`}>
+                          <div
+                            onClick={(e) => { e.stopPropagation(); toggleResourceSelection(resource.id); }}
+                            className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5 ${selectedResourceIds.has(resource.id) ? 'border-gray-400 bg-gray-500' : 'border-gray-300 bg-white'}`}
+                          >
                             {selectedResourceIds.has(resource.id) && <Check size={12} className="text-white" />}
                           </div>
                           <div className="flex-1 min-w-0">
@@ -2727,16 +2814,15 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                           key={resource.id}
                           onClick={(e) => {
                             e.stopPropagation();
-                            if (resource.type === 'interactive' && resource.url) {
-                              setViewingResource(resource);
-                            } else {
-                              toggleResourceSelection(resource.id);
-                            }
+                            handleResourceClick(resource);
                           }}
                           className={`flex items-start gap-3 p-3 bg-white border border-gray-200 rounded-lg hover:${getThemeClass('border')} hover:shadow-sm transition-all cursor-pointer group`}
                         >
                           {/* 选中指示器 */}
-                          <div className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5 ${selectedResourceIds.has(resource.id) ? 'border-gray-400 bg-gray-500' : 'border-gray-300 bg-white'}`}>
+                          <div
+                            onClick={(e) => { e.stopPropagation(); toggleResourceSelection(resource.id); }}
+                            className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5 ${selectedResourceIds.has(resource.id) ? 'border-gray-400 bg-gray-500' : 'border-gray-300 bg-white'}`}
+                          >
                             {selectedResourceIds.has(resource.id) && <Check size={12} className="text-white" />}
                           </div>
                           <div className="flex-1 min-w-0">
@@ -2775,6 +2861,8 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                         </div>
                       ))}
                     </>
+                  )}
+                  </>
                   )}
                 </div>
               </div>
@@ -3579,6 +3667,21 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
       <InteractiveViewerModal
         resource={viewingResource}
         onClose={() => setViewingResource(null)}
+        onShrinkToInline={() => {
+          if (viewingResource) {
+            setInlineViewingResource({
+              id: viewingResource.id,
+              title: viewingResource.title,
+              type: viewingResource.type,
+              icon: viewingResource.type === 'interactive' ? '🔬' : '📄',
+              toolId: viewingResource.id,
+              url: viewingResource.url,
+              description: viewingResource.description,
+              interactiveCategory: viewingResource.interactiveCategory,
+            });
+            setViewingResource(null);
+          }
+        }}
       />
     </div>
     </>

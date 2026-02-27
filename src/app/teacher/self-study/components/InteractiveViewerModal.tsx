@@ -7,6 +7,7 @@ import { Resource } from '@/types/shared-context';
 interface InteractiveViewerModalProps {
   resource: Resource | null;
   onClose: () => void;
+  onShrinkToInline?: () => void;
 }
 
 const CATEGORY_CONFIG: Record<string, { label: string; color: string }> = {
@@ -16,7 +17,7 @@ const CATEGORY_CONFIG: Record<string, { label: string; color: string }> = {
   test: { label: '测试', color: 'bg-amber-100 text-amber-700' },
 };
 
-export default function InteractiveViewerModal({ resource, onClose }: InteractiveViewerModalProps) {
+export default function InteractiveViewerModal({ resource, onClose, onShrinkToInline }: InteractiveViewerModalProps) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -54,9 +55,15 @@ export default function InteractiveViewerModal({ resource, onClose }: Interactiv
           </div>
           <div className="flex items-center gap-1 flex-shrink-0">
             <button
-              onClick={() => setIsFullscreen(!isFullscreen)}
+              onClick={() => {
+                if (onShrinkToInline && isFullscreen) {
+                  onShrinkToInline();
+                } else {
+                  setIsFullscreen(!isFullscreen);
+                }
+              }}
               className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              title={isFullscreen ? '退出全屏' : '全屏'}
+              title={isFullscreen ? (onShrinkToInline ? '缩小到侧栏' : '退出全屏') : '全屏'}
             >
               {isFullscreen ? (
                 <Minimize2 size={18} className="text-gray-500" />
