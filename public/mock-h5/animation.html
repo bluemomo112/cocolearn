@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>光合作用动画演示</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:linear-gradient(135deg,#e8f5e9,#f1f8e9);color:#1b3a1b;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:12px}
+h1{font-size:clamp(1.1rem,4vw,1.5rem);color:#1b5e20;margin:8px 0 4px}
+.sub{font-size:clamp(.7rem,2.5vw,.85rem);color:#6a8a6a;margin-bottom:12px}
+.card{width:100%;max-width:580px;background:#fff;border-radius:18px;box-shadow:0 6px 30px rgba(0,0,0,.08);padding:16px;overflow:hidden}
+.stage{width:100%;aspect-ratio:5/4;position:relative;border-radius:14px;background:linear-gradient(180deg,#bbdefb 0%,#c8e6c9 55%,#a5d6a7 100%);overflow:hidden}
+.sun{position:absolute;width:14%;aspect-ratio:1;top:5%;left:50%;transform:translateX(-50%);border-radius:50%;background:radial-gradient(circle,#fff9c4,#fdd835);box-shadow:0 0 20px rgba(253,216,53,.5);opacity:0;transition:opacity .5s}
+.sun.v{opacity:1;animation:sunP 2.5s ease-in-out infinite}
+@keyframes sunP{0%,100%{box-shadow:0 0 20px rgba(253,216,53,.5);transform:translateX(-50%) scale(1)}50%{box-shadow:0 0 45px rgba(253,216,53,.9);transform:translateX(-50%) scale(1.06)}}
+.rays{position:absolute;top:12%;left:50%;transform:translateX(-50%);width:6%;height:22%;opacity:0;transition:opacity .5s}
+.rays.v{opacity:1}
+.ray{position:absolute;top:0;left:50%;width:2px;height:100%;background:linear-gradient(180deg,rgba(255,235,59,.8),transparent);transform-origin:top center}
+.ray:nth-child(1){transform:translateX(-50%) rotate(-30deg)}
+.ray:nth-child(2){transform:translateX(-50%) rotate(0)}
+.ray:nth-child(3){transform:translateX(-50%) rotate(30deg)}
+.rays.v .ray{animation:rayF 2s ease-in-out infinite}
+.rays.v .ray:nth-child(1){animation-delay:.3s}
+.rays.v .ray:nth-child(3){animation-delay:.6s}
+@keyframes rayF{0%,100%{opacity:.3;height:80%}50%{opacity:1;height:100%}}
+.leaf-wrap{position:absolute;bottom:10%;left:50%;transform:translateX(-50%);opacity:0;transition:opacity .5s .1s}
+.leaf-wrap.v{opacity:1}
+.leaf-wrap.v svg{animation:bob 3s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:rotate(-2deg)}50%{transform:rotate(2deg)}}
+.mol{position:absolute;padding:3px 8px;border-radius:12px;font-size:clamp(.6rem,2.2vw,.78rem);font-weight:700;opacity:0;transition:opacity .4s;white-space:nowrap}
+.mol.v{opacity:1}
+.co2{left:5%;top:38%;background:rgba(100,100,100,.12);color:#555}
+.h2o{left:5%;top:54%;background:rgba(41,182,246,.15);color:#0277bd}
+.gluc{right:5%;top:38%;background:rgba(255,160,0,.15);color:#e65100}
+.o2{right:5%;top:54%;background:rgba(76,175,80,.15);color:#1b5e20}
+.co2.v{animation:dR 3s ease-in-out infinite}
+.h2o.v{animation:dR 3.4s ease-in-out infinite .5s}
+.gluc.v{animation:dL 3s ease-in-out infinite}
+.o2.v{animation:dL 3.2s ease-in-out infinite .4s}
+@keyframes dR{0%,100%{transform:translate(0,0)}50%{transform:translate(8px,-4px)}}
+@keyframes dL{0%,100%{transform:translate(0,0)}50%{transform:translate(-8px,-4px)}}
+.arr{position:absolute;top:48%;height:2px;width:16%;opacity:0;transition:opacity .5s}
+.arr.v{opacity:1;animation:aP 2s ease-in-out infinite}
+.arr-l{left:20%;background:linear-gradient(90deg,#888,#2e7d32)}
+.arr-r{right:20%;background:linear-gradient(90deg,#2e7d32,#888)}
+.arr::after{content:'';position:absolute;right:-2px;top:-4px;border:5px solid transparent;border-left:7px solid #2e7d32}
+.arr-r::after{border-left-color:#666}
+@keyframes aP{0%,100%{opacity:.5}50%{opacity:1}}
+.eq{position:absolute;bottom:2%;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.88);padding:4px 12px;border-radius:10px;font-size:clamp(.48rem,1.8vw,.66rem);color:#2e7d32;font-weight:600;opacity:0;transition:opacity .5s;white-space:nowrap}
+.eq.v{opacity:1}
+.desc{text-align:center;margin-top:12px;font-size:clamp(.78rem,3vw,.95rem);min-height:2.6em;line-height:1.6}
+.tl{display:flex;align-items:center;margin:14px auto 0;width:100%;max-width:580px;padding:0 10px}
+.tl-dot{width:clamp(24px,7vw,34px);height:clamp(24px,7vw,34px);border-radius:50%;background:#c8e6c9;display:flex;align-items:center;justify-content:center;font-size:clamp(.6rem,2vw,.75rem);font-weight:700;color:#fff;cursor:pointer;transition:all .3s;flex-shrink:0}
+.tl-dot.act{background:#2d8a4e;transform:scale(1.15);box-shadow:0 3px 12px rgba(45,138,78,.35)}
+.tl-dot.done{background:#66bb6a}
+.tl-bar{flex:1;height:3px;background:#c8e6c9;border-radius:2px;transition:background .3s}
+.tl-bar.done{background:#66bb6a}
+.tl-labels{display:flex;width:100%;max-width:580px;padding:4px 10px 0}
+.tl-lb{flex:1;text-align:center;font-size:clamp(.42rem,1.6vw,.58rem);color:#6a8a6a;transition:all .3s}
+.tl-lb.act{color:#1b5e20;font-weight:700}
+.ctrls{display:flex;gap:10px;margin-top:12px}
+.btn{border:none;border-radius:12px;padding:8px 22px;font-size:clamp(.72rem,2.5vw,.88rem);font-weight:600;cursor:pointer;transition:all .2s}
+.btn-play{background:#2d8a4e;color:#fff}
+.btn-play:hover{background:#1b5e20}
+.btn-reset{background:#e8f5e9;color:#2d8a4e}
+.btn-reset:hover{background:#c8e6c9}
+.btn:active{transform:scale(.95)}
+</style>
+</head>
+<body>
+<h1>光合作用 Photosynthesis</h1>
+<p class="sub">植物如何将阳光转化为能量</p>
+<div class="card">
+<div class="stage" id="stage">
+<div class="sun" id="el-sun"></div>
+<div class="rays" id="el-rays"><div class="ray"></div><div class="ray"></div><div class="ray"></div></div>
+<div class="leaf-wrap" id="el-leaf">
+<svg viewBox="0 0 160 110" width="130" style="max-width:32vw">
+<defs><linearGradient id="lg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#81c784"/><stop offset="100%" stop-color="#2e7d32"/></linearGradient></defs>
+<path d="M80 95 C30 85,5 50,25 20 C45 0,75 5,80 15 C85 5,115 0,135 20 C155 50,130 85,80 95Z" fill="url(#lg1)" stroke="#1b5e20" stroke-width="1.5"/>
+<line x1="80" y1="95" x2="80" y2="20" stroke="#1b5e20" stroke-width="1.5" opacity=".5"/>
+<line x1="80" y1="65" x2="50" y2="45" stroke="#1b5e20" stroke-width="1" opacity=".35"/>
+<line x1="80" y1="50" x2="110" y2="35" stroke="#1b5e20" stroke-width="1" opacity=".35"/>
+<line x1="80" y1="75" x2="108" y2="60" stroke="#1b5e20" stroke-width="1" opacity=".35"/>
+<line x1="80" y1="55" x2="55" y2="35" stroke="#1b5e20" stroke-width="1" opacity=".35"/>
+</svg>
+</div>
+<div class="mol co2" id="el-co2">CO₂</div>
+<div class="mol h2o" id="el-h2o">H₂O</div>
+<div class="mol gluc" id="el-gluc">C₆H₁₂O₆</div>
+<div class="mol o2" id="el-o2">O₂</div>
+<div class="arr arr-l" id="el-arrl"></div>
+<div class="arr arr-r" id="el-arrr"></div>
+<div class="eq" id="el-eq">6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂</div>
+</div>
+<p class="desc" id="desc">点击「播放」开始光合作用演示</p>
+</div>
+
+<div class="tl" id="tl"></div>
+<div class="tl-labels" id="tl-labels"></div>
+
+<div class="ctrls">
+<button class="btn btn-play" id="btnPlay" onclick="toggle()">▶ 播放</button>
+<button class="btn btn-reset" onclick="reset()">↺ 重置</button>
+</div>
+
+<script>
+var steps=[
+{ids:[],desc:"准备就绪，点击播放开始演示",label:"准备"},
+{ids:["el-sun","el-rays"],desc:"☀️ 第一步：阳光照射到植物叶片上，提供光能",label:"光照"},
+{ids:["el-sun","el-rays","el-leaf"],desc:"🌿 第二步：叶片中的叶绿体吸收光能",label:"吸收"},
+{ids:["el-sun","el-rays","el-leaf","el-co2","el-h2o","el-arrl"],desc:"💨 第三步：植物吸收二氧化碳(CO₂)和水(H₂O)作为原料",label:"原料"},
+{ids:["el-sun","el-rays","el-leaf","el-co2","el-h2o","el-arrl","el-gluc","el-o2","el-arrr"],desc:"🔄 第四步：在叶绿体中，光能将CO₂和H₂O转化为葡萄糖",label:"转化"},
+{ids:["el-sun","el-rays","el-leaf","el-co2","el-h2o","el-arrl","el-gluc","el-o2","el-arrr","el-eq"],desc:"✅ 完成！产生葡萄糖(C₆H₁₂O₆)供植物生长，释放氧气(O₂)",label:"完成"}
+];
+var cur=0,playing=false,timer=null;
+var allEls=["el-sun","el-rays","el-leaf","el-co2","el-h2o","el-arrl","el-gluc","el-o2","el-arrr","el-eq"];
+
+function buildTL(){
+var tl=document.getElementById("tl"),lb=document.getElementById("tl-labels");
+tl.innerHTML="";lb.innerHTML="";
+for(var i=0;i<steps.length;i++){
+var d=document.createElement("div");
+d.className="tl-dot";d.textContent=i;d.dataset.i=i;
+d.onclick=function(){goTo(+this.dataset.i)};
+tl.appendChild(d);
+if(i<steps.length-1){var b=document.createElement("div");b.className="tl-bar";tl.appendChild(b)}
+var l=document.createElement("div");l.className="tl-lb";l.textContent=steps[i].label;
+lb.appendChild(l);
+}
+}
+
+function render(){
+allEls.forEach(function(id){var e=document.getElementById(id);if(e)e.classList.remove("v")});
+steps[cur].ids.forEach(function(id){var e=document.getElementById(id);if(e)e.classList.add("v")});
+document.getElementById("desc").textContent=steps[cur].desc;
+var dots=document.querySelectorAll(".tl-dot");
+var bars=document.querySelectorAll(".tl-bar");
+var lbs=document.querySelectorAll(".tl-lb");
+dots.forEach(function(d,i){d.className="tl-dot"+(i<cur?" done":"")+(i===cur?" act":"")});
+bars.forEach(function(b,i){b.className="tl-bar"+(i<cur?" done":"")});
+lbs.forEach(function(l,i){l.className="tl-lb"+(i===cur?" act":"")});
+}
+
+function goTo(i){cur=i;render()}
+
+function toggle(){
+if(playing){pause()}
+else{playing=true;document.getElementById("btnPlay").textContent="⏸ 暂停";advance()}
+}
+
+function advance(){
+if(!playing)return;
+if(cur<steps.length-1){cur++;render();timer=setTimeout(advance,2200)}
+else{pause()}
+}
+
+function pause(){playing=false;clearTimeout(timer);document.getElementById("btnPlay").textContent="▶ 播放"}
+
+function reset(){pause();cur=0;render()}
+
+buildTL();render();
+</script>
+</body>
+</html>

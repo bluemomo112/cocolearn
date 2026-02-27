@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>植物工厂生长数据可视化</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:#f0f4f8;color:#1a2a3a;min-height:100vh}
+.hdr{background:linear-gradient(135deg,#0d7377,#14919b);padding:16px 20px;color:#fff}
+.hdr h1{font-size:clamp(16px,4vw,22px);font-weight:600}
+.hdr p{font-size:12px;opacity:.8;margin-top:4px}
+.tabs{display:flex;gap:8px;padding:12px 16px;background:#fff;border-bottom:1px solid #e2e8f0;overflow-x:auto}
+.tab{padding:6px 14px;border-radius:16px;font-size:13px;border:1.5px solid #b2d8d8;background:#fff;color:#0d7377;cursor:pointer;white-space:nowrap;transition:all .2s}
+.tab.on{background:#0d7377;color:#fff;border-color:#0d7377}
+.ct{padding:16px}
+.card{background:#fff;border-radius:12px;padding:16px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.card h3{font-size:14px;font-weight:600;color:#1a2a3a;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.card h3::before{content:"";display:inline-block;width:3px;height:14px;background:#14919b;border-radius:2px}
+canvas{width:100%;display:block;cursor:crosshair}
+.tip{position:fixed;background:rgba(13,115,119,.95);color:#fff;padding:8px 12px;border-radius:8px;font-size:12px;pointer-events:none;opacity:0;transition:opacity .15s;z-index:99;max-width:220px;line-height:1.6}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-bottom:16px}
+.sc{background:linear-gradient(135deg,#e6f7f7,#f0fafa);border-radius:10px;padding:12px;text-align:center;border:1px solid #d0eded}
+.sv{font-size:clamp(18px,5vw,26px);font-weight:700;color:#0d7377}
+.sl{font-size:11px;color:#5a7a7a;margin-top:2px}
+.leg{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px;justify-content:center}
+.li{display:flex;align-items:center;gap:4px;font-size:11px;color:#4a6a6a}
+.ld{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+</style>
+</head>
+<body>
+<div class="hdr"><h1>植物工厂生长数据可视化</h1><p>实时监测 · 智能分析 · 精准调控</p></div>
+<div class="tabs" id="tabs"></div>
+<div class="ct" id="ct"></div>
+<div class="tip" id="tip"></div>
+<script>
+var P=['生菜','番茄','黄瓜','草莓','罗勒','薄荷','芹菜','菠菜'],
+CL=['#0d7377','#14919b','#2ec4b6','#48d1cc','#5bc0be','#3a86a8','#1b8a6b','#45b7aa'],
+gR=[3.2,2.8,4.1,1.9,2.5,2.1,3.5,3.0],
+yK=[12.5,28.3,18.7,8.2,5.6,4.8,15.1,10.9],
+ds=[],tD=[22,23,22.5,24,25,24.5,23,22,23.5,24,25.5,24,23,22.5],
+hD=[65,68,70,72,69,66,64,67,70,73,71,68,65,63],
+lD=[320,340,335,350,360,355,330,325,345,355,365,350,340,330],
+cD=[800,820,810,850,870,860,830,815,840,860,880,855,835,820],
+cur='overview',tip=document.getElementById('tip'),dpr=window.devicePixelRatio||1;
+for(var i=1;i<=14;i++)ds.push(i+'日');
+
+var VW=[{id:'overview',l:'数据总览'},{id:'growth',l:'生长速率'},{id:'env',l:'环境监测'},{id:'harvest',l:'产量分析'}];
+var tb=document.getElementById('tabs');
+VW.forEach(function(v){
+  var b=document.createElement('div');
+  b.className='tab'+(v.id===cur?' on':'');b.textContent=v.l;
+  b.onclick=function(){cur=v.id;document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('on')});b.classList.add('on');render()};
+  tb.appendChild(b);
+});
+
+function rr(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.lineTo(x+w-r,y);c.quadraticCurveTo(x+w,y,x+w,y+r);c.lineTo(x+w,y+h-r);c.quadraticCurveTo(x+w,y+h,x+w-r,y+h);c.lineTo(x+r,y+h);c.quadraticCurveTo(x,y+h,x,y+h-r);c.lineTo(x,y+r);c.quadraticCurveTo(x,y,x+r,y);c.closePath()}
+function sc(cv,hp){var r=cv.parentElement.getBoundingClientRect(),w=r.width-32;cv.style.width=w+'px';cv.style.height=hp+'px';cv.width=w*dpr;cv.height=hp*dpr;var c=cv.getContext('2d');c.scale(dpr,dpr);return{c:c,w:w,h:hp}}
+
+function drawBar(cv,labels,vals,colors,unit){
+  var s=sc(cv,Math.min(280,innerHeight*.35)),c=s.c,w=s.w,h=s.h;
+  var p={t:14,r:12,b:38,l:42},cw=w-p.l-p.r,ch=h-p.t-p.b;
+  var mx=Math.max.apply(null,vals)*1.25,gap=cw/labels.length,bw=Math.min(gap*.55,36);
+  c.font='11px sans-serif';c.textAlign='right';c.fillStyle='#8a9ab0';
+  for(var i=0;i<=4;i++){var y=p.t+ch-ch*(i/4);c.fillText((mx*i/4).toFixed(1),p.l-6,y+4);c.beginPath();c.moveTo(p.l,y);c.lineTo(w-p.r,y);c.strokeStyle=i?'#eef2f6':'#cdd8e4';c.lineWidth=1;c.stroke()}
+  var ht=[];
+  labels.forEach(function(lb,i){
+    var x=p.l+gap*i+gap/2,bh=ch*(vals[i]/mx),by=p.t+ch-bh,cl=colors[i%colors.length];
+    var g=c.createLinearGradient(0,by,0,p.t+ch);g.addColorStop(0,cl);g.addColorStop(1,cl+'55');
+    c.fillStyle=g;rr(c,x-bw/2,by,bw,bh,3);c.fill();
+    c.fillStyle='#4a6070';c.textAlign='center';c.font='10px sans-serif';c.fillText(lb,x,p.t+ch+16);
+    c.fillStyle=cl;c.font='bold 11px sans-serif';c.fillText(vals[i]+unit,x,by-5);
+    ht.push({x:x-bw/2,y:by,w:bw,h:bh,lb:lb,v:vals[i],u:unit,cl:cl});
+  });
+  cv._h=ht;cv._t='bar';
+}
+
+function drawLine(cv,labels,sets){
+  var s=sc(cv,Math.min(260,innerHeight*.32)),c=s.c,w=s.w,h=s.h;
+  var p={t:16,r:14,b:38,l:44},cw=w-p.l-p.r,ch=h-p.t-p.b;
+  var av=[];sets.forEach(function(d){av=av.concat(d.d)});
+  var mn=Math.min.apply(null,av)*.92,mx=Math.max.apply(null,av)*1.08,rng=mx-mn;
+  c.font='11px sans-serif';c.textAlign='right';c.fillStyle='#8a9ab0';
+  for(var i=0;i<=4;i++){var y=p.t+ch-ch*(i/4);c.fillText((mn+rng*i/4).toFixed(1),p.l-6,y+4);c.beginPath();c.moveTo(p.l,y);c.lineTo(w-p.r,y);c.strokeStyle='#eef2f6';c.lineWidth=1;c.stroke()}
+  c.textAlign='center';c.fillStyle='#8a9ab0';c.font='10px sans-serif';
+  var st=Math.max(1,Math.floor(labels.length/7));
+  labels.forEach(function(lb,i){if(i%st===0||i===labels.length-1){c.fillText(lb,p.l+cw*(i/(labels.length-1)),p.t+ch+18)}});
+  var ht=[];
+  sets.forEach(function(ds){
+    c.beginPath();c.strokeStyle=ds.cl;c.lineWidth=2;c.lineJoin='round';
+    var pts=[];
+    ds.d.forEach(function(v,i){
+      var x=p.l+cw*(i/(labels.length-1)),y=p.t+ch-ch*((v-mn)/rng);
+      pts.push({x:x,y:y,v:v});
+      if(i===0)c.moveTo(x,y);else c.lineTo(x,y);
+    });
+    c.stroke();
+    var ga=c.createLinearGradient(0,p.t,0,p.t+ch);ga.addColorStop(0,ds.cl+'33');ga.addColorStop(1,ds.cl+'05');
+    c.lineTo(p.l+cw,p.t+ch);c.lineTo(p.l,p.t+ch);c.closePath();c.fillStyle=ga;c.fill();
+    pts.forEach(function(pt,i){
+      c.beginPath();c.arc(pt.x,pt.y,3,0,Math.PI*2);c.fillStyle='#fff';c.fill();c.strokeStyle=ds.cl;c.lineWidth=1.5;c.stroke();
+      ht.push({x:pt.x,y:pt.y,r:8,lb:labels[i],v:pt.v,u:ds.u,n:ds.n,cl:ds.cl});
+    });
+  });
+  cv._h=ht;cv._t='line';
+}
+
+function addTip(cv){
+  cv.onmousemove=function(e){
+    var rect=cv.getBoundingClientRect(),mx=e.clientX-rect.left,my=e.clientY-rect.top;
+    var found=null;
+    if(cv._t==='bar'){
+      (cv._h||[]).forEach(function(h){if(mx>=h.x&&mx<=h.x+h.w&&my>=h.y&&my<=h.y+h.h)found=h});
+      if(found)tip.textContent=found.lb+'\n数值: '+found.v+found.u;
+    }else{
+      (cv._h||[]).forEach(function(h){var dx=mx-h.x,dy=my-h.y;if(Math.sqrt(dx*dx+dy*dy)<h.r)found=h});
+      if(found)tip.textContent=found.n+' · '+found.lb+'\n数值: '+found.v+found.u;
+    }
+    if(found){tip.style.opacity='1';tip.style.left=Math.min(e.clientX+12,innerWidth-180)+'px';tip.style.top=(e.clientY-50)+'px'}
+    else{tip.style.opacity='0'}
+  };
+  cv.onmouseleave=function(){tip.style.opacity='0'};
+}
+
+function mkCard(title){var d=document.createElement('div');d.className='card';d.innerHTML='<h3>'+title+'</h3>';return d}
+function mkCv(){var c=document.createElement('canvas');return c}
+function mkLeg(items){var d=document.createElement('div');d.className='leg';items.forEach(function(it){d.innerHTML+='<div class="li"><div class="ld" style="background:'+it.c+'"></div>'+it.n+'</div>'});return d}
+
+function render(){
+  var ct=document.getElementById('ct');ct.innerHTML='';
+  if(cur==='overview'){
+    var avg=0;gR.forEach(function(v){avg+=v});avg=(avg/gR.length).toFixed(1);
+    var tot=0;yK.forEach(function(v){tot+=v});
+    var at=0;tD.forEach(function(v){at+=v});at=(at/tD.length).toFixed(1);
+    var ah=0;hD.forEach(function(v){ah+=v});ah=(ah/hD.length).toFixed(0);
+    var sd=document.createElement('div');sd.className='stats';
+    sd.innerHTML='<div class="sc"><div class="sv">'+P.length+'</div><div class="sl">种植品种</div></div><div class="sc"><div class="sv">'+avg+'</div><div class="sl">平均生长速率 cm/天</div></div><div class="sc"><div class="sv">'+tot.toFixed(1)+'</div><div class="sl">总产量 kg</div></div><div class="sc"><div class="sv">'+at+'°C</div><div class="sl">平均温度</div></div>';
+    ct.appendChild(sd);
+    var c1=mkCard('各品种生长速率 (cm/天)'),cv1=mkCv();c1.appendChild(cv1);ct.appendChild(c1);
+    drawBar(cv1,P,gR,CL,' cm/天');addTip(cv1);
+    var c2=mkCard('温湿度趋势 (近14天)'),cv2=mkCv();c2.appendChild(cv2);
+    c2.appendChild(mkLeg([{c:'#0d7377',n:'温度 (°C)'},{c:'#2ec4b6',n:'湿度 (%)'}]));
+    ct.appendChild(c2);
+    drawLine(cv2,ds,[{d:tD,cl:'#0d7377',n:'温度',u:'°C'},{d:hD,cl:'#2ec4b6',n:'湿度',u:'%'}]);addTip(cv2);
+  }
+  else if(cur==='growth'){
+    var c1=mkCard('各品种日均生长速率 (cm/天)'),cv1=mkCv();c1.appendChild(cv1);ct.appendChild(c1);
+    drawBar(cv1,P,gR,CL,' cm/天');addTip(cv1);
+    var weekly=[[1.8,1.5,2.2,1.0,1.3,1.1,1.8,1.6],[3.2,2.8,4.1,1.9,2.5,2.1,3.5,3.0]];
+    var c2=mkCard('生长速率对比: 第1周 vs 第2周'),cv2=mkCv();c2.appendChild(cv2);
+    c2.appendChild(mkLeg([{c:'#5bc0be',n:'第1周'},{c:'#0d7377',n:'第2周'}]));
+    ct.appendChild(c2);
+    var s2=sc(cv2,Math.min(260,innerHeight*.32)),cx=s2.c,w2=s2.w,h2=s2.h;
+    var pp={t:14,r:12,b:38,l:42},cw2=w2-pp.l-pp.r,ch2=h2-pp.t-pp.b;
+    var mx2=5,gap2=cw2/P.length,bw2=Math.min(gap2*.3,18);
+    cx.font='11px sans-serif';cx.textAlign='right';cx.fillStyle='#8a9ab0';
+    for(var i=0;i<=4;i++){var y=pp.t+ch2-ch2*(i/4);cx.fillText((mx2*i/4).toFixed(1),pp.l-6,y+4);cx.beginPath();cx.moveTo(pp.l,y);cx.lineTo(w2-pp.r,y);cx.strokeStyle=i?'#eef2f6':'#cdd8e4';cx.lineWidth=1;cx.stroke()}
+    var ht2=[];
+    P.forEach(function(lb,i){
+      var xc=pp.l+gap2*i+gap2/2;
+      [['#5bc0be',weekly[0][i],-1],['#0d7377',weekly[1][i],1]].forEach(function(d){
+        var cl=d[0],v=d[1],off=d[2],x=xc+off*bw2*.6;
+        var bh=ch2*(v/mx2),by=pp.t+ch2-bh;
+        var g=cx.createLinearGradient(0,by,0,pp.t+ch2);g.addColorStop(0,cl);g.addColorStop(1,cl+'55');
+        cx.fillStyle=g;rr(cx,x-bw2/2,by,bw2,bh,2);cx.fill();
+        cx.fillStyle=cl;cx.font='bold 9px sans-serif';cx.textAlign='center';cx.fillText(v.toFixed(1),x,by-4);
+        ht2.push({x:x-bw2/2,y:by,w:bw2,h:bh,lb:lb,v:v,u:' cm/天',cl:cl});
+      });
+      cx.fillStyle='#4a6070';cx.textAlign='center';cx.font='10px sans-serif';cx.fillText(lb,xc,pp.t+ch2+16);
+    });
+    cv2._h=ht2;cv2._t='bar';addTip(cv2);
+  }
+  else if(cur==='env'){
+    var c1=mkCard('温度变化趋势 (°C)'),cv1=mkCv();c1.appendChild(cv1);ct.appendChild(c1);
+    drawLine(cv1,ds,[{d:tD,cl:'#0d7377',n:'温度',u:'°C'}]);addTip(cv1);
+    var c2=mkCard('湿度变化趋势 (%)'),cv2=mkCv();c2.appendChild(cv2);ct.appendChild(c2);
+    drawLine(cv2,ds,[{d:hD,cl:'#2ec4b6',n:'湿度',u:'%'}]);addTip(cv2);
+    var c3=mkCard('光照与CO₂浓度'),cv3=mkCv();c3.appendChild(cv3);
+    c3.appendChild(mkLeg([{c:'#e6a817',n:'光照 (μmol)'},{c:'#8a6abf',n:'CO₂ (ppm)'}]));
+    ct.appendChild(c3);
+    drawLine(cv3,ds,[{d:lD,cl:'#e6a817',n:'光照',u:' μmol'},{d:cD,cl:'#8a6abf',n:'CO₂',u:' ppm'}]);addTip(cv3);
+  }
+  else if(cur==='harvest'){
+    var c1=mkCard('各品种产量 (kg)'),cv1=mkCv();c1.appendChild(cv1);ct.appendChild(c1);
+    drawBar(cv1,P,yK,CL,' kg');addTip(cv1);
+    var eff=[];P.forEach(function(_,i){eff.push(+(yK[i]/gR[i]).toFixed(1))});
+    var c2=mkCard('产量效率 (kg/生长速率)'),cv2=mkCv();c2.appendChild(cv2);ct.appendChild(c2);
+    drawBar(cv2,P,eff,CL.slice().reverse(),'');addTip(cv2);
+  }
+}
+render();
+var rt;window.onresize=function(){clearTimeout(rt);rt=setTimeout(render,200)};
+</script>
+</body>
+</html>

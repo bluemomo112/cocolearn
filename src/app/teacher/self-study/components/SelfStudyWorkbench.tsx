@@ -1300,6 +1300,13 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
         interactive_test: 'test',
       };
 
+      const urlMap: Record<string, string> = {
+        interactive_animation: '/mock-h5/animation.html',
+        interactive_visualization: '/mock-h5/visualization.html',
+        interactive_simulation: '/mock-h5/simulation.html',
+        interactive_test: '/mock-h5/test.html',
+      };
+
       setTimeout(() => {
         const newResource = {
           id: `ai_res_${Date.now()}`,
@@ -1310,7 +1317,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
           generatedAt: new Date(),
           toolId: tool.id,
           interactiveCategory: categoryMap[tool.id],
-          url: `https://example.com/ai-generated/${tool.id}/${Date.now()}`,
+          url: urlMap[tool.id] || '/mock-h5/animation.html',
         };
 
         setAiGeneratedResources(prev => [newResource, ...prev]);

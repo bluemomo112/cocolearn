@@ -435,7 +435,7 @@ IF 温度 > 28℃ THEN 启动降温
     title: '光合作用过程动画',
     type: 'interactive',
     description: '动画展示光反应和暗反应的完整过程',
-    url: 'https://example.com/photosynthesis-animation',
+    url: '/mock-h5/animation.html',
     interactiveCategory: 'animation',
   },
   {
@@ -443,7 +443,7 @@ IF 温度 > 28℃ THEN 启动降温
     title: '植物水分运输动画',
     type: 'interactive',
     description: '从根部吸水到叶片蒸腾的全过程动画',
-    url: 'https://example.com/water-transport-animation',
+    url: '/mock-h5/animation.html',
     interactiveCategory: 'animation',
   },
   {
@@ -451,7 +451,7 @@ IF 温度 > 28℃ THEN 启动降温
     title: '二次函数图像探索器',
     type: 'interactive',
     description: 'Desmos 风格，调节参数观察图像变化',
-    url: 'https://example.com/quadratic-explorer',
+    url: '/mock-h5/visualization.html',
     interactiveCategory: 'visualization',
   },
   {
@@ -459,7 +459,7 @@ IF 温度 > 28℃ THEN 启动降温
     title: '植物生长数据可视化',
     type: 'interactive',
     description: '多维度农业数据交互式可视化',
-    url: 'https://example.com/plant-growth-viz',
+    url: '/mock-h5/visualization.html',
     interactiveCategory: 'visualization',
   },
   {
@@ -467,7 +467,7 @@ IF 温度 > 28℃ THEN 启动降温
     title: 'PhET: 温室效应模拟',
     type: 'interactive',
     description: '调节大气成分观察温度变化',
-    url: 'https://phet.colorado.edu/sims/html/greenhouse-effect/latest/greenhouse-effect_all.html',
+    url: '/mock-h5/simulation.html',
     interactiveCategory: 'simulation',
   },
   {
@@ -475,7 +475,7 @@ IF 温度 > 28℃ THEN 启动降温
     title: 'PhET: pH值模拟实验',
     type: 'interactive',
     description: '测量不同溶液的酸碱性',
-    url: 'https://phet.colorado.edu/sims/html/ph-scale/latest/ph-scale_all.html',
+    url: '/mock-h5/simulation.html',
     interactiveCategory: 'simulation',
   },
   {
@@ -483,7 +483,7 @@ IF 温度 > 28℃ THEN 启动降温
     title: '植物工厂知识闯关',
     type: 'interactive',
     description: '互动闯关测试，检验植物工厂知识掌握',
-    url: 'https://example.com/plant-factory-quiz',
+    url: '/mock-h5/test.html',
     interactiveCategory: 'test',
   },
   {
@@ -491,7 +491,7 @@ IF 温度 > 28℃ THEN 启动降温
     title: '水培系统设计挑战',
     type: 'interactive',
     description: '拖拽式互动练习，设计水培系统',
-    url: 'https://example.com/hydroponic-challenge',
+    url: '/mock-h5/test.html',
     interactiveCategory: 'test',
   }
 ];
