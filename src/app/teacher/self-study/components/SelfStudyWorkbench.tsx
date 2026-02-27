@@ -63,6 +63,8 @@ interface SelfStudyWorkbenchProps {
   isAIGenerating?: boolean;
   onCreateNewSpace?: () => void;
   onViewResults?: () => void;
+  pendingExamFiles?: File[] | null;
+  onExamFilesHandled?: () => void;
 }
 
 interface ChatMessage {
@@ -700,7 +702,7 @@ function LearningStatusPanel({
 }
 
 // 主组件
-export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isAIGenerating = false, onCreateNewSpace, onViewResults }: SelfStudyWorkbenchProps) {
+export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isAIGenerating = false, onCreateNewSpace, onViewResults, pendingExamFiles, onExamFilesHandled }: SelfStudyWorkbenchProps) {
   const { t } = useLanguage();
   const router = useRouter();
 
@@ -1109,6 +1111,13 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
   const [examDetectedFiles, setExamDetectedFiles] = useState<File[] | null>(null);
   const [examProcessingStep, setExamProcessingStep] = useState<ExamProcessingStep | null>(null);
   const [examProcessingTaskId, setExamProcessingTaskId] = useState<string | null>(null);
+
+  // 响应来自 page.tsx 的外部试卷文件（新建空间时上传）
+  useEffect(() => {
+    if (pendingExamFiles && pendingExamFiles.length > 0) {
+      setExamDetectedFiles(pendingExamFiles);
+    }
+  }, [pendingExamFiles]);
 
   // 任务/资源设置弹窗
   const [settingsTaskId, setSettingsTaskId] = useState<string | null>(null);
@@ -1594,6 +1603,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
   const handleExamConfirm = (processingConfig: ExamProcessingConfig) => {
     console.log('[ExamProcess] 开始转换:', processingConfig);
     setExamDetectedFiles(null);
+    onExamFilesHandled?.();
     const taskId = `task_exam_${Date.now()}`;
     setExamProcessingTaskId(taskId);
     setExamProcessingStep('detecting');
@@ -3974,7 +3984,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
         <ExamDetectedModal
           files={examDetectedFiles}
           onConfirm={handleExamConfirm}
-          onCancel={() => setExamDetectedFiles(null)}
+          onCancel={() => { setExamDetectedFiles(null); onExamFilesHandled?.(); }}
         />
       )}
 

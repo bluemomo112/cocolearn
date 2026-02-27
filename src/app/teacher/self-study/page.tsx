@@ -51,6 +51,9 @@ export default function SelfStudyPage() {
   const [showResourceLibraryModal, setShowResourceLibraryModal] = useState(false);
   const [showAIGenerateModal, setShowAIGenerateModal] = useState(false);
   const [isAIGenerating, setIsAIGenerating] = useState(false);
+  const [pendingExamFiles, setPendingExamFiles] = useState<File[] | null>(null);
+
+  const EXAM_PATTERN = /(?:试卷|测验|测试|考试|期中|期末|月考|模拟|真题|quiz|exam|test|midterm|final|assessment)/i;
 
   // 检查是否首次访问
   useEffect(() => {
@@ -132,68 +135,75 @@ export default function SelfStudyPage() {
       return;
     }
 
-    // 从第一个文件名生成空间标题
-    const firstFileName = files[0]?.name || '未命名空间';
-    const title = firstFileName.replace(/\.[^/.]+$/, ''); // 移除文件扩展名
+    // 检测试卷文件
+    const examFiles = files.filter(f => EXAM_PATTERN.test(f.name));
+    const normalFiles = files.filter(f => !EXAM_PATTERN.test(f.name));
 
-    // 更新空间标题
-    if (currentSpace) {
-      const updatedSpace = { ...currentSpace, title };
+    if (examFiles.length > 0) {
+      console.log('[ExamDetect] 新建空间时检测到试卷文件:', examFiles.map(f => f.name));
+      setPendingExamFiles(examFiles);
+    }
+
+    // 非试卷文件正常处理
+    if (normalFiles.length > 0 && currentSpace) {
+      const title = normalFiles[0]?.name || '未命名空间';
+      const spaceTitle = title.replace(/\.[^/.]+$/, '');
+      const updatedSpace = { ...currentSpace, title: spaceTitle };
       setCurrentSpace(updatedSpace);
-
-      // 更新spaces列表中的标题
       setSpaces(prev =>
-        prev.map(s => s.id === currentSpace.id ? { ...s, title, resourceCount: files.length } : s)
+        prev.map(s => s.id === currentSpace.id ? { ...s, title: spaceTitle, resourceCount: normalFiles.length } : s)
       );
-
-      // 创建mock Resource对象（演示用）
-      const mockResources: Resource[] = files.map((file, index) => {
+      const mockResources: Resource[] = normalFiles.map((file, index) => {
         const ext = file.name.split('.').pop()?.toLowerCase() || '';
         let type: 'document' | 'presentation' | 'video' = 'document';
         let fileType: 'docx' | 'pptx' | 'mp4' = 'docx';
-
-        if (['ppt', 'pptx'].includes(ext)) {
-          type = 'presentation';
-          fileType = 'pptx';
-        } else if (['mp4', 'avi', 'mov'].includes(ext)) {
-          type = 'video';
-          fileType = 'mp4';
-        }
-
+        if (['ppt', 'pptx'].includes(ext)) { type = 'presentation'; fileType = 'pptx'; }
+        else if (['mp4', 'avi', 'mov'].includes(ext)) { type = 'video'; fileType = 'mp4'; }
         return {
           id: `resource_${Date.now()}_${index}`,
           title: file.name.replace(/\.[^/.]+$/, ''),
-          type,
-          fileType,
+          type, fileType,
           path: `/mock/path/${file.name}`,
           description: `上传的文件：${file.name}`,
           duration: '10分钟',
         };
       });
-
-      // 添加到空间resources
-      setCurrentSpace({
-        ...updatedSpace,
-        resources: [...updatedSpace.resources, ...mockResources],
-      });
+      setCurrentSpace({ ...updatedSpace, resources: [...updatedSpace.resources, ...mockResources] });
+    } else if (examFiles.length > 0 && currentSpace) {
+      // 仅有试卷文件时，用第一个文件名作为空间标题
+      const spaceTitle = examFiles[0].name.replace(/\.[^/.]+$/, '');
+      const updatedSpace = { ...currentSpace, title: spaceTitle };
+      setCurrentSpace(updatedSpace);
+      setSpaces(prev =>
+        prev.map(s => s.id === currentSpace.id ? { ...s, title: spaceTitle } : s)
+      );
     }
+
     setShowFileUploadModal(false);
   };
 
   // 处理资源库选择
   const handleResourceSelect = (resources: Resource[]) => {
-    // 将选中的资源添加到当前空间
     if (currentSpace && resources.length > 0) {
-      // 从第一个资源标题生成空间标题
-      const title = resources[0]?.title || '未命名空间';
+      // 检测试卷资源（通过标题匹配）
+      const examResources = resources.filter(r => EXAM_PATTERN.test(r.title));
+      const normalResources = resources.filter(r => !EXAM_PATTERN.test(r.title));
 
+      if (examResources.length > 0) {
+        console.log('[ExamDetect] 资源库中检测到试卷资源:', examResources.map(r => r.title));
+        // 用资源标题创建合成 File 对象，供 ExamDetectedModal 使用
+        const syntheticFiles = examResources.map(r => new File([], r.title));
+        setPendingExamFiles(syntheticFiles);
+      }
+
+      // 非试卷资源正常添加
+      const resourcesToAdd = normalResources.length > 0 ? normalResources : [];
+      const title = resources[0]?.title || '未命名空间';
       const updatedSpace = { ...currentSpace, title };
       setCurrentSpace({
         ...updatedSpace,
-        resources: [...updatedSpace.resources, ...resources],
+        resources: [...updatedSpace.resources, ...resourcesToAdd],
       });
-
-      // 更新spaces列表中的标题和资源数量
       setSpaces(prev =>
         prev.map(s => s.id === currentSpace.id ? { ...s, title, resourceCount: resources.length } : s)
       );
@@ -365,6 +375,8 @@ export default function SelfStudyPage() {
           isAIGenerating={isAIGenerating}
           onCreateNewSpace={handleCreateSpace}
           onViewResults={() => setViewState('results')}
+          pendingExamFiles={pendingExamFiles}
+          onExamFilesHandled={() => setPendingExamFiles(null)}
         />
       )}
 

@@ -2113,7 +2113,7 @@ export function UseViewHeader({ config, onBack }: any) {
     <header className="h-10 bg-white/80 backdrop-blur-xl border-b border-gray-100 flex items-center justify-between px-4 shrink-0">
       <div className="flex items-center gap-2">
         <div className="flex items-center gap-1.5 px-2 py-0.5 bg-emerald-50 rounded">
-          <span className="text-xs font-medium text-emerald-700">CocoLearn Teacher</span>
+          <span className="text-xs font-medium text-emerald-700">CocoStudy Teacher</span>
         </div>
         <div className="w-px h-5 bg-gray-200"></div>
         <div className="flex items-center gap-1.5">
@@ -2163,7 +2163,7 @@ export function ResultsViewHeader({ config, onBack, onSwitchToUse }: any) {
     <header className="h-10 bg-white/80 backdrop-blur-xl border-b border-gray-100 flex items-center justify-between px-4 shrink-0">
       <div className="flex items-center gap-2">
         <div className="flex items-center gap-1.5 px-2 py-0.5 bg-purple-50 rounded">
-          <span className="text-xs font-medium text-purple-700">CocoLearn Teacher</span>
+          <span className="text-xs font-medium text-purple-700">CocoStudy Teacher</span>
         </div>
         <div className="w-px h-5 bg-gray-200"></div>
         <div className="flex items-center gap-1.5">
