@@ -23,3 +23,25 @@ export interface QuickResultData {
     explanation?: string;
   }>;
 }
+
+// 试卷处理配置
+export interface ExamProcessingConfig {
+  mode: 'exact_extract' | 'extract_and_regenerate';
+  batchMode?: 'separate' | 'same_exam_multi_student' | 'merge';
+  includeHandwriting: boolean;
+  files: File[];
+}
+
+// 试卷转换进度
+export type ExamProcessingStep = 'detecting' | 'extracting' | 'converting' | 'done';
+
+// 错题学习上下文
+export interface ErrorQuestionContext {
+  taskId: string;
+  questionId: string;
+  question: TaskQuestion;
+  userAnswer: string | string[];
+  correctAnswer: string | string[];
+  explanation?: string;
+  chatHistory?: Array<{ role: 'user' | 'assistant'; content: string }>;
+}

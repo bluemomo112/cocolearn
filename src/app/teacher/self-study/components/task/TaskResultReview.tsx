@@ -1,29 +1,74 @@
 'use client';
 
-import { useState } from 'react';
-import { ChevronLeft, ChevronRight, Award, Lightbulb } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { ChevronLeft, ChevronRight, Award, Lightbulb, RotateCcw, Sparkles, MessageCircle } from 'lucide-react';
 import { Task, TaskQuestion } from '@/types/shared-context';
 import QuestionRenderer, { getQuestionTypeLabel } from './QuestionRenderer';
 import RichContent from './RichContent';
 import { QuickResultData } from './taskTypes';
+import ErrorQuestionChat from './ErrorQuestionChat';
 
 interface TaskResultReviewProps {
   task: Task;
   quickResult: QuickResultData;
   selectedAnswers: Record<string, string | string[]>;
   onClose: () => void;
+  onRetryWrongQuestions?: () => void;
+  onGeneratePractice?: () => void;
+  onBackToChat?: () => void;
 }
 
 export default function TaskResultReview({
   task, quickResult, selectedAnswers, onClose,
+  onRetryWrongQuestions, onGeneratePractice, onBackToChat,
 }: TaskResultReviewProps) {
   const questions = task.questions || [];
   const [currentPage, setCurrentPage] = useState(0);
+  const [chatHistories, setChatHistories] = useState<Record<string, Array<{ role: 'user' | 'assistant'; content: string }>>>({});
+  const [expandedChat, setExpandedChat] = useState<string | null>(null);
   const isSummaryPage = currentPage === questions.length;
   const scorePercent = Math.round((quickResult.correctCount / quickResult.totalCount) * 100);
   const scoreColor = scorePercent >= 80 ? 'text-green-600' : scorePercent >= 60 ? 'text-amber-600' : 'text-red-600';
 
   const getResult = (qId: string) => quickResult.details.find(d => d.questionId === qId);
+
+  // Auto-expand chat for wrong answers when navigating
+  useEffect(() => {
+    if (!isSummaryPage) {
+      const q = questions[currentPage];
+      const result = getResult(q.id);
+      if (result && !result.correct) {
+        setExpandedChat(q.id);
+      } else {
+        setExpandedChat(null);
+      }
+    }
+  }, [currentPage]);
+
+  const handleSendMessage = (questionId: string, message: string) => {
+    setChatHistories(prev => {
+      const existing = prev[questionId] || [];
+      const q = questions.find(q => q.id === questionId);
+      const detail = getResult(questionId);
+      let history = [...existing];
+      if (history.length === 0 && q) {
+        const ua = Array.isArray(detail?.userAnswer) ? detail.userAnswer.join(', ') : (detail?.userAnswer || '');
+        const ca = Array.isArray(detail?.correctAnswer) ? detail.correctAnswer.join(', ') : (detail?.correctAnswer || q.answer?.toString() || '');
+        history.push({
+          role: 'assistant',
+          content: `让我来帮你分析这道题。\n\n你的答案是「${ua}」，正确答案是「${ca}」。\n\n${detail?.explanation || q.explanation || ''}\n\n如果还有不明白的地方，可以继续问我哦~`
+        });
+      }
+      history.push({ role: 'user', content: message });
+      setTimeout(() => {
+        setChatHistories(p => ({
+          ...p,
+          [questionId]: [...(p[questionId] || []), { role: 'assistant', content: `好的，让我换个角度解释一下。\n\n这道题的关键在于理解核心概念。${q?.explanation ? '根据解析：' + q.explanation.substring(0, 100) + '...' : '建议你回顾相关学习材料，重点关注这个知识点。'}\n\n还有其他疑问吗？` }]
+        }));
+      }, 800);
+      return { ...prev, [questionId]: history };
+    });
+  };
 
   const getNavColor = (idx: number) => {
     if (idx === questions.length) return 'bg-gray-600 text-white';
@@ -39,6 +84,9 @@ export default function TaskResultReview({
     typeStats[l].total++;
     if (getResult(q.id)?.correct) typeStats[l].correct++;
   });
+
+  const currentQuestion = !isSummaryPage ? questions[currentPage] : null;
+  const currentDetail = currentQuestion ? getResult(currentQuestion.id) : undefined;
 
   return (
     <div className="fixed inset-0 z-50 bg-white flex flex-col">
@@ -66,11 +114,43 @@ export default function TaskResultReview({
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 flex flex-col overflow-hidden">
         {isSummaryPage ? (
-          <ReviewSummary result={quickResult} pct={scorePercent} color={scoreColor} stats={typeStats} onClose={onClose} />
+          <div className="flex-1 overflow-auto">
+            <ReviewSummary
+              result={quickResult} pct={scorePercent} color={scoreColor} stats={typeStats}
+              onClose={onClose}
+              onRetryWrongQuestions={onRetryWrongQuestions}
+              onGeneratePractice={onGeneratePractice}
+              onBackToChat={onBackToChat}
+            />
+          </div>
         ) : (
-          <ReviewQuestion q={questions[currentPage]} idx={currentPage} detail={getResult(questions[currentPage].id)} answer={selectedAnswers[questions[currentPage].id]} />
+          <>
+            <div className="flex-1 overflow-auto">
+              <ReviewQuestion
+                q={questions[currentPage]}
+                idx={currentPage}
+                detail={currentDetail}
+                answer={selectedAnswers[questions[currentPage].id]}
+              />
+            </div>
+            {currentQuestion && currentDetail && !currentDetail.correct && (
+              <div className="shrink-0">
+                <ErrorQuestionChat
+                  questionId={currentQuestion.id}
+                  question={currentQuestion}
+                  userAnswer={currentDetail.userAnswer || selectedAnswers[currentQuestion.id] || ''}
+                  correctAnswer={currentDetail.correctAnswer || currentQuestion.answer || ''}
+                  explanation={currentDetail.explanation || currentQuestion.explanation}
+                  isExpanded={expandedChat === currentQuestion.id}
+                  onToggle={() => setExpandedChat(prev => prev === currentQuestion.id ? null : currentQuestion.id)}
+                  chatHistory={chatHistories[currentQuestion.id] || []}
+                  onSendMessage={handleSendMessage}
+                />
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -133,13 +213,17 @@ function ReviewQuestion({ q, idx, detail, answer }: {
   );
 }
 
-function ReviewSummary({ result, pct, color, stats, onClose }: {
+function ReviewSummary({ result, pct, color, stats, onClose, onRetryWrongQuestions, onGeneratePractice, onBackToChat }: {
   result: QuickResultData; pct: number; color: string;
   stats: Record<string, { total: number; correct: number }>;
   onClose: () => void;
+  onRetryWrongQuestions?: () => void;
+  onGeneratePractice?: () => void;
+  onBackToChat?: () => void;
 }) {
   const stroke = pct >= 80 ? '#22c55e' : pct >= 60 ? '#f59e0b' : '#ef4444';
   const dash = (pct / 100) * 327;
+  const hasWrongQuestions = result.correctCount < result.totalCount;
 
   return (
     <div className="max-w-2xl mx-auto py-12 px-8">
@@ -193,10 +277,31 @@ function ReviewSummary({ result, pct, color, stats, onClose }: {
         </p>
       </div>
 
-      <button onClick={onClose}
-        className="w-full py-4 rounded-xl bg-primary-600 text-white font-medium hover:bg-primary-700 transition-colors flex items-center justify-center gap-2">
-        <ChevronLeft size={18} />返回对话
-      </button>
+      <div className="space-y-3">
+        {hasWrongQuestions && (
+          <div className="flex gap-3">
+            {onRetryWrongQuestions && (
+              <button onClick={onRetryWrongQuestions}
+                className="flex-1 py-3.5 rounded-xl border-2 border-amber-300 bg-amber-50 text-amber-700 font-medium hover:bg-amber-100 transition-colors flex items-center justify-center gap-2">
+                <RotateCcw size={18} />重做错题
+              </button>
+            )}
+            {onGeneratePractice && (
+              <button onClick={onGeneratePractice}
+                className="flex-1 py-3.5 rounded-xl border-2 border-purple-300 bg-purple-50 text-purple-700 font-medium hover:bg-purple-100 transition-colors flex items-center justify-center gap-2">
+                <Sparkles size={18} />生成针对性练习
+              </button>
+            )}
+          </div>
+        )}
+        <button onClick={onBackToChat || onClose}
+          className="w-full py-4 rounded-xl bg-primary-600 text-white font-medium hover:bg-primary-700 transition-colors flex flex-col items-center justify-center gap-1">
+          <div className="flex items-center gap-2">
+            <MessageCircle size={18} />回到对话区继续学习
+          </div>
+          <span className="text-xs text-primary-200 font-normal">错题分析已同步到AI对话上下文</span>
+        </button>
+      </div>
     </div>
   );
 }

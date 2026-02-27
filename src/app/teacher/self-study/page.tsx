@@ -3,9 +3,11 @@
 import { useState, useEffect } from 'react';
 import { SpaceSummary, SpaceConfig, createDefaultSpaceConfig } from '@/types/self-study';
 import { Resource } from '@/types/shared-context';
+import { usePersistedState, clearSpaceStorage } from './utils/storage';
 import Onboarding from './components/Onboarding';
 import SpaceManager from './components/SpaceManager';
 import SelfStudyWorkbench from './components/SelfStudyWorkbench';
+import SpaceResults from './components/SpaceResults';
 import CreationMethodModal from './components/CreationMethodModal';
 import FileUploadModal from './components/FileUploadModal';
 import ResourceLibraryModal from './components/ResourceLibraryModal';
@@ -37,12 +39,12 @@ const mockSpaces: SpaceSummary[] = [
   },
 ];
 
-type ViewState = 'manager' | 'onboarding' | 'workbench';
+type ViewState = 'manager' | 'onboarding' | 'workbench' | 'results';
 
 export default function SelfStudyPage() {
-  const [viewState, setViewState] = useState<ViewState>('manager');
-  const [spaces, setSpaces] = useState<SpaceSummary[]>(mockSpaces);
-  const [currentSpace, setCurrentSpace] = useState<SpaceConfig | null>(null);
+  const [viewState, setViewState] = usePersistedState<ViewState>('self-study:viewState', 'manager');
+  const [spaces, setSpaces] = usePersistedState<SpaceSummary[]>('self-study:spaces', mockSpaces);
+  const [currentSpace, setCurrentSpace] = usePersistedState<SpaceConfig | null>('self-study:currentSpace', null);
   const [isFirstVisit, setIsFirstVisit] = useState(false);
   const [showCreationMethodModal, setShowCreationMethodModal] = useState(false);
   const [showFileUploadModal, setShowFileUploadModal] = useState(false);
@@ -297,6 +299,7 @@ export default function SelfStudyPage() {
   // 删除空间
   const handleDeleteSpace = (spaceId: string) => {
     setSpaces(prev => prev.filter(s => s.id !== spaceId));
+    clearSpaceStorage(spaceId);
   };
 
   // 完成引导流程，创建新空间
@@ -322,6 +325,11 @@ export default function SelfStudyPage() {
   const handleBackToManager = () => {
     setCurrentSpace(null);
     setViewState('manager');
+  };
+
+  // 从结果页返回工作台
+  const handleBackFromResults = () => {
+    setViewState('workbench');
   };
 
   // 取消引导流程
@@ -356,6 +364,14 @@ export default function SelfStudyPage() {
           onUpdateConfig={(updated) => setCurrentSpace(updated)}
           isAIGenerating={isAIGenerating}
           onCreateNewSpace={handleCreateSpace}
+          onViewResults={() => setViewState('results')}
+        />
+      )}
+
+      {viewState === 'results' && currentSpace && (
+        <SpaceResults
+          spaceId={currentSpace.id}
+          onBack={handleBackFromResults}
         />
       )}
 

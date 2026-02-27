@@ -25,6 +25,11 @@ export interface Resource {
   textContent?: string;
   url?: string;
   interactiveCategory?: 'animation' | 'visualization' | 'simulation' | 'test';
+  // 试卷相关扩展
+  sourceType?: 'manual_upload' | 'exam_paper' | 'student_answer_sheet';
+  linkedTaskId?: string;
+  studentName?: string;
+  visibility?: ResourceVisibility;
 }
 
 export interface TaskQuestion {
@@ -45,6 +50,22 @@ export interface TaskRubric {
   fail: string;
 }
 
+// 任务级别设置
+export interface TaskSettings {
+  showAnswersAfterSubmit: boolean;
+  showExplanationsAfterSubmit: boolean;
+  allowRetry: boolean;
+  fullscreenMode: boolean;
+  allowViewResources: boolean; // 开卷模式
+  source: 'exam_converted' | 'ai_generated' | 'manual';
+}
+
+// 资源可见性配置
+export interface ResourceVisibility {
+  mode: 'always' | 'after_task' | 'hidden';
+  afterTaskId?: string;
+}
+
 export interface Task {
   id: string;
   type: 'quiz' | 'assignment' | 'reflection';
@@ -59,6 +80,7 @@ export interface Task {
   prerequisite?: string[];
   submissionPlaceholder?: string;
   relatedResourceIds?: string[];
+  settings?: TaskSettings;
 }
 
 export interface CompetencyUpdate {

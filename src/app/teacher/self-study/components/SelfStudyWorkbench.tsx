@@ -24,10 +24,15 @@ import ResourceInlineViewer, { InlineViewResource } from './ResourceInlineViewer
 import { useLanguage } from '@/contexts/LanguageContext';
 import { TaskEditModal } from '@/app/teacher/note-config/modals';
 import { useRouter } from 'next/navigation';
+import { usePersistedState } from '../utils/storage';
 import { PublishMode, PublishScope } from '@/types/self-study';
 import TaskExpandedCard from './task/TaskExpandedCard';
 import TaskResultReview from './task/TaskResultReview';
-import { QuickResultData } from './task/taskTypes';
+import { QuickResultData, ExamProcessingConfig, ExamProcessingStep } from './task/taskTypes';
+import ExamDetectedModal from './ExamDetectedModal';
+import TaskSettingsPopover from './TaskSettingsPopover';
+import ResourceSettingsPopover from './ResourceSettingsPopover';
+import type { TaskSettings, ResourceVisibility } from '@/types/shared-context';
 
 // 主题配置 - 修改这里即可改变整体风格
 const THEME = {
@@ -57,6 +62,7 @@ interface SelfStudyWorkbenchProps {
   onUpdateConfig: (config: SpaceConfig) => void;
   isAIGenerating?: boolean;
   onCreateNewSpace?: () => void;
+  onViewResults?: () => void;
 }
 
 interface ChatMessage {
@@ -164,9 +170,9 @@ const MOCK_CURRENT_NODE = 'node_3';
 // Mock generated tasks for self-directed mode - will be created inside component with t()
 
 // Enhanced Notes Panel component
-function EnhancedNotesPanel({ learningMode, isAIGenerating, getThemeClass }: { learningMode?: LearningMode; isAIGenerating?: boolean; getThemeClass: (type: 'bg' | 'bgHover' | 'text' | 'border' | 'icon') => string }) {
+function EnhancedNotesPanel({ learningMode, isAIGenerating, getThemeClass, configId }: { learningMode?: LearningMode; isAIGenerating?: boolean; getThemeClass: (type: 'bg' | 'bgHover' | 'text' | 'border' | 'icon') => string; configId?: string }) {
   const { t } = useLanguage();
-  const [notes, setNotes] = useState<Note[]>([]);
+  const [notes, setNotes] = usePersistedState<Note[]>(`self-study:wb:${configId ?? 'default'}:notes`, []);
   const [activeNoteId, setActiveNoteId] = useState('');
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
@@ -694,7 +700,7 @@ function LearningStatusPanel({
 }
 
 // 主组件
-export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isAIGenerating = false, onCreateNewSpace }: SelfStudyWorkbenchProps) {
+export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isAIGenerating = false, onCreateNewSpace, onViewResults }: SelfStudyWorkbenchProps) {
   const { t } = useLanguage();
   const router = useRouter();
 
@@ -1048,7 +1054,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
   const COLLAPSED_WIDTH = 72;
 
   // 聊天状态
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messages, setMessages] = usePersistedState<ChatMessage[]>(`self-study:wb:${config.id}:messages`, []);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId] = useState(`session_${Date.now()}`);
@@ -1063,10 +1069,18 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
     totalCount: number;
     details: any[];
   } | null>(null);
-  const [completedTasks, setCompletedTasks] = useState<Set<string>>(new Set());
+  const [completedTasksArray, setCompletedTasksArray] = usePersistedState<string[]>(`self-study:wb:${config.id}:completedTasks`, []);
+  const completedTasks = new Set(completedTasksArray);
+  const setCompletedTasks = (updater: Set<string> | ((prev: Set<string>) => Set<string>)) => {
+    if (typeof updater === 'function') {
+      setCompletedTasksArray(prev => [...updater(new Set(prev))]);
+    } else {
+      setCompletedTasksArray([...updater]);
+    }
+  };
 
   // 计时器状态
-  const [elapsedTime, setElapsedTime] = useState(0);
+  const [elapsedTime, setElapsedTime] = usePersistedState<number>(`self-study:wb:${config.id}:elapsedTime`, 0);
   const [isTimerRunning, setIsTimerRunning] = useState(true);
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -1076,8 +1090,8 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
   );
 
   // 学习路径状态
-  const [learningPath, setLearningPath] = useState<LearningPathNode[]>(MOCK_LEARNING_PATH);
-  const [currentNodeId, setCurrentNodeId] = useState(MOCK_CURRENT_NODE);
+  const [learningPath, setLearningPath] = usePersistedState<LearningPathNode[]>(`self-study:wb:${config.id}:learningPath`, MOCK_LEARNING_PATH);
+  const [currentNodeId, setCurrentNodeId] = usePersistedState<string>(`self-study:wb:${config.id}:currentNodeId`, MOCK_CURRENT_NODE);
 
   // 设置弹窗
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -1090,6 +1104,15 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
 
   // 链接输入弹窗
   const [isLinkInputOpen, setIsLinkInputOpen] = useState(false);
+
+  // 试卷检测状态
+  const [examDetectedFiles, setExamDetectedFiles] = useState<File[] | null>(null);
+  const [examProcessingStep, setExamProcessingStep] = useState<ExamProcessingStep | null>(null);
+  const [examProcessingTaskId, setExamProcessingTaskId] = useState<string | null>(null);
+
+  // 任务/资源设置弹窗
+  const [settingsTaskId, setSettingsTaskId] = useState<string | null>(null);
+  const [settingsResourceId, setSettingsResourceId] = useState<string | null>(null);
 
   // 空间名称编辑状态
   const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -1135,7 +1158,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
   });
 
   // 生成的任务列表（初始为空）
-  const [generatedTasks, setGeneratedTasks] = useState<typeof MOCK_GENERATED_TASKS>([]);
+  const [generatedTasks, setGeneratedTasks] = usePersistedState<typeof MOCK_GENERATED_TASKS>(`self-study:wb:${config.id}:generatedTasks`, []);
   const [isGeneratingTask, setIsGeneratingTask] = useState(false);
   const [isReflectionDismissed, setIsReflectionDismissed] = useState(false);
 
@@ -1371,6 +1394,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
 
   // 初始化欢迎消息
   useEffect(() => {
+    if (messages.length > 0) return; // already have persisted messages
     if (config.learningMode === 'ai_guided') {
       // AI引导模式：加载完整的 mock 对话（自由探索 + 模式切换 + AI引导）
       setMessages([...MOCK_SELF_DIRECTED_MESSAGES, ...MOCK_AI_GUIDED_EXTRA_MESSAGES]);
@@ -1515,11 +1539,42 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
   };
 
   const handleViewAnalytics = () => {
-    router.push(`/teacher/self-study/${config.id}/results`);
+    if (onViewResults) {
+      onViewResults();
+    } else {
+      router.push(`/teacher/self-study/${config.id}/results`);
+    }
   };
+
+  // 试卷关键词正则
+  const EXAM_PATTERN = /(?:试卷|测验|测试|考试|期中|期末|月考|模拟|真题|quiz|exam|test|midterm|final|assessment)/i;
 
   // 处理文件上传
   const handleFileUpload = (files: File[]) => {
+    // 检测是否包含试卷文件
+    const examFiles = files.filter(f => EXAM_PATTERN.test(f.name));
+    if (examFiles.length > 0) {
+      console.log('[ExamDetect] 检测到试卷文件:', examFiles.map(f => f.name));
+      setExamDetectedFiles(examFiles);
+      // 非试卷文件正常处理
+      const normalFiles = files.filter(f => !EXAM_PATTERN.test(f.name));
+      if (normalFiles.length > 0) {
+        const newResources: Resource[] = normalFiles.map((file) => ({
+          id: `resource_${Date.now()}_${Math.random()}`,
+          title: file.name,
+          type: file.type.includes('video') ? 'video' :
+                file.type.includes('presentation') ? 'presentation' : 'document',
+          description: `上传于 ${new Date().toLocaleString('zh-CN')}`,
+        }));
+        onUpdateConfig({
+          ...config,
+          resources: [...config.resources, ...newResources],
+        });
+      }
+      setIsFileUploadOpen(false);
+      return;
+    }
+
     const newResources: Resource[] = files.map((file) => ({
       id: `resource_${Date.now()}_${Math.random()}`,
       title: file.name,
@@ -1533,6 +1588,140 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
       resources: [...config.resources, ...newResources],
     });
     setIsFileUploadOpen(false);
+  };
+
+  // 处理试卷转换确认
+  const handleExamConfirm = (processingConfig: ExamProcessingConfig) => {
+    console.log('[ExamProcess] 开始转换:', processingConfig);
+    setExamDetectedFiles(null);
+    const taskId = `task_exam_${Date.now()}`;
+    setExamProcessingTaskId(taskId);
+    setExamProcessingStep('detecting');
+
+    // Mock 转换进度
+    setTimeout(() => setExamProcessingStep('extracting'), 1000);
+    setTimeout(() => setExamProcessingStep('converting'), 2500);
+    setTimeout(() => {
+      setExamProcessingStep('done');
+      // 生成 mock quiz 任务
+      const mockExamTask = {
+        id: taskId,
+        type: 'quiz',
+        title: processingConfig.files[0]?.name?.replace(/\.[^.]+$/, '') || '试卷测试',
+        status: 'available',
+        questionCount: 5,
+        generatedAt: new Date().toISOString(),
+        settings: {
+          showAnswersAfterSubmit: false,
+          showExplanationsAfterSubmit: false,
+          allowRetry: true,
+          fullscreenMode: true,
+          allowViewResources: false,
+          source: 'exam_converted',
+        },
+        questions: [
+          { id: 'eq1', type: 'single_choice', content: '以下哪个是光合作用的主要产物？', options: ['氧气和葡萄糖', '二氧化碳和水', '氮气和蛋白质', '氢气和脂肪'], answer: 'A', explanation: '光合作用将CO₂和H₂O转化为葡萄糖和O₂。' },
+          { id: 'eq2', type: 'true_false', content: '植物只在白天进行呼吸作用。', options: ['正确', '错误'], answer: 'B', explanation: '植物全天都在进行呼吸作用，不仅限于白天。' },
+          { id: 'eq3', type: 'single_choice', content: '叶绿体中进行光反应的场所是？', options: ['基质', '类囊体薄膜', '外膜', '内膜'], answer: 'B', explanation: '光反应在类囊体薄膜上进行。' },
+          { id: 'eq4', type: 'multiple_choice', content: '以下哪些因素会影响光合作用速率？（多选）', options: ['光照强度', '温度', 'CO₂浓度', '土壤pH值'], answer: ['A', 'B', 'C'], explanation: '光照、温度和CO₂浓度是影响光合速率的三大因素。' },
+          { id: 'eq5', type: 'fill_in_blank', content: '光合作用的化学方程式中，反应物是___和___。', answer: '二氧化碳;水', explanation: '6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂' },
+        ],
+      };
+      setGeneratedTasks(prev => [mockExamTask as any, ...prev]);
+
+      // 原文件作为资源（默认完成测试后可见）
+      const examResource: Resource = {
+        id: `resource_exam_${Date.now()}`,
+        title: processingConfig.files[0]?.name || '试卷原文',
+        type: 'document',
+        description: '试卷原文件（完成测试后可查看）',
+        sourceType: 'exam_paper',
+        linkedTaskId: taskId,
+        visibility: { mode: 'after_task', afterTaskId: taskId },
+      };
+      onUpdateConfig({
+        ...config,
+        resources: [...config.resources, examResource],
+      });
+
+      // 清除进度
+      setTimeout(() => {
+        setExamProcessingStep(null);
+        setExamProcessingTaskId(null);
+      }, 1500);
+    }, 4000);
+  };
+
+  // 保存任务设置
+  const handleSaveTaskSettings = (taskId: string, settings: TaskSettings) => {
+    console.log('[TaskSettings] 保存:', taskId, settings);
+    setGeneratedTasks(prev => prev.map(t =>
+      t.id === taskId ? { ...t, settings } : t
+    ));
+    setSettingsTaskId(null);
+  };
+
+  // 保存资源可见性
+  const handleSaveResourceVisibility = (resourceId: string, visibility: ResourceVisibility) => {
+    console.log('[ResourceVisibility] 保存:', resourceId, visibility);
+    onUpdateConfig({
+      ...config,
+      resources: config.resources.map(r =>
+        r.id === resourceId ? { ...r, visibility } : r
+      ),
+    });
+    setSettingsResourceId(null);
+  };
+
+  // 错题闭环 handlers
+  const handleRetryWrongQuestions = () => {
+    console.log('[ErrorLoop] 重做错题');
+    if (expandedTask) {
+      setTaskDisplayMode('fullscreen');
+      setQuickResult(null);
+    }
+  };
+
+  const handleGeneratePractice = () => {
+    console.log('[ErrorLoop] 生成针对性练习');
+    // Mock: 生成新任务
+    const practiceTask = {
+      id: `task_practice_${Date.now()}`,
+      type: 'quiz',
+      title: `${expandedTask?.title || '测试'} - 针对性练习`,
+      status: 'available',
+      questionCount: 3,
+      generatedAt: new Date().toISOString(),
+      questions: [
+        { id: 'pq1', type: 'single_choice', content: '针对你的薄弱点：光合作用中，水的光解发生在哪里？', options: ['类囊体薄膜', '叶绿体基质', '线粒体', '细胞质'], answer: 'A', explanation: '水的光解是光反应的一部分，发生在类囊体薄膜上。' },
+        { id: 'pq2', type: 'true_false', content: 'C4植物比C3植物更适应高温干旱环境。', options: ['正确', '错误'], answer: 'A', explanation: 'C4植物有特殊的CO₂固定机制，能在高温下维持较高光合速率。' },
+        { id: 'pq3', type: 'single_choice', content: '暗反应（Calvin循环）的主要产物是？', options: ['G3P（甘油醛-3-磷酸）', 'ATP', 'NADPH', 'O₂'], answer: 'A', explanation: 'Calvin循环固定CO₂最终生成G3P，用于合成葡萄糖。' },
+      ],
+    };
+    setGeneratedTasks(prev => [practiceTask as any, ...prev]);
+    setTaskDisplayMode('embedded');
+    setExpandedTask(practiceTask as any);
+  };
+
+  const handleBackToChat = () => {
+    console.log('[ErrorLoop] 回到对话区');
+    setTaskDisplayMode('embedded');
+    // 同步错题上下文到对话
+    if (expandedTask && quickResult) {
+      const wrongDetails = quickResult.details.filter(d => !d.correct);
+      if (wrongDetails.length > 0) {
+        const syncMsg: ChatMessage = {
+          id: `msg_error_sync_${Date.now()}`,
+          role: 'assistant',
+          content: `📊 **错题分析已同步**\n\n刚才的「${expandedTask.title}」中，你有 ${wrongDetails.length} 道题需要加强：\n${wrongDetails.map((d, i) => {
+            const q = expandedTask.questions?.find(q => q.id === d.questionId);
+            return `${i + 1}. ${q?.content?.substring(0, 40) || '题目'}...`;
+          }).join('\n')}\n\n我可以帮你：\n- 深入讲解这些知识点\n- 推荐相关学习资料\n- 生成更多练习题\n\n你想从哪个开始？`,
+          timestamp: new Date(),
+        };
+        setMessages(prev => [...prev, syncMsg]);
+      }
+    }
   };
 
   // 处理链接添加
@@ -2067,6 +2256,9 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
             quickResult={quickResult}
             selectedAnswers={taskMessage?.taskState?.selectedAnswers || {}}
             onClose={() => { setTaskDisplayMode('embedded'); }}
+            onRetryWrongQuestions={handleRetryWrongQuestions}
+            onGeneratePractice={handleGeneratePractice}
+            onBackToChat={handleBackToChat}
           />
         );
       })()}
@@ -2461,7 +2653,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                         <div
                           key={resource.id}
                           onClick={() => handleResourceClick(resource)}
-                          className={`flex items-center gap-3 p-3 rounded-lg transition-all cursor-pointer bg-white border border-gray-200 hover:${getThemeClass('border')} hover:shadow-sm`}
+                          className={`flex items-center gap-3 p-3 rounded-lg transition-all cursor-pointer bg-white border border-gray-200 hover:${getThemeClass('border')} hover:shadow-sm group`}
                         >
                           <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg ${
                             resource.type === 'video' ? 'bg-red-50' :
@@ -2496,6 +2688,20 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                                resource.interactiveCategory === 'simulation' ? '模拟' : '测试'}
                             </span>
                           )}
+                          {resource.visibility && resource.visibility.mode !== 'always' && (
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded-full flex-shrink-0 ${
+                              resource.visibility.mode === 'hidden' ? 'bg-red-50 text-red-600' : 'bg-amber-50 text-amber-600'
+                            }`}>
+                              {resource.visibility.mode === 'hidden' ? '隐藏' : '任务后'}
+                            </span>
+                          )}
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setSettingsResourceId(resource.id); }}
+                            className="p-1 rounded-md opacity-0 group-hover:opacity-100 hover:bg-gray-100 transition-all"
+                            title="资源设置"
+                          >
+                            <Settings size={14} className="text-gray-400" />
+                          </button>
                           <ChevronRight size={16} className="text-gray-400" />
                         </div>
                       ))}
@@ -2581,6 +2787,31 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                         </div>
                       </div>
                     )}
+                    {/* 试卷转换进度 */}
+                    {examProcessingStep && examProcessingStep !== 'done' && (
+                      <div className="px-3 py-3 bg-amber-50 border border-amber-200 rounded-lg">
+                        <div className="flex items-center gap-2 text-xs text-amber-700 mb-2">
+                          <FileText size={14} className="animate-pulse" />
+                          <span>
+                            {examProcessingStep === 'detecting' ? '正在检测试卷内容...' :
+                             examProcessingStep === 'extracting' ? '正在提取题目...' :
+                             '正在转换为学习任务...'}
+                          </span>
+                        </div>
+                        <div className="h-1.5 bg-amber-100 rounded-full overflow-hidden">
+                          <div className="h-full bg-amber-500 rounded-full transition-all duration-500" style={{
+                            width: examProcessingStep === 'detecting' ? '25%' :
+                                   examProcessingStep === 'extracting' ? '55%' : '85%'
+                          }} />
+                        </div>
+                        <div className="flex justify-between text-[10px] text-amber-500 mt-1">
+                          <span className={examProcessingStep === 'detecting' ? 'font-medium' : ''}>📄 检测</span>
+                          <span className={examProcessingStep === 'extracting' ? 'font-medium' : ''}>📝 提取</span>
+                          <span className={examProcessingStep === 'converting' ? 'font-medium' : ''}>🔄 转换</span>
+                          <span>✅ 完成</span>
+                        </div>
+                      </div>
+                    )}
                     {generatedTasks.length === 0 ? (
                       <div className="text-center py-6 text-gray-400">
                         <Zap size={24} className="mx-auto mb-2 opacity-50" />
@@ -2645,8 +2876,21 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                               )}
                               <span>•</span>
                               <span>{new Date(task.generatedAt).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}</span>
+                              {(task as any).settings?.source === 'exam_converted' && (
+                                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">试卷</span>
+                              )}
                             </div>
                           </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSettingsTaskId(task.id);
+                            }}
+                            className="opacity-0 group-hover:opacity-100 p-2 hover:bg-gray-100 rounded-lg transition-all"
+                            title={t('任务设置')}
+                          >
+                            <Settings size={16} className="text-gray-400" />
+                          </button>
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -2865,6 +3109,23 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                             </div>
                             <p className="text-xs text-gray-400 line-clamp-1 ml-8">{resource.description}</p>
                           </div>
+                          {/* 资源可见性指示 + 设置按钮 */}
+                          <div className="flex items-center gap-1 flex-shrink-0">
+                            {resource.visibility && resource.visibility.mode !== 'always' && (
+                              <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                                resource.visibility.mode === 'hidden' ? 'bg-red-50 text-red-600' : 'bg-amber-50 text-amber-600'
+                              }`}>
+                                {resource.visibility.mode === 'hidden' ? '隐藏' : '任务后'}
+                              </span>
+                            )}
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setSettingsResourceId(resource.id); }}
+                              className="p-1 rounded-md opacity-0 group-hover:opacity-100 hover:bg-gray-100 transition-all"
+                              title="资源设置"
+                            >
+                              <Settings size={14} className="text-gray-400" />
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </>
@@ -2950,6 +3211,31 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                         </div>
                       </div>
                     )}
+                    {/* 试卷转换进度 */}
+                    {examProcessingStep && examProcessingStep !== 'done' && (
+                      <div className="px-3 py-3 bg-amber-50 border border-amber-200 rounded-lg">
+                        <div className="flex items-center gap-2 text-xs text-amber-700 mb-2">
+                          <FileText size={14} className="animate-pulse" />
+                          <span>
+                            {examProcessingStep === 'detecting' ? '正在检测试卷内容...' :
+                             examProcessingStep === 'extracting' ? '正在提取题目...' :
+                             '正在转换为学习任务...'}
+                          </span>
+                        </div>
+                        <div className="h-1.5 bg-amber-100 rounded-full overflow-hidden">
+                          <div className="h-full bg-amber-500 rounded-full transition-all duration-500" style={{
+                            width: examProcessingStep === 'detecting' ? '25%' :
+                                   examProcessingStep === 'extracting' ? '55%' : '85%'
+                          }} />
+                        </div>
+                        <div className="flex justify-between text-[10px] text-amber-500 mt-1">
+                          <span className={examProcessingStep === 'detecting' ? 'font-medium' : ''}>📄 检测</span>
+                          <span className={examProcessingStep === 'extracting' ? 'font-medium' : ''}>📝 提取</span>
+                          <span className={examProcessingStep === 'converting' ? 'font-medium' : ''}>🔄 转换</span>
+                          <span>✅ 完成</span>
+                        </div>
+                      </div>
+                    )}
                     {generatedTasks.length === 0 ? (
                       <div className="text-center py-6 text-gray-400">
                         <Zap size={24} className="mx-auto mb-2 opacity-50" />
@@ -3014,8 +3300,21 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                               )}
                               <span>•</span>
                               <span>{new Date(task.generatedAt).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}</span>
+                              {(task as any).settings?.source === 'exam_converted' && (
+                                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">试卷</span>
+                              )}
                             </div>
                           </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSettingsTaskId(task.id);
+                            }}
+                            className="opacity-0 group-hover:opacity-100 p-2 hover:bg-gray-100 rounded-lg transition-all"
+                            title={t('任务设置')}
+                          >
+                            <Settings size={16} className="text-gray-400" />
+                          </button>
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -3419,7 +3718,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                   flex: collapsedPanels.studio ? '1 1 auto' : '0 0 50%'
                 }}
               >
-                <EnhancedNotesPanel learningMode={config.learningMode} isAIGenerating={isAIGenerating} getThemeClass={getThemeClass} />
+                <EnhancedNotesPanel learningMode={config.learningMode} isAIGenerating={isAIGenerating} getThemeClass={getThemeClass} configId={config.id} />
               </div>
 
               {/* Studio 工具区域 - 可折叠，展开时占50% */}
@@ -3669,6 +3968,40 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
         onClose={() => setIsLinkInputOpen(false)}
         onAdd={handleLinkAdd}
       />
+
+      {/* 试卷检测弹窗 */}
+      {examDetectedFiles && (
+        <ExamDetectedModal
+          files={examDetectedFiles}
+          onConfirm={handleExamConfirm}
+          onCancel={() => setExamDetectedFiles(null)}
+        />
+      )}
+
+      {/* 任务设置弹窗 */}
+      {settingsTaskId && (() => {
+        const t = generatedTasks.find(task => task.id === settingsTaskId);
+        return t ? (
+          <TaskSettingsPopover
+            task={t}
+            onSave={handleSaveTaskSettings}
+            onClose={() => setSettingsTaskId(null)}
+          />
+        ) : null;
+      })()}
+
+      {/* 资源设置弹窗 */}
+      {settingsResourceId && (() => {
+        const r = config.resources.find(res => res.id === settingsResourceId);
+        return r ? (
+          <ResourceSettingsPopover
+            resource={r}
+            tasks={generatedTasks.map(t => ({ id: t.id, title: t.title }))}
+            onSave={handleSaveResourceVisibility}
+            onClose={() => setSettingsResourceId(null)}
+          />
+        ) : null;
+      })()}
 
       {/* 互动资源查看器 */}
       <InteractiveViewerModal
