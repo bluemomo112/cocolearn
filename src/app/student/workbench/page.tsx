@@ -71,6 +71,7 @@ import {
   CompetencyTrend,
 } from '@/data/mockCompetencyData';
 import { mockResources, mockTasks } from '@/data/mockLearningData';
+import GrowthTimelinePanel from '../components/GrowthTimelinePanel';
 import { Resource, Task, TaskQuestion, TaskRubric } from '@/types/shared-context';
 
 // 任务展开卡片组件 - 在中间聊天区显示
@@ -2099,7 +2100,7 @@ function RightPanel({ config, rightTab, setRightTab, width, elapsedTime, tasks, 
           <EnhancedNotesPanel />
         ) : (
           <div className="flex-1 overflow-y-auto p-3">
-            <CompetencyGrowthPanel competencyProfile={competencyProfile} />
+            <GrowthTimelinePanel competencyProfile={competencyProfile} />
           </div>
         )}
       </div>
