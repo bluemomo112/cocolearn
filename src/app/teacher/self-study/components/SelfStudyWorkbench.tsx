@@ -25,7 +25,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { TaskEditModal } from '@/app/teacher/note-config/modals';
 import { useRouter } from 'next/navigation';
 import { usePersistedState } from '../utils/storage';
-import { PublishMode, PublishScope } from '@/types/self-study';
+import { PublishScope } from '@/types/self-study';
 import TaskExpandedCard from './task/TaskExpandedCard';
 import TaskResultReview from './task/TaskResultReview';
 import { QuickResultData, ExamProcessingConfig, ExamProcessingStep } from './task/taskTypes';
@@ -57,9 +57,11 @@ const THEME = {
 };
 
 interface SelfStudyWorkbenchProps {
-  config: SpaceConfig;
-  onBack: () => void;
-  onUpdateConfig: (config: SpaceConfig) => void;
+  config?: SpaceConfig;
+  spaceId?: string;
+  mode?: 'teacher' | 'student';
+  onBack?: () => void;
+  onUpdateConfig?: (config: SpaceConfig) => void;
   isAIGenerating?: boolean;
   onCreateNewSpace?: () => void;
   onViewResults?: () => void;
@@ -702,9 +704,61 @@ function LearningStatusPanel({
 }
 
 // 主组件
-export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isAIGenerating = false, onCreateNewSpace, onViewResults, pendingExamFiles, onExamFilesHandled }: SelfStudyWorkbenchProps) {
+export default function SelfStudyWorkbench({
+  config: initialConfig,
+  spaceId,
+  mode = 'teacher',
+  onBack,
+  onUpdateConfig,
+  isAIGenerating = false,
+  onCreateNewSpace,
+  onViewResults,
+  pendingExamFiles,
+  onExamFilesHandled
+}: SelfStudyWorkbenchProps) {
   const { t } = useLanguage();
   const router = useRouter();
+  const isStudentMode = mode === 'student';
+
+  // 如果传入 spaceId，从 localStorage 加载配置（学生模式）
+  const [config, setConfig] = useState<SpaceConfig>(() => {
+    if (spaceId && !initialConfig) {
+      const stored = localStorage.getItem(`self-study:space:${spaceId}`);
+      if (stored) {
+        return JSON.parse(stored);
+      }
+    }
+    return initialConfig || {
+      id: spaceId || `space_${Date.now()}`,
+      title: '新学习空间',
+      learningMode: 'self_directed' as LearningMode,
+      resources: [],
+      resourceSource: 'user_uploaded' as any,
+      tasks: [],
+      userProfile: {
+        preferences: {
+          aiStyle: 'patient' as any,
+          knowledgeBoundary: 'moderate' as any,
+        },
+      },
+      noteTemplate: 'blank' as any,
+      competencyDimensions: [],
+      publishStatus: 'unpublished' as any,
+      publishedVersions: [],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+  });
+
+  // 更新配置的包装函数
+  const handleUpdateConfig = (newConfig: SpaceConfig) => {
+    setConfig(newConfig);
+    if (onUpdateConfig) {
+      handleUpdateConfig(newConfig);
+    }
+    // 保存到 localStorage
+    localStorage.setItem(`self-study:space:${newConfig.id}`, JSON.stringify(newConfig));
+  };
 
   // 主题色工具函数
   const getThemeClass = (type: 'bg' | 'bgHover' | 'text' | 'border' | 'icon'): string => {
@@ -1510,32 +1564,45 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
   };
 
   // 发布相关函数
-  const handlePublish = async (mode: PublishMode, scope: PublishScope) => {
-    // 生成分享链接和访问码
+  const handlePublish = async (metadata: import('@/types/self-study').PublishMetadata, scope: PublishScope) => {
+    // 生成分享链接
     const shareLink = `${window.location.origin}/learn/${config.id}`;
-    const accessCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+
+    // 标记所有现有资源和任务为教师发布的内容
+    const publishedResources = config.resources.map(r => ({
+      ...r,
+      source: r.source || 'teacher' as const,
+    }));
+    const publishedTasks = config.tasks.map(t => ({
+      ...t,
+      source: t.source || 'teacher' as const,
+    }));
 
     // 创建新版本
     const newVersion: import('@/types/self-study').PublishVersion = {
       version: (config.publishedVersions?.length || 0) + 1,
       publishedAt: new Date(),
-      mode,
       scope,
       shareLink,
-      accessCode,
       snapshot: {
         title: config.title,
-        resources: scope.includeResources ? config.resources : [],
-        tasks: scope.includeTasks ? config.tasks : [],
+        resources: scope.includeResources ? publishedResources : [],
+        tasks: scope.includeTasks ? publishedTasks : [],
         userProfile: scope.includeAISettings ? config.userProfile : undefined,
         learningPath: scope.includeLearningPath ? config.learningPath : undefined,
       },
     };
 
     // 更新配置
-    onUpdateConfig({
+    handleUpdateConfig({
       ...config,
+      resources: publishedResources,
+      tasks: publishedTasks,
       publishStatus: 'published',
+      publishMetadata: {
+        ...metadata,
+        publishedAt: new Date(),
+      },
       publishedVersions: [...(config.publishedVersions || []), newVersion],
       currentPublishVersion: newVersion.version,
     });
@@ -1543,7 +1610,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
 
   const handleSave = () => {
     // 保存当前配置
-    onUpdateConfig({ ...config, updatedAt: new Date() });
+    handleUpdateConfig({ ...config, updatedAt: new Date() });
     // TODO: 显示保存成功提示
   };
 
@@ -1574,8 +1641,9 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
           type: file.type.includes('video') ? 'video' :
                 file.type.includes('presentation') ? 'presentation' : 'document',
           description: `上传于 ${new Date().toLocaleString('zh-CN')}`,
+          source: isStudentMode ? 'student' : 'teacher',
         }));
-        onUpdateConfig({
+        handleUpdateConfig({
           ...config,
           resources: [...config.resources, ...newResources],
         });
@@ -1590,9 +1658,10 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
       type: file.type.includes('video') ? 'video' :
             file.type.includes('presentation') ? 'presentation' : 'document',
       description: `上传于 ${new Date().toLocaleString('zh-CN')}`,
+      source: isStudentMode ? 'student' : 'teacher',
     }));
 
-    onUpdateConfig({
+    handleUpdateConfig({
       ...config,
       resources: [...config.resources, ...newResources],
     });
@@ -1649,7 +1718,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
         linkedTaskId: taskId,
         visibility: { mode: 'after_task', afterTaskId: taskId },
       };
-      onUpdateConfig({
+      handleUpdateConfig({
         ...config,
         resources: [...config.resources, examResource],
       });
@@ -1674,7 +1743,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
   // 保存资源可见性
   const handleSaveResourceVisibility = (resourceId: string, visibility: ResourceVisibility) => {
     console.log('[ResourceVisibility] 保存:', resourceId, visibility);
-    onUpdateConfig({
+    handleUpdateConfig({
       ...config,
       resources: config.resources.map(r =>
         r.id === resourceId ? { ...r, visibility } : r
@@ -1747,7 +1816,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
       } : {}),
     };
 
-    onUpdateConfig({
+    handleUpdateConfig({
       ...config,
       resources: [...config.resources, newResource],
     });
@@ -1757,7 +1826,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
   // 处理空间名称保存
   const handleTitleSave = () => {
     if (editedTitle.trim() && editedTitle !== config.title) {
-      onUpdateConfig({
+      handleUpdateConfig({
         ...config,
         title: editedTitle.trim(),
       });
@@ -1838,7 +1907,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
       }
     }
 
-    onUpdateConfig({ ...config, learningMode: mode });
+    handleUpdateConfig({ ...config, learningMode: mode });
   };
 
   // 处理检查点答题
@@ -2325,9 +2394,9 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
                 >
                   <Pencil size={14} />
                 </button>
-                {config.publishStatus === 'published' && config.publishedVersions.length > 0 && (
-                  <span className="px-2 py-0.5 text-xs font-mono text-primary-600 bg-primary-50 border border-primary-200 rounded">
-                    {config.publishedVersions[config.publishedVersions.length - 1].accessCode}
+                {config.publishStatus === 'published' && (
+                  <span className="px-2 py-0.5 text-xs text-primary-600 bg-primary-50 border border-primary-200 rounded">
+                    已发布
                   </span>
                 )}
               </div>
@@ -2344,25 +2413,43 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
             {t('设置')}
           </button>
 
-          {/* 发布 */}
-          <button
-            onClick={() => setIsPublishModalOpen(true)}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-          >
-            <Share2 size={15} />
-            {t('发布')}
-          </button>
+          {/* 发布 - 仅教师模式显示 */}
+          {!isStudentMode && (
+            <button
+              onClick={() => setIsPublishModalOpen(true)}
+              className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+            >
+              <Share2 size={15} />
+              {t('发布')}
+            </button>
+          )}
 
-          {/* 分析 */}
-          <button
-            onClick={handleViewAnalytics}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-          >
-            <BarChart3 size={15} />
-            {t('分析')}
-          </button>
+          {/* 分析 - 仅教师模式显示 */}
+          {!isStudentMode && (
+            <button
+              onClick={handleViewAnalytics}
+              className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+            >
+              <BarChart3 size={15} />
+              {t('分析')}
+            </button>
+          )}
         </div>
       </header>
+
+      {/* 学生模式信息栏 */}
+      {isStudentMode && config.publishMetadata && (
+        <div className="bg-blue-50 border-b border-blue-200 px-6 py-2">
+          <div className="flex items-center gap-4 text-sm text-blue-700">
+            {config.publishMetadata.grade && (
+              <span>年级: {config.publishMetadata.grade}</span>
+            )}
+            {config.publishMetadata.subjects && config.publishMetadata.subjects.length > 0 && (
+              <span>学科: {config.publishMetadata.subjects.join(', ')}</span>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* 主内容区 - 三栏布局 */}
       <div className="flex-1 flex overflow-hidden">
@@ -3829,7 +3916,7 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
           config={config}
           onClose={() => setIsSettingsOpen(false)}
           onSave={(newConfig) => {
-            onUpdateConfig(newConfig);
+            handleUpdateConfig(newConfig);
             setIsSettingsOpen(false);
           }}
         />
@@ -3962,7 +4049,6 @@ export default function SelfStudyWorkbench({ config, onBack, onUpdateConfig, isA
         onPublish={handlePublish}
         isPublished={config.publishStatus === 'published'}
         shareLink={config.publishedVersions?.[config.publishedVersions.length - 1]?.shareLink}
-        accessCode={config.publishedVersions?.[config.publishedVersions.length - 1]?.accessCode}
       />
 
       {/* 文件上传弹窗 */}

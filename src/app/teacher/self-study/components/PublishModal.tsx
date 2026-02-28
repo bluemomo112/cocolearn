@@ -2,16 +2,28 @@
 
 import { useState } from 'react';
 import { X, Share2, Copy, Check, BarChart3 } from 'lucide-react';
-import { PublishMode, PublishScope } from '@/types/self-study';
+import { PublishScope, PublishMetadata } from '@/types/self-study';
 
 interface PublishModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onPublish: (mode: PublishMode, scope: PublishScope) => void;
+  onPublish: (metadata: PublishMetadata, scope: PublishScope) => void;
   isPublished: boolean;
   shareLink?: string;
-  accessCode?: string;
 }
+
+const GRADES = ['一年级', '二年级', '三年级', '四年级', '五年级', '六年级', '七年级', '八年级', '九年级'];
+
+const SUBJECTS = ['语文', '数学', '英语', '科学', '物理', '化学', '生物', '历史', '地理', '政治', '音乐', '美术', '体育', '信息技术'];
+
+const MOCK_CLASSES = [
+  '一年级1班', '一年级2班',
+  '二年级1班', '二年级2班',
+  '三年级1班', '三年级2班',
+  '四年级1班', '四年级2班', '四年级3班',
+  '五年级1班', '五年级2班',
+  '六年级1班', '六年级2班',
+];
 
 export default function PublishModal({
   isOpen,
@@ -19,9 +31,12 @@ export default function PublishModal({
   onPublish,
   isPublished,
   shareLink,
-  accessCode,
 }: PublishModalProps) {
-  const [mode, setMode] = useState<PublishMode>('self_study');
+  const [metadata, setMetadata] = useState<PublishMetadata>({
+    grade: undefined,
+    subjects: [],
+    bindClasses: [],
+  });
   const [scope, setScope] = useState<PublishScope>({
     includeResources: true,
     includeTasks: true,
@@ -31,26 +46,38 @@ export default function PublishModal({
   const [isPublishing, setIsPublishing] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
-  const [copiedCode, setCopiedCode] = useState(false);
 
   if (!isOpen) return null;
 
   const handlePublish = async () => {
     setIsPublishing(true);
-    await onPublish(mode, scope);
+    await onPublish(metadata, scope);
     setIsPublishing(false);
     setShowSuccess(true);
   };
 
-  const copyToClipboard = async (text: string, type: 'link' | 'code') => {
+  const copyToClipboard = async (text: string) => {
     await navigator.clipboard.writeText(text);
-    if (type === 'link') {
-      setCopiedLink(true);
-      setTimeout(() => setCopiedLink(false), 2000);
-    } else {
-      setCopiedCode(true);
-      setTimeout(() => setCopiedCode(false), 2000);
-    }
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2000);
+  };
+
+  const toggleSubject = (subject: string) => {
+    setMetadata({
+      ...metadata,
+      subjects: metadata.subjects?.includes(subject)
+        ? metadata.subjects.filter(s => s !== subject)
+        : [...(metadata.subjects || []), subject],
+    });
+  };
+
+  const toggleClass = (className: string) => {
+    setMetadata({
+      ...metadata,
+      bindClasses: metadata.bindClasses?.includes(className)
+        ? metadata.bindClasses.filter(c => c !== className)
+        : [...(metadata.bindClasses || []), className],
+    });
   };
 
   return (
@@ -76,38 +103,71 @@ export default function PublishModal({
         <div className="p-6 space-y-6">
           {!showSuccess ? (
             <>
-              {/* 发布模式选择 */}
+              {/* 发布信息 */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-3">
-                  发布模式
+                  发布信息
                 </label>
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    onClick={() => setMode('self_study')}
-                    className={`p-4 border-2 rounded-lg text-left transition-all ${
-                      mode === 'self_study'
-                        ? 'border-primary-500 bg-primary-50'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <div className="font-medium text-gray-900 mb-1">自学模式</div>
-                    <div className="text-sm text-gray-600">
-                      生成分享链接，任何人都可以访问学习
+                <div className="space-y-4">
+                  {/* 年级选择 */}
+                  <div>
+                    <label className="block text-xs text-gray-600 mb-2">年级</label>
+                    <select
+                      value={metadata.grade || ''}
+                      onChange={(e) => setMetadata({ ...metadata, grade: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    >
+                      <option value="">请选择年级（可选）</option>
+                      {GRADES.map((grade) => (
+                        <option key={grade} value={grade}>
+                          {grade}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* 学科多选 */}
+                  <div>
+                    <label className="block text-xs text-gray-600 mb-2">学科</label>
+                    <div className="flex flex-wrap gap-2">
+                      {SUBJECTS.map((subject) => (
+                        <button
+                          key={subject}
+                          onClick={() => toggleSubject(subject)}
+                          className={`px-3 py-1.5 rounded-full text-sm transition-all ${
+                            metadata.subjects?.includes(subject)
+                              ? 'bg-primary-600 text-white'
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          }`}
+                        >
+                          {subject}
+                        </button>
+                      ))}
                     </div>
-                  </button>
-                  <button
-                    onClick={() => setMode('for_students')}
-                    className={`p-4 border-2 rounded-lg text-left transition-all ${
-                      mode === 'for_students'
-                        ? 'border-primary-500 bg-primary-50'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <div className="font-medium text-gray-900 mb-1">发布给学生</div>
-                    <div className="text-sm text-gray-600">
-                      生成访问码，学生输入后可以学习
+                  </div>
+
+                  {/* 班级多选 */}
+                  <div>
+                    <label className="block text-xs text-gray-600 mb-2">绑定班级</label>
+                    <div className="border border-gray-300 rounded-lg p-3 max-h-40 overflow-y-auto">
+                      <div className="space-y-2">
+                        {MOCK_CLASSES.map((className) => (
+                          <label
+                            key={className}
+                            className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={metadata.bindClasses?.includes(className)}
+                              onChange={() => toggleClass(className)}
+                              className="w-4 h-4 text-primary-600 rounded focus:ring-primary-500"
+                            />
+                            <span className="text-sm text-gray-700">{className}</span>
+                          </label>
+                        ))}
+                      </div>
                     </div>
-                  </button>
+                  </div>
                 </div>
               </div>
 
@@ -179,7 +239,7 @@ export default function PublishModal({
                   发布成功！
                 </h3>
                 <p className="text-gray-600">
-                  学习空间已成功发布，你可以分享给其他人了
+                  学习空间已成功发布，你可以分享给学生了
                 </p>
               </div>
 
@@ -197,32 +257,11 @@ export default function PublishModal({
                       className="flex-1 px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-sm"
                     />
                     <button
-                      onClick={() => shareLink && copyToClipboard(shareLink, 'link')}
+                      onClick={() => shareLink && copyToClipboard(shareLink)}
                       className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors flex items-center gap-2"
                     >
                       {copiedLink ? <Check size={16} /> : <Copy size={16} />}
                       {copiedLink ? '已复制' : '复制'}
-                    </button>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    访问码
-                  </label>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={accessCode || ''}
-                      readOnly
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-sm font-mono"
-                    />
-                    <button
-                      onClick={() => accessCode && copyToClipboard(accessCode, 'code')}
-                      className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors flex items-center gap-2"
-                    >
-                      {copiedCode ? <Check size={16} /> : <Copy size={16} />}
-                      {copiedCode ? '已复制' : '复制'}
                     </button>
                   </div>
                 </div>
@@ -233,9 +272,9 @@ export default function PublishModal({
                 <div className="flex gap-3">
                   <BarChart3 size={20} className="text-blue-600 flex-shrink-0 mt-0.5" />
                   <div className="text-sm text-blue-900">
-                    <p className="font-medium mb-1">查看学习数据</p>
+                    <p className="font-medium mb-1">学生可以访问学习空间</p>
                     <p className="text-blue-700">
-                      点击右上角"查看分析"按钮，可以查看学生的学习进度和数据分析
+                      学生打开链接后可以查看你发布的内容，并在此基础上添加自己的资源和任务
                     </p>
                   </div>
                 </div>

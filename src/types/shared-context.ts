@@ -30,6 +30,8 @@ export interface Resource {
   linkedTaskId?: string;
   studentName?: string;
   visibility?: ResourceVisibility;
+  // 内容来源标记（用于区分教师发布内容和学生添加内容）
+  source?: 'teacher' | 'student';
 }
 
 export interface TaskQuestion {
@@ -81,6 +83,8 @@ export interface Task {
   submissionPlaceholder?: string;
   relatedResourceIds?: string[];
   settings?: TaskSettings;
+  // 内容来源标记（用于区分教师发布内容和学生添加内容）
+  source?: 'teacher' | 'student';
 }
 
 export interface CompetencyUpdate {
