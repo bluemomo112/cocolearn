@@ -1226,6 +1226,19 @@ export default function SelfStudyWorkbench({
   const [isGeneratingTask, setIsGeneratingTask] = useState(false);
   const [isReflectionDismissed, setIsReflectionDismissed] = useState(false);
 
+  // 学生模式：自动打开第一个未完成的 quiz
+  useEffect(() => {
+    if (mode === 'student' && generatedTasks.length > 0 && !expandedTask) {
+      const firstIncompleteQuiz = generatedTasks.find(
+        task => task.type === 'quiz' && !completedTasks.has(task.id)
+      );
+      if (firstIncompleteQuiz) {
+        setExpandedTask(firstIncompleteQuiz as any);
+        setTaskDisplayMode('fullscreen');
+      }
+    }
+  }, [mode, generatedTasks, completedTasks, expandedTask]);
+
   // 任务编辑弹窗
   const [editingTask, setEditingTask] = useState<typeof MOCK_GENERATED_TASKS[0] | null>(null);
 
@@ -2405,14 +2418,16 @@ export default function SelfStudyWorkbench({
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {/* 设置 */}
-          <button
-            onClick={() => setIsSettingsOpen(true)}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-          >
-            <Settings size={15} />
-            {t('设置')}
-          </button>
+          {/* 设置 - 仅教师模式显示 */}
+          {!isStudentMode && (
+            <button
+              onClick={() => setIsSettingsOpen(true)}
+              className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+            >
+              <Settings size={15} />
+              {t('设置')}
+            </button>
+          )}
 
           {/* 发布 - 仅教师模式显示 */}
           {!isStudentMode && (
@@ -2793,13 +2808,15 @@ export default function SelfStudyWorkbench({
                               {resource.visibility.mode === 'hidden' ? '隐藏' : '任务后'}
                             </span>
                           )}
-                          <button
-                            onClick={(e) => { e.stopPropagation(); setSettingsResourceId(resource.id); }}
-                            className="p-1 rounded-md opacity-0 group-hover:opacity-100 hover:bg-gray-100 transition-all"
-                            title="资源设置"
-                          >
-                            <Settings size={14} className="text-gray-400" />
-                          </button>
+                          {!isStudentMode && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setSettingsResourceId(resource.id); }}
+                              className="p-1 rounded-md opacity-0 group-hover:opacity-100 hover:bg-gray-100 transition-all"
+                              title="资源设置"
+                            >
+                              <Settings size={14} className="text-gray-400" />
+                            </button>
+                          )}
                           <ChevronRight size={16} className="text-gray-400" />
                         </div>
                       ))}
@@ -2979,16 +2996,18 @@ export default function SelfStudyWorkbench({
                               )}
                             </div>
                           </div>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSettingsTaskId(task.id);
-                            }}
-                            className="opacity-0 group-hover:opacity-100 p-2 hover:bg-gray-100 rounded-lg transition-all"
-                            title={t('任务设置')}
-                          >
-                            <Settings size={16} className="text-gray-400" />
-                          </button>
+                          {!isStudentMode && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSettingsTaskId(task.id);
+                              }}
+                              className="opacity-0 group-hover:opacity-100 p-2 hover:bg-gray-100 rounded-lg transition-all"
+                              title={t('任务设置')}
+                            >
+                              <Settings size={16} className="text-gray-400" />
+                            </button>
+                          )}
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -3216,13 +3235,15 @@ export default function SelfStudyWorkbench({
                                 {resource.visibility.mode === 'hidden' ? '隐藏' : '任务后'}
                               </span>
                             )}
-                            <button
-                              onClick={(e) => { e.stopPropagation(); setSettingsResourceId(resource.id); }}
-                              className="p-1 rounded-md opacity-0 group-hover:opacity-100 hover:bg-gray-100 transition-all"
-                              title="资源设置"
-                            >
-                              <Settings size={14} className="text-gray-400" />
-                            </button>
+                            {!isStudentMode && (
+                              <button
+                                onClick={(e) => { e.stopPropagation(); setSettingsResourceId(resource.id); }}
+                                className="p-1 rounded-md opacity-0 group-hover:opacity-100 hover:bg-gray-100 transition-all"
+                                title="资源设置"
+                              >
+                                <Settings size={14} className="text-gray-400" />
+                              </button>
+                            )}
                           </div>
                         </div>
                       ))}
@@ -3403,16 +3424,18 @@ export default function SelfStudyWorkbench({
                               )}
                             </div>
                           </div>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSettingsTaskId(task.id);
-                            }}
-                            className="opacity-0 group-hover:opacity-100 p-2 hover:bg-gray-100 rounded-lg transition-all"
-                            title={t('任务设置')}
-                          >
-                            <Settings size={16} className="text-gray-400" />
-                          </button>
+                          {!isStudentMode && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSettingsTaskId(task.id);
+                              }}
+                              className="opacity-0 group-hover:opacity-100 p-2 hover:bg-gray-100 rounded-lg transition-all"
+                              title={t('任务设置')}
+                            >
+                              <Settings size={16} className="text-gray-400" />
+                            </button>
+                          )}
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
