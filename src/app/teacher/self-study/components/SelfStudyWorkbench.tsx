@@ -25,7 +25,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { TaskEditModal } from '@/app/teacher/note-config/modals';
 import { useRouter } from 'next/navigation';
 import { usePersistedState } from '../utils/storage';
-import { PublishMode, PublishScope } from '@/types/self-study';
+import { PublishScope } from '@/types/self-study';
 import TaskExpandedCard from './task/TaskExpandedCard';
 import TaskResultReview from './task/TaskResultReview';
 import { QuickResultData, ExamProcessingConfig, ExamProcessingStep } from './task/taskTypes';
@@ -2394,9 +2394,9 @@ export default function SelfStudyWorkbench({
                 >
                   <Pencil size={14} />
                 </button>
-                {config.publishStatus === 'published' && config.publishedVersions.length > 0 && (
-                  <span className="px-2 py-0.5 text-xs font-mono text-primary-600 bg-primary-50 border border-primary-200 rounded">
-                    {config.publishedVersions[config.publishedVersions.length - 1].accessCode}
+                {config.publishStatus === 'published' && (
+                  <span className="px-2 py-0.5 text-xs text-primary-600 bg-primary-50 border border-primary-200 rounded">
+                    已发布
                   </span>
                 )}
               </div>

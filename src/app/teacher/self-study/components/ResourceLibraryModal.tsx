@@ -42,7 +42,9 @@ export default function ResourceLibraryModal({ isOpen, onClose, onSelect }: Reso
   };
 
   const handleConfirm = () => {
-    const selected = libraryResources.filter(r => selectedResources.has(r.id));
+    const selected = libraryResources
+      .filter(r => selectedResources.has(r.id))
+      .map(r => ({ ...r, source: 'teacher' as const }));
     onSelect(selected);
     setSelectedResources(new Set());
     setSearchQuery('');
