@@ -62,8 +62,14 @@ export interface LearningPath {
   updatedAt: Date;
 }
 
-// 发布模式
-export type PublishMode = 'self_study' | 'for_students';
+// 发布元数据
+export interface PublishMetadata {
+  grade?: string;              // 年级，如 "四年级"
+  subjects?: string[];         // 学科，如 ["科学", "地理"]
+  bindClasses?: string[];      // 绑定班级，如 ["四年级1班", "四年级2班"]
+  publishedAt?: Date;          // 发布时间
+  publishedBy?: string;        // 发布者
+}
 
 // 发布配置范围
 export interface PublishScope {
@@ -77,10 +83,8 @@ export interface PublishScope {
 export interface PublishVersion {
   version: number;
   publishedAt: Date;
-  mode: PublishMode;
   scope: PublishScope;
   shareLink: string;
-  accessCode: string;
   snapshot: Partial<SpaceConfig>; // 发布时的配置快照
 }
 
@@ -118,6 +122,7 @@ export interface SpaceConfig {
   publishStatus: 'unpublished' | 'published';
   publishedVersions: PublishVersion[];
   currentPublishVersion?: number;
+  publishMetadata?: PublishMetadata; // 发布元数据
 
   // 元数据
   createdAt: Date;
