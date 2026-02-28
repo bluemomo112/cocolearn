@@ -51,9 +51,14 @@ export default function PublishModal({
 
   const handlePublish = async () => {
     setIsPublishing(true);
-    await onPublish(metadata, scope);
-    setIsPublishing(false);
-    setShowSuccess(true);
+    try {
+      await onPublish(metadata, scope);
+      setShowSuccess(true);
+    } catch (error) {
+      console.error('发布失败:', error);
+    } finally {
+      setIsPublishing(false);
+    }
   };
 
   const copyToClipboard = async (text: string) => {

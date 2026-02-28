@@ -755,7 +755,7 @@ export default function SelfStudyWorkbench({
   const handleUpdateConfig = (newConfig: SpaceConfig) => {
     setConfig(newConfig);
     if (onUpdateConfig) {
-      handleUpdateConfig(newConfig);
+      onUpdateConfig(newConfig);
     }
     // 保存到 localStorage
     localStorage.setItem(`self-study:space:${newConfig.id}`, JSON.stringify(newConfig));
