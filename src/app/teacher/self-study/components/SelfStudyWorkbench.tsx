@@ -28,6 +28,7 @@ import { usePersistedState } from '../utils/storage';
 import { PublishScope } from '@/types/self-study';
 import TaskExpandedCard from './task/TaskExpandedCard';
 import TaskResultReview from './task/TaskResultReview';
+import GrowthTimelinePanel from '@/app/student/components/GrowthTimelinePanel';
 import { QuickResultData, ExamProcessingConfig, ExamProcessingStep } from './task/taskTypes';
 import ExamDetectedModal from './ExamDetectedModal';
 import TaskSettingsPopover from './TaskSettingsPopover';
@@ -3898,12 +3899,13 @@ export default function SelfStudyWorkbench({
               </div>
             </div>
           ) : (
-            <LearningStatusPanel
-              elapsedTime={elapsedTime}
-              learningMode={config.learningMode}
-              learningPath={learningPath}
-              observations={MOCK_AI_OBSERVATIONS}
-            />
+            <div className="flex-1 overflow-y-auto p-3">
+              <GrowthTimelinePanel competencyProfile={{
+                critical_thinking: 2,
+                information_synthesis: 2,
+                metacognition: 2,
+              }} />
+            </div>
           )}
         </>
       )}
