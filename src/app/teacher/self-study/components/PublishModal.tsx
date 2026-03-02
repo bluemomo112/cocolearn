@@ -10,6 +10,7 @@ interface PublishModalProps {
   onPublish: (metadata: PublishMetadata, scope: PublishScope) => void;
   isPublished: boolean;
   shareLink?: string;
+  currentSpaceName?: string;
 }
 
 const GRADES = ['一年级', '二年级', '三年级', '四年级', '五年级', '六年级', '七年级', '八年级', '九年级'];
@@ -31,8 +32,11 @@ export default function PublishModal({
   onPublish,
   isPublished,
   shareLink,
+  currentSpaceName,
 }: PublishModalProps) {
   const [metadata, setMetadata] = useState<PublishMetadata>({
+    spaceName: currentSpaceName || '',
+    isAnonymous: false,
     grade: undefined,
     subjects: [],
     bindClasses: [],
@@ -49,10 +53,20 @@ export default function PublishModal({
 
   if (!isOpen) return null;
 
+  // 生成6位随机访问码
+  const generateAccessCode = () => {
+    return Math.random().toString(36).substring(2, 8).toUpperCase();
+  };
+
   const handlePublish = async () => {
     setIsPublishing(true);
     try {
-      await onPublish(metadata, scope);
+      const publishData = {
+        ...metadata,
+        accessCode: metadata.isAnonymous ? generateAccessCode() : undefined,
+      };
+      await onPublish(publishData, scope);
+      setMetadata(publishData);
       setShowSuccess(true);
     } catch (error) {
       console.error('发布失败:', error);
@@ -108,6 +122,20 @@ export default function PublishModal({
         <div className="p-6 space-y-6">
           {!showSuccess ? (
             <>
+              {/* 学习空间名称 */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  学习空间名称
+                </label>
+                <input
+                  type="text"
+                  value={metadata.spaceName || ''}
+                  onChange={(e) => setMetadata({ ...metadata, spaceName: e.target.value })}
+                  placeholder="请输入学习空间名称"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                />
+              </div>
+
               {/* 发布信息 */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-3">
@@ -151,8 +179,36 @@ export default function PublishModal({
                     </div>
                   </div>
 
+                  {/* 匿名模式开关 */}
+                  <div className="border-t border-gray-200 pt-4">
+                    <label className="flex items-center justify-between cursor-pointer">
+                      <div>
+                        <div className="text-sm font-medium text-gray-700">匿名模式</div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          开启后，学生无需绑定班级，使用访问码即可进入
+                        </div>
+                      </div>
+                      <div className="relative">
+                        <input
+                          type="checkbox"
+                          checked={metadata.isAnonymous || false}
+                          onChange={(e) => {
+                            setMetadata({
+                              ...metadata,
+                              isAnonymous: e.target.checked,
+                              bindClasses: e.target.checked ? [] : metadata.bindClasses
+                            });
+                          }}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+                      </div>
+                    </label>
+                  </div>
+
                   {/* 班级多选 */}
-                  <div>
+                  {!metadata.isAnonymous && (
+                    <div>
                     <label className="block text-xs text-gray-600 mb-2">绑定班级</label>
                     <div className="border border-gray-300 rounded-lg p-3 max-h-40 overflow-y-auto">
                       <div className="space-y-2">
@@ -173,6 +229,7 @@ export default function PublishModal({
                       </div>
                     </div>
                   </div>
+                  )}
                 </div>
               </div>
 
@@ -270,6 +327,33 @@ export default function PublishModal({
                     </button>
                   </div>
                 </div>
+
+                {/* 访问码（仅匿名模式） */}
+                {metadata.isAnonymous && metadata.accessCode && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      访问码
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={metadata.accessCode}
+                        readOnly
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-sm font-mono text-lg tracking-wider text-center"
+                      />
+                      <button
+                        onClick={() => metadata.accessCode && copyToClipboard(metadata.accessCode)}
+                        className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors flex items-center gap-2"
+                      >
+                        {copiedLink ? <Check size={16} /> : <Copy size={16} />}
+                        {copiedLink ? '已复制' : '复制'}
+                      </button>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-2">
+                      学生需要输入此访问码才能进入学习空间
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* 提示 */}
@@ -277,9 +361,13 @@ export default function PublishModal({
                 <div className="flex gap-3">
                   <BarChart3 size={20} className="text-blue-600 flex-shrink-0 mt-0.5" />
                   <div className="text-sm text-blue-900">
-                    <p className="font-medium mb-1">学生可以访问学习空间</p>
+                    <p className="font-medium mb-1">
+                      {metadata.isAnonymous ? '学生可以匿名访问学习空间' : '学生可以访问学习空间'}
+                    </p>
                     <p className="text-blue-700">
-                      学生打开链接后可以查看你发布的内容，并在此基础上添加自己的资源和任务
+                      {metadata.isAnonymous
+                        ? '学生打开链接并输入访问码后，需要输入姓名即可进入学习空间'
+                        : '学生打开链接后可以从班级名录中选择自己的姓名登录'}
                     </p>
                   </div>
                 </div>

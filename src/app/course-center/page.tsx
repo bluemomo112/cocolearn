@@ -13,7 +13,7 @@ interface Course {
   source: 'official' | 'organization'
   concepts: string[] // 跨学科大概念
   studentCount: number
-  rating: number
+  teachingMode: 'teaching' | 'self-study' | 'both' // 授课模式/自学模式/双模式
 }
 
 interface KnowledgeNode {
@@ -36,15 +36,9 @@ interface KnowledgeLink {
 }
 
 // ==================== 数据 ====================
-const platformStats = {
-  singleCourses: 186,
-  seriesCourses: 34,
-  teachers: 428,
-  schools: 67,
-}
-
 const subjects = ['全部', '语文', '数学', '物理', '化学', '生物', '地理', '历史', '道德与法治', '信息科技']
 const sources = ['全部', '官方', '组织']
+const teachingModes = ['全部', '授课模式', '自学模式', '双模式']
 
 // 跨学科课程数据
 const courses: Course[] = [
@@ -56,7 +50,7 @@ const courses: Course[] = [
     source: 'official',
     concepts: ['系统与平衡', '生态系统', '成长', '生命周期'],
     studentCount: 1240,
-    rating: 4.8,
+    teachingMode: 'both',
   },
   {
     id: '2',
@@ -66,7 +60,7 @@ const courses: Course[] = [
     source: 'organization',
     concepts: ['诗词鉴赏', '天文现象', '地理特征', '文化传承'],
     studentCount: 890,
-    rating: 4.9,
+    teachingMode: 'teaching',
   },
   {
     id: '3',
@@ -76,7 +70,7 @@ const courses: Course[] = [
     source: 'official',
     concepts: ['统计推断', '数据表示', '算法思维', '可视化设计'],
     studentCount: 2100,
-    rating: 4.7,
+    teachingMode: 'self-study',
   },
   {
     id: '4',
@@ -86,7 +80,7 @@ const courses: Course[] = [
     source: 'organization',
     concepts: ['科学发展', '文化变革', '天文学', '力学基础'],
     studentCount: 643,
-    rating: 4.6,
+    teachingMode: 'teaching',
   },
   {
     id: '5',
@@ -96,7 +90,7 @@ const courses: Course[] = [
     source: 'official',
     concepts: ['波形与频率', '比例关系', '和声原理', '数学建模'],
     studentCount: 756,
-    rating: 4.8,
+    teachingMode: 'both',
   },
   {
     id: '6',
@@ -106,7 +100,7 @@ const courses: Course[] = [
     source: 'organization',
     concepts: ['化学变化', '颜料科学', '材料特性', '色彩理论'],
     studentCount: 512,
-    rating: 4.5,
+    teachingMode: 'self-study',
   },
   {
     id: '7',
@@ -116,7 +110,7 @@ const courses: Course[] = [
     source: 'official',
     concepts: ['算法设计', '逻辑思维', '问题分解', '抽象建模'],
     studentCount: 1890,
-    rating: 4.9,
+    teachingMode: 'both',
   },
   {
     id: '8',
@@ -126,7 +120,7 @@ const courses: Course[] = [
     source: 'official',
     concepts: ['生态平衡', '责任意识', '可持续发展', '环境伦理'],
     studentCount: 1023,
-    rating: 4.7,
+    teachingMode: 'teaching',
   },
   {
     id: '9',
@@ -136,7 +130,7 @@ const courses: Course[] = [
     source: 'organization',
     concepts: ['地缘政治', '气候影响', '资源分布', '文明交流'],
     studentCount: 678,
-    rating: 4.6,
+    teachingMode: 'self-study',
   },
   {
     id: '10',
@@ -146,7 +140,7 @@ const courses: Course[] = [
     source: 'official',
     concepts: ['人工智能', '信息安全', '网络伦理', '数字公民'],
     studentCount: 1456,
-    rating: 4.8,
+    teachingMode: 'both',
   },
   {
     id: '11',
@@ -156,7 +150,7 @@ const courses: Course[] = [
     source: 'organization',
     concepts: ['元素周期律', '恒星演化', '核反应', '宇宙结构'],
     studentCount: 534,
-    rating: 4.7,
+    teachingMode: 'teaching',
   },
   {
     id: '12',
@@ -166,7 +160,7 @@ const courses: Course[] = [
     source: 'official',
     concepts: ['水循环', '能量转换', '气候系统', '全球变暖'],
     studentCount: 1678,
-    rating: 4.8,
+    teachingMode: 'self-study',
   },
 ]
 
@@ -791,25 +785,28 @@ export default function CourseCenter() {
   const [viewMode, setViewMode] = useState<'courses' | 'visualization'>('courses')
   const [selectedSubject, setSelectedSubject] = useState('全部')
   const [selectedSource, setSelectedSource] = useState('全部')
+  const [selectedTeachingMode, setSelectedTeachingMode] = useState('全部')
   const [searchQuery, setSearchQuery] = useState('')
   const [showTeachingModal, setShowTeachingModal] = useState(false)
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null)
 
-  // 处理去授课按钮点击
+  // 处理去预览按钮点击
   const handleTeachClick = (course: Course) => {
-    setSelectedCourse(course)
-    setShowTeachingModal(true)
+    if (course.teachingMode === 'both') {
+      setSelectedCourse(course)
+      setShowTeachingModal(true)
+    } else {
+      // 直接跳转到预览页
+      const mode = course.teachingMode === 'teaching' ? 'teaching' : 'self-study'
+      window.location.href = `/course-center/preview/${course.id}?mode=${mode}`
+    }
   }
-
   // 处理教学模式选择
   const handleModeSelect = (mode: 'teacher-centered' | 'student-centered') => {
     setShowTeachingModal(false)
-    if (mode === 'teacher-centered') {
-      // 讲授模式 - 跳转到讲授页面
-      window.open('https://pbl.cocorobo.cn/pbl-student-table/dist/#/pptEasyClass?type=&courseId=ae814d33-ef5d-11f0-9b8a-005056924926&userid=e9b3eb89-2446-11ee-91d8-005056b86db5&oid=45facc0a-1211-11ec-80ad-005056b86db5&org=&cid=&tType=1&screenType=2', '_blank')
-    } else {
-      // 自学模式 - 跳转到使用视角
-      window.open('/teacher/note-config', '_blank')
+    if (selectedCourse) {
+      const modeParam = mode === 'teacher-centered' ? 'teaching' : 'self-study'
+      window.location.href = `/course-center/preview/${selectedCourse.id}?mode=${modeParam}`
     }
   }
 
@@ -818,6 +815,11 @@ export default function CourseCenter() {
     if (selectedSource !== '全部') {
       if (selectedSource === '官方' && course.source !== 'official') return false
       if (selectedSource === '组织' && course.source !== 'organization') return false
+    }
+    if (selectedTeachingMode !== '全部') {
+      if (selectedTeachingMode === '授课模式' && course.teachingMode !== 'teaching') return false
+      if (selectedTeachingMode === '自学模式' && course.teachingMode !== 'self-study') return false
+      if (selectedTeachingMode === '双模式' && course.teachingMode !== 'both') return false
     }
     if (searchQuery && !course.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
         !course.concepts.some(concept => concept.includes(searchQuery))) return false
@@ -844,54 +846,6 @@ export default function CourseCenter() {
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
             探索学科交叉融合的无限可能，发现优质跨学科课程资源
           </p>
-        </div>
-
-        {/* 平台统计 */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white text-xl">
-                📚
-              </div>
-              <div>
-                <div className="text-2xl font-bold text-gray-900">{platformStats.singleCourses}</div>
-                <div className="text-sm text-gray-500">单一课程</div>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-accent-500 to-accent-600 flex items-center justify-center text-white text-xl">
-                📖
-              </div>
-              <div>
-                <div className="text-2xl font-bold text-gray-900">{platformStats.seriesCourses}</div>
-                <div className="text-sm text-gray-500">系列课程</div>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white text-xl">
-                👨‍🏫
-              </div>
-              <div>
-                <div className="text-2xl font-bold text-gray-900">{platformStats.teachers}</div>
-                <div className="text-sm text-gray-500">参与教师</div>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center text-white text-xl">
-                🏫
-              </div>
-              <div>
-                <div className="text-2xl font-bold text-gray-900">{platformStats.schools}</div>
-                <div className="text-sm text-gray-500">参与学校</div>
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* 视图切换和筛选栏 */}
@@ -950,6 +904,16 @@ export default function CourseCenter() {
               >
                 {sources.map((source) => (
                   <option key={source} value={source}>{source === '全部' ? '全部来源' : source}</option>
+                ))}
+              </select>
+
+              <select
+                value={selectedTeachingMode}
+                onChange={(e) => setSelectedTeachingMode(e.target.value)}
+                className="px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all"
+              >
+                {teachingModes.map((mode) => (
+                  <option key={mode} value={mode}>{mode === '全部' ? '全部模式' : mode}</option>
                 ))}
               </select>
 
@@ -1033,14 +997,28 @@ function CourseGridView({ courses, onTeach }: { courses: Course[]; onTeach: (cou
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
 
-            {/* 来源标签 - 右上角 */}
-            <div className="absolute top-3 right-3">
-              <span className={`px-2.5 py-1 text-xs font-medium rounded-lg ${
+            {/* 标签组 - 右上角并排 */}
+            <div className="absolute top-3 right-3 flex gap-2">
+              {/* 来源标签 */}
+              <span className={`px-2.5 py-1 text-xs font-medium rounded-lg backdrop-blur-sm ${
                 course.source === 'official'
-                  ? 'bg-primary-500 text-white'
-                  : 'bg-accent-500 text-white'
+                  ? 'bg-primary-500/90 text-white'
+                  : 'bg-accent-500/90 text-white'
               }`}>
                 {course.source === 'official' ? '官方' : '组织'}
+              </span>
+
+              {/* 教学模式标签 */}
+              <span className={`px-2.5 py-1 text-xs font-medium rounded-lg backdrop-blur-sm ${
+                course.teachingMode === 'both'
+                  ? 'bg-primary-600/90 text-white'
+                  : course.teachingMode === 'teaching'
+                  ? 'bg-accent-600/90 text-white'
+                  : 'bg-fresh-600/90 text-white'
+              }`}>
+                {course.teachingMode === 'both' && '双模式'}
+                {course.teachingMode === 'teaching' && '授课模式'}
+                {course.teachingMode === 'self-study' && '自学模式'}
               </span>
             </div>
           </div>
@@ -1052,9 +1030,9 @@ function CourseGridView({ courses, onTeach }: { courses: Course[]; onTeach: (cou
               {course.title}
             </h3>
 
-            {/* 学科标签 */}
+            {/* 学科标签 - 最多显示3个 */}
             <div className="flex flex-wrap gap-1.5 mb-3">
-              {course.subjects.map((subject) => (
+              {course.subjects.slice(0, 3).map((subject) => (
                 <span
                   key={subject}
                   className="px-2.5 py-1 text-xs font-medium rounded-lg"
@@ -1066,18 +1044,28 @@ function CourseGridView({ courses, onTeach }: { courses: Course[]; onTeach: (cou
                   {subject}
                 </span>
               ))}
+              {course.subjects.length > 3 && (
+                <span className="px-2.5 py-1 text-xs font-medium rounded-lg bg-gray-100 text-gray-600">
+                  +{course.subjects.length - 3}
+                </span>
+              )}
             </div>
 
-            {/* 跨学科概念 */}
+            {/* 跨学科概念 - 最多显示3个 */}
             <div className="flex flex-wrap gap-1.5 mb-4">
-              {course.concepts.map((concept) => (
+              {course.concepts.slice(0, 3).map((concept) => (
                 <span key={concept} className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full">
                   {concept}
                 </span>
               ))}
+              {course.concepts.length > 3 && (
+                <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full">
+                  +{course.concepts.length - 3}
+                </span>
+              )}
             </div>
 
-            {/* 底部信息：学习人数、评分、授课按钮 */}
+            {/* 底部信息：学习人数、授课按钮 */}
             <div className="flex items-center justify-between pt-3 border-t border-gray-100">
               <div className="flex items-center gap-4">
                 {/* 学习人数 */}
@@ -1087,19 +1075,12 @@ function CourseGridView({ courses, onTeach }: { courses: Course[]; onTeach: (cou
                   </svg>
                   {course.studentCount}人学习
                 </span>
-                {/* 评分 */}
-                <span className="flex items-center gap-1 text-sm text-gray-500">
-                  <svg className="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                  </svg>
-                  {course.rating}
-                </span>
               </div>
               <button
                 onClick={() => onTeach(course)}
                 className="px-4 py-2 bg-gradient-to-r from-primary-600 to-accent-600 text-white text-sm font-medium rounded-xl hover:shadow-lg hover:shadow-primary-500/25 transition-all duration-300"
               >
-                去授课
+                去预览
               </button>
             </div>
           </div>
@@ -1526,19 +1507,13 @@ function KnowledgeGraphView({
                       <span className="text-xs text-gray-500">{course.subjects.join('/')}</span>
                       <span className="text-xs text-gray-400">•</span>
                       <span className="text-xs text-gray-500">{course.studentCount}人学习</span>
-                      <span className="text-xs text-yellow-500 flex items-center gap-0.5">
-                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                        </svg>
-                        {course.rating}
-                      </span>
                     </div>
                   </div>
                   <button
                     onClick={() => onTeach(course)}
                     className="px-3 py-1.5 bg-primary-50 text-primary-600 text-xs font-medium rounded-lg hover:bg-primary-100 transition-colors whitespace-nowrap"
                   >
-                    去授课
+                    去预览
                   </button>
                 </div>
               ))}

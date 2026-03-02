@@ -1243,7 +1243,7 @@ export default function SelfStudyWorkbench({
   const [editingTask, setEditingTask] = useState<typeof MOCK_GENERATED_TASKS[0] | null>(null);
 
   // AI生成的资源列表
-  const [aiGeneratedResources, setAiGeneratedResources] = useState<Array<{
+  const [aiGeneratedResources, setAiGeneratedResources] = usePersistedState<Array<{
     id: string;
     title: string;
     type: 'ai_generated';
@@ -1253,7 +1253,7 @@ export default function SelfStudyWorkbench({
     toolId: string;
     interactiveCategory?: 'animation' | 'visualization' | 'simulation' | 'test';
     url?: string;
-  }>>([]);
+  }>>(`self-study:wb:${config.id}:aiGeneratedResources`, []);
 
   // Studio工具配置弹窗
   const [studioConfigModal, setStudioConfigModal] = useState<{
@@ -1599,7 +1599,7 @@ export default function SelfStudyWorkbench({
       scope,
       shareLink,
       snapshot: {
-        title: config.title,
+        title: metadata.spaceName || config.title,
         resources: scope.includeResources ? publishedResources : [],
         tasks: scope.includeTasks ? publishedTasks : [],
         userProfile: scope.includeAISettings ? config.userProfile : undefined,
@@ -1610,6 +1610,7 @@ export default function SelfStudyWorkbench({
     // 更新配置
     handleUpdateConfig({
       ...config,
+      title: metadata.spaceName || config.title,
       resources: publishedResources,
       tasks: publishedTasks,
       publishStatus: 'published',
@@ -4074,6 +4075,7 @@ export default function SelfStudyWorkbench({
         onPublish={handlePublish}
         isPublished={config.publishStatus === 'published'}
         shareLink={config.publishedVersions?.[config.publishedVersions.length - 1]?.shareLink}
+        currentSpaceName={config.title}
       />
 
       {/* 文件上传弹窗 */}

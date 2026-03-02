@@ -64,6 +64,9 @@ export interface LearningPath {
 
 // 发布元数据
 export interface PublishMetadata {
+  spaceName?: string;          // 学习空间名称
+  isAnonymous?: boolean;       // 是否匿名模式
+  accessCode?: string;         // 访问码（匿名模式使用）
   grade?: string;              // 年级，如 "四年级"
   subjects?: string[];         // 学科，如 ["科学", "地理"]
   bindClasses?: string[];      // 绑定班级，如 ["四年级1班", "四年级2班"]
