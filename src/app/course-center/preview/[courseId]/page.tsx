@@ -2,45 +2,43 @@
 
 import { useState, useEffect } from 'react'
 import { useParams, useSearchParams, useRouter } from 'next/navigation'
-import Link from 'next/link'
 
-// Mock课程数据（实际应该从API获取）
-const mockCourses = {
-  '1': {
+// 从课程中心获取课程数据
+const courses = [
+  {
     id: '1',
     title: '水循环与气候变化探究',
     cover: 'https://images.unsplash.com/photo-1501630834273-4b5604d2ee31?w=1200&h=600&fit=crop',
-    subjects: ['地理', '物理'],
+    subjects: ['地理', '物理', '化学', '生物'],
+    source: 'official' as const,
+    concepts: ['系统与平衡', '生态系统', '成长', '生命周期'],
+    studentCount: 1240,
+    teachingMode: 'both' as const,
     description: '通过跨学科视角探索水循环系统与全球气候变化的关系，理解地球系统的复杂性和相互作用。',
-    objectives: [
-      '理解水循环的基本过程和驱动力',
-      '分析气候变化对水循环的影响',
-      '探索人类活动与水资源的关系',
-    ],
-    content: [
-      { type: 'video', title: '水循环基础', duration: '15分钟' },
-      { type: 'reading', title: '气候变化报告', duration: '20分钟' },
-      { type: 'quiz', title: '知识检测', duration: '10分钟' },
-    ],
   },
-  '2': {
+  {
     id: '2',
-    title: '数学建模与环境保护',
-    cover: 'https://images.unsplash.com/photo-1509228468518-180dd4864904?w=1200&h=600&fit=crop',
-    subjects: ['数学', '生物'],
-    description: '运用数学建模方法分析环境问题，培养用数学思维解决实际问题的能力。',
-    objectives: [
-      '掌握基本的数学建模方法',
-      '分析生态系统的数学模型',
-      '应用模型解决环境保护问题',
-    ],
-    content: [
-      { type: 'video', title: '数学建模入门', duration: '18分钟' },
-      { type: 'reading', title: '生态系统案例', duration: '15分钟' },
-      { type: 'quiz', title: '建模练习', duration: '12分钟' },
-    ],
+    title: '诗词中的天文地理',
+    cover: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&h=600&fit=crop',
+    subjects: ['语文', '地理', '历史'],
+    source: 'organization' as const,
+    concepts: ['诗词鉴赏', '天文现象', '地理特征', '文化传承'],
+    studentCount: 890,
+    teachingMode: 'teaching' as const,
+    description: '从古诗词中学习天文地理知识，感受中华文化的博大精深。',
   },
-}
+  {
+    id: '3',
+    title: '数据可视化与统计分析',
+    cover: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1200&h=600&fit=crop',
+    subjects: ['数学', '信息科技'],
+    source: 'official' as const,
+    concepts: ['统计推断', '数据表示', '算法思维', '可视化设计'],
+    studentCount: 2100,
+    teachingMode: 'self-study' as const,
+    description: '学习数据分析的基本方法，培养数据思维和可视化表达能力。',
+  },
+]
 
 export default function CoursePreview() {
   const params = useParams()
@@ -49,23 +47,29 @@ export default function CoursePreview() {
   const courseId = params.courseId as string
   const mode = searchParams.get('mode') as 'teaching' | 'self-study'
 
+  const [showConfigModal, setShowConfigModal] = useState(true)
   const [showCopyModal, setShowCopyModal] = useState(false)
-  const course = mockCourses[courseId as keyof typeof mockCourses]
+
+  const course = courses.find(c => c.id === courseId)
 
   if (!course) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">课程不存在</h1>
-          <Link href="/teacher/course-center" className="text-primary-600 hover:underline">
+          <button
+            onClick={() => router.push('/course-center')}
+            className="text-primary-600 hover:underline"
+          >
             返回课程中心
-          </Link>
+          </button>
         </div>
       </div>
     )
   }
 
   const handleGoToTeach = () => {
+    setShowConfigModal(false)
     setShowCopyModal(true)
     // 模拟复制课程
     setTimeout(() => {
@@ -73,44 +77,159 @@ export default function CoursePreview() {
     }, 1500)
   }
 
+  const handleStartPreview = () => {
+    setShowConfigModal(false)
+    // 跳转到学生工作台
+    router.push(`/student/workbench?courseId=${courseId}&mode=${mode}`)
+  }
+
+  const modeLabel = mode === 'teaching' ? '授课模式' : '自学模式'
+  const modeDescription = mode === 'teaching'
+    ? '教师引导的课堂教学，适合系统性讲解和互动讨论'
+    : '学生自主探索学习，适合个性化学习路径和自我节奏'
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Link
-                href="/teacher/course-center"
-                className="text-gray-600 hover:text-gray-900 transition-colors"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </Link>
-              <div>
-                <h1 className="text-xl font-semibold text-gray-900">{course.title}</h1>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className={`px-2 py-0.5 text-xs font-medium rounded-lg ${
-                    mode === 'teaching' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'
+    <>
+      {/* 课程配置信息弹窗 */}
+      {showConfigModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 animate-fade-in">
+          <div className="relative bg-white rounded-3xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto animate-scale-in">
+            {/* 关闭按钮 */}
+            <button
+              onClick={() => setShowConfigModal(false)}
+              className="absolute top-6 right-6 text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            {/* 头部 */}
+            <div className="px-8 pt-8 pb-6 border-b border-gray-100">
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">课程配置信息</h2>
+              <p className="text-gray-500">以学生视角预览课程内容</p>
+            </div>
+
+            {/* 内容 */}
+            <div className="px-8 py-6 space-y-6">
+              {/* 课程封面 */}
+              <div className="relative h-48 rounded-2xl overflow-hidden">
+                <img
+                  src={course.cover}
+                  alt={course.title}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                <div className="absolute bottom-4 left-4 right-4">
+                  <h3 className="text-xl font-bold text-white">{course.title}</h3>
+                </div>
+              </div>
+
+              {/* 基本信息 */}
+              <div className="space-y-4">
+                {/* 课程来源 */}
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">课程来源</label>
+                  <span className={`inline-flex px-3 py-1.5 text-sm font-medium rounded-lg ${
+                    course.source === 'official'
+                      ? 'bg-primary-50 text-primary-700 border border-primary-200'
+                      : 'bg-accent-50 text-accent-700 border border-accent-200'
                   }`}>
-                    {mode === 'teaching' ? '授课模式' : '自学模式'}
+                    {course.source === 'official' ? '官方课程' : '组织课程'}
                   </span>
-                  <span className="text-sm text-gray-500">学生视角预览</span>
+                </div>
+
+                {/* 教学模式 */}
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">教学模式</label>
+                  <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl">
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                      mode === 'teaching' ? 'bg-accent-100' : 'bg-fresh-100'
+                    }`}>
+                      <svg className={`w-5 h-5 ${
+                        mode === 'teaching' ? 'text-accent-600' : 'text-fresh-600'
+                      }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-gray-900 mb-1">{modeLabel}</h4>
+                      <p className="text-sm text-gray-600">{modeDescription}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 涉及学科 */}
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">涉及学科</label>
+                  <div className="flex flex-wrap gap-2">
+                    {course.subjects.map((subject) => (
+                      <span
+                        key={subject}
+                        className="px-3 py-1.5 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg"
+                      >
+                        {subject}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 跨学科大概念 */}
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">跨学科大概念</label>
+                  <div className="flex flex-wrap gap-2">
+                    {course.concepts.map((concept) => (
+                      <span
+                        key={concept}
+                        className="px-3 py-1.5 bg-primary-50 text-primary-700 text-sm font-medium rounded-lg border border-primary-200"
+                      >
+                        {concept}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 课程描述 */}
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">课程描述</label>
+                  <p className="text-gray-600 text-sm leading-relaxed p-4 bg-gray-50 rounded-xl">
+                    {course.description}
+                  </p>
+                </div>
+
+                {/* 学习人数 */}
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">学习人数</label>
+                  <div className="flex items-center gap-2 text-gray-600">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                    <span className="text-sm font-medium">{course.studentCount} 人正在学习</span>
+                  </div>
                 </div>
               </div>
             </div>
-            <button
-              onClick={handleGoToTeach}
-              className="px-6 py-2.5 bg-primary-600 text-white font-medium rounded-xl hover:bg-primary-700 transition-colors"
-            >
-              去授课
-            </button>
+
+            {/* 底部操作 */}
+            <div className="px-8 py-6 border-t border-gray-100 flex gap-3">
+              <button
+                onClick={handleStartPreview}
+                className="flex-1 px-6 py-3 bg-gray-100 text-gray-700 font-medium rounded-xl hover:bg-gray-200 transition-colors"
+              >
+                开始预览
+              </button>
+              <button
+                onClick={handleGoToTeach}
+                className="flex-1 px-6 py-3 bg-gradient-to-r from-primary-600 to-accent-600 text-white font-medium rounded-xl hover:shadow-lg hover:shadow-primary-500/25 transition-all"
+              >
+                去授课
+              </button>
+            </div>
           </div>
         </div>
-      </header>
+      )}
 
-      {/* Copy Modal */}
+      {/* 复制课程加载弹窗 */}
       {showCopyModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 animate-fade-in">
           <div className="bg-white rounded-2xl p-8 max-w-sm w-full mx-4 text-center animate-scale-in">
@@ -125,139 +244,11 @@ export default function CoursePreview() {
         </div>
       )}
 
-      {/* Hero Section */}
-      <div className="relative h-80 overflow-hidden">
-        <img
-          src={course.cover}
-          alt={course.title}
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
-        <div className="absolute bottom-0 left-0 right-0 p-8">
-          <div className="max-w-7xl mx-auto">
-            <div className="flex flex-wrap gap-2 mb-4">
-              {course.subjects.map((subject) => (
-                <span key={subject} className="px-3 py-1 bg-white/20 backdrop-blur-sm text-white text-sm font-medium rounded-lg">
-                  {subject}
-                </span>
-              ))}
-            </div>
-            <h2 className="text-3xl font-bold text-white mb-2">{course.title}</h2>
-            <p className="text-white/90 text-lg max-w-3xl">{course.description}</p>
-          </div>
-        </div>
+      {/* 学生工作台页面将在这里加载 */}
+      <div className="min-h-screen bg-gray-50">
+        {/* 这里会被重定向到 /student/workbench */}
       </div>
-
-      {/* Content */}
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Content */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Learning Objectives */}
-            <div className="bg-white rounded-2xl border border-gray-100 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">学习目标</h3>
-              <ul className="space-y-3">
-                {course.objectives.map((objective, index) => (
-                  <li key={index} className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <svg className="w-4 h-4 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                    </div>
-                    <span className="text-gray-700">{objective}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Course Content */}
-            <div className="bg-white rounded-2xl border border-gray-100 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">课程内容</h3>
-              <div className="space-y-3">
-                {course.content.map((item, index) => (
-                  <div key={index} className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                      item.type === 'video' ? 'bg-red-100' :
-                      item.type === 'reading' ? 'bg-blue-100' : 'bg-green-100'
-                    }`}>
-                      {item.type === 'video' && (
-                        <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                      )}
-                      {item.type === 'reading' && (
-                        <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                        </svg>
-                      )}
-                      {item.type === 'quiz' && (
-                        <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="font-medium text-gray-900">{item.title}</h4>
-                      <p className="text-sm text-gray-500">{item.duration}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Mode Info */}
-            <div className="bg-white rounded-2xl border border-gray-100 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                {mode === 'teaching' ? '授课模式' : '自学模式'}
-              </h3>
-              <p className="text-gray-600 text-sm mb-4">
-                {mode === 'teaching'
-                  ? '教师引导的课堂教学，适合系统性讲解和互动讨论。'
-                  : '学生自主探索学习，适合个性化学习路径和自我节奏。'}
-              </p>
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <svg className="w-4 h-4 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  {mode === 'teaching' ? '支持课堂互动' : '自主学习节奏'}
-                </div>
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <svg className="w-4 h-4 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  {mode === 'teaching' ? '实时答疑解惑' : '个性化学习路径'}
-                </div>
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <svg className="w-4 h-4 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  {mode === 'teaching' ? '小组协作学习' : '智能学习推荐'}
-                </div>
-              </div>
-            </div>
-
-            {/* CTA */}
-            <div className="bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl p-6 text-white">
-              <h3 className="text-lg font-semibold mb-2">开始授课</h3>
-              <p className="text-white/90 text-sm mb-4">
-                将此课程复制到您的工作台，开始个性化编辑和授课。
-              </p>
-              <button
-                onClick={handleGoToTeach}
-                className="w-full px-4 py-2.5 bg-white text-primary-600 font-medium rounded-xl hover:bg-gray-50 transition-colors"
-              >
-                去授课
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    </>
   )
 }
 
