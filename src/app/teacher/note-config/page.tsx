@@ -149,7 +149,8 @@ interface Question {
 interface NoteConfig {
   noteInfo: {
     title: string;
-    description: string;
+    cover?: string;
+    tags?: string[];
     subjects?: string[];
     grade?: string;
     bindClasses?: string[];
@@ -336,7 +337,8 @@ export default function NoteConfigPage() {
   const [config, setConfig] = useState<NoteConfig>({
     noteInfo: {
       title: '水循环与水资源',
-      description: '探索水的循环过程，理解水资源的重要性',
+      cover: 'https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=400',
+      tags: ['知识点', '探究'],
       subjects: ['科学', '地理', '环境教育'],
       grade: '四年级',
       bindClasses: ['四年级1班', '四年级2班'],
