@@ -438,6 +438,12 @@ function StudentWorkbenchContent() {
     metacognition: 2,
   });
 
+  // 课程完成状态
+  const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [reportGeneratedAt, setReportGeneratedAt] = useState<Date | null>(null);
+  const [showCompletionDialog, setShowCompletionDialog] = useState(false);
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+
   // 课程数据（用于预览弹窗）
   const previewCourseData = previewCourseId ? {
     '1': {
@@ -884,6 +890,69 @@ ${resource.type === 'video'
     setIsTimerRunning(true);
   };
 
+  // 处理完成课程
+  const handleCompleteCourse = () => {
+    setShowCompletionDialog(true);
+  };
+
+  // 确认完成课程
+  const confirmCompleteCourse = async () => {
+    setShowCompletionDialog(false);
+    setIsGeneratingReport(true);
+
+    // 模拟AI评价生成过程（4秒）
+    await new Promise(resolve => setTimeout(resolve, 4000));
+
+    // 保存完成数据到localStorage（模拟数据同步）
+    const completionData = {
+      studentId: 'student_001',
+      courseId: 'plant-factory',
+      completedAt: new Date().toISOString(),
+      taskSubmissions: Array.from(completedTasks),
+      competencyProfile,
+      learningDuration: elapsedTime,
+    };
+    localStorage.setItem('course_completion', JSON.stringify(completionData));
+
+    setHasSubmitted(true);
+    setReportGeneratedAt(new Date());
+    setIsGeneratingReport(false);
+
+    // 跳转到报告页
+    router.push('/student/courses/plant-factory/report');
+  };
+
+  // 获取按钮配置
+  const getButtonConfig = () => {
+    if (!allRequiredCompleted) {
+      return {
+        text: '完成课程',
+        icon: Award,
+        disabled: true,
+        className: 'bg-gray-300 cursor-not-allowed text-gray-500',
+        onClick: () => {},
+      };
+    }
+
+    if (hasSubmitted) {
+      return {
+        text: '重新生成报告',
+        icon: RotateCcw,
+        disabled: false,
+        className: 'bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg',
+        onClick: handleCompleteCourse,
+      };
+    }
+
+    return {
+      text: '完成课程',
+      icon: Award,
+      disabled: false,
+      className: 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-md hover:shadow-lg',
+      onClick: handleCompleteCourse,
+    };
+  };
+
   return (
     <div className="h-screen flex flex-col bg-gray-50">
       {/* 课程配置信息弹窗 */}
@@ -1050,34 +1119,21 @@ ${resource.type === 'video'
             <Clock size={14} className="text-primary-600" />
             <span className="text-sm font-medium text-primary-700">{formatTime(elapsedTime)}</span>
           </div>
-          <button
-            onClick={toggleTimer}
-            className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-            title={isTimerRunning ? '暂停计时' : '继续计时'}
-          >
-            {isTimerRunning ? <Pause size={16} className="text-gray-700" /> : <Play size={16} className="text-gray-700" />}
-          </button>
-          <button
-            onClick={resetTimer}
-            className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-            title="重置计时器"
-          >
-            <RotateCcw size={16} className="text-gray-700" />
-          </button>
-          {allRequiredCompleted && (
-            <button
-              onClick={() => router.push('/student/courses/plant-factory/report')}
-              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white text-sm font-medium rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all shadow-md hover:shadow-lg"
-              title="查看学习报告"
-            >
-              <BarChart3 size={16} />
-              查看报告
-            </button>
-          )}
-          <button className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 transition-colors">
-            <Save size={16} />
-            保存进度
-          </button>
+          {(() => {
+            const buttonConfig = getButtonConfig();
+            const Icon = buttonConfig.icon;
+            return (
+              <button
+                onClick={buttonConfig.onClick}
+                disabled={buttonConfig.disabled}
+                className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all ${buttonConfig.className}`}
+                title={buttonConfig.text}
+              >
+                <Icon size={16} />
+                {buttonConfig.text}
+              </button>
+            );
+          })()}
         </div>
       </header>
 
@@ -1146,6 +1202,71 @@ ${resource.type === 'video'
           competencyProfile={competencyProfile}
         />
       </div>
+
+      {/* 确认完成课程对话框 */}
+      {showCompletionDialog && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 animate-fade-in">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 p-6 animate-scale-in">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center">
+                <Award size={24} className="text-white" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-800">
+                  {hasSubmitted ? '重新生成报告' : '确认完成课程'}
+                </h3>
+                <p className="text-xs text-gray-500">
+                  {hasSubmitted ? '将覆盖之前的报告' : '即将生成AI综合评价'}
+                </p>
+              </div>
+            </div>
+            <p className="text-sm text-gray-600 mb-6">
+              {hasSubmitted
+                ? '将重新分析你的学习数据并生成新的报告，是否继续？'
+                : '你已完成所有必修任务！提交后将生成AI综合评价报告。'}
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowCompletionDialog(false)}
+                className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+              >
+                取消
+              </button>
+              <button
+                onClick={confirmCompleteCourse}
+                className="flex-1 px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all font-medium shadow-md"
+              >
+                确认{hasSubmitted ? '重新生成' : '完成'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* AI评价生成动画 */}
+      {isGeneratingReport && (
+        <div className="fixed inset-0 bg-gradient-to-br from-green-900/95 to-emerald-900/95 flex items-center justify-center z-50">
+          <div className="text-center">
+            <div className="mb-8 relative">
+              <div className="w-24 h-24 mx-auto rounded-full bg-white/10 flex items-center justify-center animate-pulse">
+                <Sparkles size={48} className="text-white" />
+              </div>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-32 h-32 border-4 border-white/20 border-t-white rounded-full animate-spin"></div>
+              </div>
+            </div>
+            <div className="space-y-3">
+              <h3 className="text-2xl font-bold text-white mb-2">AI正在生成你的学习报告</h3>
+              <div className="space-y-2 text-white/80 text-sm">
+                <p className="animate-fade-in">✨ 正在分析你的学习数据...</p>
+                <p className="animate-fade-in animation-delay-1000">📊 评估任务完成质量...</p>
+                <p className="animate-fade-in animation-delay-2000">🎯 生成能力画像报告...</p>
+                <p className="animate-fade-in animation-delay-3000">💡 准备个性化建议...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

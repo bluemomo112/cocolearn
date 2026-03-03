@@ -398,10 +398,11 @@ export function NoteInfoModal({ config, onSave, onClose, knowledgeLibrary, grade
       publishedCode: randomCode,
     });
 
+    // 设置发布数据并显示成功弹窗
     setPublishData({ link, code: randomCode });
     setShowPublishSuccess(true);
 
-    console.log('✅ 发布成功弹窗应该显示了, showPublishSuccess=', true);
+    console.log('✅ 发布成功，显示成功弹窗');
   };
 
   return (
@@ -748,7 +749,6 @@ export function NoteInfoModal({ config, onSave, onClose, knowledgeLibrary, grade
           onClose={() => {
             console.log('关闭发布成功弹窗');
             setShowPublishSuccess(false);
-            // 不要关闭主弹窗，让用户可以继续编辑或查看
           }}
         />
       )}
