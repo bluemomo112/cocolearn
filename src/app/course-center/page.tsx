@@ -789,6 +789,7 @@ export default function CourseCenter() {
   const [searchQuery, setSearchQuery] = useState('')
   const [showTeachingModal, setShowTeachingModal] = useState(false)
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null)
+  const [showCourseTypeModal, setShowCourseTypeModal] = useState(false)
 
   // 处理去预览按钮点击
   const handleTeachClick = (course: Course) => {
@@ -934,6 +935,17 @@ export default function CourseCenter() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
               </div>
+
+              {/* 创建新课程按钮 */}
+              <button
+                onClick={() => setShowCourseTypeModal(true)}
+                className="flex items-center gap-2 px-5 py-2.5 bg-primary-600 text-white text-sm font-medium rounded-xl hover:bg-primary-700 transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                创建新课程
+              </button>
             </div>
           </div>
         </div>
@@ -958,6 +970,113 @@ export default function CourseCenter() {
         onSelect={handleModeSelect}
         courseTitle={selectedCourse?.title}
       />
+
+      {/* 课程类型选择弹窗 */}
+      {showCourseTypeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          {/* 背景遮罩 */}
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => setShowCourseTypeModal(false)}
+          />
+
+          {/* 弹窗内容 */}
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 p-8 animate-fade-in-up">
+            {/* 关闭按钮 */}
+            <button
+              onClick={() => setShowCourseTypeModal(false)}
+              className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            {/* 标题 */}
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">选择课堂模式</h2>
+              <p className="text-gray-500">请根据您的教学需求选择合适的课堂模式</p>
+            </div>
+
+            {/* 课堂模式选项卡片 */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* 以教师为中心课堂 */}
+              <button
+                onClick={() => window.open('https://beta.pbl.cocorobo.cn/pbl-teacher-table/dist/#/pptEasy?cid=ae814d33-ef5d-11f0-9b8a-005056924926&userid=e9b3eb89-2446-11ee-91d8-005056b86db5&oid=45facc0a-1211-11ec-80ad-005056b86db5&org=&role=0', '_blank')}
+                className="group relative w-full bg-gradient-to-br from-emerald-50 to-teal-50 border-2 border-emerald-100 rounded-2xl p-6 hover:border-emerald-300 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 text-left"
+              >
+                <div className="flex flex-col items-center text-center">
+                  {/* 图标 */}
+                  <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-accent-600 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+
+                  {/* 标题 */}
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">以教师为中心课堂</h3>
+
+                  {/* 描述 */}
+                  <p className="text-sm text-gray-500 mb-4">
+                    教师实时控制课堂节奏，学生跟随教师统一进度学习
+                  </p>
+
+                  {/* 特点标签 */}
+                  <div className="flex flex-wrap justify-center gap-2">
+                    <span className="px-2.5 py-1 bg-primary-100 text-primary-600 text-xs font-medium rounded-lg">实时同步</span>
+                    <span className="px-2.5 py-1 bg-primary-100 text-primary-600 text-xs font-medium rounded-lg">统一进度</span>
+                    <span className="px-2.5 py-1 bg-primary-100 text-primary-600 text-xs font-medium rounded-lg">课堂互动</span>
+                  </div>
+                </div>
+
+                {/* 箭头指示 */}
+                <div className="absolute bottom-4 right-4 w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <svg className="w-4 h-4 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+              </button>
+
+              {/* 以学生为中心的课堂 */}
+              <button
+                onClick={() => window.open('teacher/note-config', '_blank')}
+                className="group relative w-full bg-gradient-to-br from-emerald-50 to-teal-50 border-2 border-emerald-100 rounded-2xl p-6 hover:border-emerald-300 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 text-left"
+              >
+                <div className="flex flex-col items-center text-center">
+                  {/* 图标 */}
+                  <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    </svg>
+                  </div>
+
+                  {/* 标题 */}
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">以学生为中心的课堂</h3>
+
+                  {/* 描述 */}
+                  <p className="text-sm text-gray-500 mb-4">
+                    学生自主探索学习，教师提供个性化指导与资源
+                  </p>
+
+                  {/* 特点标签 */}
+                  <div className="flex flex-wrap justify-center gap-2">
+                    <span className="px-2.5 py-1 bg-emerald-100 text-emerald-600 text-xs font-medium rounded-lg">自主学习</span>
+                    <span className="px-2.5 py-1 bg-emerald-100 text-emerald-600 text-xs font-medium rounded-lg">个性进度</span>
+                    <span className="px-2.5 py-1 bg-emerald-100 text-emerald-600 text-xs font-medium rounded-lg">AI辅导</span>
+                  </div>
+                </div>
+
+                {/* 箭头指示 */}
+                <div className="absolute bottom-4 right-4 w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
