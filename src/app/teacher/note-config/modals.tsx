@@ -298,6 +298,7 @@ export function NoteInfoModal({ config, onSave, onClose, knowledgeLibrary, grade
   const [publishData, setPublishData] = useState({ link: '', code: '' });
   const [publishError, setPublishError] = useState('');
   const [customTagInput, setCustomTagInput] = useState('');
+  const [showShareLink, setShowShareLink] = useState(false);
 
   const allSubjects = ALL_SUBJECTS;
 
@@ -363,29 +364,44 @@ export function NoteInfoModal({ config, onSave, onClose, knowledgeLibrary, grade
   };
 
   const handlePublish = () => {
+    console.log('=== 发布按钮被点击 ===');
+    console.log('当前配置:', localConfig);
+
     // 清除之前的错误
     setPublishError('');
 
     // 验证发布配置
     if (!localConfig.grade) {
+      console.log('❌ 验证失败: 未选择年级');
       setPublishError('请选择年级后再发布');
       return;
     }
     if (localConfig.bindClasses.length === 0) {
+      console.log('❌ 验证失败: 未绑定班级');
       setPublishError('请至少绑定一个班级后再发布');
       return;
     }
 
-    // 保存配置
-    onSave(localConfig);
+    console.log('✅ 验证通过，开始发布...');
 
     // 生成课程链接和随机码（mock）
     const courseId = Math.random().toString(36).substring(2, 10);
     const randomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
     const link = `https://student.example.com/course/${courseId}`;
 
+    console.log('生成的发布数据:', { link, code: randomCode });
+
+    // 保存配置（包含发布信息）
+    onSave({
+      ...localConfig,
+      publishedLink: link,
+      publishedCode: randomCode,
+    });
+
     setPublishData({ link, code: randomCode });
     setShowPublishSuccess(true);
+
+    console.log('✅ 发布成功弹窗应该显示了, showPublishSuccess=', true);
   };
 
   return (
@@ -669,15 +685,28 @@ export function NoteInfoModal({ config, onSave, onClose, knowledgeLibrary, grade
             </div>
           )}
           <div className="flex justify-between items-center">
-            <button
-              onClick={onClose}
-              className="px-5 py-2.5 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-xl font-medium transition-all"
-            >
-              取消
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={onClose}
+                className="px-5 py-2.5 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-xl font-medium transition-all"
+              >
+                取消
+              </button>
+              {/* 查看分享链接按钮 */}
+              {config.publishedLink && (
+                <button
+                  onClick={() => setShowShareLink(true)}
+                  className="px-5 py-2.5 text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded-xl font-medium transition-all flex items-center gap-2 border border-primary-200"
+                >
+                  <ExternalLink size={16} />
+                  查看分享链接
+                </button>
+              )}
+            </div>
             <div className="flex gap-3">
               <button
                 onClick={() => {
+                  console.log('保存草稿按钮被点击');
                   onSave(localConfig);
                   onClose();
                 }}
@@ -686,7 +715,10 @@ export function NoteInfoModal({ config, onSave, onClose, knowledgeLibrary, grade
                 保存草稿
               </button>
               <button
-                onClick={handlePublish}
+                onClick={(e) => {
+                  console.log('发布按钮点击事件触发', e);
+                  handlePublish();
+                }}
                 className="px-6 py-2.5 bg-gradient-to-r from-primary-600 to-accent-600 text-white rounded-xl hover:from-primary-700 hover:to-accent-700 font-medium transition-all flex items-center gap-2 shadow-lg shadow-primary-200"
               >
                 <Send size={16} />
@@ -697,6 +729,16 @@ export function NoteInfoModal({ config, onSave, onClose, knowledgeLibrary, grade
         </div>
       </div>
 
+      {/* 查看分享链接弹窗 */}
+      {showShareLink && config.publishedLink && (
+        <PublishSuccessModal
+          courseTitle={localConfig.title}
+          courseLink={config.publishedLink}
+          accessCode={config.publishedCode || ''}
+          onClose={() => setShowShareLink(false)}
+        />
+      )}
+
       {/* 发布成功弹窗 */}
       {showPublishSuccess && (
         <PublishSuccessModal
@@ -704,6 +746,7 @@ export function NoteInfoModal({ config, onSave, onClose, knowledgeLibrary, grade
           courseLink={publishData.link}
           accessCode={publishData.code}
           onClose={() => {
+            console.log('关闭发布成功弹窗');
             setShowPublishSuccess(false);
             onClose();
           }}
