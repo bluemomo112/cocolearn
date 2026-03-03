@@ -99,6 +99,14 @@ export interface SpaceConfig {
   topic?: string; // 学习主题
   scenario?: PresetScenario; // 预设场景
 
+  // 笔记元信息
+  cover?: string; // 封面图
+  tags?: string[]; // 标签
+  subjects?: string[]; // 学科
+  grade?: string; // 年级
+  bindClasses?: string[]; // 绑定班级
+  publishScope?: PublishScope; // 发布范围
+
   // 学习模式（替代 interactionMode）
   learningMode: LearningMode;
 

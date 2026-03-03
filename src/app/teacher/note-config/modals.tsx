@@ -300,6 +300,14 @@ export function NoteInfoModal({ config, onSave, onClose, knowledgeLibrary, grade
   const [customTagInput, setCustomTagInput] = useState('');
   const [showShareLink, setShowShareLink] = useState(false);
 
+  // 发布范围选择
+  const [publishScope, setPublishScope] = useState({
+    includeResources: true,
+    includeTasks: true,
+    includeAISettings: true,
+    includeLearningPath: true,
+  });
+
   const allSubjects = ALL_SUBJECTS;
 
   // AI 自动推荐封面和标签
@@ -366,6 +374,7 @@ export function NoteInfoModal({ config, onSave, onClose, knowledgeLibrary, grade
   const handlePublish = () => {
     console.log('=== 发布按钮被点击 ===');
     console.log('当前配置:', localConfig);
+    console.log('发布范围:', publishScope);
 
     // 清除之前的错误
     setPublishError('');
@@ -391,9 +400,10 @@ export function NoteInfoModal({ config, onSave, onClose, knowledgeLibrary, grade
 
     console.log('生成的发布数据:', { link, code: randomCode });
 
-    // 保存配置（包含发布信息）
+    // 保存配置（包含发布信息和发布范围）
     onSave({
       ...localConfig,
+      publishScope,
       publishedLink: link,
       publishedCode: randomCode,
     });
@@ -669,6 +679,65 @@ export function NoteInfoModal({ config, onSave, onClose, knowledgeLibrary, grade
                           {className}
                         </button>
                       ))}
+                    </div>
+                  </div>
+
+                  {/* 发布范围选择 */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2.5 flex items-center gap-2">
+                      <Layers size={16} className="text-purple-600" />
+                      发布范围
+                      <span className="text-xs font-normal text-gray-500">选择要发布的内容</span>
+                    </label>
+                    <div className="space-y-2.5">
+                      <label className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
+                        <input
+                          type="checkbox"
+                          checked={publishScope.includeResources}
+                          onChange={(e) => setPublishScope({ ...publishScope, includeResources: e.target.checked })}
+                          className="w-4 h-4 text-primary-600 rounded focus:ring-2 focus:ring-primary-500"
+                        />
+                        <div className="flex-1">
+                          <div className="text-sm font-medium text-gray-900">包含学习资源</div>
+                          <div className="text-xs text-gray-500">发布所有添加的学习资源</div>
+                        </div>
+                      </label>
+                      <label className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
+                        <input
+                          type="checkbox"
+                          checked={publishScope.includeTasks}
+                          onChange={(e) => setPublishScope({ ...publishScope, includeTasks: e.target.checked })}
+                          className="w-4 h-4 text-primary-600 rounded focus:ring-2 focus:ring-primary-500"
+                        />
+                        <div className="flex-1">
+                          <div className="text-sm font-medium text-gray-900">包含学习任务</div>
+                          <div className="text-xs text-gray-500">发布所有配置的学习任务</div>
+                        </div>
+                      </label>
+                      <label className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
+                        <input
+                          type="checkbox"
+                          checked={publishScope.includeAISettings}
+                          onChange={(e) => setPublishScope({ ...publishScope, includeAISettings: e.target.checked })}
+                          className="w-4 h-4 text-primary-600 rounded focus:ring-2 focus:ring-primary-500"
+                        />
+                        <div className="flex-1">
+                          <div className="text-sm font-medium text-gray-900">包含 AI 设置</div>
+                          <div className="text-xs text-gray-500">发布 AI 助手配置和引导设置</div>
+                        </div>
+                      </label>
+                      <label className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
+                        <input
+                          type="checkbox"
+                          checked={publishScope.includeLearningPath}
+                          onChange={(e) => setPublishScope({ ...publishScope, includeLearningPath: e.target.checked })}
+                          className="w-4 h-4 text-primary-600 rounded focus:ring-2 focus:ring-primary-500"
+                        />
+                        <div className="flex-1">
+                          <div className="text-sm font-medium text-gray-900">包含学习路径</div>
+                          <div className="text-xs text-gray-500">发布 AI 生成的学习路径</div>
+                        </div>
+                      </label>
                     </div>
                   </div>
                 </div>

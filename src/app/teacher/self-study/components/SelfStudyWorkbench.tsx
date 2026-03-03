@@ -23,7 +23,7 @@ import KnowledgeBaseModal from './KnowledgeBaseModal';
 import InteractiveViewerModal from './InteractiveViewerModal';
 import ResourceInlineViewer, { InlineViewResource } from './ResourceInlineViewer';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { TaskEditModal } from '@/app/teacher/note-config/modals';
+import { TaskEditModal, NoteInfoModal } from '@/app/teacher/note-config/modals';
 import { useRouter } from 'next/navigation';
 import { usePersistedState } from '../utils/storage';
 import { PublishScope } from '@/types/self-study';
@@ -57,6 +57,35 @@ const THEME = {
     borderHover: 'hover:border-gray-300',
   },
 };
+
+// 年级列表
+const GRADES = ['一年级', '二年级', '三年级', '四年级', '五年级', '六年级', '七年级', '八年级', '九年级'];
+
+// 班级列表
+const MOCK_CLASSES = [
+  '四年级1班',
+  '四年级2班',
+  '四年级3班',
+  '五年级1班',
+  '五年级2班',
+  '五年级3班',
+];
+
+// 知识点库（简化版）
+const KNOWLEDGE_POINTS_LIBRARY = [
+  {
+    id: 'kp1',
+    title: '水循环的概念',
+    subject: '地理',
+    grade: '四年级',
+  },
+  {
+    id: 'kp2',
+    title: '光合作用原理',
+    subject: '生物',
+    grade: '五年级',
+  },
+];
 
 interface SelfStudyWorkbenchProps {
   config?: SpaceConfig;
@@ -1186,6 +1215,9 @@ export default function SelfStudyWorkbench({
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editedTitle, setEditedTitle] = useState(config.title);
 
+  // 笔记信息配置弹窗
+  const [showNoteInfoModal, setShowNoteInfoModal] = useState(false);
+
   // 资源和任务选中状态
   const [selectedResourceIds, setSelectedResourceIds] = useState<Set<string>>(new Set());
   const [selectedTaskIds, setSelectedTaskIds] = useState<Set<string>>(new Set());
@@ -1889,6 +1921,20 @@ export default function SelfStudyWorkbench({
     setIsEditingTitle(false);
   };
 
+  // 处理笔记信息配置保存
+  const handleNoteInfoSave = (updatedConfig: any) => {
+    handleUpdateConfig({
+      ...config,
+      title: updatedConfig.title,
+      cover: updatedConfig.cover,
+      tags: updatedConfig.tags,
+      subjects: updatedConfig.subjects,
+      grade: updatedConfig.grade,
+      bindClasses: updatedConfig.bindClasses,
+    });
+    setShowNoteInfoModal(false);
+  };
+
   // 切换学习模式
   const handleModeChange = (mode: LearningMode) => {
     if (mode === config.learningMode) return;
@@ -2437,9 +2483,9 @@ export default function SelfStudyWorkbench({
               <div className="flex items-center gap-2 group">
                 <h1 className="text-base font-semibold text-gray-900">{config.title}</h1>
                 <button
-                  onClick={() => setIsEditingTitle(true)}
+                  onClick={() => setShowNoteInfoModal(true)}
                   className="p-1 opacity-0 group-hover:opacity-100 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all"
-                  title={t('编辑名称')}
+                  title={t('编辑配置')}
                 >
                   <Pencil size={14} />
                 </button>
@@ -4125,6 +4171,18 @@ export default function SelfStudyWorkbench({
         shareLink={config.publishedVersions?.[config.publishedVersions.length - 1]?.shareLink}
         currentSpaceName={config.title}
       />
+
+      {/* 笔记信息配置弹窗 */}
+      {showNoteInfoModal && (
+        <NoteInfoModal
+          config={config}
+          onSave={handleNoteInfoSave}
+          onClose={() => setShowNoteInfoModal(false)}
+          knowledgeLibrary={KNOWLEDGE_POINTS_LIBRARY}
+          grades={GRADES}
+          classes={MOCK_CLASSES}
+        />
+      )}
 
       {/* 文件上传弹窗 */}
       <FileUploadModal
