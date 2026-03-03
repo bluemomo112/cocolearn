@@ -268,18 +268,18 @@ const generateTagRecommendations = (title: string, subjects: string[]): string[]
   return [...new Set(recommendedTags)]; // 去重
 };
 
-// 跨学科标签（从课程中心提取）
+// 跨学科标签（精选推荐，限制在10个以内）
 const CROSS_DISCIPLINARY_TAGS = [
-  '系统与平衡', '生态系统', '成长', '生命周期',
-  '诗词鉴赏', '天文现象', '地理特征', '文化传承',
-  '统计推断', '数据表示', '算法思维', '可视化设计',
-  '科学发展', '文化变革', '波形与频率', '比例关系',
-  '和声原理', '数学建模', '化学变化', '颜料科学',
-  '材料特性', '色彩理论', '算法设计', '逻辑思维',
-  '问题分解', '抽象建模', '生态平衡', '责任意识',
-  '可持续发展', '环境伦理', '地缘政治', '气候影响',
-  '资源分布', '文明交流', '人工智能', '信息安全',
-  '网络伦理', '数字公民',
+  '系统与平衡', '生态系统', '数据分析', '逻辑思维',
+  '文化传承', '可持续发展', '创新思维', '批判性思考',
+  '问题解决', '信息素养',
+];
+
+// 完整学科列表
+const ALL_SUBJECTS = [
+  '语文', '数学', '英语', '物理', '化学', '生物',
+  '历史', '地理', '政治', '科学', '信息技术', '通用技术',
+  '音乐', '美术', '体育', '心理健康', '劳动技术', '综合实践',
 ];
 
 // NoteInfoModal - 跨学科配置模态框
@@ -297,8 +297,9 @@ export function NoteInfoModal({ config, onSave, onClose, knowledgeLibrary, grade
   const [showPublishSuccess, setShowPublishSuccess] = useState(false);
   const [publishData, setPublishData] = useState({ link: '', code: '' });
   const [publishError, setPublishError] = useState('');
+  const [customTagInput, setCustomTagInput] = useState('');
 
-  const allSubjects = Object.keys(knowledgeLibrary);
+  const allSubjects = ALL_SUBJECTS;
 
   // AI 自动推荐封面和标签
   useEffect(() => {
@@ -508,29 +509,83 @@ export function NoteInfoModal({ config, onSave, onClose, knowledgeLibrary, grade
                   <Sparkles size={16} className="text-primary-600" />
                 )}
                 跨学科标签
-                <span className="text-xs font-normal text-gray-500 ml-1">AI 推荐</span>
+                <span className="text-xs font-normal text-gray-500 ml-1">AI 推荐，可自定义</span>
               </label>
-              <div className="flex flex-wrap gap-2.5">
+
+              {/* 已选标签展示 */}
+              {localConfig.tags.length > 0 && (
+                <div className="mb-3 flex flex-wrap gap-2">
+                  {localConfig.tags.map((tag: string) => (
+                    <div
+                      key={tag}
+                      className="px-3.5 py-2 rounded-xl text-sm font-medium bg-primary-600 text-white shadow-md shadow-primary-200 flex items-center gap-2"
+                    >
+                      {tag}
+                      <button
+                        onClick={() => toggleTag(tag)}
+                        className="hover:bg-white/20 rounded-full p-0.5 transition-colors"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* 推荐标签 */}
+              <div className="flex flex-wrap gap-2.5 mb-3">
                 {isGeneratingAI && localConfig.tags.length === 0 ? (
                   <div className="text-sm text-gray-500 flex items-center gap-2 py-2">
                     <Loader2 size={16} className="animate-spin" />
                     AI 推荐中...
                   </div>
                 ) : (
-                  CROSS_DISCIPLINARY_TAGS.map((tag) => (
+                  CROSS_DISCIPLINARY_TAGS.filter((tag: string) => !localConfig.tags.includes(tag)).map((tag: string) => (
                     <button
                       key={tag}
                       onClick={() => toggleTag(tag)}
-                      className={`px-3.5 py-2 rounded-xl text-sm font-medium transition-all ${
-                        localConfig.tags.includes(tag)
-                          ? 'bg-primary-600 text-white shadow-md shadow-primary-200'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
-                      }`}
+                      className="px-3.5 py-2 rounded-xl text-sm font-medium transition-all bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200"
                     >
                       {tag}
                     </button>
                   ))
                 )}
+              </div>
+
+              {/* 自定义标签输入 */}
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={customTagInput}
+                  onChange={(e) => setCustomTagInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && customTagInput.trim()) {
+                      e.preventDefault();
+                      const newTag = customTagInput.trim();
+                      if (!localConfig.tags.includes(newTag)) {
+                        setLocalConfig({ ...localConfig, tags: [...localConfig.tags, newTag] });
+                      }
+                      setCustomTagInput('');
+                    }
+                  }}
+                  placeholder="输入自定义标签，按回车添加"
+                  className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all hover:border-gray-300"
+                />
+                <button
+                  onClick={() => {
+                    if (customTagInput.trim()) {
+                      const newTag = customTagInput.trim();
+                      if (!localConfig.tags.includes(newTag)) {
+                        setLocalConfig({ ...localConfig, tags: [...localConfig.tags, newTag] });
+                      }
+                      setCustomTagInput('');
+                    }
+                  }}
+                  className="px-4 py-2.5 bg-primary-600 text-white rounded-xl hover:bg-primary-700 font-medium transition-all flex items-center gap-2"
+                >
+                  <Plus size={16} />
+                  添加
+                </button>
               </div>
             </div>
 
@@ -541,7 +596,7 @@ export function NoteInfoModal({ config, onSave, onClose, knowledgeLibrary, grade
                 className="w-full flex items-center justify-between text-sm font-semibold text-gray-800 hover:text-gray-900 mb-5 group"
               >
                 <div className="flex items-center gap-2">
-                  <div className="w-1 h-4 bg-blue-600 rounded-full"></div>
+                  <div className="w-1 h-4 bg-primary-600 rounded-full"></div>
                   发布配置
                 </div>
                 <div className={`p-1.5 rounded-lg group-hover:bg-gray-100 transition-all ${showMoreConfig ? 'rotate-180' : ''}`}>
@@ -563,7 +618,7 @@ export function NoteInfoModal({ config, onSave, onClose, knowledgeLibrary, grade
                         setLocalConfig({ ...localConfig, grade: e.target.value });
                         setPublishError('');
                       }}
-                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all hover:border-gray-300"
+                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all hover:border-gray-300"
                     >
                       <option value="">请选择年级</option>
                       {grades.map((grade: string) => (
