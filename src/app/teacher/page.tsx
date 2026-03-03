@@ -162,7 +162,7 @@ export default function TeacherDashboard() {
           <p className="text-gray-600">今天是 {dateStr}</p>
         </div>
 
-        {/* Tabs - 教师中心子导航 */}
+        {/* Tabs - 我的主页子导航 */}
         <div className="flex items-center gap-6 mb-8 border-b border-gray-200 animate-fade-in" style={{ animationDelay: '0.1s' }}>
           {[
             { id: 'my-courses', label: '我的课程', icon: (

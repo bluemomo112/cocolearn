@@ -67,14 +67,14 @@ export default function Home() {
             </div>
           </Link>
 
-          {/* 教师工作台 */}
+          {/* 我的主页 */}
           <Link href="/teacher" className="group">
             <div className="bg-white rounded-3xl p-10 shadow-lg border border-gray-100 hover:shadow-2xl hover:-translate-y-3 transition-all duration-300 h-full">
               <div className="w-20 h-20 bg-gradient-to-br from-accent-500 to-accent-600 rounded-3xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-lg">
                 <Users className="w-10 h-10 text-white" strokeWidth={2} />
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-accent-600 transition-colors">
-                教师工作台
+                我的主页
               </h3>
               <p className="text-gray-600 mb-6 leading-relaxed">
                 创建课程、管理教学、分析学情，一站式解决

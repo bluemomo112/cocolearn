@@ -28,16 +28,7 @@ export default function TopNavbar({ user = { name: 'Mo老师', role: 'AI · 高�
   const { t } = useLanguage()
 
   const navItems: NavItem[] = [
-    {
-      id: 'teacher',
-      label: t('教师中心'),
-      href: '/teacher',
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-        </svg>
-      ),
-    },
+
     {
       id: 'course-center',
       label: t('课程中心'),
@@ -48,9 +39,19 @@ export default function TopNavbar({ user = { name: 'Mo老师', role: 'AI · 高�
         </svg>
       ),
     },
+        {
+      id: 'teacher',
+      label: t('我的主页'),
+      href: '/teacher',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+        </svg>
+      ),
+    },
     {
       id: 'resource-hub',
-      label: t('资源库'),
+      label: t('学习资源'),
       href: '/resource-hub',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

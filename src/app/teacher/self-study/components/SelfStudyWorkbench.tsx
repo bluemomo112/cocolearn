@@ -13,12 +13,13 @@ import {
   ListChecks, ChevronRight, ChevronLeft, Play, Download, Eye, Search, BarChart3, Map,
   CheckCircle2, Circle, Bot, MessageSquare, Pause, RotateCcw, GitBranch,
   Edit, Image as ImageIcon, Mic, Trash2, Layers, Award, TrendingUp,
-  ChevronDown, ChevronUp, Layout, Share2, AlertCircle, Globe,
+  ChevronDown, ChevronUp, Layout, Share2, AlertCircle, Globe, Database,
 } from 'lucide-react';
 import SettingsModal from './SettingsModal';
 import PublishModal from './PublishModal';
 import FileUploadModal from './FileUploadModal';
 import LinkInputModal from './LinkInputModal';
+import KnowledgeBaseModal from './KnowledgeBaseModal';
 import InteractiveViewerModal from './InteractiveViewerModal';
 import ResourceInlineViewer, { InlineViewResource } from './ResourceInlineViewer';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -1162,6 +1163,9 @@ export default function SelfStudyWorkbench({
   // 链接输入弹窗
   const [isLinkInputOpen, setIsLinkInputOpen] = useState(false);
 
+  // 知识库导入弹窗
+  const [showKnowledgeBaseModal, setShowKnowledgeBaseModal] = useState(false);
+
   // 试卷检测状态
   const [examDetectedFiles, setExamDetectedFiles] = useState<File[] | null>(null);
   const [examProcessingStep, setExamProcessingStep] = useState<ExamProcessingStep | null>(null);
@@ -1836,6 +1840,36 @@ export default function SelfStudyWorkbench({
       resources: [...config.resources, newResource],
     });
     setIsLinkInputOpen(false);
+  };
+
+  // 处理知识库导入
+  const handleKnowledgeBaseImport = (errorQuestions: any[]) => {
+    const newResources: Resource[] = errorQuestions.map(eq => {
+      return {
+        id: `resource_error_${eq.id}`,
+        title: `错题: ${eq.question.content.substring(0, 30)}...`,
+        type: 'interactive' as const,
+        interactiveCategory: 'test' as const,
+        description: `来自《${eq.originalTaskTitle}》· ${eq.attemptDate}`,
+        textContent: JSON.stringify({
+          question: eq.question,
+          errorContext: {
+            userAnswer: eq.userAnswer,
+            attemptDate: eq.attemptDate,
+            correctionCount: eq.correctionCount,
+            originalTaskId: eq.originalTaskId
+          }
+        }),
+        sourceType: 'manual_upload' as const,
+        source: 'teacher' as const
+      };
+    });
+
+    handleUpdateConfig({
+      ...config,
+      resources: [...config.resources, ...newResources],
+    });
+    setShowKnowledgeBaseModal(false);
   };
 
   // 处理空间名称保存
@@ -2647,6 +2681,13 @@ export default function SelfStudyWorkbench({
                       <Link size={12} />
                       {t('粘贴链接')}
                     </button>
+                    <button
+                      onClick={() => setShowKnowledgeBaseModal(true)}
+                      className="flex-1 px-2 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-600 hover:bg-gray-100 transition-colors flex items-center justify-center gap-1"
+                    >
+                      <Database size={12} />
+                      {t('从知识库导入')}
+                    </button>
                   </div>
                 </div>
 
@@ -3083,6 +3124,13 @@ export default function SelfStudyWorkbench({
                     >
                       <Link size={12} />
                       {t('粘贴链接')}
+                    </button>
+                    <button
+                      onClick={() => setShowKnowledgeBaseModal(true)}
+                      className="flex-1 px-2 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-600 hover:bg-gray-100 transition-colors flex items-center justify-center gap-1"
+                    >
+                      <Database size={12} />
+                      {t('从知识库导入')}
                     </button>
                   </div>
                 </div>
@@ -4090,6 +4138,13 @@ export default function SelfStudyWorkbench({
         isOpen={isLinkInputOpen}
         onClose={() => setIsLinkInputOpen(false)}
         onAdd={handleLinkAdd}
+      />
+
+      {/* 知识库导入弹窗 */}
+      <KnowledgeBaseModal
+        isOpen={showKnowledgeBaseModal}
+        onClose={() => setShowKnowledgeBaseModal(false)}
+        onImport={handleKnowledgeBaseImport}
       />
 
       {/* 试卷检测弹窗 */}
