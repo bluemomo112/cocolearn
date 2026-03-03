@@ -389,9 +389,9 @@ export function NoteInfoModal({ config, onSave, onClose, knowledgeLibrary, grade
 
   return (
     <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center backdrop-blur-sm" onClick={onClose}>
-      <div className="bg-white w-[850px] max-h-[90vh] rounded-3xl shadow-2xl overflow-hidden border border-gray-100" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-white w-[900px] max-h-[90vh] rounded-3xl shadow-2xl overflow-hidden border border-gray-100" onClick={(e) => e.stopPropagation()}>
         {/* 头部 */}
-        <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-700 text-white px-6 py-5">
+        <div className="bg-gradient-to-br from-primary-600 via-primary-700 to-accent-700 text-white px-6 py-5">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-xl font-bold flex items-center gap-2.5">
@@ -400,7 +400,7 @@ export function NoteInfoModal({ config, onSave, onClose, knowledgeLibrary, grade
                 </div>
                 笔记基本信息配置
               </h2>
-              <p className="text-blue-100 text-sm mt-1.5 ml-11">配置课程信息并发布到班级</p>
+              <p className="text-primary-100 text-sm mt-1.5 ml-11">配置课程信息并发布到班级</p>
             </div>
             <button
               onClick={onClose}
@@ -413,38 +413,66 @@ export function NoteInfoModal({ config, onSave, onClose, knowledgeLibrary, grade
 
         <div className="p-7 max-h-[calc(90vh-200px)] overflow-y-auto">
           <div className="space-y-7">
-            {/* 课程基本信息 */}
-            <div className="space-y-5">
-              {/* 标题 */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-2.5 flex items-center gap-2">
-                  <div className="w-1 h-4 bg-blue-600 rounded-full"></div>
-                  课程名称
-                  <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={localConfig.title}
-                  onChange={(e) => setLocalConfig({ ...localConfig, title: e.target.value })}
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all hover:border-gray-300"
-                  placeholder="例如：水循环与水资源"
-                />
+            {/* 课程基本信息 - 左右布局 */}
+            <div className="flex gap-6">
+              {/* 左侧：标题和学科 */}
+              <div className="flex-1 space-y-5">
+                {/* 标题 */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-800 mb-2.5 flex items-center gap-2">
+                    <div className="w-1 h-4 bg-primary-600 rounded-full"></div>
+                    课程名称
+                    <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={localConfig.title}
+                    onChange={(e) => setLocalConfig({ ...localConfig, title: e.target.value })}
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all hover:border-gray-300"
+                    placeholder="例如：水循环与水资源"
+                  />
+                </div>
+
+                {/* 涉及学科 */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-800 mb-2.5 flex items-center gap-2">
+                    <div className="w-1 h-4 bg-primary-600 rounded-full"></div>
+                    <Network size={16} className="text-primary-600" />
+                    涉及学科
+                    <span className="text-xs font-normal text-gray-500 ml-1">可多选</span>
+                  </label>
+                  <div className="flex flex-wrap gap-2.5">
+                    {allSubjects.map((subject) => (
+                      <button
+                        key={subject}
+                        onClick={() => toggleSubject(subject)}
+                        className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                          localConfig.subjects.includes(subject)
+                            ? 'bg-primary-600 text-white shadow-md shadow-primary-200'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
+                        }`}
+                      >
+                        {subject}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
 
-              {/* 封面 */}
-              <div>
+              {/* 右侧：封面 */}
+              <div className="w-64 shrink-0">
                 <label className="block text-sm font-semibold text-gray-800 mb-2.5 flex items-center gap-2">
-                  <div className="w-1 h-4 bg-blue-600 rounded-full"></div>
+                  <div className="w-1 h-4 bg-primary-600 rounded-full"></div>
                   {isGeneratingAI ? (
-                    <Loader2 size={16} className="text-blue-600 animate-spin" />
+                    <Loader2 size={16} className="text-primary-600 animate-spin" />
                   ) : (
-                    <Sparkles size={16} className="text-blue-600" />
+                    <Sparkles size={16} className="text-primary-600" />
                   )}
                   课程封面
                   <span className="text-xs font-normal text-gray-500 ml-1">AI 推荐</span>
                 </label>
-                <div className="flex items-center gap-4 bg-gray-50 rounded-xl p-4 border border-gray-200">
-                  <div className="w-40 h-24 bg-white rounded-lg overflow-hidden border border-gray-200 shadow-sm relative">
+                <div className="space-y-3">
+                  <div className="w-full h-40 bg-white rounded-xl overflow-hidden border border-gray-200 shadow-sm relative">
                     {localConfig.cover ? (
                       <img src={localConfig.cover} alt="封面" className="w-full h-full object-cover" />
                     ) : (
@@ -457,7 +485,7 @@ export function NoteInfoModal({ config, onSave, onClose, knowledgeLibrary, grade
                     type="button"
                     onClick={regenerateCover}
                     disabled={isGeneratingAI}
-                    className="px-4 py-2.5 text-sm text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                    className="w-full px-4 py-2.5 text-sm text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded-xl font-medium flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all border border-gray-200"
                   >
                     {isGeneratingAI ? (
                       <Loader2 size={16} className="animate-spin" />
@@ -468,66 +496,41 @@ export function NoteInfoModal({ config, onSave, onClose, knowledgeLibrary, grade
                   </button>
                 </div>
               </div>
+            </div>
 
-              {/* 涉及学科 */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-2.5 flex items-center gap-2">
-                  <div className="w-1 h-4 bg-blue-600 rounded-full"></div>
-                  <Network size={16} className="text-blue-600" />
-                  涉及学科
-                  <span className="text-xs font-normal text-gray-500 ml-1">可多选</span>
-                </label>
-                <div className="flex flex-wrap gap-2.5">
-                  {allSubjects.map((subject) => (
+            {/* 跨学科标签 */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-800 mb-2.5 flex items-center gap-2">
+                <div className="w-1 h-4 bg-primary-600 rounded-full"></div>
+                {isGeneratingAI ? (
+                  <Loader2 size={16} className="text-primary-600 animate-spin" />
+                ) : (
+                  <Sparkles size={16} className="text-primary-600" />
+                )}
+                跨学科标签
+                <span className="text-xs font-normal text-gray-500 ml-1">AI 推荐</span>
+              </label>
+              <div className="flex flex-wrap gap-2.5">
+                {isGeneratingAI && localConfig.tags.length === 0 ? (
+                  <div className="text-sm text-gray-500 flex items-center gap-2 py-2">
+                    <Loader2 size={16} className="animate-spin" />
+                    AI 推荐中...
+                  </div>
+                ) : (
+                  CROSS_DISCIPLINARY_TAGS.map((tag) => (
                     <button
-                      key={subject}
-                      onClick={() => toggleSubject(subject)}
-                      className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                        localConfig.subjects.includes(subject)
-                          ? 'bg-blue-600 text-white shadow-md shadow-blue-200'
+                      key={tag}
+                      onClick={() => toggleTag(tag)}
+                      className={`px-3.5 py-2 rounded-xl text-sm font-medium transition-all ${
+                        localConfig.tags.includes(tag)
+                          ? 'bg-primary-600 text-white shadow-md shadow-primary-200'
                           : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
                       }`}
                     >
-                      {subject}
+                      {tag}
                     </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* 跨学科标签 */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-2.5 flex items-center gap-2">
-                  <div className="w-1 h-4 bg-blue-600 rounded-full"></div>
-                  {isGeneratingAI ? (
-                    <Loader2 size={16} className="text-blue-600 animate-spin" />
-                  ) : (
-                    <Sparkles size={16} className="text-blue-600" />
-                  )}
-                  跨学科标签
-                  <span className="text-xs font-normal text-gray-500 ml-1">AI 推荐</span>
-                </label>
-                <div className="flex flex-wrap gap-2.5">
-                  {isGeneratingAI && localConfig.tags.length === 0 ? (
-                    <div className="text-sm text-gray-500 flex items-center gap-2 py-2">
-                      <Loader2 size={16} className="animate-spin" />
-                      AI 推荐中...
-                    </div>
-                  ) : (
-                    CROSS_DISCIPLINARY_TAGS.map((tag) => (
-                      <button
-                        key={tag}
-                        onClick={() => toggleTag(tag)}
-                        className={`px-3.5 py-2 rounded-xl text-sm font-medium transition-all ${
-                          localConfig.tags.includes(tag)
-                            ? 'bg-blue-600 text-white shadow-md shadow-blue-200'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
-                        }`}
-                      >
-                        {tag}
-                      </button>
-                    ))
-                  )}
-                </div>
+                  ))
+                )}
               </div>
             </div>
 
@@ -629,7 +632,7 @@ export function NoteInfoModal({ config, onSave, onClose, knowledgeLibrary, grade
               </button>
               <button
                 onClick={handlePublish}
-                className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 font-medium transition-all flex items-center gap-2 shadow-lg shadow-blue-200"
+                className="px-6 py-2.5 bg-gradient-to-r from-primary-600 to-accent-600 text-white rounded-xl hover:from-primary-700 hover:to-accent-700 font-medium transition-all flex items-center gap-2 shadow-lg shadow-primary-200"
               >
                 <Send size={16} />
                 发布到班级
