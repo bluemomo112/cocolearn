@@ -28,8 +28,8 @@ export function PublishSuccessModal({ courseTitle, courseLink, accessCode, onClo
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center backdrop-blur-sm" onClick={onClose}>
-      <div className="bg-white w-[500px] rounded-2xl shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center backdrop-blur-sm">
+      <div className="bg-white w-[500px] rounded-2xl shadow-2xl overflow-hidden animate-zoomIn" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white p-6 relative">
           <button

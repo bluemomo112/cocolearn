@@ -748,7 +748,7 @@ export function NoteInfoModal({ config, onSave, onClose, knowledgeLibrary, grade
           onClose={() => {
             console.log('关闭发布成功弹窗');
             setShowPublishSuccess(false);
-            onClose();
+            // 不要关闭主弹窗，让用户可以继续编辑或查看
           }}
         />
       )}
