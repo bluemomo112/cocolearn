@@ -388,6 +388,7 @@ function StudentWorkbenchContent() {
 
   // 课程配置弹窗状态
   const [showCourseConfigModal, setShowCourseConfigModal] = useState(false);
+  const hasShownModalRef = useRef(false);
 
   // 布局状态
   const [leftWidth, setLeftWidth] = useState(25);
@@ -474,11 +475,12 @@ function StudentWorkbenchContent() {
     },
   }[previewCourseId] : null;
 
-  // 显示课程配置弹窗（仅在有preview参数时）
+  // 显示课程配置弹窗（仅在有preview参数时，且只显示一次）
   useEffect(() => {
     const isPreview = searchParams.get('preview') === 'true';
-    if (isPreview && previewCourseId && previewMode && previewCourseData) {
+    if (isPreview && previewCourseId && previewMode && previewCourseData && !hasShownModalRef.current) {
       setShowCourseConfigModal(true);
+      hasShownModalRef.current = true;
     }
   }, [searchParams, previewCourseId, previewMode, previewCourseData]);
 

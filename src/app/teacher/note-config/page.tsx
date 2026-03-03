@@ -405,6 +405,7 @@ export default function NoteConfigPage() {
         <UseViewHeader
           config={config}
           onBack={() => handleViewSwitch('edit')}
+          onPublish={() => setActiveModal('noteInfo')}
         />
         <StudentPreview config={config} leftWidth={leftWidth} rightWidth={rightWidth} />
       </div>
@@ -456,7 +457,7 @@ export default function NoteConfigPage() {
             查看课程报告
           </a>
           <div className="w-px h-5 bg-gray-200"></div>
-          <button className="flex items-center gap-1.5 px-3 py-1 bg-primary-600 text-white text-xs font-medium rounded-lg hover:bg-primary-700 transition-colors" onClick={() => window.open('/student/workbench', '_blank')}>
+          <button className="flex items-center gap-1.5 px-3 py-1 bg-primary-600 text-white text-xs font-medium rounded-lg hover:bg-primary-700 transition-colors" onClick={() => setActiveModal('noteInfo')}>
             <Save size={14} />
             发布到班级
           </button>

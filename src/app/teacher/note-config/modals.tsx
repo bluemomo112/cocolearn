@@ -268,6 +268,20 @@ const generateTagRecommendations = (title: string, subjects: string[]): string[]
   return [...new Set(recommendedTags)]; // 去重
 };
 
+// 跨学科标签（从课程中心提取）
+const CROSS_DISCIPLINARY_TAGS = [
+  '系统与平衡', '生态系统', '成长', '生命周期',
+  '诗词鉴赏', '天文现象', '地理特征', '文化传承',
+  '统计推断', '数据表示', '算法思维', '可视化设计',
+  '科学发展', '文化变革', '波形与频率', '比例关系',
+  '和声原理', '数学建模', '化学变化', '颜料科学',
+  '材料特性', '色彩理论', '算法设计', '逻辑思维',
+  '问题分解', '抽象建模', '生态平衡', '责任意识',
+  '可持续发展', '环境伦理', '地缘政治', '气候影响',
+  '资源分布', '文明交流', '人工智能', '信息安全',
+  '网络伦理', '数字公民',
+];
+
 // NoteInfoModal - 跨学科配置模态框
 export function NoteInfoModal({ config, onSave, onClose, knowledgeLibrary, grades, classes }: any) {
   const [localConfig, setLocalConfig] = useState({
@@ -278,10 +292,11 @@ export function NoteInfoModal({ config, onSave, onClose, knowledgeLibrary, grade
     grade: config.grade || '',
     bindClasses: config.bindClasses || [],
   });
-  const [showMoreConfig, setShowMoreConfig] = useState(false);
+  const [showMoreConfig, setShowMoreConfig] = useState(true);
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [showPublishSuccess, setShowPublishSuccess] = useState(false);
   const [publishData, setPublishData] = useState({ link: '', code: '' });
+  const [publishError, setPublishError] = useState('');
 
   const allSubjects = Object.keys(knowledgeLibrary);
 
@@ -347,6 +362,19 @@ export function NoteInfoModal({ config, onSave, onClose, knowledgeLibrary, grade
   };
 
   const handlePublish = () => {
+    // 清除之前的错误
+    setPublishError('');
+
+    // 验证发布配置
+    if (!localConfig.grade) {
+      setPublishError('请选择年级后再发布');
+      return;
+    }
+    if (localConfig.bindClasses.length === 0) {
+      setPublishError('请至少绑定一个班级后再发布');
+      return;
+    }
+
     // 保存配置
     onSave(localConfig);
 
@@ -360,43 +388,63 @@ export function NoteInfoModal({ config, onSave, onClose, knowledgeLibrary, grade
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center backdrop-blur-sm" onClick={onClose}>
-      <div className="bg-white w-[800px] max-h-[85vh] rounded-2xl shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
-        <div className="bg-gradient-to-r from-primary-600 to-accent-600 text-white p-5">
-          <h2 className="text-lg font-bold flex items-center gap-2">
-            <Settings size={20} />
-            笔记基本信息配置
-          </h2>
+    <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center backdrop-blur-sm" onClick={onClose}>
+      <div className="bg-white w-[850px] max-h-[90vh] rounded-3xl shadow-2xl overflow-hidden border border-gray-100" onClick={(e) => e.stopPropagation()}>
+        {/* 头部 */}
+        <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-700 text-white px-6 py-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-bold flex items-center gap-2.5">
+                <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+                  <Settings size={22} />
+                </div>
+                笔记基本信息配置
+              </h2>
+              <p className="text-blue-100 text-sm mt-1.5 ml-11">配置课程信息并发布到班级</p>
+            </div>
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+            >
+              <X size={20} />
+            </button>
+          </div>
         </div>
 
-        <div className="p-6 max-h-[calc(85vh-140px)] overflow-y-auto">
-          <div className="space-y-6">
+        <div className="p-7 max-h-[calc(90vh-200px)] overflow-y-auto">
+          <div className="space-y-7">
             {/* 课程基本信息 */}
-            <div className="space-y-4">
+            <div className="space-y-5">
               {/* 标题 */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">课程名称 *</label>
+                <label className="block text-sm font-semibold text-gray-800 mb-2.5 flex items-center gap-2">
+                  <div className="w-1 h-4 bg-blue-600 rounded-full"></div>
+                  课程名称
+                  <span className="text-red-500">*</span>
+                </label>
                 <input
                   type="text"
                   value={localConfig.title}
                   onChange={(e) => setLocalConfig({ ...localConfig, title: e.target.value })}
-                  className="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary-500 outline-none"
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all hover:border-gray-300"
                   placeholder="例如：水循环与水资源"
                 />
               </div>
 
               {/* 封面 */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                <label className="block text-sm font-semibold text-gray-800 mb-2.5 flex items-center gap-2">
+                  <div className="w-1 h-4 bg-blue-600 rounded-full"></div>
                   {isGeneratingAI ? (
-                    <Loader2 size={16} className="text-primary-500 animate-spin" />
+                    <Loader2 size={16} className="text-blue-600 animate-spin" />
                   ) : (
-                    <Sparkles size={16} className="text-primary-500" />
+                    <Sparkles size={16} className="text-blue-600" />
                   )}
-                  课程封面（AI 推荐）
+                  课程封面
+                  <span className="text-xs font-normal text-gray-500 ml-1">AI 推荐</span>
                 </label>
-                <div className="flex items-center gap-3">
-                  <div className="w-32 h-20 bg-gray-100 rounded-lg overflow-hidden border border-gray-200 relative">
+                <div className="flex items-center gap-4 bg-gray-50 rounded-xl p-4 border border-gray-200">
+                  <div className="w-40 h-24 bg-white rounded-lg overflow-hidden border border-gray-200 shadow-sm relative">
                     {localConfig.cover ? (
                       <img src={localConfig.cover} alt="封面" className="w-full h-full object-cover" />
                     ) : (
@@ -409,43 +457,70 @@ export function NoteInfoModal({ config, onSave, onClose, knowledgeLibrary, grade
                     type="button"
                     onClick={regenerateCover}
                     disabled={isGeneratingAI}
-                    className="px-4 py-2 text-sm text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-4 py-2.5 text-sm text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                   >
                     {isGeneratingAI ? (
-                      <Loader2 size={14} className="animate-spin" />
+                      <Loader2 size={16} className="animate-spin" />
                     ) : (
-                      <Sparkles size={14} />
+                      <Sparkles size={16} />
                     )}
                     重新生成
                   </button>
                 </div>
               </div>
 
-              {/* 标签 */}
+              {/* 涉及学科 */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                  {isGeneratingAI ? (
-                    <Loader2 size={16} className="text-primary-500 animate-spin" />
-                  ) : (
-                    <Sparkles size={16} className="text-primary-500" />
-                  )}
-                  课程标签（AI 推荐）
+                <label className="block text-sm font-semibold text-gray-800 mb-2.5 flex items-center gap-2">
+                  <div className="w-1 h-4 bg-blue-600 rounded-full"></div>
+                  <Network size={16} className="text-blue-600" />
+                  涉及学科
+                  <span className="text-xs font-normal text-gray-500 ml-1">可多选</span>
                 </label>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2.5">
+                  {allSubjects.map((subject) => (
+                    <button
+                      key={subject}
+                      onClick={() => toggleSubject(subject)}
+                      className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                        localConfig.subjects.includes(subject)
+                          ? 'bg-blue-600 text-white shadow-md shadow-blue-200'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
+                      }`}
+                    >
+                      {subject}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 跨学科标签 */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-800 mb-2.5 flex items-center gap-2">
+                  <div className="w-1 h-4 bg-blue-600 rounded-full"></div>
+                  {isGeneratingAI ? (
+                    <Loader2 size={16} className="text-blue-600 animate-spin" />
+                  ) : (
+                    <Sparkles size={16} className="text-blue-600" />
+                  )}
+                  跨学科标签
+                  <span className="text-xs font-normal text-gray-500 ml-1">AI 推荐</span>
+                </label>
+                <div className="flex flex-wrap gap-2.5">
                   {isGeneratingAI && localConfig.tags.length === 0 ? (
-                    <div className="text-sm text-gray-500 flex items-center gap-2">
-                      <Loader2 size={14} className="animate-spin" />
+                    <div className="text-sm text-gray-500 flex items-center gap-2 py-2">
+                      <Loader2 size={16} className="animate-spin" />
                       AI 推荐中...
                     </div>
                   ) : (
-                    ['知识点', '实验', '探究', '跨学科', '项目式学习', '观察', '分析', '创新'].map((tag) => (
+                    CROSS_DISCIPLINARY_TAGS.map((tag) => (
                       <button
                         key={tag}
                         onClick={() => toggleTag(tag)}
-                        className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                        className={`px-3.5 py-2 rounded-xl text-sm font-medium transition-all ${
                           localConfig.tags.includes(tag)
-                            ? 'bg-primary-500 text-white'
-                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            ? 'bg-blue-600 text-white shadow-md shadow-blue-200'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
                         }`}
                       >
                         {tag}
@@ -456,25 +531,36 @@ export function NoteInfoModal({ config, onSave, onClose, knowledgeLibrary, grade
               </div>
             </div>
 
-            {/* 更多配置（可折叠） */}
-            <div className="border-t border-gray-200 pt-4">
+            {/* 发布配置 */}
+            <div className="border-t border-gray-200 pt-6">
               <button
                 onClick={() => setShowMoreConfig(!showMoreConfig)}
-                className="w-full flex items-center justify-between text-sm font-medium text-gray-700 hover:text-gray-900 mb-4"
+                className="w-full flex items-center justify-between text-sm font-semibold text-gray-800 hover:text-gray-900 mb-5 group"
               >
-                <span>更多配置</span>
-                {showMoreConfig ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                <div className="flex items-center gap-2">
+                  <div className="w-1 h-4 bg-blue-600 rounded-full"></div>
+                  发布配置
+                </div>
+                <div className={`p-1.5 rounded-lg group-hover:bg-gray-100 transition-all ${showMoreConfig ? 'rotate-180' : ''}`}>
+                  <ChevronDown size={18} />
+                </div>
               </button>
 
               {showMoreConfig && (
-                <div className="space-y-4">
+                <div className="space-y-5">
                   {/* 年级 */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">年级</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2.5">
+                      年级
+                      <span className="text-red-500 ml-1">*</span>
+                    </label>
                     <select
                       value={localConfig.grade}
-                      onChange={(e) => setLocalConfig({ ...localConfig, grade: e.target.value })}
-                      className="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary-500 outline-none"
+                      onChange={(e) => {
+                        setLocalConfig({ ...localConfig, grade: e.target.value });
+                        setPublishError('');
+                      }}
+                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all hover:border-gray-300"
                     >
                       <option value="">请选择年级</option>
                       {grades.map((grade: string) => (
@@ -483,44 +569,26 @@ export function NoteInfoModal({ config, onSave, onClose, knowledgeLibrary, grade
                     </select>
                   </div>
 
-                  {/* 跨学科选择 */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                      <Network size={16} className="text-primary-500" />
-                      涉及学科（可多选）
-                    </label>
-                    <div className="flex flex-wrap gap-2">
-                      {allSubjects.map((subject) => (
-                        <button
-                          key={subject}
-                          onClick={() => toggleSubject(subject)}
-                          className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                            localConfig.subjects.includes(subject)
-                              ? 'bg-primary-500 text-white'
-                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                          }`}
-                        >
-                          {subject}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
                   {/* 绑定班级 */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                      <Users size={16} className="text-emerald-500" />
-                      绑定班级（可多选）
+                    <label className="block text-sm font-medium text-gray-700 mb-2.5 flex items-center gap-2">
+                      <Users size={16} className="text-emerald-600" />
+                      绑定班级
+                      <span className="text-xs font-normal text-gray-500">可多选</span>
+                      <span className="text-red-500">*</span>
                     </label>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap gap-2.5">
                       {classes.map((className: string) => (
                         <button
                           key={className}
-                          onClick={() => toggleClass(className)}
-                          className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                          onClick={() => {
+                            toggleClass(className);
+                            setPublishError('');
+                          }}
+                          className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
                             localConfig.bindClasses.includes(className)
-                              ? 'bg-emerald-500 text-white'
-                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                              ? 'bg-emerald-600 text-white shadow-md shadow-emerald-200'
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
                           }`}
                         >
                           {className}
@@ -534,27 +602,39 @@ export function NoteInfoModal({ config, onSave, onClose, knowledgeLibrary, grade
           </div>
         </div>
 
-        <div className="p-4 border-t border-gray-200 flex justify-between items-center">
-          <button onClick={onClose} className="px-5 py-2 text-gray-600 hover:text-gray-800 font-medium">
-            取消
-          </button>
-          <div className="flex gap-3">
+        {/* 底部操作栏 */}
+        <div className="px-7 py-5 border-t border-gray-200 bg-gray-50">
+          {publishError && (
+            <div className="mb-4 text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl px-4 py-3 flex items-center gap-2">
+              <AlertCircle size={16} className="shrink-0" />
+              <span>{publishError}</span>
+            </div>
+          )}
+          <div className="flex justify-between items-center">
             <button
-              onClick={() => {
-                onSave(localConfig);
-                onClose();
-              }}
-              className="px-5 py-2 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 font-medium transition-colors"
+              onClick={onClose}
+              className="px-5 py-2.5 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-xl font-medium transition-all"
             >
-              保存
+              取消
             </button>
-            <button
-              onClick={handlePublish}
-              className="px-5 py-2 bg-primary-600 text-white rounded-xl hover:bg-primary-700 font-medium transition-colors flex items-center gap-2"
-            >
-              <Send size={16} />
-              发布
-            </button>
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  onSave(localConfig);
+                  onClose();
+                }}
+                className="px-6 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 hover:border-gray-400 font-medium transition-all shadow-sm"
+              >
+                保存草稿
+              </button>
+              <button
+                onClick={handlePublish}
+                className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 font-medium transition-all flex items-center gap-2 shadow-lg shadow-blue-200"
+              >
+                <Send size={16} />
+                发布到班级
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -2320,7 +2400,7 @@ export function StudentPreview({ config, leftWidth, rightWidth }: any) {
 }
 
 // Use视角头部 - 学生使用界面预览
-export function UseViewHeader({ config, onBack }: any) {
+export function UseViewHeader({ config, onBack, onPublish }: any) {
   return (
     <header className="h-10 bg-white/80 backdrop-blur-xl border-b border-gray-100 flex items-center justify-between px-4 shrink-0">
       <div className="flex items-center gap-2">
@@ -2358,7 +2438,7 @@ export function UseViewHeader({ config, onBack }: any) {
         </a>
         <div className="w-px h-5 bg-gray-200"></div>
         <button
-          onClick={() => window.open('/student/workbench', '_blank')}
+          onClick={onPublish}
           className="flex items-center gap-1.5 px-3 py-1 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors"
         >
           <Send size={14} />
@@ -2370,7 +2450,7 @@ export function UseViewHeader({ config, onBack }: any) {
 }
 
 // Results视角头部 - 学习数据统计
-export function ResultsViewHeader({ config, onBack, onSwitchToUse }: any) {
+export function ResultsViewHeader({ config, onBack, onSwitchToUse, onPublish }: any) {
   return (
     <header className="h-10 bg-white/80 backdrop-blur-xl border-b border-gray-100 flex items-center justify-between px-4 shrink-0">
       <div className="flex items-center gap-2">
@@ -2406,7 +2486,7 @@ export function ResultsViewHeader({ config, onBack, onSwitchToUse }: any) {
         </button>
         <div className="w-px h-5 bg-gray-200"></div>
         <button
-          onClick={() => window.open('/student/workbench', '_blank')}
+          onClick={onPublish}
           className="flex items-center gap-1.5 px-3 py-1 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors"
         >
           <Send size={14} />
