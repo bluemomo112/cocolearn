@@ -20,7 +20,7 @@ import SettingsModal from './SettingsModal';
 import PublishModal from './PublishModal';
 import FileUploadModal from './FileUploadModal';
 import LinkInputModal from './LinkInputModal';
-import KnowledgeBaseModal from './KnowledgeBaseModal';
+import UnifiedResourceLibraryModal from './UnifiedResourceLibraryModal';
 import InteractiveViewerModal from './InteractiveViewerModal';
 import ResourceInlineViewer, { InlineViewResource } from './ResourceInlineViewer';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -28,6 +28,7 @@ import { TaskEditModal, NoteInfoModal } from '@/app/teacher/note-config/modals';
 import { useRouter } from 'next/navigation';
 import { usePersistedState } from '../utils/storage';
 import { PublishScope } from '@/types/self-study';
+import type { ErrorQuestion, HistoricalTest, Note as KnowledgeNote, InteractiveWebpage } from '@/data/mockKnowledgeBase';
 import TaskExpandedCard from './task/TaskExpandedCard';
 import TaskResultReview from './task/TaskResultReview';
 import GrowthTimelinePanel from '@/app/student/components/GrowthTimelinePanel';
@@ -1193,7 +1194,7 @@ export default function SelfStudyWorkbench({
   // 链接输入弹窗
   const [isLinkInputOpen, setIsLinkInputOpen] = useState(false);
 
-  // 知识库导入弹窗
+  // 资源库导入弹窗
   const [showKnowledgeBaseModal, setShowKnowledgeBaseModal] = useState(false);
 
   // 试卷检测状态
@@ -1987,16 +1988,67 @@ export default function SelfStudyWorkbench({
   };
 
   // 处理知识库导入 - 错题本
-  const handleKnowledgeBaseImport = (errorQuestions: any[]) => {
+  const handleKnowledgeBaseImport = (errorQuestions: ErrorQuestion[]) => {
     console.log('[Demo] 加载场景 D2：错题本导入');
     loadErrorQuestionsScenario(errorQuestions);
     setShowKnowledgeBaseModal(false);
   };
 
   // 处理知识库导入 - 历史测验
-  const handleHistoricalTestImport = (testRecord: any) => {
+  const handleHistoricalTestImport = (testRecord: HistoricalTest) => {
     console.log('[Demo] 加载场景 D1：历史测验导入');
     loadHistoricalTestScenario(testRecord);
+    setShowKnowledgeBaseModal(false);
+  };
+
+  // 处理笔记导入
+  const handleNotesImport = (notes: KnowledgeNote[]) => {
+    console.log('[Demo] 导入笔记:', notes);
+    // 将笔记转换为资源格式并添加
+    const noteResources: Resource[] = notes.map(note => ({
+      id: note.id,
+      title: note.title,
+      type: 'document',
+      path: `notes/${note.id}.md`,
+      description: note.content.substring(0, 100) + '...',
+      textContent: note.content,
+      duration: '笔记',
+    }));
+
+    setConfig(prev => ({
+      ...prev,
+      resources: [...prev.resources, ...noteResources],
+    }));
+    setShowKnowledgeBaseModal(false);
+  };
+
+  // 处理互动网页导入
+  const handleWebpagesImport = (webpages: InteractiveWebpage[]) => {
+    console.log('[Demo] 导入互动网页:', webpages);
+    // 将互动网页转换为资源格式并添加
+    const webpageResources: Resource[] = webpages.map(wp => ({
+      id: wp.id,
+      title: wp.title,
+      type: 'interactive',
+      path: wp.url,
+      description: wp.description,
+      duration: wp.duration,
+    }));
+
+    setConfig(prev => ({
+      ...prev,
+      resources: [...prev.resources, ...webpageResources],
+    }));
+    setShowKnowledgeBaseModal(false);
+  };
+
+  // 处理学习资料导入
+  const handleResourcesImport = (resources: Resource[]) => {
+    console.log('[Demo] 导入学习资料:', resources);
+    setConfig(prev => ({
+      ...prev,
+      resources: [...prev.resources, ...resources],
+    }));
     setShowKnowledgeBaseModal(false);
   };
 
@@ -2929,7 +2981,7 @@ export default function SelfStudyWorkbench({
                       className="flex-1 px-2 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-600 hover:bg-gray-100 transition-colors flex items-center justify-center gap-1"
                     >
                       <Database size={12} />
-                      {t('从知识库导入')}
+                      {t('从资源库导入')}
                     </button>
                   </div>
                 </div>
@@ -3380,7 +3432,7 @@ export default function SelfStudyWorkbench({
                       className="flex-1 px-2 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-600 hover:bg-gray-100 transition-colors flex items-center justify-center gap-1"
                     >
                       <Database size={12} />
-                      {t('从知识库导入')}
+                      {t('从资源库导入')}
                     </button>
                   </div>
                 </div>
@@ -4402,12 +4454,15 @@ export default function SelfStudyWorkbench({
         onAdd={handleLinkAdd}
       />
 
-      {/* 知识库导入弹窗 */}
-      <KnowledgeBaseModal
+      {/* 资源库导入弹窗 */}
+      <UnifiedResourceLibraryModal
         isOpen={showKnowledgeBaseModal}
         onClose={() => setShowKnowledgeBaseModal(false)}
-        onImport={handleKnowledgeBaseImport}
+        onImportResources={handleResourcesImport}
+        onImportErrorQuestions={handleKnowledgeBaseImport}
         onImportHistoricalTest={handleHistoricalTestImport}
+        onImportNotes={handleNotesImport}
+        onImportWebpages={handleWebpagesImport}
       />
 
       {/* 试卷检测弹窗 */}

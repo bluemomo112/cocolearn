@@ -10,8 +10,9 @@ import SelfStudyWorkbench from './components/SelfStudyWorkbench';
 import SpaceResults from './components/SpaceResults';
 import CreationMethodModal from './components/CreationMethodModal';
 import FileUploadModal from './components/FileUploadModal';
-import ResourceLibraryModal from './components/ResourceLibraryModal';
+import UnifiedResourceLibraryModal from './components/UnifiedResourceLibraryModal';
 import AIGenerateFormModal from './components/AIGenerateFormModal';
+import type { ErrorQuestion, HistoricalTest, Note, InteractiveWebpage } from '@/data/mockKnowledgeBase';
 
 // 模拟存储的学习空间数据
 const mockSpaces: SpaceSummary[] = [
@@ -211,6 +212,62 @@ export default function SelfStudyPage() {
     setShowResourceLibraryModal(false);
   };
 
+  // 处理错题导入
+  const handleErrorQuestionsImport = (questions: ErrorQuestion[]) => {
+    if (currentSpace) {
+      // 将错题转换为任务题目格式并添加到当前空间
+      // 这里可以根据实际需求处理错题导入逻辑
+      console.log('导入错题:', questions);
+    }
+    setShowResourceLibraryModal(false);
+  };
+
+  // 处理历史测验导入
+  const handleHistoricalTestImport = (testRecord: HistoricalTest) => {
+    if (currentSpace) {
+      // 处理历史测验导入逻辑
+      console.log('导入历史测验:', testRecord);
+    }
+    setShowResourceLibraryModal(false);
+  };
+
+  // 处理笔记导入
+  const handleNotesImport = (notes: Note[]) => {
+    if (currentSpace) {
+      // 处理笔记导入逻辑
+      console.log('导入笔记:', notes);
+    }
+    setShowResourceLibraryModal(false);
+  };
+
+  // 处理互动网页导入
+  const handleWebpagesImport = (webpages: InteractiveWebpage[]) => {
+    if (currentSpace) {
+      // 将互动网页转换为资源格式并添加
+      const webpageResources: Resource[] = webpages.map(wp => ({
+        id: wp.id,
+        title: wp.title,
+        type: 'interactive',
+        path: wp.url,
+        description: wp.description,
+        duration: wp.duration,
+      }));
+
+      setCurrentSpace({
+        ...currentSpace,
+        resources: [...currentSpace.resources, ...webpageResources],
+      });
+      setSpaces(prev =>
+        prev.map(s => s.id === currentSpace.id ? {
+          ...s,
+          resourceCount: currentSpace.resources.length + webpageResources.length
+        } : s)
+      );
+    }
+    setShowResourceLibraryModal(false);
+  };
+
+
   // 处理AI生成
   const handleAIGenerate = (data: {
     topic: string;
@@ -402,10 +459,14 @@ export default function SelfStudyPage() {
       />
 
       {/* 资源库选择模态框 */}
-      <ResourceLibraryModal
+      <UnifiedResourceLibraryModal
         isOpen={showResourceLibraryModal}
         onClose={() => setShowResourceLibraryModal(false)}
-        onSelect={handleResourceSelect}
+        onImportResources={handleResourceSelect}
+        onImportErrorQuestions={handleErrorQuestionsImport}
+        onImportHistoricalTest={handleHistoricalTestImport}
+        onImportNotes={handleNotesImport}
+        onImportWebpages={handleWebpagesImport}
       />
 
       {/* AI生成表单模态框 */}

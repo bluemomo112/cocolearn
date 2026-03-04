@@ -30,7 +30,7 @@ export default function CreationMethodModal({ isOpen, onClose, onSelectMethod }:
       id: 'library' as const,
       icon: Library,
       title: '从资源库导入',
-      description: '选择现成的课程模板',
+      description: '从资源库选择学习资料、题目等',
       recommended: false,
     },
     {
