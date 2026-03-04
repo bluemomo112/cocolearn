@@ -3063,7 +3063,7 @@ export default function SelfStudyWorkbench({
         );
       })()}
 
-      <div className="h-full flex flex-col bg-gray-50">
+      <div className="h-screen flex flex-col bg-gray-50 overflow-hidden">
       {/* 顶部状态栏 */}
       <header className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-6 shrink-0">
         <div className="flex items-center gap-4">

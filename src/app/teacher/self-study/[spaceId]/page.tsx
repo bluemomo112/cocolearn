@@ -32,10 +32,12 @@ export default function SpacePage({ params }: { params: Promise<{ spaceId: strin
   }
 
   return (
-    <SelfStudyWorkbench
-      config={config}
-      onBack={() => router.push('/teacher/self-study')}
-      onUpdateConfig={() => {}}
-    />
+    <div className="h-screen w-screen flex flex-col">
+      <SelfStudyWorkbench
+        config={config}
+        onBack={() => router.push('/teacher/self-study')}
+        onUpdateConfig={() => {}}
+      />
+    </div>
   );
 }

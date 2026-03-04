@@ -104,6 +104,13 @@
   --color-fresh-600: var(--fresh-600);
 }
 
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
 body {
   background: var(--bg-gradient);
   color: var(--foreground);

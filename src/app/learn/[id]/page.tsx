@@ -37,7 +37,7 @@ export default function LearnPage() {
   }
 
   return (
-    <div className="h-screen w-screen">
+    <div className="h-screen w-screen overflow-hidden">
       <SelfStudyWorkbench
         spaceId={spaceId}
         mode="student"

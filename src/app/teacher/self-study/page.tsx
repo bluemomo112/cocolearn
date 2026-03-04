@@ -499,7 +499,7 @@ export default function SelfStudyPage() {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-gray-50 overflow-hidden">
+    <div className="fixed inset-0 z-50 bg-gray-50 overflow-hidden flex flex-col">
       {viewState === 'manager' && (
         <SpaceManager
           spaces={spaces}

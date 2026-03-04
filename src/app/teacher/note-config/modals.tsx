@@ -400,7 +400,7 @@ export function NoteInfoModal({ config, onSave, onClose, knowledgeLibrary, grade
     // 生成课程链接和随机码（mock）
     const courseId = Math.random().toString(36).substring(2, 10);
     const randomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-    const link = `https://student.example.com/course/${courseId}`;
+    const link = `http://localhost:3000/learn/${courseId}`;
 
     console.log('生成的发布数据:', { link, code: randomCode });
 
