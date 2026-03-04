@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { PublishSuccessModal } from './PublishSuccessModal';
 import {
   X,
@@ -294,8 +295,6 @@ export function NoteInfoModal({ config, onSave, onClose, knowledgeLibrary, grade
   });
   const [showMoreConfig, setShowMoreConfig] = useState(true);
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
-  const [showPublishSuccess, setShowPublishSuccess] = useState(false);
-  const [publishData, setPublishData] = useState({ link: '', code: '' });
   const [publishError, setPublishError] = useState('');
   const [customTagInput, setCustomTagInput] = useState('');
   const [showShareLink, setShowShareLink] = useState(false);
@@ -375,6 +374,7 @@ export function NoteInfoModal({ config, onSave, onClose, knowledgeLibrary, grade
     console.log('=== 发布按钮被点击 ===');
     console.log('当前配置:', localConfig);
     console.log('发布范围:', publishScope);
+    console.log('年级:', localConfig.grade, '班级:', localConfig.bindClasses);
 
     // 清除之前的错误
     setPublishError('');
@@ -401,6 +401,7 @@ export function NoteInfoModal({ config, onSave, onClose, knowledgeLibrary, grade
     console.log('生成的发布数据:', { link, code: randomCode });
 
     // 保存配置（包含发布信息和发布范围）
+    // page.tsx 会检测到 publishedLink 和 publishedCode，自动显示成功弹窗
     onSave({
       ...localConfig,
       publishScope,
@@ -408,11 +409,7 @@ export function NoteInfoModal({ config, onSave, onClose, knowledgeLibrary, grade
       publishedCode: randomCode,
     });
 
-    // 设置发布数据并显示成功弹窗
-    setPublishData({ link, code: randomCode });
-    setShowPublishSuccess(true);
-
-    console.log('✅ 发布成功，显示成功弹窗');
+    console.log('✅ 发布成功，page.tsx 将显示成功弹窗');
   };
 
   return (
@@ -791,28 +788,18 @@ export function NoteInfoModal({ config, onSave, onClose, knowledgeLibrary, grade
         </div>
       </div>
 
-      {/* 查看分享链接弹窗 */}
-      {showShareLink && config.publishedLink && (
-        <PublishSuccessModal
-          courseTitle={localConfig.title}
-          courseLink={config.publishedLink}
-          accessCode={config.publishedCode || ''}
-          onClose={() => setShowShareLink(false)}
-        />
-      )}
-
-      {/* 发布成功弹窗 */}
-      {showPublishSuccess && (
-        <PublishSuccessModal
-          courseTitle={localConfig.title}
-          courseLink={publishData.link}
-          accessCode={publishData.code}
-          onClose={() => {
-            console.log('关闭发布成功弹窗');
-            setShowPublishSuccess(false);
-          }}
-        />
-      )}
+      {/* 查看分享链接弹窗 - 使用 Portal 渲染到 body */}
+      {showShareLink && config.publishedLink &&
+        createPortal(
+          <PublishSuccessModal
+            courseTitle={localConfig.title}
+            courseLink={config.publishedLink}
+            accessCode={config.publishedCode || ''}
+            onClose={() => setShowShareLink(false)}
+          />,
+          document.body
+        )
+      }
     </div>
   );
 }

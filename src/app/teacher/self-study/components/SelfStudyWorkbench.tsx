@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { SpaceConfig, LearningMode, LearningPathNode, LEARNING_MODE_CONFIG } from '@/types/self-study';
-import { Resource, Task } from '@/types/shared-context';
+import { Resource, Task, TaskQuestion } from '@/types/shared-context';
 import { mockResources } from '@/data/mockLearningData';
 import { blankExamScenario, multiStudentScenario, arbitraryFileScenario, historicalTestScenario, errorQuestionsScenario } from '@/data/demoScenarios';
 import {
@@ -15,6 +15,7 @@ import {
   CheckCircle2, Circle, Bot, MessageSquare, Pause, RotateCcw, GitBranch,
   Edit, Image as ImageIcon, Mic, Trash2, Layers, Award, TrendingUp,
   ChevronDown, ChevronUp, Layout, Share2, AlertCircle, Globe, Database,
+  Workflow, TestTube2, CreditCard, Film, Presentation,
 } from 'lucide-react';
 import SettingsModal from './SettingsModal';
 import PublishModal from './PublishModal';
@@ -133,7 +134,7 @@ interface ChatMessage {
     actionButtons?: Array<{
       id: string;
       label: string;
-      icon: string;
+      iconName: string; // Lucide icon name
       studioToolId: string;
     }>;
   };
@@ -181,6 +182,73 @@ interface Note {
   updatedAt: Date;
   images: string[];
   voiceRecordings: VoiceRecording[];
+}
+
+// Helper function to get icon component from icon name
+function getIconComponent(iconName: string) {
+  const iconMap: Record<string, any> = {
+    'FileEdit': FileEdit,
+    'TestTube2': TestTube2,
+    'Presentation': Presentation,
+    'Film': Film,
+    'CreditCard': CreditCard,
+    'Workflow': Workflow,
+    'Database': Database,
+    'Globe': Globe,
+    'AlertCircle': AlertCircle,
+    'Share2': Share2,
+    'Layout': Layout,
+    'ChevronUp': ChevronUp,
+    'ChevronDown': ChevronDown,
+    'TrendingUp': TrendingUp,
+    'Award': Award,
+    'Layers': Layers,
+    'Trash2': Trash2,
+    'Mic': Mic,
+    'ImageIcon': ImageIcon,
+    'Edit': Edit,
+    'GitBranch': GitBranch,
+    'RotateCcw': RotateCcw,
+    'Pause': Pause,
+    'MessageSquare': MessageSquare,
+    'Bot': Bot,
+    'Circle': Circle,
+    'CheckCircle2': CheckCircle2,
+    'Map': Map,
+    'BarChart3': BarChart3,
+    'Search': Search,
+    'Eye': Eye,
+    'Download': Download,
+    'Play': Play,
+    'ChevronLeft': ChevronLeft,
+    'ChevronRight': ChevronRight,
+    'ListChecks': ListChecks,
+    'FolderOpen': FolderOpen,
+    'Clock': Clock,
+    'MessageCircle': MessageCircle,
+    'Lightbulb': Lightbulb,
+    'Target': Target,
+    'Save': Save,
+    'Pencil': Pencil,
+    'Activity': Activity,
+    'Zap': Zap,
+    'Check': Check,
+    'X': X,
+    'GripVertical': GripVertical,
+    'Link': Link,
+    'Upload': Upload,
+    'Plus': Plus,
+    'FileSpreadsheet': FileSpreadsheet,
+    'Video': Video,
+    'FileText': FileText,
+    'Sparkles': Sparkles,
+    'Brain': Brain,
+    'BookOpen': BookOpen,
+    'Settings': Settings,
+    'Send': Send,
+    'ArrowLeft': ArrowLeft,
+  };
+  return iconMap[iconName] || AlertCircle;
 }
 
 function Resizer({ onResize }: { onResize: (delta: number) => void }) {
@@ -1166,6 +1234,8 @@ export default function SelfStudyWorkbench({
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId] = useState(`session_${Date.now()}`);
   const [flashingToolId, setFlashingToolId] = useState<string | null>(null);
+  const [flashingButtonId, setFlashingButtonId] = useState<string | null>(null);
+  const [generatingButtonId, setGeneratingButtonId] = useState<string | null>(null);
 
   // 任务交互状态
   const [expandedTask, setExpandedTask] = useState<Task | null>(null);
@@ -1598,9 +1668,9 @@ export default function SelfStudyWorkbench({
           { id: 'ask_question', label: '我有问题' }
         ],
         actionButtons: [
-          { id: 'mind_map', label: '生成思维导图', icon: '🗺️', studioToolId: 'mind_map' },
-          { id: 'quiz', label: '生成知识测验', icon: '📝', studioToolId: 'quiz' },
-          { id: 'flashcards', label: '生成记忆卡片', icon: '🃏', studioToolId: 'flashcards' }
+          { id: 'mind_map', label: '生成思维导图', iconName: 'Workflow', studioToolId: 'mind_map' },
+          { id: 'quiz', label: '生成知识测验', iconName: 'TestTube2', studioToolId: 'quiz' },
+          { id: 'flashcards', label: '生成记忆卡片', iconName: 'CreditCard', studioToolId: 'flashcards' }
         ]
       }
     }]);
@@ -1631,6 +1701,63 @@ export default function SelfStudyWorkbench({
       return () => clearTimeout(timer);
     }
   }, [isAIGenerating, generatedTasks.length]);
+
+  // 快速回复处理函数
+  const handleQuickReply = (messageText: string) => {
+    const userMessage: ChatMessage = {
+      id: `msg_${Date.now()}`,
+      role: 'user',
+      content: messageText,
+      timestamp: new Date(),
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
+    setIsLoading(true);
+
+    // 模拟 AI 回复（与 handleSendMessage 中的逻辑相同）
+    const userInput = messageText.toLowerCase();
+    setTimeout(() => {
+      let aiContent = '';
+
+      if (config.learningMode === 'self_directed') {
+        if (userInput.includes('搜索') || userInput.includes('概念')) {
+          aiContent = `🔍 **${t('概念解析')}**\n\n${t('让我帮你搜索相关概念...')}\n\n${t('根据知识库检索，这个概念的核心要点是：')}\n\n1. **${t('定义')}**：...\n2. **${t('特征')}**：...\n3. **${t('应用场景')}**：...\n\n${t('你想深入了解哪个方面？')}`;
+        } else if (userInput.includes('总结') || userInput.includes('要点')) {
+          aiContent = `📋 **${t('要点总结')}**\n\n${t('根据你目前的学习内容，我来帮你梳理关键要点：')}\n\n**${t('核心概念')}**\n- ${t('要点一：...')}\n- ${t('要点二：...')}\n\n**${t('重要公式')}**\n- ${t('公式一：...')}\n\n**${t('常见误区')}**\n- ${t('注意事项：...')}\n\n${t('需要我详细解释某个要点吗？')}`;
+        } else if (userInput.includes('例子') || userInput.includes('举例')) {
+          aiContent = `💡 **${t('实例说明')}**\n\n${t('让我用一个生活中的例子来解释：')}\n\n${t('想象一下...')}\n\n${t('这就像是...')}\n\n${t('通过这个例子，你能理解核心原理了吗？')}`;
+        } else {
+          aiContent = `${t('这是一个很好的问题！让我来帮你解答...')}\n\n${t('根据你的问题，我认为关键点在于：')}\n\n1. **${t('首先')}**，${t('我们需要理解...')}\n2. **${t('其次')}**，${t('要注意...')}\n3. **${t('最后')}**，${t('可以这样应用...')}\n\n${t('你还有其他想了解的吗？')}`;
+        }
+        const userMsgCount = messages.filter(m => m.role === 'user').length + 1;
+        if (userMsgCount % 4 === 0 && userMsgCount >= 4) {
+          aiContent += `\n\n---\n💡 ${t('顺便说一下，根据你的提问，你已经涉及了')} ${masteredCount}/${totalNodes} ${t('个核心知识点。想看看完整的学习路径吗？')}`;
+        }
+      } else {
+        if (userInput.includes('考考') || userInput.includes('测试')) {
+          aiContent = `🧪 **${t('知识检测')}**\n\n${t('好的，让我来考考你！')}\n\n**${t('问题')}**：${t('关于「')}${learningPath.find(n => n.id === currentNodeId)?.title}${t('」，请回答：')}\n\n${t('这个概念的核心定义是什么？它与前面学过的内容有什么联系？')}\n\n💭 *${t('提示：可以结合之前学习的基础概念来思考')}*`;
+        } else if (userInput.includes('下一') || userInput.includes('继续')) {
+          aiContent = `⏭️ **${t('进入下一知识点')}**\n\n${t('很好！你已经掌握了当前内容。')}\n\n📍 ${t('正在为你准备下一个知识点：「')}${learningPath.find(n => n.status === 'pending')?.title || t('综合应用')}${t('」')}\n\n🔄 *${t('正在从知识库加载相关资源...')}*\n\n${t('准备好了吗？让我们开始吧！')}`;
+        } else if (userInput.includes('路径') || userInput.includes('进度')) {
+          const mastered = learningPath.filter(n => n.status === 'mastered').length;
+          aiContent = `🗺️ **${t('学习路径概览')}**\n\n**${t('当前进度')}**：${mastered}/${learningPath.length} ${t('个知识点已掌握')}\n\n**${t('学习路径')}**：\n${learningPath.map((n, i) => `${n.status === 'mastered' ? '✅' : n.id === currentNodeId ? '📍' : '⬜'} ${i + 1}. ${n.title}`).join('\n')}\n\n${t('继续加油！你已经完成了')} ${Math.round((mastered / learningPath.length) * 100)}%`;
+        } else if (userInput.includes('提示') || userInput.includes('帮助')) {
+          aiContent = `💡 **${t('学习提示')}**\n\n${t('关于「')}${learningPath.find(n => n.id === currentNodeId)?.title}${t('」，这里有一些提示：')}\n\n1. 🔑 **${t('关键词')}**：${t('注意理解核心术语的含义')}\n2. 🔗 **${t('联系')}**：${t('思考与前面知识点的关联')}\n3. 📝 **${t('练习')}**：${t('尝试用自己的话复述')}\n\n${t('需要更具体的帮助吗？')}`;
+        } else {
+          aiContent = `${t('很好的思考！👍')}\n\n${t('让我来引导你深入理解这个概念...')}\n\n**${t('关键点')}**：\n1. ${t('首先，我们需要明确...')}\n2. ${t('其次，要理解...')}\n3. ${t('最后，可以这样应用...')}\n\n🎯 **${t('小测验')}**：${t('现在，你能用自己的话解释一下吗？这样我可以确认你是否理解了。')}`;
+        }
+      }
+
+      const aiReply: ChatMessage = {
+        id: `msg_${Date.now()}_ai`,
+        role: 'assistant',
+        content: aiContent,
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, aiReply]);
+      setIsLoading(false);
+    }, 1200);
+  };
 
   // 发送消息
   const handleSendMessage = async () => {
@@ -1697,8 +1824,8 @@ export default function SelfStudyWorkbench({
               { id: 'related', label: t('相关概念') }
             ],
             actionButtons: [
-              { id: 'mind_map', label: t('生成思维导图'), icon: '🗺️', studioToolId: 'mind_map' },
-              { id: 'flashcards', label: t('生成记忆卡片'), icon: '🃏', studioToolId: 'flashcards' }
+              { id: 'mind_map', label: t('生成思维导图'), iconName: 'Workflow', studioToolId: 'mind_map' },
+              { id: 'flashcards', label: t('生成记忆卡片'), iconName: 'CreditCard', studioToolId: 'flashcards' }
             ]
           };
         } else if (userInput.includes('总结') || userInput.includes('要点')) {
@@ -1708,8 +1835,8 @@ export default function SelfStudyWorkbench({
               { id: 'continue', label: t('继续学习') }
             ],
             actionButtons: [
-              { id: 'quiz', label: t('基于要点生成测试'), icon: '📝', studioToolId: 'quiz' },
-              { id: 'mind_map', label: t('生成思维导图'), icon: '🗺️', studioToolId: 'mind_map' }
+              { id: 'quiz', label: t('基于要点生成测试'), iconName: 'TestTube2', studioToolId: 'quiz' },
+              { id: 'mind_map', label: t('生成思维导图'), iconName: 'Workflow', studioToolId: 'mind_map' }
             ]
           };
         } else if (userInput.includes('例子') || userInput.includes('举例')) {
@@ -1719,7 +1846,7 @@ export default function SelfStudyWorkbench({
               { id: 'practice', label: t('我来试试') }
             ],
             actionButtons: [
-              { id: 'animation', label: t('生成讲解动画'), icon: '🎬', studioToolId: 'interactive_animation' }
+              { id: 'animation', label: t('生成讲解动画'), iconName: 'Film', studioToolId: 'interactive_animation' }
             ]
           };
         } else {
@@ -1740,7 +1867,7 @@ export default function SelfStudyWorkbench({
               { id: 'hint', label: t('给我提示') }
             ],
             actionButtons: [
-              { id: 'quiz', label: t('生成正式测试'), icon: '📝', studioToolId: 'quiz' }
+              { id: 'quiz', label: t('生成正式测试'), iconName: 'TestTube2', studioToolId: 'quiz' }
             ]
           };
         } else if (userInput.includes('下一') || userInput.includes('继续')) {
@@ -1757,7 +1884,7 @@ export default function SelfStudyWorkbench({
               { id: 'review', label: t('复习已学内容') }
             ],
             actionButtons: [
-              { id: 'summary', label: t('生成学习报告'), icon: '📊', studioToolId: 'summary' }
+              { id: 'summary', label: t('生成学习报告'), iconName: 'BarChart3', studioToolId: 'summary' }
             ]
           };
         } else {
@@ -1784,13 +1911,31 @@ export default function SelfStudyWorkbench({
   };
 
   // 处理聊天功能按钮点击
-  const handleChatAction = (studioToolId: string) => {
+  const handleChatAction = (studioToolId: string, buttonId?: string) => {
     const tool = STUDIO_TOOLS.find(t => t.id === studioToolId);
     if (tool) {
+      if (buttonId) {
+        setGeneratingButtonId(buttonId);
+      }
       handleStudioToolClick(tool);
       setFlashingToolId(studioToolId);
-      setTimeout(() => setFlashingToolId(null), 1500);
+      if (buttonId) {
+        setFlashingButtonId(buttonId);
+      }
+      // 在Studio工具生成完成后清除loading状态（2秒后，与handleStudioToolClick中的setTimeout一致）
+      setTimeout(() => {
+        if (buttonId) {
+          setGeneratingButtonId(null);
+        }
+      }, 2000);
+      setTimeout(() => {
+        setFlashingToolId(null);
+        if (buttonId) {
+          setFlashingButtonId(null);
+        }
+      }, 1500);
     }
+  };
   };
 
   // 切换计时器
@@ -2161,18 +2306,28 @@ export default function SelfStudyWorkbench({
       return Array.isArray(ans) ? ans.join(', ') : ans;
     };
 
+    // 构建详细的讲解内容
+    const detailedExplanation = question.explanation
+      ? `${question.explanation}\n\n---\n\n**深入分析：**\n\n这道题的关键在于理解核心概念。让我从几个维度帮你分析：\n\n**🎯 知识点定位**\n这道题主要考查的是基础概念的理解和应用。你需要掌握相关定义，并能在具体情境中灵活运用。\n\n**💡 解题思路**\n1. 首先，仔细审题，明确题目问的是什么\n2. 然后，回忆相关的知识点和概念\n3. 最后，结合题目信息进行逻辑推理\n\n**⚠️ 易错点提醒**\n很多同学在这类题目上容易出错，主要原因是：\n- 对概念的理解不够深入\n- 容易混淆相似的概念\n- 没有注意题目中的关键信息\n\n**📚 知识拓展**\n这个知识点在实际应用中非常重要，建议你：\n- 多做几道类似的题目巩固理解\n- 尝试用自己的话解释这个概念\n- 思考这个知识点在不同场景下的应用`
+      : `让我为你深入讲解这道题：\n\n**🎯 知识点定位**\n这道题考查的是核心概念的理解。你需要掌握相关定义，并能在具体情境中灵活运用。\n\n**💡 解题思路**\n1. **审题**：仔细阅读题目，找出关键信息\n2. **回忆**：联想相关的知识点和概念\n3. **推理**：结合题目信息进行逻辑分析\n4. **验证**：检查答案是否符合题意\n\n**⚠️ 易错点提醒**\n这类题目的常见错误：\n- 对概念理解不够准确\n- 容易被干扰选项误导\n- 忽略了题目中的限定条件\n\n**📚 学习建议**\n为了更好地掌握这个知识点：\n- 回顾教材中的相关章节\n- 多做几道类似题目\n- 尝试总结解题规律\n- 与同学讨论交流理解`;
+
     // 发送AI讲解消息
     const explainMsg: ChatMessage = {
       id: `msg_explain_${Date.now()}`,
       role: 'assistant',
-      content: `📝 **深入详解**\n\n**题目：** ${question.content}\n\n**你的答案：** ${formatAnswer(userAnswer)}\n**正确答案：** ${formatAnswer(correctAnswer)}\n\n---\n\n让我为你深入讲解这道题：\n\n${question.explanation || '这道题考查的是核心概念的理解。让我从几个角度来分析：\n\n1. **知识点回顾**：这道题涉及的关键知识点需要你理解其本质含义。\n\n2. **解题思路**：遇到这类题目，首先要明确题目问的是什么，然后回忆相关知识点，最后进行逻辑推理。\n\n3. **易错点提醒**：很多同学容易在这个地方出错，要特别注意区分相似概念。'}\n\n如果还有不清楚的地方，随时问我！`,
+      content: `📝 **深入详解这道错题**\n\n---\n\n**📋 题目回顾**\n${question.content}\n\n**📊 答案对比**\n- 你的答案：${formatAnswer(userAnswer)}\n- 正确答案：${formatAnswer(correctAnswer)}\n\n---\n\n${detailedExplanation}\n\n---\n\n💬 如果还有不清楚的地方，随时问我！我可以换个角度再解释，或者举更多例子帮你理解。`,
       timestamp: new Date(),
       suggestions: {
+        quickReplies: [
+          { id: 'more_examples', label: '再举个例子' },
+          { id: 'related_concepts', label: '相关知识点' },
+          { id: 'understand', label: '我明白了' },
+        ],
         actionButtons: [
           {
             id: 'generate_variant',
             label: '生成变种题',
-            icon: '🔄',
+            iconName: 'RotateCcw',
             studioToolId: 'generate_variant_question',
           },
         ],
@@ -4143,28 +4298,78 @@ export default function SelfStudyWorkbench({
 
               // 普通消息渲染
               return (
-              <div key={message.id} className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : ''}`}>
+                <div key={message.id} className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : ''}`}>
                 {message.role === 'assistant' && (
                   <div className="w-8 h-8 rounded-full bg-primary-600 flex-shrink-0 flex items-center justify-center">
                     <Bot size={16} className="text-white" />
                   </div>
                 )}
                 <div className={`${message.role === 'user' ? 'max-w-[80%]' : 'flex flex-col gap-2 max-w-[80%]'}`}>
-                  {/* 消息内容 */}
+                  {/* 消息气泡 */}
                   <div
-                    className={`p-4 rounded-lg ${
+                    className={`rounded-lg ${
                       message.role === 'user'
                         ? 'bg-primary-600 text-white rounded-tr-none'
-                        : 'bg-white border border-gray-200 rounded-tl-none'
+                        : 'bg-white border border-gray-200 rounded-tl-none overflow-hidden'
                     }`}
                   >
-                    <div
-                      className={`text-sm leading-relaxed whitespace-pre-line ${
-                        message.role === 'user' ? 'text-white' : 'text-gray-700'
-                      }`}
-                    >
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
+                    {/* 消息内容 */}
+                    <div className="p-4">
+                      <div
+                        className={`text-sm leading-relaxed whitespace-pre-line ${
+                          message.role === 'user' ? 'text-white' : 'text-gray-700'
+                        }`}
+                      >
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
+                      </div>
                     </div>
+
+                    {/* 功能按钮 - 内嵌在对话框底部 */}
+                    {message.role === 'assistant' && message.suggestions?.actionButtons && message.suggestions.actionButtons.length > 0 && (
+                      <div className="px-4 py-3 bg-gray-50 border-t border-gray-100">
+                        <div className="flex flex-wrap gap-2">
+                          {message.suggestions.actionButtons.map((button) => {
+                            const IconComponent = getIconComponent(button.iconName);
+                            const buttonFullId = `${message.id}-${button.id}`;
+                            const isGenerating = generatingButtonId === buttonFullId;
+                            const isFlashing = flashingButtonId === buttonFullId;
+
+                            return (
+                              <button
+                                key={button.id}
+                                onClick={() => !isGenerating && handleChatAction(button.studioToolId, buttonFullId)}
+                                className={`px-3 py-2 text-sm font-medium rounded-lg border flex items-center gap-2 group transition-all ${
+                                  isGenerating
+                                    ? 'bg-gray-50 border-gray-200 animate-pulse cursor-wait'
+                                    : isFlashing
+                                    ? 'bg-primary-100 border-primary-500 ring-2 ring-primary-400 shadow-lg scale-105'
+                                    : 'bg-white border-gray-200 hover:border-primary-300 hover:bg-primary-50 text-gray-700 hover:text-primary-700 hover:shadow-sm cursor-pointer'
+                                }`}
+                              >
+                                {IconComponent && <IconComponent size={16} className={`transition-colors ${
+                                  isGenerating
+                                    ? 'text-gray-500'
+                                    : isFlashing
+                                    ? 'text-primary-600 animate-pulse'
+                                    : 'text-gray-500 group-hover:text-primary-600'
+                                }`} />}
+                                <div className="flex flex-col items-start">
+                                  <span className={`font-medium ${isFlashing ? 'text-primary-700' : ''}`}>{button.label}</span>
+                                  {isGenerating ? (
+                                    <span className="text-xs text-gray-500 flex items-center gap-1">
+                                      <Activity size={10} className="animate-spin" />
+                                      {t('生成中...')}
+                                    </span>
+                                  ) : !isFlashing && (
+                                    <ChevronRight size={14} className={`transition-colors text-gray-400 group-hover:text-primary-500`} />
+                                  )}
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* 资源引用标签 */}
@@ -4207,42 +4412,19 @@ export default function SelfStudyWorkbench({
                     );
                   })()}
 
-                  {/* 推荐回复和功能按钮 */}
-                  {message.role === 'assistant' && message.suggestions && (
-                    <div className="flex flex-col gap-3 mt-3">
-                      {/* 推荐回复 - 轻量标签样式 */}
-                      {message.suggestions.quickReplies && message.suggestions.quickReplies.length > 0 && (
-                        <div className="flex flex-wrap gap-2">
-                          {message.suggestions.quickReplies.map((reply) => (
-                            <button
-                              key={reply.id}
-                              onClick={() => {
-                                setInputMessage(reply.label);
-                                handleSendMessage();
-                              }}
-                              className="px-3 py-1.5 text-xs font-medium rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-800 transition-all hover:shadow-sm"
-                            >
-                              {reply.label}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* 功能按钮 - 突出的操作按钮样式 */}
-                      {message.suggestions.actionButtons && message.suggestions.actionButtons.length > 0 && (
-                        <div className="flex flex-wrap gap-2">
-                          {message.suggestions.actionButtons.map((button) => (
-                            <button
-                              key={button.id}
-                              onClick={() => handleChatAction(button.studioToolId)}
-                              className={`px-4 py-2 text-sm font-medium rounded-lg bg-white border-2 border-primary-200 hover:border-primary-400 hover:bg-primary-50 text-gray-700 hover:text-primary-700 transition-all hover:shadow-md flex items-center gap-2 group`}
-                            >
-                              <span className="text-base group-hover:scale-110 transition-transform">{button.icon}</span>
-                              <span>{button.label}</span>
-                            </button>
-                          ))}
-                        </div>
-                      )}
+                  {/* 推荐回复 - 在对话框外下方，长条形输入框样式 */}
+                  {message.role === 'assistant' && message.suggestions?.quickReplies && message.suggestions.quickReplies.length > 0 && (
+                    <div className="mt-2 flex flex-col gap-2">
+                      {message.suggestions.quickReplies.map((reply) => (
+                        <button
+                          key={reply.id}
+                          onClick={() => handleQuickReply(reply.label)}
+                          className="px-4 py-3 text-sm text-left rounded-lg border border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300 text-gray-700 transition-all hover:shadow-sm flex items-start gap-2"
+                        >
+                          <Send size={14} className="text-gray-400 mt-0.5 flex-shrink-0" />
+                          <span>{reply.label}</span>
+                        </button>
+                      ))}
                     </div>
                   )}
                 </div>
@@ -4253,7 +4435,7 @@ export default function SelfStudyWorkbench({
             {/* 加载指示器 */}
             {isLoading && (
               <div className="flex gap-3">
-                <div className="w-8 h-8 rounded-full bg-gray-800 flex-shrink-0 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full bg-primary-600 flex-shrink-0 flex items-center justify-center">
                   <Bot size={16} className="text-white" />
                 </div>
                 <div className="bg-white border border-gray-200 rounded-lg rounded-tl-none p-4">
