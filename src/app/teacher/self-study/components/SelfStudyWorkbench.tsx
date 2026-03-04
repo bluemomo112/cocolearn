@@ -6,6 +6,7 @@ import remarkGfm from 'remark-gfm';
 import { SpaceConfig, LearningMode, LearningPathNode, LEARNING_MODE_CONFIG } from '@/types/self-study';
 import { Resource, Task } from '@/types/shared-context';
 import { mockResources } from '@/data/mockLearningData';
+import { blankExamScenario, multiStudentScenario, arbitraryFileScenario, historicalTestScenario, errorQuestionsScenario } from '@/data/demoScenarios';
 import {
   ArrowLeft, Send, Settings, BookOpen, Brain, Sparkles, FileText, Video,
   FileSpreadsheet, Plus, Upload, Link, GripVertical, X, Check, Zap, FileEdit,
@@ -1239,7 +1240,7 @@ export default function SelfStudyWorkbench({
   };
 
   const toggleAllResources = () => {
-    const allIds = [...config.resources.map(r => r.id), ...aiGeneratedResources.map(r => r.id)];
+    const allIds = [...config.resources.map(r => r.id), ...aiGeneratedResources.map(r => r.id), ...MOCK_AI_RESOURCES.map(r => r.id)];
     setSelectedResourceIds(prev => prev.size === allIds.length ? new Set() : new Set(allIds));
   };
 
@@ -1505,16 +1506,17 @@ export default function SelfStudyWorkbench({
     };
   }, [isTimerRunning]);
 
-  // 初始化欢迎消息
+  // 初始化欢迎消息 - 改为空白引导状态
   useEffect(() => {
     if (messages.length > 0) return; // already have persisted messages
-    if (config.learningMode === 'ai_guided') {
-      // AI引导模式：加载完整的 mock 对话（自由探索 + 模式切换 + AI引导）
-      setMessages([...MOCK_SELF_DIRECTED_MESSAGES, ...MOCK_AI_GUIDED_EXTRA_MESSAGES]);
-    } else {
-      // 自由探索模式：只加载自由探索阶段的对话
-      setMessages([...MOCK_SELF_DIRECTED_MESSAGES]);
-    }
+
+    // 设置开场引导消息
+    setMessages([{
+      id: 'welcome-guide',
+      role: 'assistant',
+      content: '你好！我是你的学习助手。你可以：\n\n1. 📄 上传文件（试卷、笔记、资料）\n2. 📚 从知识库导入（历史测验、错题本）\n3. 💬 直接向我提问\n\n开始你的学习之旅吧！',
+      timestamp: new Date(),
+    }]);
   }, []);
 
   // 学习模式切换时自动切换右侧标签
@@ -1686,36 +1688,15 @@ export default function SelfStudyWorkbench({
       // 非试卷文件正常处理
       const normalFiles = files.filter(f => !EXAM_PATTERN.test(f.name));
       if (normalFiles.length > 0) {
-        const newResources: Resource[] = normalFiles.map((file) => ({
-          id: `resource_${Date.now()}_${Math.random()}`,
-          title: file.name,
-          type: file.type.includes('video') ? 'video' :
-                file.type.includes('presentation') ? 'presentation' : 'document',
-          description: `上传于 ${new Date().toLocaleString('zh-CN')}`,
-          source: isStudentMode ? 'student' : 'teacher',
-        }));
-        handleUpdateConfig({
-          ...config,
-          resources: [...config.resources, ...newResources],
-        });
+        // 场景 A：任意文件上传（脚本化对话）
+        loadArbitraryFileScenario(normalFiles);
       }
       setIsFileUploadOpen(false);
       return;
     }
 
-    const newResources: Resource[] = files.map((file) => ({
-      id: `resource_${Date.now()}_${Math.random()}`,
-      title: file.name,
-      type: file.type.includes('video') ? 'video' :
-            file.type.includes('presentation') ? 'presentation' : 'document',
-      description: `上传于 ${new Date().toLocaleString('zh-CN')}`,
-      source: isStudentMode ? 'student' : 'teacher',
-    }));
-
-    handleUpdateConfig({
-      ...config,
-      resources: [...config.resources, ...newResources],
-    });
+    // 场景 A：任意文件上传（脚本化对话）
+    loadArbitraryFileScenario(files);
     setIsFileUploadOpen(false);
   };
 
@@ -1733,46 +1714,15 @@ export default function SelfStudyWorkbench({
     setTimeout(() => setExamProcessingStep('converting'), 2500);
     setTimeout(() => {
       setExamProcessingStep('done');
-      // 生成 mock quiz 任务
-      const mockExamTask = {
-        id: taskId,
-        type: 'quiz',
-        title: processingConfig.files[0]?.name?.replace(/\.[^.]+$/, '') || '试卷测试',
-        status: 'available',
-        questionCount: 5,
-        generatedAt: new Date().toISOString(),
-        settings: {
-          showAnswersAfterSubmit: false,
-          showExplanationsAfterSubmit: false,
-          allowRetry: true,
-          fullscreenMode: true,
-          allowViewResources: false,
-          source: 'exam_converted',
-        },
-        questions: [
-          { id: 'eq1', type: 'single_choice', content: '以下哪个是光合作用的主要产物？', options: ['氧气和葡萄糖', '二氧化碳和水', '氮气和蛋白质', '氢气和脂肪'], answer: 'A', explanation: '光合作用将CO₂和H₂O转化为葡萄糖和O₂。' },
-          { id: 'eq2', type: 'true_false', content: '植物只在白天进行呼吸作用。', options: ['正确', '错误'], answer: 'B', explanation: '植物全天都在进行呼吸作用，不仅限于白天。' },
-          { id: 'eq3', type: 'single_choice', content: '叶绿体中进行光反应的场所是？', options: ['基质', '类囊体薄膜', '外膜', '内膜'], answer: 'B', explanation: '光反应在类囊体薄膜上进行。' },
-          { id: 'eq4', type: 'multiple_choice', content: '以下哪些因素会影响光合作用速率？（多选）', options: ['光照强度', '温度', 'CO₂浓度', '土壤pH值'], answer: ['A', 'B', 'C'], explanation: '光照、温度和CO₂浓度是影响光合速率的三大因素。' },
-          { id: 'eq5', type: 'fill_in_blank', content: '光合作用的化学方程式中，反应物是___和___。', answer: '二氧化碳;水', explanation: '6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂' },
-        ],
-      };
-      setGeneratedTasks(prev => [mockExamTask as any, ...prev]);
 
-      // 原文件作为资源（默认完成测试后可见）
-      const examResource: Resource = {
-        id: `resource_exam_${Date.now()}`,
-        title: processingConfig.files[0]?.name || '试卷原文',
-        type: 'document',
-        description: '试卷原文件（完成测试后可查看）',
-        sourceType: 'exam_paper',
-        linkedTaskId: taskId,
-        visibility: { mode: 'after_task', afterTaskId: taskId },
-      };
-      handleUpdateConfig({
-        ...config,
-        resources: [...config.resources, examResource],
-      });
+      // 场景路由：根据 includeHandwriting 判断
+      if (processingConfig.includeHandwriting) {
+        // 场景 C：批量学生答卷（成绩识别与分析）
+        loadMultiStudentScenario(taskId, processingConfig.files[0]?.name);
+      } else {
+        // 场景 B：空白试卷（交互式答题）
+        loadBlankExamScenario(taskId, processingConfig.files[0]?.name);
+      }
 
       // 清除进度
       setTimeout(() => {
@@ -1780,6 +1730,168 @@ export default function SelfStudyWorkbench({
         setExamProcessingTaskId(null);
       }, 1500);
     }, 4000);
+  };
+
+  // 场景 B：加载空白试卷场景
+  const loadBlankExamScenario = (taskId: string, fileName?: string) => {
+    console.log('[Demo] 加载场景 B：空白试卷');
+
+    // 添加试卷资源
+    const examResource: Resource = {
+      id: `resource_exam_${Date.now()}`,
+      title: fileName || '数学试卷',
+      type: 'document',
+      description: '试卷原文件',
+      sourceType: 'exam_paper',
+    };
+    handleUpdateConfig({
+      ...config,
+      resources: [...config.resources, examResource],
+    });
+
+    // 生成交互式答题任务
+    const blankExamTask = {
+      id: taskId,
+      type: 'quiz' as const,
+      title: fileName?.replace(/\.[^.]+$/, '') || '数学试卷测试',
+      status: 'available' as const,
+      questionCount: blankExamScenario.questions.length,
+      generatedAt: new Date().toISOString(),
+      settings: {
+        showAnswersAfterSubmit: true,
+        showExplanationsAfterSubmit: true,
+        allowRetry: true,
+        fullscreenMode: true,
+        allowViewResources: false,
+        source: 'exam_converted',
+      },
+      questions: blankExamScenario.questions,
+    };
+    setGeneratedTasks(prev => [blankExamTask as any, ...prev]);
+
+    // AI 发送欢迎消息
+    setTimeout(() => {
+      setMessages(prev => [...prev, {
+        id: `msg_${Date.now()}`,
+        role: 'assistant' as const,
+        content: blankExamScenario.welcomeMessage,
+        timestamp: new Date(),
+      }]);
+    }, 500);
+  };
+
+  // 场景 C：加载批量学生答卷场景
+  const loadMultiStudentScenario = (taskId: string, fileName?: string) => {
+    console.log('[Demo] 加载场景 C：批量学生答卷');
+
+    // 添加多份学生试卷资源
+    const studentResources = multiStudentScenario.resources.map(r => ({
+      ...r,
+      id: `${r.id}_${Date.now()}`,
+    }));
+    handleUpdateConfig({
+      ...config,
+      resources: [...config.resources, ...studentResources],
+    });
+
+    // 生成干净的原题任务
+    const cleanExamTask = {
+      id: taskId,
+      type: 'quiz' as const,
+      title: fileName?.replace(/\.[^.]+$/, '') || '数学试卷（原题）',
+      status: 'available' as const,
+      questionCount: multiStudentScenario.originalQuestions.length,
+      generatedAt: new Date().toISOString(),
+      settings: {
+        showAnswersAfterSubmit: true,
+        showExplanationsAfterSubmit: true,
+        allowRetry: true,
+        fullscreenMode: true,
+        allowViewResources: false,
+        source: 'exam_converted',
+      },
+      questions: multiStudentScenario.originalQuestions,
+    };
+    setGeneratedTasks(prev => [cleanExamTask as any, ...prev]);
+
+    // 自动发送分析对话序列
+    setTimeout(() => {
+      multiStudentScenario.analysisMessages.forEach((msg, index) => {
+        setTimeout(() => {
+          setMessages(prev => [...prev, {
+            ...msg,
+            id: `${msg.id}_${Date.now()}`,
+            timestamp: new Date(),
+          }]);
+        }, index * 1500);
+      });
+
+      // 最后生成变式练习题
+      setTimeout(() => {
+        const practiceTask = {
+          ...multiStudentScenario.practiceTask,
+          id: `${multiStudentScenario.practiceTask.id}_${Date.now()}`,
+          generatedAt: new Date().toISOString(),
+          settings: {
+            showAnswersAfterSubmit: true,
+            showExplanationsAfterSubmit: true,
+            allowRetry: true,
+            fullscreenMode: true,
+            allowViewResources: true,
+          },
+        };
+        setGeneratedTasks(prev => [...prev, practiceTask as any]);
+      }, multiStudentScenario.analysisMessages.length * 1500 + 500);
+    }, 1000);
+  };
+
+  // 场景 A：加载任意文件场景（脚本化对话）
+  const loadArbitraryFileScenario = (files: File[]) => {
+    console.log('[Demo] 加载场景 A：任意文件上传');
+
+    // 添加文件资源
+    const newResources: Resource[] = files.map((file) => ({
+      id: `resource_${Date.now()}_${Math.random()}`,
+      title: file.name,
+      type: file.type.includes('video') ? 'video' :
+            file.type.includes('presentation') ? 'presentation' : 'document',
+      description: `上传于 ${new Date().toLocaleString('zh-CN')}`,
+      source: isStudentMode ? 'student' : 'teacher',
+    }));
+    handleUpdateConfig({
+      ...config,
+      resources: [...config.resources, ...newResources],
+    });
+
+    // 自动播放脚本化对话序列
+    setTimeout(() => {
+      arbitraryFileScenario.dialogueScript.forEach((msg, index) => {
+        setTimeout(() => {
+          setMessages(prev => [...prev, {
+            ...msg,
+            id: `${msg.id}_${Date.now()}`,
+            timestamp: new Date(),
+          }]);
+        }, index * 1500);
+      });
+
+      // 最后生成练习任务
+      setTimeout(() => {
+        const practiceTask = {
+          ...arbitraryFileScenario.practiceTask,
+          id: `${arbitraryFileScenario.practiceTask.id}_${Date.now()}`,
+          generatedAt: new Date().toISOString(),
+          settings: {
+            showAnswersAfterSubmit: true,
+            showExplanationsAfterSubmit: true,
+            allowRetry: true,
+            fullscreenMode: true,
+            allowViewResources: true,
+          },
+        };
+        setGeneratedTasks(prev => [...prev, practiceTask as any]);
+      }, arbitraryFileScenario.dialogueScript.length * 1500 + 500);
+    }, 1000);
   };
 
   // 保存任务设置
@@ -1874,34 +1986,111 @@ export default function SelfStudyWorkbench({
     setIsLinkInputOpen(false);
   };
 
-  // 处理知识库导入
+  // 处理知识库导入 - 错题本
   const handleKnowledgeBaseImport = (errorQuestions: any[]) => {
-    const newResources: Resource[] = errorQuestions.map(eq => {
-      return {
-        id: `resource_error_${eq.id}`,
-        title: `错题: ${eq.question.content.substring(0, 30)}...`,
-        type: 'interactive' as const,
-        interactiveCategory: 'test' as const,
-        description: `来自《${eq.originalTaskTitle}》· ${eq.attemptDate}`,
-        textContent: JSON.stringify({
-          question: eq.question,
-          errorContext: {
-            userAnswer: eq.userAnswer,
-            attemptDate: eq.attemptDate,
-            correctionCount: eq.correctionCount,
-            originalTaskId: eq.originalTaskId
-          }
-        }),
-        sourceType: 'manual_upload' as const,
-        source: 'teacher' as const
-      };
-    });
+    console.log('[Demo] 加载场景 D2：错题本导入');
+    loadErrorQuestionsScenario(errorQuestions);
+    setShowKnowledgeBaseModal(false);
+  };
 
+  // 处理知识库导入 - 历史测验
+  const handleHistoricalTestImport = (testRecord: any) => {
+    console.log('[Demo] 加载场景 D1：历史测验导入');
+    loadHistoricalTestScenario(testRecord);
+    setShowKnowledgeBaseModal(false);
+  };
+
+  // 场景 D1：加载历史测验场景
+  const loadHistoricalTestScenario = (testRecord: any) => {
+    // 添加测验记录资源
+    const testResource: Resource = {
+      id: `resource_test_${Date.now()}`,
+      title: testRecord.title,
+      type: 'document',
+      description: `得分：${testRecord.score}/${testRecord.totalScore}，正确率：${Math.round(testRecord.correctCount / testRecord.questionCount * 100)}%`,
+      source: 'student',
+    };
     handleUpdateConfig({
       ...config,
-      resources: [...config.resources, ...newResources],
+      resources: [...config.resources, testResource],
     });
-    setShowKnowledgeBaseModal(false);
+
+    // 自动播放分析对话序列
+    setTimeout(() => {
+      historicalTestScenario.analysisDialogue.forEach((msg, index) => {
+        setTimeout(() => {
+          setMessages(prev => [...prev, {
+            ...msg,
+            id: `${msg.id}_${Date.now()}`,
+            timestamp: new Date(),
+          }]);
+        }, index * 1500);
+      });
+
+      // 最后生成针对性练习题
+      setTimeout(() => {
+        const practiceTask = {
+          ...historicalTestScenario.practiceTask,
+          id: `${historicalTestScenario.practiceTask.id}_${Date.now()}`,
+          generatedAt: new Date().toISOString(),
+          settings: {
+            showAnswersAfterSubmit: true,
+            showExplanationsAfterSubmit: true,
+            allowRetry: true,
+            fullscreenMode: true,
+            allowViewResources: true,
+          },
+        };
+        setGeneratedTasks(prev => [...prev, practiceTask as any]);
+      }, historicalTestScenario.analysisDialogue.length * 1500 + 500);
+    }, 1000);
+  };
+
+  // 场景 D2：加载错题本场景
+  const loadErrorQuestionsScenario = (errorQuestions: any[]) => {
+    // 添加错题本资源
+    const errorResource: Resource = {
+      id: `resource_errors_${Date.now()}`,
+      title: '错题本',
+      type: 'document',
+      description: `包含 ${errorQuestions.length} 道错题`,
+      source: 'student',
+    };
+    handleUpdateConfig({
+      ...config,
+      resources: [...config.resources, errorResource],
+    });
+
+    // 自动播放引导消息
+    setTimeout(() => {
+      errorQuestionsScenario.guidanceMessages.forEach((msg, index) => {
+        setTimeout(() => {
+          setMessages(prev => [...prev, {
+            ...msg,
+            id: `${msg.id}_${Date.now()}`,
+            timestamp: new Date(),
+          }]);
+        }, index * 1500);
+      });
+
+      // 最后生成变式练习题
+      setTimeout(() => {
+        const practiceTask = {
+          ...errorQuestionsScenario.practiceTask,
+          id: `${errorQuestionsScenario.practiceTask.id}_${Date.now()}`,
+          generatedAt: new Date().toISOString(),
+          questions: errorQuestionsScenario.practiceTask.questions,
+          settings: {
+            showAnswersAfterSubmit: true,
+            showExplanationsAfterSubmit: true,
+            allowRetry: true,
+            fullscreenMode: true,
+            allowViewResources: true,
+          },
+        };
+        setGeneratedTasks(prev => [...prev, practiceTask as any]);
+      }, errorQuestionsScenario.guidanceMessages.length * 1500 + 500);
+    }, 1000);
   };
 
   // 处理空间名称保存
@@ -2808,7 +2997,7 @@ export default function SelfStudyWorkbench({
                   {MOCK_AI_RESOURCES.map((resource) => (
                     <div
                       key={resource.id}
-                      className={`flex items-center gap-3 p-3 rounded-lg transition-all cursor-pointer ${
+                      className={`flex items-start gap-3 p-3 rounded-lg transition-all cursor-pointer ${
                         resource.status === 'generating'
                           ? 'bg-accent-50 border border-gray-200 animate-pulse'
                           : resource.status === 'ready'
@@ -2816,7 +3005,14 @@ export default function SelfStudyWorkbench({
                           : 'bg-gray-50 border border-gray-200 opacity-60'
                       }`}
                     >
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg ${
+                      {/* 选中指示器 */}
+                      <div
+                        onClick={(e) => { e.stopPropagation(); toggleResourceSelection(resource.id); }}
+                        className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5 ${selectedResourceIds.has(resource.id) ? 'border-gray-400 bg-gray-500' : 'border-gray-300 bg-white'}`}
+                      >
+                        {selectedResourceIds.has(resource.id) && <Check size={12} className="text-white" />}
+                      </div>
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0 ${
                         resource.status === 'generating'
                           ? 'bg-gray-100'
                           : resource.status === 'ready'
@@ -3241,12 +3437,12 @@ export default function SelfStudyWorkbench({
                     <>
                       {/* 全选控制 */}
                       <div className="flex items-center justify-between px-1 mb-1">
-                        <span className="text-xs text-gray-500">{config.resources.length + aiGeneratedResources.length} {t('个来源')}</span>
+                        <span className="text-xs text-gray-500">{config.resources.length + aiGeneratedResources.length + MOCK_AI_RESOURCES.length} {t('个来源')}</span>
                         <button
                           onClick={() => toggleAllResources()}
                           className="text-xs text-gray-600 hover:text-gray-800 font-medium p-2 rounded-lg"
                         >
-                          {selectedResourceIds.size === config.resources.length + aiGeneratedResources.length ? t('取消全选') : t('全选')}
+                          {selectedResourceIds.size === config.resources.length + aiGeneratedResources.length + MOCK_AI_RESOURCES.length ? t('取消全选') : t('全选')}
                         </button>
                       </div>
 
@@ -4211,6 +4407,7 @@ export default function SelfStudyWorkbench({
         isOpen={showKnowledgeBaseModal}
         onClose={() => setShowKnowledgeBaseModal(false)}
         onImport={handleKnowledgeBaseImport}
+        onImportHistoricalTest={handleHistoricalTestImport}
       />
 
       {/* 试卷检测弹窗 */}
