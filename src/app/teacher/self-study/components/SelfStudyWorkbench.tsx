@@ -127,6 +127,16 @@ interface ChatMessage {
     toNodeId: string;
     summary: string;
   };
+  // 推荐回复和功能按钮
+  suggestions?: {
+    quickReplies?: Array<{ id: string; label: string }>;
+    actionButtons?: Array<{
+      id: string;
+      label: string;
+      icon: string;
+      studioToolId: string;
+    }>;
+  };
   // 资源引用
   resourceRef?: {
     resourceId: string;
@@ -783,6 +793,13 @@ export default function SelfStudyWorkbench({
     };
   });
 
+  // 同步外部 config 变化
+  useEffect(() => {
+    if (initialConfig) {
+      setConfig(initialConfig);
+    }
+  }, [initialConfig]);
+
   // 更新配置的包装函数
   const handleUpdateConfig = (newConfig: SpaceConfig) => {
     setConfig(newConfig);
@@ -872,6 +889,7 @@ export default function SelfStudyWorkbench({
     // 任务生成类工具
     { id: 'quiz', label: t('知识测验'), icon: '📝', description: t('生成测试题目'), status: 'ready' as const, type: 'task' as const },
     { id: 'practice', label: t('练习题'), icon: '✍️', description: t('生成练习任务'), status: 'ready' as const, type: 'task' as const },
+    { id: 'generate_variant_question', label: t('生成变种题'), icon: '🔄', description: t('基于错题生成变种练习'), status: 'ready' as const, type: 'task' as const },
     // 互动内容生成类工具
     { id: 'interactive_animation', label: t('说明动画'), icon: '🎬', description: t('生成互动说明动画'), status: 'ready' as const, type: 'interactive' as const },
     { id: 'interactive_visualization', label: t('可视化'), icon: '📊', description: t('生成数据可视化'), status: 'ready' as const, type: 'interactive' as const },
@@ -1147,6 +1165,7 @@ export default function SelfStudyWorkbench({
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId] = useState(`session_${Date.now()}`);
+  const [flashingToolId, setFlashingToolId] = useState<string | null>(null);
 
   // 任务交互状态
   const [expandedTask, setExpandedTask] = useState<Task | null>(null);
@@ -1385,47 +1404,102 @@ export default function SelfStudyWorkbench({
       setGeneratingToolId(tool.id);
 
       setTimeout(() => {
-        const newTask = {
-          id: `gen_task_${Date.now()}`,
-          type: 'quiz' as const,
-          title: `🤖 ${t('AI生成')}：${tool.label}`,
-          status: 'optional' as const,
-          questionCount: 3,
-          questions: [
-            {
-              id: `q_${Date.now()}_1`,
-              type: 'single_choice',
-              content: t('这是一道AI生成的示例题目，请选择正确答案。'),
-              options: [t('选项A'), t('选项B'), t('选项C'), t('选项D')],
-              answer: t('选项A'),
-              explanation: t('选项A是正确答案。'),
-              points: 1,
-            },
-            {
-              id: `q_${Date.now()}_2`,
-              type: 'true_false',
-              content: t('这是一道判断题示例。'),
-              answer: 'true',
-              explanation: t('该说法是正确的。'),
-              points: 1,
-            },
-            {
-              id: `q_${Date.now()}_3`,
-              type: 'fill_in_blank',
-              content: t('这是一道填空题示例，请填写___。'),
-              answer: t('答案'),
-              blanks: 1,
-              explanation: t('正确答案是"答案"。'),
-              points: 1,
-            },
-          ],
-          passScore: 60,
-          generatedAt: new Date(),
-        };
+        // 特殊处理：生成变种题
+        if (tool.id === 'generate_variant_question') {
+          const variantTask = {
+            id: `gen_task_${Date.now()}`,
+            type: 'quiz' as const,
+            title: `🔄 ${t('变种练习题')}`,
+            status: 'optional' as const,
+            questionCount: 3,
+            questions: [
+              {
+                id: `q_${Date.now()}_1`,
+                type: 'single_choice',
+                content: t('【变种题】这是基于你的错题生成的变种练习，考查相同知识点但换了不同角度。'),
+                options: [t('选项A'), t('选项B'), t('选项C'), t('选项D')],
+                answer: t('选项B'),
+                explanation: t('这道变种题从另一个角度考查了相同的知识点，帮助你更全面地理解。'),
+                points: 1,
+              },
+              {
+                id: `q_${Date.now()}_2`,
+                type: 'single_choice',
+                content: t('【变种题】继续巩固这个知识点，这次从应用场景出发。'),
+                options: [t('选项A'), t('选项B'), t('选项C'), t('选项D')],
+                answer: t('选项C'),
+                explanation: t('通过实际应用场景，你可以更好地理解这个概念。'),
+                points: 1,
+              },
+              {
+                id: `q_${Date.now()}_3`,
+                type: 'true_false',
+                content: t('【变种题】判断题形式，检验你对核心概念的理解是否准确。'),
+                options: [t('正确'), t('错误')],
+                answer: t('正确'),
+                explanation: t('这个判断帮助你明确概念的边界和适用范围。'),
+                points: 1,
+              },
+            ],
+            passScore: 60,
+            generatedAt: new Date(),
+          };
+          setGeneratedTasks(prev => [variantTask, ...prev]);
+          setGeneratingToolId(null);
+          setCollapsedPanels(prev => ({ ...prev, tasks: false }));
 
-        setGeneratedTasks(prev => [newTask, ...prev]);
-        setGeneratingToolId(null);
-        setCollapsedPanels(prev => ({ ...prev, tasks: false })); // 展开任务区域
+          // 发送确认消息
+          const confirmMsg: ChatMessage = {
+            id: `msg_variant_${Date.now()}`,
+            role: 'assistant',
+            content: `✅ **变种练习题已生成**\n\n我为你生成了 3 道变种练习题，它们：\n- 考查相同的知识点\n- 从不同角度出题\n- 帮助你全面掌握这个概念\n\n点击左侧任务列表中的「🔄 变种练习题」开始练习吧！`,
+            timestamp: new Date(),
+          };
+          setMessages(prev => [...prev, confirmMsg]);
+        } else {
+          // 普通任务生成
+          const newTask = {
+            id: `gen_task_${Date.now()}`,
+            type: 'quiz' as const,
+            title: `🤖 ${t('AI生成')}：${tool.label}`,
+            status: 'optional' as const,
+            questionCount: 3,
+            questions: [
+              {
+                id: `q_${Date.now()}_1`,
+                type: 'single_choice',
+                content: t('这是一道AI生成的示例题目，请选择正确答案。'),
+                options: [t('选项A'), t('选项B'), t('选项C'), t('选项D')],
+                answer: t('选项A'),
+                explanation: t('选项A是正确答案。'),
+                points: 1,
+              },
+              {
+                id: `q_${Date.now()}_2`,
+                type: 'true_false',
+                content: t('这是一道判断题示例。'),
+                answer: 'true',
+                explanation: t('该说法是正确的。'),
+                points: 1,
+              },
+              {
+                id: `q_${Date.now()}_3`,
+                type: 'fill_in_blank',
+                content: t('这是一道填空题示例，请填写___。'),
+                answer: t('答案'),
+                blanks: 1,
+                explanation: t('正确答案是"答案"。'),
+                points: 1,
+              },
+            ],
+            passScore: 60,
+            generatedAt: new Date(),
+          };
+
+          setGeneratedTasks(prev => [newTask, ...prev]);
+          setGeneratingToolId(null);
+          setCollapsedPanels(prev => ({ ...prev, tasks: false })); // 展开任务区域
+        }
       }, 2000);
     } else if (tool.type === 'interactive') {
       // 生成互动资源
@@ -1511,12 +1585,24 @@ export default function SelfStudyWorkbench({
   useEffect(() => {
     if (messages.length > 0) return; // already have persisted messages
 
-    // 设置开场引导消息
+    // 设置开场引导消息，带推荐回复和功能按钮
     setMessages([{
       id: 'welcome-guide',
       role: 'assistant',
-      content: '你好！我是你的学习助手。你可以：\n\n1. 📄 上传文件（试卷、笔记、资料）\n2. 📚 从知识库导入（历史测验、错题本）\n3. 💬 直接向我提问\n\n开始你的学习之旅吧！',
+      content: '你好！我是你的学习助手 🤖\n\n我可以帮你：\n\n📄 **分析学习资料** - 上传文件或从知识库导入\n💬 **解答疑问** - 直接向我提问任何学习问题\n🎯 **生成学习内容** - 使用右侧 Studio 工具生成思维导图、测试题等\n\n准备好开始学习了吗？',
       timestamp: new Date(),
+      suggestions: {
+        quickReplies: [
+          { id: 'start_learning', label: '开始学习' },
+          { id: 'upload_material', label: '我想上传资料' },
+          { id: 'ask_question', label: '我有问题' }
+        ],
+        actionButtons: [
+          { id: 'mind_map', label: '生成思维导图', icon: '🗺️', studioToolId: 'mind_map' },
+          { id: 'quiz', label: '生成知识测验', icon: '📝', studioToolId: 'quiz' },
+          { id: 'flashcards', label: '生成记忆卡片', icon: '🃏', studioToolId: 'flashcards' }
+        ]
+      }
     }]);
   }, []);
 
@@ -1598,15 +1684,113 @@ export default function SelfStudyWorkbench({
         }
       }
 
+      // 根据对话内容生成推荐回复和功能按钮
+      let suggestions: ChatMessage['suggestions'] = undefined;
+
+      if (config.learningMode === 'self_directed') {
+        // 自由探索模式的建议
+        if (userInput.includes('搜索') || userInput.includes('概念')) {
+          suggestions = {
+            quickReplies: [
+              { id: 'more_detail', label: t('再详细一点') },
+              { id: 'example', label: t('举个例子') },
+              { id: 'related', label: t('相关概念') }
+            ],
+            actionButtons: [
+              { id: 'mind_map', label: t('生成思维导图'), icon: '🗺️', studioToolId: 'mind_map' },
+              { id: 'flashcards', label: t('生成记忆卡片'), icon: '🃏', studioToolId: 'flashcards' }
+            ]
+          };
+        } else if (userInput.includes('总结') || userInput.includes('要点')) {
+          suggestions = {
+            quickReplies: [
+              { id: 'quiz_me', label: t('考考我') },
+              { id: 'continue', label: t('继续学习') }
+            ],
+            actionButtons: [
+              { id: 'quiz', label: t('基于要点生成测试'), icon: '📝', studioToolId: 'quiz' },
+              { id: 'mind_map', label: t('生成思维导图'), icon: '🗺️', studioToolId: 'mind_map' }
+            ]
+          };
+        } else if (userInput.includes('例子') || userInput.includes('举例')) {
+          suggestions = {
+            quickReplies: [
+              { id: 'more_examples', label: t('更多例子') },
+              { id: 'practice', label: t('我来试试') }
+            ],
+            actionButtons: [
+              { id: 'animation', label: t('生成讲解动画'), icon: '🎬', studioToolId: 'interactive_animation' }
+            ]
+          };
+        } else {
+          suggestions = {
+            quickReplies: [
+              { id: 'quiz_me', label: t('考考我') },
+              { id: 'explain_more', label: t('再解释一下') },
+              { id: 'example', label: t('举个例子') }
+            ]
+          };
+        }
+      } else {
+        // AI引导模式的建议
+        if (userInput.includes('考考') || userInput.includes('测试')) {
+          suggestions = {
+            quickReplies: [
+              { id: 'more_quiz', label: t('考考我更多') },
+              { id: 'hint', label: t('给我提示') }
+            ],
+            actionButtons: [
+              { id: 'quiz', label: t('生成正式测试'), icon: '📝', studioToolId: 'quiz' }
+            ]
+          };
+        } else if (userInput.includes('下一') || userInput.includes('继续')) {
+          suggestions = {
+            quickReplies: [
+              { id: 'ready', label: t('准备好了') },
+              { id: 'review', label: t('先复习一下') }
+            ]
+          };
+        } else if (userInput.includes('路径') || userInput.includes('进度')) {
+          suggestions = {
+            quickReplies: [
+              { id: 'continue', label: t('继续学习') },
+              { id: 'review', label: t('复习已学内容') }
+            ],
+            actionButtons: [
+              { id: 'summary', label: t('生成学习报告'), icon: '📊', studioToolId: 'summary' }
+            ]
+          };
+        } else {
+          suggestions = {
+            quickReplies: [
+              { id: 'quiz_me', label: t('考考我') },
+              { id: 'next', label: t('下一知识点') },
+              { id: 'hint', label: t('给我提示') }
+            ]
+          };
+        }
+      }
+
       const aiReply: ChatMessage = {
         id: `msg_${Date.now()}_ai`,
         role: 'assistant',
         content: aiContent,
         timestamp: new Date(),
+        suggestions,
       };
       setMessages((prev) => [...prev, aiReply]);
       setIsLoading(false);
     }, 1200);
+  };
+
+  // 处理聊天功能按钮点击
+  const handleChatAction = (studioToolId: string) => {
+    const tool = STUDIO_TOOLS.find(t => t.id === studioToolId);
+    if (tool) {
+      handleStudioToolClick(tool);
+      setFlashingToolId(studioToolId);
+      setTimeout(() => setFlashingToolId(null), 1500);
+    }
   };
 
   // 切换计时器
@@ -1965,6 +2149,37 @@ export default function SelfStudyWorkbench({
         setMessages(prev => [...prev, syncMsg]);
       }
     }
+  };
+
+  const handleExplainQuestion = (question: TaskQuestion, userAnswer: string | string[], correctAnswer: string | string[]) => {
+    console.log('[ExplainQuestion] 深入详解题目:', question.id);
+    // 关闭结果回顾，回到对话区
+    setTaskDisplayMode('embedded');
+
+    // 格式化答案
+    const formatAnswer = (ans: string | string[]) => {
+      return Array.isArray(ans) ? ans.join(', ') : ans;
+    };
+
+    // 发送AI讲解消息
+    const explainMsg: ChatMessage = {
+      id: `msg_explain_${Date.now()}`,
+      role: 'assistant',
+      content: `📝 **深入详解**\n\n**题目：** ${question.content}\n\n**你的答案：** ${formatAnswer(userAnswer)}\n**正确答案：** ${formatAnswer(correctAnswer)}\n\n---\n\n让我为你深入讲解这道题：\n\n${question.explanation || '这道题考查的是核心概念的理解。让我从几个角度来分析：\n\n1. **知识点回顾**：这道题涉及的关键知识点需要你理解其本质含义。\n\n2. **解题思路**：遇到这类题目，首先要明确题目问的是什么，然后回忆相关知识点，最后进行逻辑推理。\n\n3. **易错点提醒**：很多同学容易在这个地方出错，要特别注意区分相似概念。'}\n\n如果还有不清楚的地方，随时问我！`,
+      timestamp: new Date(),
+      suggestions: {
+        actionButtons: [
+          {
+            id: 'generate_variant',
+            label: '生成变种题',
+            icon: '🔄',
+            studioToolId: 'generate_variant_question',
+          },
+        ],
+      },
+    };
+
+    setMessages(prev => [...prev, explainMsg]);
   };
 
   // 处理链接添加
@@ -2682,6 +2897,7 @@ export default function SelfStudyWorkbench({
             onRetryWrongQuestions={handleRetryWrongQuestions}
             onGeneratePractice={handleGeneratePractice}
             onBackToChat={handleBackToChat}
+            onExplainQuestion={handleExplainQuestion}
           />
         );
       })()}
@@ -3990,6 +4206,45 @@ export default function SelfStudyWorkbench({
                       </div>
                     );
                   })()}
+
+                  {/* 推荐回复和功能按钮 */}
+                  {message.role === 'assistant' && message.suggestions && (
+                    <div className="flex flex-col gap-3 mt-3">
+                      {/* 推荐回复 - 轻量标签样式 */}
+                      {message.suggestions.quickReplies && message.suggestions.quickReplies.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {message.suggestions.quickReplies.map((reply) => (
+                            <button
+                              key={reply.id}
+                              onClick={() => {
+                                setInputMessage(reply.label);
+                                handleSendMessage();
+                              }}
+                              className="px-3 py-1.5 text-xs font-medium rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-800 transition-all hover:shadow-sm"
+                            >
+                              {reply.label}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* 功能按钮 - 突出的操作按钮样式 */}
+                      {message.suggestions.actionButtons && message.suggestions.actionButtons.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {message.suggestions.actionButtons.map((button) => (
+                            <button
+                              key={button.id}
+                              onClick={() => handleChatAction(button.studioToolId)}
+                              className={`px-4 py-2 text-sm font-medium rounded-lg bg-white border-2 border-primary-200 hover:border-primary-400 hover:bg-primary-50 text-gray-700 hover:text-primary-700 transition-all hover:shadow-md flex items-center gap-2 group`}
+                            >
+                              <span className="text-base group-hover:scale-110 transition-transform">{button.icon}</span>
+                              <span>{button.label}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
               );
@@ -4228,6 +4483,7 @@ export default function SelfStudyWorkbench({
                     <div className="grid grid-cols-2 gap-2">
                     {STUDIO_TOOLS.map((tool) => {
                       const isGenerating = generatingToolId === tool.id;
+                      const isFlashing = flashingToolId === tool.id;
                       return (
                         <div
                           key={tool.id}
@@ -4235,6 +4491,8 @@ export default function SelfStudyWorkbench({
                           className={`p-3 rounded-lg border text-left transition-all relative group ${
                             isGenerating
                               ? 'bg-gray-50 border-gray-200 animate-pulse cursor-wait'
+                              : isFlashing
+                              ? 'ring-2 ring-blue-400 scale-105 bg-blue-50 border-blue-300'
                               : `bg-white border-gray-200 hover:${getThemeClass('border')} hover:shadow-sm cursor-pointer`
                           }`}
                         >

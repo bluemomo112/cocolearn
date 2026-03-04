@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Award, Lightbulb, RotateCcw, Sparkles, MessageCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Award, Lightbulb, RotateCcw, Sparkles, MessageCircle, BookmarkCheck, Trash2 } from 'lucide-react';
 import { Task, TaskQuestion } from '@/types/shared-context';
 import QuestionRenderer, { getQuestionTypeLabel } from './QuestionRenderer';
 import RichContent from './RichContent';
@@ -16,59 +16,20 @@ interface TaskResultReviewProps {
   onRetryWrongQuestions?: () => void;
   onGeneratePractice?: () => void;
   onBackToChat?: () => void;
+  onExplainQuestion?: (question: TaskQuestion, userAnswer: string | string[], correctAnswer: string | string[]) => void;
 }
 
 export default function TaskResultReview({
   task, quickResult, selectedAnswers, onClose,
-  onRetryWrongQuestions, onGeneratePractice, onBackToChat,
+  onRetryWrongQuestions, onGeneratePractice, onBackToChat, onExplainQuestion,
 }: TaskResultReviewProps) {
   const questions = task.questions || [];
   const [currentPage, setCurrentPage] = useState(0);
-  const [chatHistories, setChatHistories] = useState<Record<string, Array<{ role: 'user' | 'assistant'; content: string }>>>({});
-  const [expandedChat, setExpandedChat] = useState<string | null>(null);
   const isSummaryPage = currentPage === questions.length;
   const scorePercent = Math.round((quickResult.correctCount / quickResult.totalCount) * 100);
   const scoreColor = scorePercent >= 80 ? 'text-green-600' : scorePercent >= 60 ? 'text-amber-600' : 'text-red-600';
 
   const getResult = (qId: string) => quickResult.details.find(d => d.questionId === qId);
-
-  // Auto-expand chat for wrong answers when navigating
-  useEffect(() => {
-    if (!isSummaryPage) {
-      const q = questions[currentPage];
-      const result = getResult(q.id);
-      if (result && !result.correct) {
-        setExpandedChat(q.id);
-      } else {
-        setExpandedChat(null);
-      }
-    }
-  }, [currentPage]);
-
-  const handleSendMessage = (questionId: string, message: string) => {
-    setChatHistories(prev => {
-      const existing = prev[questionId] || [];
-      const q = questions.find(q => q.id === questionId);
-      const detail = getResult(questionId);
-      let history = [...existing];
-      if (history.length === 0 && q) {
-        const ua = Array.isArray(detail?.userAnswer) ? detail.userAnswer.join(', ') : (detail?.userAnswer || '');
-        const ca = Array.isArray(detail?.correctAnswer) ? detail.correctAnswer.join(', ') : (detail?.correctAnswer || q.answer?.toString() || '');
-        history.push({
-          role: 'assistant',
-          content: `让我来帮你分析这道题。\n\n你的答案是「${ua}」，正确答案是「${ca}」。\n\n${detail?.explanation || q.explanation || ''}\n\n如果还有不明白的地方，可以继续问我哦~`
-        });
-      }
-      history.push({ role: 'user', content: message });
-      setTimeout(() => {
-        setChatHistories(p => ({
-          ...p,
-          [questionId]: [...(p[questionId] || []), { role: 'assistant', content: `好的，让我换个角度解释一下。\n\n这道题的关键在于理解核心概念。${q?.explanation ? '根据解析：' + q.explanation.substring(0, 100) + '...' : '建议你回顾相关学习材料，重点关注这个知识点。'}\n\n还有其他疑问吗？` }]
-        }));
-      }, 800);
-      return { ...prev, [questionId]: history };
-    });
-  };
 
   const getNavColor = (idx: number) => {
     if (idx === questions.length) return 'bg-gray-600 text-white';
@@ -126,31 +87,21 @@ export default function TaskResultReview({
             />
           </div>
         ) : (
-          <>
-            <div className="flex-1 overflow-auto">
-              <ReviewQuestion
-                q={questions[currentPage]}
-                idx={currentPage}
-                detail={currentDetail}
-                answer={selectedAnswers[questions[currentPage].id]}
-              />
-            </div>
-            {currentQuestion && currentDetail && !currentDetail.correct && (
-              <div className="shrink-0">
-                <ErrorQuestionChat
-                  questionId={currentQuestion.id}
-                  question={currentQuestion}
-                  userAnswer={currentDetail.userAnswer || selectedAnswers[currentQuestion.id] || ''}
-                  correctAnswer={currentDetail.correctAnswer || currentQuestion.answer || ''}
-                  explanation={currentDetail.explanation || currentQuestion.explanation}
-                  isExpanded={expandedChat === currentQuestion.id}
-                  onToggle={() => setExpandedChat(prev => prev === currentQuestion.id ? null : currentQuestion.id)}
-                  chatHistory={chatHistories[currentQuestion.id] || []}
-                  onSendMessage={handleSendMessage}
-                />
-              </div>
-            )}
-          </>
+          <div className="flex-1 overflow-auto">
+            <ReviewQuestion
+              q={questions[currentPage]}
+              idx={currentPage}
+              detail={currentDetail}
+              answer={selectedAnswers[questions[currentPage].id]}
+              onExplainQuestion={() => {
+                if (currentQuestion && currentDetail && onExplainQuestion) {
+                  const userAns = currentDetail.userAnswer || selectedAnswers[currentQuestion.id] || '';
+                  const correctAns = currentDetail.correctAnswer || currentQuestion.answer || '';
+                  onExplainQuestion(currentQuestion, userAns, correctAns);
+                }
+              }}
+            />
+          </div>
         )}
       </div>
 
@@ -169,13 +120,15 @@ export default function TaskResultReview({
   );
 }
 
-function ReviewQuestion({ q, idx, detail, answer }: {
+function ReviewQuestion({ q, idx, detail, answer, onExplainQuestion }: {
   q: TaskQuestion; idx: number;
   detail?: QuickResultData['details'][0];
   answer: string | string[] | undefined;
+  onExplainQuestion?: () => void;
 }) {
   const isCorrect = detail?.correct ?? false;
   const typeLabel = getQuestionTypeLabel(q.type);
+  const [removedFromErrorBook, setRemovedFromErrorBook] = useState(false);
 
   return (
     <div className="max-w-3xl mx-auto py-10 px-8">
@@ -186,6 +139,37 @@ function ReviewQuestion({ q, idx, detail, answer }: {
         <span className="text-lg font-semibold text-gray-900">第{idx + 1}题</span>
         <span className="px-3 py-1 bg-blue-50 text-blue-600 text-sm font-medium rounded-full">{typeLabel}</span>
       </div>
+
+      {/* 错题本提示和操作按钮 */}
+      {!isCorrect && (
+        <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <BookmarkCheck size={18} className="text-amber-600" />
+              <span className="text-sm font-medium text-amber-800">
+                {removedFromErrorBook ? '已从错题本中移除' : '已加入错题本'}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setRemovedFromErrorBook(!removedFromErrorBook)}
+                className="px-3 py-1.5 text-xs font-medium text-red-600 bg-white border border-red-200 rounded-lg hover:bg-red-50 transition-colors flex items-center gap-1"
+              >
+                <Trash2 size={14} />
+                {removedFromErrorBook ? '重新加入' : '从错题本中移除'}
+              </button>
+              <button
+                onClick={onExplainQuestion}
+                className="px-3 py-1.5 text-xs font-medium text-primary-600 bg-white border border-primary-200 rounded-lg hover:bg-primary-50 transition-colors flex items-center gap-1"
+              >
+                <Lightbulb size={14} />
+                深入详解该题
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="text-2xl font-medium text-gray-900 leading-relaxed mb-8">
         <RichContent content={q.content} />
       </div>

@@ -52,6 +52,7 @@ export default function SelfStudyPage() {
   const [showResourceLibraryModal, setShowResourceLibraryModal] = useState(false);
   const [showAIGenerateModal, setShowAIGenerateModal] = useState(false);
   const [isAIGenerating, setIsAIGenerating] = useState(false);
+  const [isImportingResources, setIsImportingResources] = useState(false);
   const [pendingExamFiles, setPendingExamFiles] = useState<File[] | null>(null);
 
   const EXAM_PATTERN = /(?:试卷|测验|测试|考试|期中|期末|月考|模拟|真题|quiz|exam|test|midterm|final|assessment)/i;
@@ -186,85 +187,176 @@ export default function SelfStudyPage() {
   // 处理资源库选择
   const handleResourceSelect = (resources: Resource[]) => {
     if (currentSpace && resources.length > 0) {
-      // 检测试卷资源（通过标题匹配）
-      const examResources = resources.filter(r => EXAM_PATTERN.test(r.title));
-      const normalResources = resources.filter(r => !EXAM_PATTERN.test(r.title));
+      setShowResourceLibraryModal(false);
+      setIsImportingResources(true);
 
-      if (examResources.length > 0) {
-        console.log('[ExamDetect] 资源库中检测到试卷资源:', examResources.map(r => r.title));
-        // 用资源标题创建合成 File 对象，供 ExamDetectedModal 使用
-        const syntheticFiles = examResources.map(r => new File([], r.title));
-        setPendingExamFiles(syntheticFiles);
-      }
+      // 模拟导入过程
+      setTimeout(() => {
+        // 检测试卷资源（通过标题匹配）
+        const examResources = resources.filter(r => EXAM_PATTERN.test(r.title));
+        const normalResources = resources.filter(r => !EXAM_PATTERN.test(r.title));
 
-      // 非试卷资源正常添加
-      const resourcesToAdd = normalResources.length > 0 ? normalResources : [];
-      const title = resources[0]?.title || '未命名空间';
-      const updatedSpace = { ...currentSpace, title };
-      setCurrentSpace({
-        ...updatedSpace,
-        resources: [...updatedSpace.resources, ...resourcesToAdd],
-      });
-      setSpaces(prev =>
-        prev.map(s => s.id === currentSpace.id ? { ...s, title, resourceCount: resources.length } : s)
-      );
+        if (examResources.length > 0) {
+          console.log('[ExamDetect] 资源库中检测到试卷资源:', examResources.map(r => r.title));
+          // 用资源标题创建合成 File 对象，供 ExamDetectedModal 使用
+          const syntheticFiles = examResources.map(r => new File([], r.title));
+          setPendingExamFiles(syntheticFiles);
+        }
+
+        // 非试卷资源正常添加
+        const resourcesToAdd = normalResources.length > 0 ? normalResources : [];
+        const title = resources[0]?.title || '未命名空间';
+        const updatedSpace = { ...currentSpace, title };
+        setCurrentSpace({
+          ...updatedSpace,
+          resources: [...updatedSpace.resources, ...resourcesToAdd],
+        });
+        setSpaces(prev =>
+          prev.map(s => s.id === currentSpace.id ? { ...s, title, resourceCount: resources.length } : s)
+        );
+
+        setIsImportingResources(false);
+      }, 800);
+    } else {
+      setShowResourceLibraryModal(false);
     }
-    setShowResourceLibraryModal(false);
   };
 
   // 处理错题导入
   const handleErrorQuestionsImport = (questions: ErrorQuestion[]) => {
     if (currentSpace) {
-      // 将错题转换为任务题目格式并添加到当前空间
-      // 这里可以根据实际需求处理错题导入逻辑
-      console.log('导入错题:', questions);
+      setShowResourceLibraryModal(false);
+      setIsImportingResources(true);
+
+      setTimeout(() => {
+        // 将错题转换为资源格式并添加
+        const errorQuestionResources: Resource[] = questions.map(eq => ({
+          id: `error-${eq.id}`,
+          title: `错题：${eq.question.content.substring(0, 30)}...`,
+          type: 'document',
+          path: `error-questions/${eq.id}`,
+          description: `来自《${eq.originalTaskTitle}》，错误日期：${eq.attemptDate}`,
+          duration: '错题',
+        }));
+
+        setCurrentSpace({
+          ...currentSpace,
+          resources: [...currentSpace.resources, ...errorQuestionResources],
+        });
+        setSpaces(prev =>
+          prev.map(s => s.id === currentSpace.id ? {
+            ...s,
+            resourceCount: currentSpace.resources.length + errorQuestionResources.length
+          } : s)
+        );
+        setIsImportingResources(false);
+      }, 800);
+    } else {
+      setShowResourceLibraryModal(false);
     }
-    setShowResourceLibraryModal(false);
   };
 
   // 处理历史测验导入
   const handleHistoricalTestImport = (testRecord: HistoricalTest) => {
     if (currentSpace) {
-      // 处理历史测验导入逻辑
-      console.log('导入历史测验:', testRecord);
+      setShowResourceLibraryModal(false);
+      setIsImportingResources(true);
+
+      setTimeout(() => {
+        // 将历史测验转换为资源格式并添加
+        const testResource: Resource = {
+          id: `test-${testRecord.id}`,
+          title: testRecord.title,
+          type: 'document',
+          path: `historical-tests/${testRecord.id}`,
+          description: `${testRecord.subject || '测验'} - 得分：${testRecord.score}/${testRecord.totalScore}，正确率：${Math.round(testRecord.correctCount / testRecord.questionCount * 100)}%`,
+          duration: testRecord.duration || '测验记录',
+        };
+
+        setCurrentSpace({
+          ...currentSpace,
+          resources: [...currentSpace.resources, testResource],
+        });
+        setSpaces(prev =>
+          prev.map(s => s.id === currentSpace.id ? {
+            ...s,
+            resourceCount: currentSpace.resources.length + 1
+          } : s)
+        );
+        setIsImportingResources(false);
+      }, 800);
+    } else {
+      setShowResourceLibraryModal(false);
     }
-    setShowResourceLibraryModal(false);
   };
 
   // 处理笔记导入
   const handleNotesImport = (notes: Note[]) => {
     if (currentSpace) {
-      // 处理笔记导入逻辑
-      console.log('导入笔记:', notes);
+      setShowResourceLibraryModal(false);
+      setIsImportingResources(true);
+
+      setTimeout(() => {
+        // 将笔记转换为资源格式并添加
+        const noteResources: Resource[] = notes.map(note => ({
+          id: `note-${note.id}`,
+          title: note.title,
+          type: 'document',
+          path: `notes/${note.id}.md`,
+          description: note.content.substring(0, 100) + '...',
+          textContent: note.content,
+          duration: '笔记',
+        }));
+
+        setCurrentSpace({
+          ...currentSpace,
+          resources: [...currentSpace.resources, ...noteResources],
+        });
+        setSpaces(prev =>
+          prev.map(s => s.id === currentSpace.id ? {
+            ...s,
+            resourceCount: currentSpace.resources.length + noteResources.length
+          } : s)
+        );
+        setIsImportingResources(false);
+      }, 800);
+    } else {
+      setShowResourceLibraryModal(false);
     }
-    setShowResourceLibraryModal(false);
   };
 
   // 处理互动网页导入
   const handleWebpagesImport = (webpages: InteractiveWebpage[]) => {
     if (currentSpace) {
-      // 将互动网页转换为资源格式并添加
-      const webpageResources: Resource[] = webpages.map(wp => ({
-        id: wp.id,
-        title: wp.title,
-        type: 'interactive',
-        path: wp.url,
-        description: wp.description,
-        duration: wp.duration,
-      }));
+      setShowResourceLibraryModal(false);
+      setIsImportingResources(true);
 
-      setCurrentSpace({
-        ...currentSpace,
-        resources: [...currentSpace.resources, ...webpageResources],
-      });
-      setSpaces(prev =>
-        prev.map(s => s.id === currentSpace.id ? {
-          ...s,
-          resourceCount: currentSpace.resources.length + webpageResources.length
-        } : s)
-      );
+      setTimeout(() => {
+        // 将互动网页转换为资源格式并添加
+        const webpageResources: Resource[] = webpages.map(wp => ({
+          id: wp.id,
+          title: wp.title,
+          type: 'interactive',
+          path: wp.url,
+          description: wp.description,
+          duration: wp.duration,
+        }));
+
+        setCurrentSpace({
+          ...currentSpace,
+          resources: [...currentSpace.resources, ...webpageResources],
+        });
+        setSpaces(prev =>
+          prev.map(s => s.id === currentSpace.id ? {
+            ...s,
+            resourceCount: currentSpace.resources.length + webpageResources.length
+          } : s)
+        );
+        setIsImportingResources(false);
+      }, 800);
+    } else {
+      setShowResourceLibraryModal(false);
     }
-    setShowResourceLibraryModal(false);
   };
 
 
@@ -429,7 +521,7 @@ export default function SelfStudyPage() {
           config={currentSpace}
           onBack={handleBackToManager}
           onUpdateConfig={(updated) => setCurrentSpace(updated)}
-          isAIGenerating={isAIGenerating}
+          isAIGenerating={isAIGenerating || isImportingResources}
           onCreateNewSpace={handleCreateSpace}
           onViewResults={() => setViewState('results')}
           pendingExamFiles={pendingExamFiles}
