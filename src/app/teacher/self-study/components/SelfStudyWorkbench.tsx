@@ -1936,7 +1936,6 @@ export default function SelfStudyWorkbench({
       }, 1500);
     }
   };
-  };
 
   // 切换计时器
   const toggleTimer = () => setIsTimerRunning(!isTimerRunning);
