@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { X, Maximize2, Minimize2, Loader2 } from 'lucide-react';
 import { Resource } from '@/types/shared-context';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface InteractiveViewerModalProps {
   resource: Resource | null;
@@ -10,14 +11,15 @@ interface InteractiveViewerModalProps {
   onShrinkToInline?: () => void;
 }
 
-const CATEGORY_CONFIG: Record<string, { label: string; color: string }> = {
-  animation: { label: '动画', color: 'bg-purple-100 text-purple-700' },
-  visualization: { label: '可视化', color: 'bg-blue-100 text-blue-700' },
-  simulation: { label: '模拟', color: 'bg-green-100 text-green-700' },
-  test: { label: '测试', color: 'bg-amber-100 text-amber-700' },
-};
-
 export default function InteractiveViewerModal({ resource, onClose, onShrinkToInline }: InteractiveViewerModalProps) {
+  const { t } = useLanguage();
+
+  const CATEGORY_CONFIG: Record<string, { label: string; color: string }> = {
+    animation: { label: t('动画'), color: 'bg-purple-100 text-purple-700' },
+    visualization: { label: t('可视化'), color: 'bg-blue-100 text-blue-700' },
+    simulation: { label: t('模拟'), color: 'bg-green-100 text-green-700' },
+    test: { label: t('测试'), color: 'bg-amber-100 text-amber-700' },
+  };
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -63,7 +65,7 @@ export default function InteractiveViewerModal({ resource, onClose, onShrinkToIn
                 }
               }}
               className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              title={isFullscreen ? (onShrinkToInline ? '缩小到侧栏' : '退出全屏') : '全屏'}
+              title={isFullscreen ? (onShrinkToInline ? t('缩小到侧栏') : t('退出全屏')) : t('全屏')}
             >
               {isFullscreen ? (
                 <Minimize2 size={18} className="text-gray-500" />
@@ -86,7 +88,7 @@ export default function InteractiveViewerModal({ resource, onClose, onShrinkToIn
             <div className="absolute inset-0 flex items-center justify-center bg-gray-50 z-10">
               <div className="flex flex-col items-center gap-3">
                 <Loader2 size={32} className="text-primary-500 animate-spin" />
-                <p className="text-sm text-gray-500">加载中...</p>
+                <p className="text-sm text-gray-500">{t('加载中...')}</p>
               </div>
             </div>
           )}

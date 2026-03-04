@@ -12,13 +12,13 @@ interface LanguageContextType {
 }
 
 const LanguageContext = createContext<LanguageContextType>({
-  language: 'zh-CN',
+  language: 'zh-TW',
   setLanguage: () => {},
   t: (text) => text,
 });
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [language, setLanguage] = useState<Language>('zh-CN');
+  const [language, setLanguage] = useState<Language>('zh-TW');
   const [converter, setConverter] = useState<((text: string) => string) | null>(null);
 
   // 初始化：从 localStorage 读取语言偏好

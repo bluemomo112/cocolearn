@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { SpaceSummary, SpaceConfig, createDefaultSpaceConfig } from '@/types/self-study';
 import { Resource } from '@/types/shared-context';
 import { usePersistedState, clearSpaceStorage } from './utils/storage';
+import { useLanguage } from '@/contexts/LanguageContext';
 import Onboarding from './components/Onboarding';
 import SpaceManager from './components/SpaceManager';
 import SelfStudyWorkbench from './components/SelfStudyWorkbench';
@@ -14,35 +15,37 @@ import UnifiedResourceLibraryModal from './components/UnifiedResourceLibraryModa
 import AIGenerateFormModal from './components/AIGenerateFormModal';
 import type { ErrorQuestion, HistoricalTest, Note, InteractiveWebpage } from '@/data/mockKnowledgeBase';
 
-// 模拟存储的学习空间数据
-const mockSpaces: SpaceSummary[] = [
-  {
-    id: 'space_1',
-    title: 'Python 数据分析入门',
-    topic: 'Python数据分析',
-    scenario: 'skill_learning',
-    learningMode: 'ai_guided',
-    progress: 45,
-    resourceCount: 3,
-    lastAccessedAt: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2小时前
-    createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7天前
-  },
-  {
-    id: 'space_2',
-    title: '量子力学基础概念',
-    topic: '量子力学',
-    scenario: 'interest_exploration',
-    learningMode: 'self_directed',
-    progress: 20,
-    resourceCount: 1,
-    lastAccessedAt: new Date(Date.now() - 24 * 60 * 60 * 1000), // 1天前
-    createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000), // 14天前
-  },
-];
-
 type ViewState = 'manager' | 'onboarding' | 'workbench' | 'results';
 
 export default function SelfStudyPage() {
+  const { t } = useLanguage();
+
+  // 模拟存储的学习空间数据（支持国际化）
+  const mockSpaces: SpaceSummary[] = [
+    {
+      id: 'space_1',
+      title: t('Python 数据分析入门'),
+      topic: t('Python数据分析'),
+      scenario: 'skill_learning',
+      learningMode: 'ai_guided',
+      progress: 45,
+      resourceCount: 3,
+      lastAccessedAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
+      createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+    },
+    {
+      id: 'space_2',
+      title: t('量子力学基础概念'),
+      topic: t('量子力学'),
+      scenario: 'interest_exploration',
+      learningMode: 'self_directed',
+      progress: 20,
+      resourceCount: 1,
+      lastAccessedAt: new Date(Date.now() - 24 * 60 * 60 * 1000),
+      createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000),
+    },
+  ];
+
   const [viewState, setViewState] = usePersistedState<ViewState>('self-study:viewState', 'manager');
   const [spaces, setSpaces] = usePersistedState<SpaceSummary[]>('self-study:spaces', mockSpaces);
   const [currentSpace, setCurrentSpace] = usePersistedState<SpaceConfig | null>('self-study:currentSpace', null);
@@ -113,7 +116,7 @@ export default function SelfStudyPage() {
   };
 
   // 创建空白空间
-  const createBlankSpace = (title: string = '未命名空间'): SpaceConfig => {
+  const createBlankSpace = (title: string = t('未命名空间')): SpaceConfig => {
     const newSpace = createDefaultSpaceConfig();
     const newSummary: SpaceSummary = {
       id: newSpace.id,
@@ -148,7 +151,7 @@ export default function SelfStudyPage() {
 
     // 非试卷文件正常处理
     if (normalFiles.length > 0 && currentSpace) {
-      const title = normalFiles[0]?.name || '未命名空间';
+      const title = normalFiles[0]?.name || t('未命名空间');
       const spaceTitle = title.replace(/\.[^/.]+$/, '');
       const updatedSpace = { ...currentSpace, title: spaceTitle };
       setCurrentSpace(updatedSpace);
@@ -166,8 +169,8 @@ export default function SelfStudyPage() {
           title: file.name.replace(/\.[^/.]+$/, ''),
           type, fileType,
           path: `/mock/path/${file.name}`,
-          description: `上传的文件：${file.name}`,
-          duration: '10分钟',
+          description: `${t('上传的文件：')}${file.name}`,
+          duration: t('10分钟'),
         };
       });
       setCurrentSpace({ ...updatedSpace, resources: [...updatedSpace.resources, ...mockResources] });
@@ -205,7 +208,7 @@ export default function SelfStudyPage() {
 
         // 非试卷资源正常添加
         const resourcesToAdd = normalResources.length > 0 ? normalResources : [];
-        const title = resources[0]?.title || '未命名空间';
+        const title = resources[0]?.title || t('未命名空间');
         const updatedSpace = { ...currentSpace, title };
         setCurrentSpace({
           ...updatedSpace,
@@ -232,11 +235,11 @@ export default function SelfStudyPage() {
         // 将错题转换为资源格式并添加
         const errorQuestionResources: Resource[] = questions.map(eq => ({
           id: `error-${eq.id}`,
-          title: `错题：${eq.question.content.substring(0, 30)}...`,
+          title: `${t('错题：')}${eq.question.content.substring(0, 30)}...`,
           type: 'document',
           path: `error-questions/${eq.id}`,
-          description: `来自《${eq.originalTaskTitle}》，错误日期：${eq.attemptDate}`,
-          duration: '错题',
+          description: `${t('来自《')}${eq.originalTaskTitle}》${t('，错误日期：')}${eq.attemptDate}`,
+          duration: t('错题'),
         }));
 
         setCurrentSpace({
@@ -269,8 +272,8 @@ export default function SelfStudyPage() {
           title: testRecord.title,
           type: 'document',
           path: `historical-tests/${testRecord.id}`,
-          description: `${testRecord.subject || '测验'} - 得分：${testRecord.score}/${testRecord.totalScore}，正确率：${Math.round(testRecord.correctCount / testRecord.questionCount * 100)}%`,
-          duration: testRecord.duration || '测验记录',
+          description: `${testRecord.subject || t('测验')} - ${t('得分：')}${testRecord.score}/${testRecord.totalScore}，${t('正确率：')}${Math.round(testRecord.correctCount / testRecord.questionCount * 100)}%`,
+          duration: testRecord.duration || t('测验记录'),
         };
 
         setCurrentSpace({
@@ -305,7 +308,7 @@ export default function SelfStudyPage() {
           path: `notes/${note.id}.md`,
           description: note.content.substring(0, 100) + '...',
           textContent: note.content,
-          duration: '笔记',
+          duration: t('笔记'),
         }));
 
         setCurrentSpace({

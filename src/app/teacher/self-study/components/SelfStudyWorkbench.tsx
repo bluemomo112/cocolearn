@@ -61,34 +61,6 @@ const THEME = {
   },
 };
 
-// 年级列表
-const GRADES = ['一年级', '二年级', '三年级', '四年级', '五年级', '六年级', '七年级', '八年级', '九年级'];
-
-// 班级列表
-const MOCK_CLASSES = [
-  '四年级1班',
-  '四年级2班',
-  '四年级3班',
-  '五年级1班',
-  '五年级2班',
-  '五年级3班',
-];
-
-// 知识点库（简化版）
-const KNOWLEDGE_POINTS_LIBRARY = [
-  {
-    id: 'kp1',
-    title: '水循环的概念',
-    subject: '地理',
-    grade: '四年级',
-  },
-  {
-    id: 'kp2',
-    title: '光合作用原理',
-    subject: '生物',
-    grade: '五年级',
-  },
-];
 
 interface SelfStudyWorkbenchProps {
   config?: SpaceConfig;
@@ -830,6 +802,22 @@ export default function SelfStudyWorkbench({
   const { t } = useLanguage();
   const router = useRouter();
   const isStudentMode = mode === 'student';
+
+  // 使用 t() 的 Mock 数据（支持简繁转换）
+  const GRADES = [
+    t('一年级'), t('二年级'), t('三年级'), t('四年级'), t('五年级'),
+    t('六年级'), t('七年级'), t('八年级'), t('九年级')
+  ];
+
+  const MOCK_CLASSES = [
+    t('四年级1班'), t('四年级2班'), t('四年级3班'),
+    t('五年级1班'), t('五年级2班'), t('五年级3班')
+  ];
+
+  const KNOWLEDGE_POINTS_LIBRARY = [
+    { id: 'kp1', title: t('水循环的概念'), subject: t('地理'), grade: t('四年级') },
+    { id: 'kp2', title: t('光合作用原理'), subject: t('生物'), grade: t('五年级') }
+  ];
 
   // 如果传入 spaceId，从 localStorage 加载配置（学生模式）
   const [config, setConfig] = useState<SpaceConfig>(() => {
@@ -1659,7 +1647,7 @@ export default function SelfStudyWorkbench({
     setMessages([{
       id: 'welcome-guide',
       role: 'assistant',
-      content: '你好！我是你的学习助手 🤖\n\n我可以帮你：\n\n📄 **分析学习资料** - 上传文件或从知识库导入\n💬 **解答疑问** - 直接向我提问任何学习问题\n🎯 **生成学习内容** - 使用右侧 Studio 工具生成思维导图、测试题等\n\n准备好开始学习了吗？',
+      content: '你好！我是你的学习助手 🤖\n\n我可以帮你：\n\n📄 **分析学习资料** - 上传文件或从知识库导入\n💬 **解答疑问** - 直接向我提问任何学习问题\n🎯 **生成学习内容** - 使用右侧学习工具生成思维导图、测试题等\n\n准备好开始学习了吗？',
       timestamp: new Date(),
       suggestions: {
         quickReplies: [
@@ -3307,7 +3295,7 @@ export default function SelfStudyWorkbench({
                 {config.learningMode === 'ai_guided' ? (
                   <><Sparkles size={16} className={getThemeClass('icon')} />{t('学习资源')}</>
                 ) : (
-                  <><FolderOpen size={16} className="text-gray-500" />Sources</>
+                  <><FolderOpen size={16} className="text-gray-500" />{t('学习资源')}</>
                 )}
               </h2>
               <button
@@ -4652,7 +4640,7 @@ export default function SelfStudyWorkbench({
                     <div>
                       <h3 className="text-sm font-semibold text-gray-800 flex items-center gap-2">
                         <Sparkles size={14} className="text-gray-500" />
-                        Studio
+                        {t('学习工具')}
                       </h3>
                     </div>
                     <div className="flex items-center gap-2">
