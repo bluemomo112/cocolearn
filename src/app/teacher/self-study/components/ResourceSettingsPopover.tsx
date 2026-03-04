@@ -38,7 +38,7 @@ export default function ResourceSettingsPopover({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30" onClick={onClose}>
       <div
-        className="bg-white rounded-2xl shadow-xl w-full max-w-[400px] mx-4 overflow-hidden"
+        className="bg-white rounded-2xl shadow-xl w-full max-w-[600px] mx-4 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -105,13 +105,13 @@ export default function ResourceSettingsPopover({
         <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-gray-100">
           <button
             onClick={onClose}
-            className="px-4 py-1.5 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+            className="px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors whitespace-nowrap"
           >
             取消
           </button>
           <button
             onClick={handleSave}
-            className="px-4 py-1.5 text-sm text-white bg-blue-500 hover:bg-blue-600 rounded-lg transition-colors"
+            className="px-3 py-1.5 text-sm text-white bg-blue-500 hover:bg-blue-600 rounded-lg transition-colors whitespace-nowrap"
           >
             保存
           </button>
