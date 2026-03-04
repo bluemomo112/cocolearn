@@ -62,7 +62,6 @@ import {
   Resizer,
   NoteInfoModal,
 } from './modals';
-import { PublishSuccessModal } from './PublishSuccessModal';
 
 // 类型定义
 // 能力维度类型定义
@@ -387,11 +386,6 @@ export default function NoteConfigPage() {
   const [activeModal, setActiveModal] = useState<string | null>(null);
   const [selectedResource, setSelectedResource] = useState<Resource | null>(null);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
-  const [publishSuccessData, setPublishSuccessData] = useState<{
-    courseTitle: string;
-    courseLink: string;
-    accessCode: string;
-  } | null>(null);
 
   // 视角切换处理
   const handleViewSwitch = (newView: 'edit' | 'use') => {
@@ -542,17 +536,6 @@ export default function NoteConfigPage() {
           classes={MOCK_CLASSES}
           onSave={(newNoteInfo: any) => {
             setConfig({ ...config, noteInfo: newNoteInfo });
-
-            // 如果是发布操作（包含 publishedLink 和 publishedCode），显示成功弹窗
-            if (newNoteInfo.publishedLink && newNoteInfo.publishedCode) {
-              setPublishSuccessData({
-                courseTitle: newNoteInfo.title,
-                courseLink: newNoteInfo.publishedLink,
-                accessCode: newNoteInfo.publishedCode,
-              });
-            }
-
-            setActiveModal(null);
           }}
           onClose={() => setActiveModal(null)}
         />
@@ -630,16 +613,6 @@ export default function NoteConfigPage() {
             setSelectedTask(null);
           }}
           onClose={() => setSelectedTask(null)}
-        />
-      )}
-
-      {/* 发布成功弹窗 - 在页面层级渲染 */}
-      {publishSuccessData && (
-        <PublishSuccessModal
-          courseTitle={publishSuccessData.courseTitle}
-          courseLink={publishSuccessData.courseLink}
-          accessCode={publishSuccessData.accessCode}
-          onClose={() => setPublishSuccessData(null)}
         />
       )}
     </div>

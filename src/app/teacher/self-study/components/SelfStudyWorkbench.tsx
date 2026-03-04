@@ -2548,9 +2548,16 @@ export default function SelfStudyWorkbench({
       publishedLink: updatedConfig.publishedLink,
       publishedCode: updatedConfig.publishedCode,
     });
-    setShowNoteInfoModal(false);
 
-    console.log('✅ 配置已保存，弹窗已关闭');
+    // 如果是发布操作（有 publishedLink 和 publishedCode），不关闭弹窗
+    // NoteInfoModal 会显示成功界面，用户手动关闭时才会触发 onClose
+    const isPublishAction = updatedConfig.publishedLink && updatedConfig.publishedCode;
+    if (!isPublishAction) {
+      setShowNoteInfoModal(false);
+      console.log('✅ 配置已保存，弹窗已关闭');
+    } else {
+      console.log('✅ 发布操作完成，等待用户关闭成功弹窗');
+    }
   };
 
   // 切换学习模式

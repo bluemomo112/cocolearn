@@ -298,6 +298,10 @@ export function NoteInfoModal({ config, onSave, onClose, knowledgeLibrary, grade
   const [publishError, setPublishError] = useState('');
   const [customTagInput, setCustomTagInput] = useState('');
   const [showShareLink, setShowShareLink] = useState(false);
+  const [publishSuccessData, setPublishSuccessData] = useState<{
+    link: string;
+    code: string;
+  } | null>(null);
 
   // 发布范围选择
   const [publishScope, setPublishScope] = useState({
@@ -401,7 +405,6 @@ export function NoteInfoModal({ config, onSave, onClose, knowledgeLibrary, grade
     console.log('生成的发布数据:', { link, code: randomCode });
 
     // 保存配置（包含发布信息和发布范围）
-    // page.tsx 会检测到 publishedLink 和 publishedCode，自动显示成功弹窗
     onSave({
       ...localConfig,
       publishScope,
@@ -409,12 +412,31 @@ export function NoteInfoModal({ config, onSave, onClose, knowledgeLibrary, grade
       publishedCode: randomCode,
     });
 
-    console.log('✅ 发布成功，page.tsx 将显示成功弹窗');
+    // 切换到成功状态（不关闭弹窗）
+    setPublishSuccessData({ link, code: randomCode });
+
+    console.log('✅ 发布成功，切换到成功状态');
+  };
+
+  const handleCloseSuccessModal = () => {
+    console.log('关闭发布成功弹窗');
+    setPublishSuccessData(null);
+    onClose();
   };
 
   return (
-    <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center backdrop-blur-sm" onClick={onClose}>
-      <div className="bg-white w-[900px] max-h-[90vh] rounded-3xl shadow-2xl overflow-hidden border border-gray-100" onClick={(e) => e.stopPropagation()}>
+    <>
+      {/* 发布成功状态 */}
+      {publishSuccessData ? (
+        <PublishSuccessModal
+          courseTitle={localConfig.title}
+          courseLink={publishSuccessData.link}
+          accessCode={publishSuccessData.code}
+          onClose={handleCloseSuccessModal}
+        />
+      ) : (
+        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center backdrop-blur-sm" onClick={onClose}>
+          <div className="bg-white w-[900px] max-h-[90vh] rounded-3xl shadow-2xl overflow-hidden border border-gray-100" onClick={(e) => e.stopPropagation()}>
         {/* 头部 */}
         <div className="bg-gradient-to-br from-primary-600 via-primary-700 to-accent-700 text-white px-6 py-5">
           <div className="flex items-center justify-between">
@@ -800,7 +822,9 @@ export function NoteInfoModal({ config, onSave, onClose, knowledgeLibrary, grade
           document.body
         )
       }
-    </div>
+      </div>
+    )}
+    </>
   );
 }
 
