@@ -106,6 +106,8 @@ export interface SpaceConfig {
   grade?: string; // 年级
   bindClasses?: string[]; // 绑定班级
   publishScope?: PublishScope; // 发布范围
+  publishedLink?: string; // 发布链接
+  publishedCode?: string; // 访问码
 
   // 学习模式（替代 interactionMode）
   learningMode: LearningMode;
@@ -125,6 +127,24 @@ export interface SpaceConfig {
 
   // 笔记模板
   noteTemplate: 'blank' | 'cornell' | 'sky_rain_umbrella';
+
+  // AI 交互配置
+  freeConfig?: {
+    selectedAgentId: string;
+    teacherPrompt: string;
+    enableFence: boolean;
+  };
+
+  guidedConfig?: {
+    selectedWorkflowId: string;
+    stagePrompts: Record<string, string>; // stageId -> custom prompt
+  };
+
+  // AI 监控配置
+  metaConfig?: {
+    selectedStrategyId: string;
+    teacherPrompt: string;
+  };
 
   // 能力追踪维度（通用版可自定义）
   competencyDimensions: CompetencyType[];

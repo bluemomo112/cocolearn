@@ -1923,6 +1923,9 @@ export default function SelfStudyWorkbench({
 
   // 处理笔记信息配置保存
   const handleNoteInfoSave = (updatedConfig: any) => {
+    console.log('=== handleNoteInfoSave 被调用 ===');
+    console.log('接收到的配置:', updatedConfig);
+
     handleUpdateConfig({
       ...config,
       title: updatedConfig.title,
@@ -1931,8 +1934,13 @@ export default function SelfStudyWorkbench({
       subjects: updatedConfig.subjects,
       grade: updatedConfig.grade,
       bindClasses: updatedConfig.bindClasses,
+      publishScope: updatedConfig.publishScope,
+      publishedLink: updatedConfig.publishedLink,
+      publishedCode: updatedConfig.publishedCode,
     });
     setShowNoteInfoModal(false);
+
+    console.log('✅ 配置已保存，弹窗已关闭');
   };
 
   // 切换学习模式
@@ -2513,7 +2521,7 @@ export default function SelfStudyWorkbench({
           {/* 发布 - 仅教师模式显示 */}
           {!isStudentMode && (
             <button
-              onClick={() => setIsPublishModalOpen(true)}
+              onClick={() => setShowNoteInfoModal(true)}
               className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
             >
               <Share2 size={15} />
