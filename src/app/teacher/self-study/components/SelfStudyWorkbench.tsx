@@ -4347,17 +4347,15 @@ export default function SelfStudyWorkbench({
                                     ? 'text-primary-600 animate-pulse'
                                     : 'text-gray-500 group-hover:text-primary-600'
                                 }`} />}
-                                <div className="flex flex-col items-start">
-                                  <span className={`font-medium ${isFlashing ? 'text-primary-700' : ''}`}>{button.label}</span>
-                                  {isGenerating ? (
-                                    <span className="text-xs text-gray-500 flex items-center gap-1">
-                                      <Activity size={10} className="animate-spin" />
-                                      {t('生成中...')}
-                                    </span>
-                                  ) : !isFlashing && (
-                                    <ChevronRight size={14} className={`transition-colors text-gray-400 group-hover:text-primary-500`} />
-                                  )}
-                                </div>
+                                <span className={`font-medium ${isFlashing ? 'text-primary-700' : ''}`}>{button.label}</span>
+                                {isGenerating ? (
+                                  <span className="text-xs text-gray-500 flex items-center gap-1 ml-auto">
+                                    <Activity size={10} className="animate-spin" />
+                                    {t('生成中...')}
+                                  </span>
+                                ) : !isFlashing && (
+                                  <ChevronRight size={14} className={`transition-colors text-gray-400 group-hover:text-primary-500 ml-auto`} />
+                                )}
                               </button>
                             );
                           })}
