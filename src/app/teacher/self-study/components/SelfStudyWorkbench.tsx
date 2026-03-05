@@ -1406,6 +1406,9 @@ export default function SelfStudyWorkbench({
     toolId: string;
     interactiveCategory?: 'animation' | 'visualization' | 'simulation' | 'test';
     url?: string;
+    description?: string;
+    textContent?: string;
+    data?: any;
   }>>(`self-study:wb:${config.id}:aiGeneratedResources`, []);
 
   // Studio工具配置弹窗
@@ -1439,6 +1442,7 @@ export default function SelfStudyWorkbench({
       textContent: 'textContent' in resource ? resource.textContent : undefined,
       icon: 'icon' in resource ? resource.icon : undefined,
       toolId: 'toolId' in resource ? resource.toolId : undefined,
+      data: 'data' in resource ? resource.data : undefined,
     };
 
     setInlineViewingResource(viewResource);
@@ -1468,21 +1472,242 @@ export default function SelfStudyWorkbench({
   };
 
   // 处理Studio工具点击
+  // 資源類工具的固定 Mock 數據
+  // 資源類工具的結構化 Mock 數據
+  const RESOURCE_MOCK_DATA: Record<string, { 
+    title: string; 
+    description: string; 
+    data?: any;
+    textContent?: string;
+  }> = {
+    flashcards: {
+      title: '光合作用記憶卡片',
+      description: '10 張卡片幫助記憶光合作用的關鍵知識點',
+      data: {
+        cards: [
+          { front: '光合作用的場所是什麼？', back: '葉綠體（包括類囊體和基質）' },
+          { front: '光反應發生在哪裡？', back: '類囊體膜' },
+          { front: '暗反應發生在哪裡？', back: '葉綠體基質' },
+          { front: '光反應的產物有哪些？', back: 'ATP、NADPH、O₂' },
+          { front: '暗反應的產物是什麼？', back: '葡萄糖（C₆H₁₂O₆）' },
+          { front: '光合作用的總反應式是什麼？', back: '6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂' },
+          { front: '卡爾文循環的三個階段是什麼？', back: 'CO₂ 固定、C₃ 還原、RuBP 再生' },
+          { front: '影響光合作用的主要因素有哪些？', back: '光照強度、CO₂ 濃度、溫度、水分' },
+          { front: '光反應需要光嗎？', back: '需要' },
+          { front: '暗反應需要光嗎？', back: '不需要光，但需要光反應的產物（ATP 和 NADPH）' },
+        ],
+      },
+    },
+    audio_overview: {
+      title: '光合作用音頻概述',
+      description: '15分鐘音頻講解光合作用的完整過程',
+      data: {
+        chapters: [
+          { time: '00:00', title: '引言', content: '光合作用的定義與重要性，在生態系統中的角色' },
+          { time: '03:00', title: '光反應階段', content: '葉綠體的結構、光能的吸收與轉換、ATP 和 NADPH 的生成' },
+          { time: '08:00', title: '暗反應階段', content: '卡爾文循環的三個步驟、二氧化碳的固定、葡萄糖的合成' },
+          { time: '13:00', title: '總結', content: '光合作用的意義、影響因素分析' },
+        ],
+      },
+    },
+    timeline: {
+      title: '光合作用研究時間線',
+      description: '光合作用研究的重要歷史事件',
+      data: {
+        events: [
+          { year: '1648', icon: '🌱', title: '范·海爾蒙特實驗', description: '柳樹實驗，發現植物生長不僅依賴土壤' },
+          { year: '1771', icon: '🕯️', title: '普里斯特利實驗', description: '蠟燭與植物實驗，發現植物能"淨化"空氣' },
+          { year: '1779', icon: '☀️', title: '英格豪斯實驗', description: '發現光照的重要性，證明只有在光照下植物才能淨化空氣' },
+          { year: '1845', icon: '⚡', title: '邁爾提出能量轉換', description: '提出光能轉化為化學能的概念' },
+          { year: '1864', icon: '🔬', title: '薩克斯實驗', description: '證明光合作用產生澱粉，使用碘液檢測澱粉' },
+          { year: '1880', icon: '🦠', title: '恩格爾曼實驗', description: '水綿與好氧細菌實驗，證明葉綠體是光合作用的場所' },
+          { year: '1937', icon: '💧', title: '希爾反應', description: '發現水的光解，證明光反應中水是電子供體' },
+          { year: '1940s', icon: '🔄', title: '卡爾文循環', description: '使用放射性同位素 ¹⁴C，闡明暗反應的詳細過程' },
+        ],
+      },
+    },
+    mind_map: {
+      title: '光合作用思維導圖',
+      description: '結構化展示光合作用的核心概念和關係',
+      data: {
+        nodes: {
+          center: '光合作用',
+          branches: [
+            {
+              title: '定義與場所',
+              items: ['植物利用光能合成有機物', '化學方程式：6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂', '場所：葉綠體（類囊體和基質）'],
+            },
+            {
+              title: '光反應',
+              items: ['位置：類囊體膜', '條件：需要光', '過程：光能吸收 → 水的光解 → ATP 和 NADPH 生成', '產物：ATP、NADPH、O₂'],
+            },
+            {
+              title: '暗反應（卡爾文循環）',
+              items: ['位置：葉綠體基質', '條件：不需要光', '三個階段：CO₂ 固定、C₃ 還原、RuBP 再生', '產物：葡萄糖'],
+            },
+            {
+              title: '影響因素',
+              items: ['光照強度：影響光反應速率', 'CO₂ 濃度：影響暗反應速率', '溫度：影響酶活性', '水分：原料之一'],
+            },
+          ],
+        },
+      },
+    },
+    summary: {
+      title: '光合作用學習報告',
+      description: '全面總結光合作用的學習成果',
+      textContent: `## 📈 學習進度概覽
+
+**已掌握內容**
+✅ 光合作用的基本概念
+✅ 光反應的詳細過程
+✅ 暗反應（卡爾文循環）
+✅ 影響因素分析
+
+**需要加強的內容**
+⚠️ 光合作用與呼吸作用的關係
+⚠️ 不同植物的光合作用差異（C3、C4、CAM）
+
+## 🎯 重點知識總結
+
+### 1. 光合作用的意義
+- 為生物界提供有機物
+- 維持大氣中 O₂ 和 CO₂ 的平衡
+- 將光能轉化為化學能
+
+### 2. 光反應要點
+- **場所**：類囊體膜
+- **條件**：光、色素、酶
+- **過程**：光能吸收 → 水的光解 → ATP 和 NADPH 生成
+- **產物**：ATP、NADPH、O₂
+
+### 3. 暗反應要點
+- **場所**：葉綠體基質
+- **條件**：ATP、NADPH、CO₂、酶
+- **過程**：CO₂ 固定 → C₃ 還原 → RuBP 再生
+- **產物**：葡萄糖`,
+    },
+    concept_search: {
+      title: '光合作用概念搜索結果',
+      description: '搜索"光合作用"相關的核心概念',
+      textContent: `## 🎯 核心概念
+
+### 光合作用 (Photosynthesis)
+**定義：** 綠色植物、藻類和某些細菌利用光能，將二氧化碳和水轉化為有機物，並釋放氧氣的過程。
+
+**關鍵特徵：**
+- 能量轉換：光能 → 化學能
+- 物質轉換：無機物 → 有機物
+- 場所：葉綠體
+
+## 🔗 相關概念
+
+### 1. 葉綠體 (Chloroplast)
+- 光合作用的場所
+- 包含類囊體和基質
+- 含有葉綠素等色素
+
+### 2. 光反應 (Light Reaction)
+- 需要光的階段
+- 發生在類囊體膜
+- 產生 ATP 和 NADPH
+
+### 3. 暗反應 (Dark Reaction)
+- 不需要光的階段
+- 發生在葉綠體基質
+- 又稱卡爾文循環`,
+    },
+    key_points: {
+      title: '光合作用核心要點',
+      description: '提煉光合作用的關鍵知識點',
+      textContent: `## 🎯 必記要點
+
+### 1. 光合作用的定義
+- 綠色植物利用光能合成有機物的過程
+- 化學方程式：**6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂**
+
+### 2. 光合作用的場所
+- **葉綠體**
+  - 類囊體：光反應
+  - 基質：暗反應
+
+### 3. 光反應（需要光）
+- **場所**：類囊體膜
+- **原料**：H₂O、ADP、Pi、NADP⁺
+- **產物**：O₂、ATP、NADPH
+
+### 4. 暗反應（不需要光）
+- **場所**：葉綠體基質
+- **原料**：CO₂、ATP、NADPH
+- **產物**：C₆H₁₂O₆、ADP、Pi、NADP⁺
+
+### 5. 兩個階段的聯繫
+- 光反應為暗反應提供 **ATP** 和 **NADPH**
+- 暗反應為光反應提供 **ADP**、**Pi** 和 **NADP⁺**`,
+    },
+    examples: {
+      title: '光合作用實例說明',
+      description: '通過具體實例理解光合作用',
+      textContent: `## 實例 1：溫室蔬菜栽培
+
+**場景描述**
+農民在溫室中種植番茄，為了提高產量，採取了以下措施：
+- 增加光照時間（補光燈）
+- 提高 CO₂ 濃度（CO₂ 發生器）
+- 控制溫度（25-30°C）
+
+**原理解釋**
+- **增加光照**：提高光反應速率，產生更多 ATP 和 NADPH
+- **提高 CO₂**：提高暗反應速率，合成更多有機物
+- **適宜溫度**：保證酶的最適活性
+
+---
+
+## 實例 2：水生植物實驗
+
+**場景描述**
+將金魚藻放入水中，用漏斗和試管收集氣體，光照下產生氣泡。
+
+**原理解釋**
+- 光照下進行光合作用
+- 光反應產生 O₂
+- O₂ 以氣泡形式釋放
+
+---
+
+## 實例 3：秋天葉片變色
+
+**場景描述**
+秋天時，樹葉由綠色變為黃色或紅色。
+
+**原理解釋**
+- 氣溫降低，葉綠素分解
+- 類胡蘿蔔素（黃色）和花青素（紅色）顯現
+- 光合作用效率降低`,
+    },
+  };
+
   const handleStudioToolClick = (tool: typeof STUDIO_TOOLS[0]) => {
     if (tool.type === 'resource') {
       // 生成资源
       setGeneratingToolId(tool.id);
 
+      // 获取对应的 mock 数据
+      const mockData = RESOURCE_MOCK_DATA[tool.id];
+
       // 模拟生成过程
       setTimeout(() => {
         const newResource = {
           id: `ai_res_${Date.now()}`,
-          title: `🤖 ${t('AI生成')}：${tool.label}`,
+          title: mockData ? `🤖 ${mockData.title}` : `🤖 ${t('AI生成')}：${tool.label}`,
           type: 'ai_generated' as const,
           icon: tool.icon,
           status: 'ready' as const,
           generatedAt: new Date(),
           toolId: tool.id,
+          description: mockData?.description,
+          textContent: mockData?.textContent,
+          data: mockData?.data,
         };
 
         setAiGeneratedResources(prev => [newResource, ...prev]);
