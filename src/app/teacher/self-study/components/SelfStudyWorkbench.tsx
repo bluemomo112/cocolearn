@@ -1431,6 +1431,7 @@ export default function SelfStudyWorkbench({
     const hasUrl = 'url' in resource && !!resource.url;
     const isInteractive = (resource.type === 'interactive' || resource.type === 'ai_generated') && hasUrl &&
       ('interactiveCategory' in resource && !!resource.interactiveCategory);
+    const hasCustomViewer = 'toolId' in resource && ['flashcards', 'audio_overview', 'timeline', 'mind_map'].includes(resource.toolId || '');
 
     const viewResource: InlineViewResource = {
       id: resource.id,
@@ -1447,8 +1448,8 @@ export default function SelfStudyWorkbench({
 
     setInlineViewingResource(viewResource);
 
-    if (isInteractive) {
-      // H5 资源默认全屏打开
+    if (isInteractive || hasCustomViewer) {
+      // H5 资源和自定义 viewer 资源默认全屏打开
       setViewingResource({
         id: resource.id,
         title: resource.title,
@@ -1456,7 +1457,10 @@ export default function SelfStudyWorkbench({
         description: 'description' in resource ? (resource.description || '') : '',
         url: 'url' in resource ? resource.url : undefined,
         interactiveCategory: 'interactiveCategory' in resource ? resource.interactiveCategory as Resource['interactiveCategory'] : undefined,
-      });
+        toolId: 'toolId' in resource ? resource.toolId : undefined,
+        data: 'data' in resource ? resource.data : undefined,
+        textContent: 'textContent' in resource ? resource.textContent : undefined,
+      } as any);
     }
   };
 

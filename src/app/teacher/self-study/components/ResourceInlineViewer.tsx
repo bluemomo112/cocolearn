@@ -267,6 +267,8 @@ export default function ResourceInlineViewer({ resource, onBack, onFullscreen }:
   const [isLoading, setIsLoading] = useState(true);
 
   const hasIframeContent = !!resource.url;
+  const hasCustomViewer = ['flashcards', 'audio_overview', 'timeline', 'mind_map'].includes(resource.toolId || '');
+  const canFullscreen = hasIframeContent || hasCustomViewer;
   const category = resource.interactiveCategory
     ? CATEGORY_CONFIG[resource.interactiveCategory]
     : null;
@@ -291,7 +293,7 @@ export default function ResourceInlineViewer({ resource, onBack, onFullscreen }:
             </span>
           )}
         </div>
-        {hasIframeContent && (
+        {canFullscreen && (
           <button
             onClick={onFullscreen}
             className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
