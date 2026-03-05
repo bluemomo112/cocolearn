@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { X, Activity, Brain } from 'lucide-react';
-import { MOCK_STRATEGIES } from '../constants/mockData';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { getMockStrategies } from '../constants/mockData';
 
 interface MetaConfigModalProps {
   config: {
@@ -15,6 +16,9 @@ interface MetaConfigModalProps {
 
 export default function MetaConfigModal({ config, onSave, onClose }: MetaConfigModalProps) {
   const [localConfig, setLocalConfig] = useState(config);
+  const { t } = useLanguage();
+
+  const MOCK_STRATEGIES = useMemo(() => getMockStrategies(t), [t]);
 
   const handleSave = () => {
     onSave(localConfig);
@@ -33,9 +37,9 @@ export default function MetaConfigModal({ config, onSave, onClose }: MetaConfigM
             <div>
               <h2 className="text-lg font-bold flex items-center gap-2">
                 <Activity size={20} />
-                学情监控配置
+                {t('学情监控配置')}
               </h2>
-              <p className="text-accent-100 text-sm mt-1">选择监控策略并自定义监控指令</p>
+              <p className="text-accent-100 text-sm mt-1">{t('选择监控策略并自定义监控指令')}</p>
             </div>
             <button onClick={onClose} className="p-1 hover:bg-white/20 rounded-lg transition-colors">
               <X size={20} />
@@ -46,7 +50,7 @@ export default function MetaConfigModal({ config, onSave, onClose }: MetaConfigM
         <div className="p-6 space-y-5">
           {/* Strategy selection */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-3">选择监控策略</label>
+            <label className="block text-sm font-medium text-gray-700 mb-3">{t('选择监控策略')}</label>
             <div className="space-y-2">
               {MOCK_STRATEGIES.map((strategy) => (
                 <label
@@ -79,12 +83,12 @@ export default function MetaConfigModal({ config, onSave, onClose }: MetaConfigM
           {/* Teacher prompt */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              教师追加指令 <span className="text-gray-400 font-normal">(user_prompt)</span>
+              {t('教师追加指令')} <span className="text-gray-400 font-normal">(user_prompt)</span>
             </label>
             <textarea
               value={localConfig.teacherPrompt}
               onChange={(e) => setLocalConfig({ ...localConfig, teacherPrompt: e.target.value })}
-              placeholder="例如：当学生在视频资源上停留超过5分钟未操作时，提醒他们..."
+              placeholder={t('例如：当学生在视频资源上停留超过5分钟未操作时，提醒他们...')}
               className="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-sm text-gray-700 focus:ring-2 focus:ring-accent-500 outline-none min-h-[80px] resize-none"
             />
           </div>
@@ -93,13 +97,13 @@ export default function MetaConfigModal({ config, onSave, onClose }: MetaConfigM
         {/* Footer buttons */}
         <div className="p-4 border-t border-gray-200 flex justify-end gap-3 bg-gray-50">
           <button onClick={onClose} className="px-4 py-2 text-gray-600 hover:text-gray-800">
-            取消
+            {t('取消')}
           </button>
           <button
             onClick={handleSave}
             className="px-6 py-2 bg-accent-600 text-white rounded-xl hover:bg-accent-700 font-medium shadow-sm"
           >
-            保存
+            {t('保存')}
           </button>
         </div>
       </div>

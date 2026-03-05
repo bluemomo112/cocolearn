@@ -5,6 +5,7 @@ import Link from 'next/link'
 import CountUp from 'react-countup'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, Legend, ReferenceLine, PieChart, Pie, Cell, ScatterChart, Scatter } from 'recharts'
 import { ClassCompetencyDistribution, COMPETENCY_DEFINITIONS, getStarLevelColor } from '../../note-config/results-view'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 // ============================================
 // Type Definitions
@@ -95,34 +96,8 @@ interface TaskInfo {
 }
 
 // ============================================
-// Mock Data - 资源和任务定义
+// Mock Data - 资源和任务定义（移到组件内使用 t()）
 // ============================================
-
-const mockResources: ResourceInfo[] = [
-  { resourceId: 'resource_1', title: '认识植物工厂学生手册', type: 'document', duration: '约15分钟' },
-  { resourceId: 'resource_2', title: '水培植物工厂与集中控制学生手册', type: 'document', duration: '约20分钟' },
-  { resourceId: 'resource_3', title: '设计水培容器学生手册', type: 'document', duration: '约15分钟' },
-  { resourceId: 'resource_4', title: '认识植物工厂课件', type: 'presentation', duration: '约10分钟' },
-  { resourceId: 'resource_5', title: '水培植物工厂与集中控制课件', type: 'presentation', duration: '约10分钟' },
-  { resourceId: 'resource_6', title: '植物工厂介绍视频', type: 'video', duration: '约5分钟' },
-]
-
-const mockTasks: TaskInfo[] = [
-  { taskId: 'task_quiz_1', title: '植物工厂基础知识测验', type: 'quiz', required: true, hasCompetencyConfig: false },
-  { taskId: 'task_assignment_1', title: '植物工厂优缺点分析', type: 'assignment', required: true, hasCompetencyConfig: true, assignedCompetencies: ['critical_thinking', 'information_synthesis'] },
-  { taskId: 'task_assignment_2', title: '设计我的水培系统', type: 'assignment', required: true, hasCompetencyConfig: true, assignedCompetencies: ['information_synthesis'] },
-  { taskId: 'task_reflection_1', title: '学习反思', type: 'reflection', required: false, hasCompetencyConfig: true, assignedCompetencies: ['metacognition'] },
-]
-
-// ============================================
-// Mock Data - 班级
-// ============================================
-
-const mockClasses: ClassInfo[] = [
-  { classId: 'class-1', className: '一班', studentCount: 28 },
-  { classId: 'class-2', className: '二班', studentCount: 30 },
-  { classId: 'class-3', className: '三班', studentCount: 27 },
-]
 
 // ============================================
 // Mock Data - 学生完整数据生成
@@ -137,7 +112,7 @@ function createSeededRandom(seed: number) {
   }
 }
 
-function generateMockStudents(): StudentDetail[] {
+function generateMockStudents(mockClasses: ClassInfo[], mockResources: ResourceInfo[], mockTasks: TaskInfo[]): StudentDetail[] {
   const rand = createSeededRandom(42)
   const students: StudentDetail[] = []
   const names = [
@@ -307,8 +282,6 @@ function generateMockStudents(): StudentDetail[] {
   return students
 }
 
-const mockStudents = generateMockStudents()
-
 // ============================================
 // Helper Functions
 // ============================================
@@ -331,7 +304,7 @@ function formatDate(date: Date | null): string {
 // ============================================
 
 // 生成班级对比数据
-function generateClassComparisonData(selectedClasses: string[], students: StudentDetail[]) {
+function generateClassComparisonData(selectedClasses: string[], students: StudentDetail[], mockClasses: ClassInfo[]) {
   return selectedClasses.map(classId => {
     const classStudents = students.filter(s => s.classId === classId)
     const completed = classStudents.filter(s => s.status === 'completed').length
@@ -371,7 +344,7 @@ function generateProgressDistribution(students: StudentDetail[]) {
 }
 
 // 生成任务表现对比数据 (学生 vs 班级平均)
-function generateTaskComparisonData(student: StudentDetail, allStudents: StudentDetail[]) {
+function generateTaskComparisonData(student: StudentDetail, allStudents: StudentDetail[], mockTasks: TaskInfo[]) {
   return mockTasks.map(task => {
     const studentSubmission = student.taskSubmissions.find(t => t.taskId === task.taskId)
     const studentScore = studentSubmission?.score || 0
@@ -395,7 +368,7 @@ function generateTaskComparisonData(student: StudentDetail, allStudents: Student
 }
 
 // 生成资源/任务完成度数据
-function generateCompletionData(students: StudentDetail[]) {
+function generateCompletionData(students: StudentDetail[], mockResources: ResourceInfo[], mockTasks: TaskInfo[]) {
   // 资源查看完成度
   const totalResourceViews = students.length * mockResources.length
   const viewedResources = students.reduce((sum, s) =>
@@ -955,10 +928,12 @@ function ClassMultiSelect({
   selectedClasses,
   onToggleClass,
   totalStudents,
+  mockClasses,
 }: {
   selectedClasses: string[];
   onToggleClass: (classId: string) => void;
   totalStudents: number;
+  mockClasses: ClassInfo[];
 }) {
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-6">
@@ -1052,9 +1027,13 @@ function ClassStatCard({
 function ResourceTaskDetailsView({
   students,
   onSelectStudent,
+  mockResources,
+  mockTasks,
 }: {
   students: StudentDetail[];
   onSelectStudent: (index: number) => void;
+  mockResources: ResourceInfo[];
+  mockTasks: TaskInfo[];
 }) {
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [viewType, setViewType] = useState<'resources' | 'tasks'>('resources')
@@ -1690,11 +1669,15 @@ function StudentDetailModal({
   currentIndex,
   onClose,
   onNavigate,
+  mockResources,
+  mockTasks,
 }: {
   students: StudentDetail[];
   currentIndex: number;
   onClose: () => void;
   onNavigate: (index: number) => void;
+  mockResources: ResourceInfo[];
+  mockTasks: TaskInfo[];
 }) {
   const student = students[currentIndex]
   const [expandedSection, setExpandedSection] = useState<'resources' | 'tasks' | 'chat' | null>('tasks')
@@ -1862,7 +1845,7 @@ function StudentDetailModal({
             {expandedSection === 'tasks' && (
               <div className="px-4 pb-4 space-y-3">
                 {/* 任务对比图表 */}
-                <TaskComparisonChart data={generateTaskComparisonData(student, mockStudents)} />
+                <TaskComparisonChart data={generateTaskComparisonData(student, students, mockTasks)} />
 
                 {/* 任务列表 */}
                 {student.taskSubmissions.map(submission => {
@@ -2011,6 +1994,34 @@ interface SpaceResultsProps {
 }
 
 export default function SpaceResults({ spaceId, onBack }: SpaceResultsProps) {
+  const { t } = useLanguage()
+
+  // 使用 t() 生成国际化后的 Mock 数据
+  const mockResources: ResourceInfo[] = [
+    { resourceId: 'resource_1', title: t('认识植物工厂学生手册'), type: 'document', duration: t('约15分钟') },
+    { resourceId: 'resource_2', title: t('水培植物工厂与集中控制学生手册'), type: 'document', duration: t('约20分钟') },
+    { resourceId: 'resource_3', title: t('设计水培容器学生手册'), type: 'document', duration: t('约15分钟') },
+    { resourceId: 'resource_4', title: t('认识植物工厂课件'), type: 'presentation', duration: t('约10分钟') },
+    { resourceId: 'resource_5', title: t('水培植物工厂与集中控制课件'), type: 'presentation', duration: t('约10分钟') },
+    { resourceId: 'resource_6', title: t('植物工厂介绍视频'), type: 'video', duration: t('约5分钟') },
+  ]
+
+  const mockTasks: TaskInfo[] = [
+    { taskId: 'task_quiz_1', title: t('植物工厂基础知识测验'), type: 'quiz', required: true, hasCompetencyConfig: false },
+    { taskId: 'task_assignment_1', title: t('植物工厂优缺点分析'), type: 'assignment', required: true, hasCompetencyConfig: true, assignedCompetencies: ['critical_thinking', 'information_synthesis'] },
+    { taskId: 'task_assignment_2', title: t('设计我的水培系统'), type: 'assignment', required: true, hasCompetencyConfig: true, assignedCompetencies: ['information_synthesis'] },
+    { taskId: 'task_reflection_1', title: t('学习反思'), type: 'reflection', required: false, hasCompetencyConfig: true, assignedCompetencies: ['metacognition'] },
+  ]
+
+  const mockClasses: ClassInfo[] = [
+    { classId: 'class-1', className: t('一班'), studentCount: 28 },
+    { classId: 'class-2', className: t('二班'), studentCount: 30 },
+    { classId: 'class-3', className: t('三班'), studentCount: 27 },
+  ]
+
+  // 生成 mock 学生数据
+  const mockStudents = useMemo(() => generateMockStudents(mockClasses, mockResources, mockTasks), [mockClasses, mockResources, mockTasks])
+
   const [selectedClasses, setSelectedClasses] = useState<string[]>(mockClasses.map(c => c.classId))
   const [selectedStudentIndex, setSelectedStudentIndex] = useState<number | null>(null)
   const [showResourceTaskDetails, setShowResourceTaskDetails] = useState(false)
@@ -2025,7 +2036,7 @@ export default function SpaceResults({ spaceId, onBack }: SpaceResultsProps) {
   const filteredStudents = useMemo(() => {
     if (selectedClasses.length === 0) return mockStudents
     return mockStudents.filter(s => selectedClasses.includes(s.classId))
-  }, [selectedClasses])
+  }, [selectedClasses, mockStudents])
 
   // 切换班级选择
   const toggleClass = (classId: string) => {
@@ -2051,7 +2062,7 @@ export default function SpaceResults({ spaceId, onBack }: SpaceResultsProps) {
   }, [filteredStudents])
 
   // 计算完成度数据
-  const completionData = useMemo(() => generateCompletionData(filteredStudents), [filteredStudents])
+  const completionData = useMemo(() => generateCompletionData(filteredStudents, mockResources, mockTasks), [filteredStudents, mockResources, mockTasks])
 
   // 计算 AI 活跃度数据
   const aiActivityData = useMemo(() => generateAIActivityData(filteredStudents), [filteredStudents])
@@ -2209,6 +2220,7 @@ export default function SpaceResults({ spaceId, onBack }: SpaceResultsProps) {
               selectedClasses={selectedClasses}
               onToggleClass={toggleClass}
               totalStudents={filteredStudents.length}
+              mockClasses={mockClasses}
             />
 
             {/* 整体统计卡片 */}
@@ -2267,7 +2279,7 @@ export default function SpaceResults({ spaceId, onBack }: SpaceResultsProps) {
 
             {/* 班级对比图表 */}
             {selectedClasses.length > 0 && (
-              <ClassComparisonChart data={generateClassComparisonData(selectedClasses, filteredStudents)} />
+              <ClassComparisonChart data={generateClassComparisonData(selectedClasses, filteredStudents, mockClasses)} />
             )}
 
             {/* 进度分布图表 */}
@@ -2297,6 +2309,8 @@ export default function SpaceResults({ spaceId, onBack }: SpaceResultsProps) {
                   <ResourceTaskDetailsView
                     students={filteredStudents}
                     onSelectStudent={setSelectedStudentIndex}
+                    mockResources={mockResources}
+                    mockTasks={mockTasks}
                   />
                 </div>
               )}
@@ -2361,6 +2375,8 @@ export default function SpaceResults({ spaceId, onBack }: SpaceResultsProps) {
           currentIndex={selectedStudentIndex}
           onClose={() => setSelectedStudentIndex(null)}
           onNavigate={setSelectedStudentIndex}
+          mockResources={mockResources}
+          mockTasks={mockTasks}
         />
       )}
 

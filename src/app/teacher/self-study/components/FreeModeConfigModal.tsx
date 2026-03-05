@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { X, Bot, MessageCircle } from 'lucide-react';
-import { MOCK_AGENTS } from '../constants/mockData';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { getMockAgents } from '../constants/mockData';
 
 interface FreeModeConfigModalProps {
   config: {
@@ -16,6 +17,9 @@ interface FreeModeConfigModalProps {
 
 export default function FreeModeConfigModal({ config, onSave, onClose }: FreeModeConfigModalProps) {
   const [localConfig, setLocalConfig] = useState(config);
+  const { t } = useLanguage();
+
+  const MOCK_AGENTS = useMemo(() => getMockAgents(t), [t]);
 
   const handleSave = () => {
     onSave(localConfig);
@@ -34,9 +38,9 @@ export default function FreeModeConfigModal({ config, onSave, onClose }: FreeMod
             <div>
               <h2 className="text-lg font-bold flex items-center gap-2">
                 <MessageCircle size={20} />
-                自由对话模式配置
+                {t('自由对话模式配置')}
               </h2>
-              <p className="text-primary-100 text-sm mt-1">选择 AI 助手并追加教学指令</p>
+              <p className="text-primary-100 text-sm mt-1">{t('选择 AI 助手并追加教学指令')}</p>
             </div>
             <button onClick={onClose} className="p-1 hover:bg-white/20 rounded-lg transition-colors">
               <X size={20} />
@@ -49,7 +53,7 @@ export default function FreeModeConfigModal({ config, onSave, onClose }: FreeMod
           {/* Agent selection with radio buttons */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-3">
-              选择 AI 助手 <span className="text-gray-400 font-normal">(继承自通用版)</span>
+              {t('选择 AI 助手')} <span className="text-gray-400 font-normal">({t('继承自通用版')})</span>
             </label>
             <div className="space-y-2">
               {MOCK_AGENTS.map((agent) => (
@@ -83,12 +87,12 @@ export default function FreeModeConfigModal({ config, onSave, onClose }: FreeMod
           {/* Teacher prompt textarea */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              教师追加指令 <span className="text-gray-400 font-normal">(user_prompt)</span>
+              {t('教师追加指令')} <span className="text-gray-400 font-normal">(user_prompt)</span>
             </label>
             <textarea
               value={localConfig.teacherPrompt}
               onChange={(e) => setLocalConfig({ ...localConfig, teacherPrompt: e.target.value })}
-              placeholder="例如：请用幽默的口吻回答，所有比喻都和「水」有关..."
+              placeholder={t('例如：请用幽默的口吻回答，所有比喻都和「水」有关...')}
               className="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-sm text-gray-700 focus:ring-2 focus:ring-primary-500 outline-none min-h-[80px] resize-none"
             />
           </div>
@@ -96,8 +100,8 @@ export default function FreeModeConfigModal({ config, onSave, onClose }: FreeMod
           {/* Toggle switch for knowledge fence */}
           <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
             <div>
-              <span className="text-sm font-medium text-gray-700">启用知识围栏</span>
-              <p className="text-xs text-gray-500">只允许回答与课程资料相关的问题</p>
+              <span className="text-sm font-medium text-gray-700">{t('启用知识围栏')}</span>
+              <p className="text-xs text-gray-500">{t('只允许回答与课程资料相关的问题')}</p>
             </div>
             <button
               onClick={() => setLocalConfig({ ...localConfig, enableFence: !localConfig.enableFence })}
@@ -117,13 +121,13 @@ export default function FreeModeConfigModal({ config, onSave, onClose }: FreeMod
         {/* Footer buttons */}
         <div className="p-4 border-t border-gray-200 flex justify-end gap-3 bg-gray-50">
           <button onClick={onClose} className="px-4 py-2 text-gray-600 hover:text-gray-800">
-            取消
+            {t('取消')}
           </button>
           <button
             onClick={handleSave}
             className="px-6 py-2 bg-primary-600 text-white rounded-xl hover:bg-primary-700 font-medium shadow-sm"
           >
-            保存
+            {t('保存')}
           </button>
         </div>
       </div>

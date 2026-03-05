@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { X, GitBranch, Route, ChevronDown, ChevronUp, Pencil, Info, Trash2 } from 'lucide-react';
-import { MOCK_WORKFLOWS } from '../constants/mockData';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { getMockWorkflows } from '../constants/mockData';
 
 interface GuidedModeConfigModalProps {
   config: {
@@ -16,6 +17,9 @@ interface GuidedModeConfigModalProps {
 export default function GuidedModeConfigModal({ config, onSave, onClose }: GuidedModeConfigModalProps) {
   const [localConfig, setLocalConfig] = useState(config);
   const [expandedStage, setExpandedStage] = useState<string | null>(null);
+  const { t } = useLanguage();
+
+  const MOCK_WORKFLOWS = useMemo(() => getMockWorkflows(t), [t]);
 
   const selectedWorkflow = MOCK_WORKFLOWS.find((w) => w.id === localConfig.selectedWorkflowId);
 
@@ -43,9 +47,9 @@ export default function GuidedModeConfigModal({ config, onSave, onClose }: Guide
             <div>
               <h2 className="text-lg font-bold flex items-center gap-2">
                 <GitBranch size={20} />
-                引导学习模式配置
+                {t('引导学习模式配置')}
               </h2>
-              <p className="text-emerald-100 text-sm mt-1">选择教学法流程，可微调各阶段的AI提示词</p>
+              <p className="text-emerald-100 text-sm mt-1">{t('选择教学法流程，可微调各阶段的AI提示词')}</p>
             </div>
             <button onClick={onClose} className="p-1 hover:bg-white/20 rounded-lg transition-colors">
               <X size={20} />
@@ -58,7 +62,7 @@ export default function GuidedModeConfigModal({ config, onSave, onClose }: Guide
           {/* Workflow selection */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-3">
-              选择教学法 <span className="text-gray-400 font-normal">(继承自通用版)</span>
+              {t('选择教学法')} <span className="text-gray-400 font-normal">({t('继承自通用版')})</span>
             </label>
             <div className="space-y-2">
               {MOCK_WORKFLOWS.map((workflow) => (
@@ -84,7 +88,7 @@ export default function GuidedModeConfigModal({ config, onSave, onClose }: Guide
                     <div className="flex items-center gap-2">
                       <p className="font-medium text-gray-700">{workflow.name}</p>
                       <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded">
-                        {workflow.stages?.length || 0} 阶段
+                        {workflow.stages?.length || 0} {t('阶段')}
                       </span>
                     </div>
                     <p className="text-xs text-gray-500 mt-0.5">{workflow.description}</p>
@@ -100,9 +104,9 @@ export default function GuidedModeConfigModal({ config, onSave, onClose }: Guide
               <div className="mb-4">
                 <h3 className="text-sm font-bold text-gray-700 flex items-center gap-2">
                   <Pencil size={14} />
-                  各阶段提示词微调
+                  {t('各阶段提示词微调')}
                 </h3>
-                <p className="text-xs text-gray-500 mt-1">可根据课程内容自定义每个阶段的AI指导方式</p>
+                <p className="text-xs text-gray-500 mt-1">{t('可根据课程内容自定义每个阶段的AI指导方式')}</p>
               </div>
 
               <div className="space-y-3">
@@ -135,7 +139,7 @@ export default function GuidedModeConfigModal({ config, onSave, onClose }: Guide
                             {customPrompt && (
                               <span className="text-xs bg-amber-100 text-amber-600 px-2 py-0.5 rounded flex items-center gap-1">
                                 <Pencil size={10} />
-                                已自定义
+                                {t('已自定义')}
                               </span>
                             )}
                           </div>
@@ -155,7 +159,7 @@ export default function GuidedModeConfigModal({ config, onSave, onClose }: Guide
                           <div className="p-3 bg-white rounded-lg border border-gray-200">
                             <div className="flex items-center gap-2 mb-2">
                               <Info size={12} className="text-gray-400" />
-                              <span className="text-xs text-gray-500">默认提示词</span>
+                              <span className="text-xs text-gray-500">{t('默认提示词')}</span>
                             </div>
                             <p className="text-sm text-gray-600">{stage.defaultPrompt}</p>
                           </div>
@@ -163,12 +167,12 @@ export default function GuidedModeConfigModal({ config, onSave, onClose }: Guide
                           {/* Custom prompt textarea */}
                           <div>
                             <label className="block text-xs font-medium text-gray-600 mb-1">
-                              自定义提示词 <span className="text-gray-400 font-normal">(可选，会追加到默认提示词之后)</span>
+                              {t('自定义提示词')} <span className="text-gray-400 font-normal">({t('可选，会追加到默认提示词之后')})</span>
                             </label>
                             <textarea
                               value={customPrompt}
                               onChange={(e) => updateStagePrompt(stage.id, e.target.value)}
-                              placeholder={`例如：针对特定主题，${stage.name.split(' ')[0]}阶段可以...`}
+                              placeholder={t('例如：针对特定主题，') + stage.name.split(' ')[0] + t('阶段可以...')}
                               className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none resize-none"
                               rows={3}
                             />
@@ -181,7 +185,7 @@ export default function GuidedModeConfigModal({ config, onSave, onClose }: Guide
                               className="text-xs text-red-500 hover:text-red-600 flex items-center gap-1"
                             >
                               <Trash2 size={10} />
-                              清除自定义
+                              {t('清除自定义')}
                             </button>
                           )}
                         </div>
@@ -197,13 +201,13 @@ export default function GuidedModeConfigModal({ config, onSave, onClose }: Guide
         {/* Footer buttons */}
         <div className="p-4 border-t border-gray-200 flex justify-end gap-3 bg-gray-50">
           <button onClick={onClose} className="px-4 py-2 text-gray-600 hover:text-gray-800">
-            取消
+            {t('取消')}
           </button>
           <button
             onClick={handleSave}
             className="px-6 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 font-medium shadow-sm"
           >
-            保存
+            {t('保存')}
           </button>
         </div>
       </div>

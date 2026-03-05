@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { X, FileText, ChevronDown, ChevronUp, Settings } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { ExamProcessingConfig } from './task/taskTypes';
 
 interface ExamDetectedModalProps {
@@ -12,6 +13,7 @@ interface ExamDetectedModalProps {
 
 export default function ExamDetectedModal({ files, onConfirm, onCancel }: ExamDetectedModalProps) {
   const isBatch = files.length > 1;
+  const { t } = useLanguage();
 
   const [mode, setMode] = useState<ExamProcessingConfig['mode']>('exact_extract');
   const [batchMode, setBatchMode] = useState<ExamProcessingConfig['batchMode']>('separate');
@@ -33,7 +35,7 @@ export default function ExamDetectedModal({ files, onConfirm, onCancel }: ExamDe
         {/* Header */}
         <div className="flex items-center justify-between px-6 pt-5 pb-3">
           <h2 className="text-lg font-semibold text-gray-900">
-            {isBatch ? '检测到多份试卷文件' : '检测到试卷文件'}
+            {isBatch ? t('检测到多份试卷文件') : t('检测到试卷文件')}
           </h2>
           <button
             onClick={onCancel}
@@ -46,7 +48,7 @@ export default function ExamDetectedModal({ files, onConfirm, onCancel }: ExamDe
         <div className="px-6 pb-6 space-y-4 max-h-[70vh] overflow-y-auto">
           {/* File info */}
           {isBatch ? (
-            <BatchFileList files={files} />
+            <BatchFileList files={files} t={t} />
           ) : (
             <div className="flex items-center gap-2 text-sm text-gray-700">
               <span>📄</span>
@@ -57,25 +59,25 @@ export default function ExamDetectedModal({ files, onConfirm, onCancel }: ExamDe
           {/* Batch mode selection */}
           {isBatch && (
             <>
-              <p className="text-sm font-medium text-gray-700">这些文件看起来是：</p>
+              <p className="text-sm font-medium text-gray-700">{t('这些文件看起来是：')}</p>
               <div className="border border-gray-200 rounded-xl p-1 space-y-0.5">
                 <RadioItem
                   selected={batchMode === 'separate'}
                   onSelect={() => setBatchMode('separate')}
-                  label="不同的试卷"
-                  description="每份分别生成一个学习任务"
+                  label={t('不同的试卷')}
+                  description={t('每份分别生成一个学习任务')}
                 />
                 <RadioItem
                   selected={batchMode === 'same_exam_multi_student'}
                   onSelect={() => setBatchMode('same_exam_multi_student')}
-                  label="同一试卷的多份学生答卷"
-                  description={'提取统一题干 + 各学生答题结果\n→ 题干作为资源\n→ 每份答卷标记为"张三的答题结果"'}
+                  label={t('同一试卷的多份学生答卷')}
+                  description={t('提取统一题干 + 各学生答题结果\n→ 题干作为资源\n→ 每份答卷标记为"张三的答题结果"')}
                 />
                 <RadioItem
                   selected={batchMode === 'merge'}
                   onSelect={() => setBatchMode('merge')}
-                  label="合并为一份"
-                  description="将所有内容合并为一个学习任务"
+                  label={t('合并为一份')}
+                  description={t('将所有内容合并为一个学习任务')}
                 />
               </div>
             </>
@@ -83,26 +85,26 @@ export default function ExamDetectedModal({ files, onConfirm, onCancel }: ExamDe
 
           {/* Processing mode */}
           <p className="text-sm font-medium text-gray-700">
-            {isBatch ? '处理方式：' : '请选择处理方式：'}
+            {isBatch ? t('处理方式：') : t('请选择处理方式：')}
           </p>
           {isBatch ? (
             <div className="flex items-center gap-4">
-              <InlineRadio selected={mode === 'exact_extract'} onSelect={() => setMode('exact_extract')} label="精确提取" />
-              <InlineRadio selected={mode === 'extract_and_regenerate'} onSelect={() => setMode('extract_and_regenerate')} label="提取并重新生成" />
+              <InlineRadio selected={mode === 'exact_extract'} onSelect={() => setMode('exact_extract')} label={t('精确提取')} />
+              <InlineRadio selected={mode === 'extract_and_regenerate'} onSelect={() => setMode('extract_and_regenerate')} label={t('提取并重新生成')} />
             </div>
           ) : (
             <div className="border border-gray-200 rounded-xl p-1 space-y-0.5">
               <RadioItem
                 selected={mode === 'exact_extract'}
                 onSelect={() => setMode('exact_extract')}
-                label="精确提取"
-                description="原样提取题目，保持内容不变"
+                label={t('精确提取')}
+                description={t('原样提取题目，保持内容不变')}
               />
               <RadioItem
                 selected={mode === 'extract_and_regenerate'}
                 onSelect={() => setMode('extract_and_regenerate')}
-                label="提取并重新生成"
-                description="提取题目后生成相似的新题目（适合用作练习/复习）"
+                label={t('提取并重新生成')}
+                description={t('提取题目后生成相似的新题目（适合用作练习/复习）')}
               />
             </div>
           )}
@@ -113,7 +115,7 @@ export default function ExamDetectedModal({ files, onConfirm, onCancel }: ExamDe
             className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors"
           >
             <Settings className="w-4 h-4" />
-            <span>⚙️ 高级选项</span>
+            <span>{t('⚙️ 高级选项')}</span>
             {advancedOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </button>
           {advancedOpen && (
@@ -126,8 +128,8 @@ export default function ExamDetectedModal({ files, onConfirm, onCancel }: ExamDe
                   className="mt-0.5 w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                 />
                 <div>
-                  <span className="text-sm text-gray-700 group-hover:text-gray-900">包含手写批注/答案识别</span>
-                  <p className="text-xs text-gray-500">（识别学生手写的答题内容）</p>
+                  <span className="text-sm text-gray-700 group-hover:text-gray-900">{t('包含手写批注/答案识别')}</span>
+                  <p className="text-xs text-gray-500">{t('（识别学生手写的答题内容）')}</p>
                 </div>
               </label>
             </div>
@@ -140,13 +142,13 @@ export default function ExamDetectedModal({ files, onConfirm, onCancel }: ExamDe
             onClick={onCancel}
             className="border border-gray-300 text-gray-700 rounded-xl px-6 py-2.5 text-sm font-medium hover:bg-gray-50 transition-colors"
           >
-            取消
+            {t('取消')}
           </button>
           <button
             onClick={handleConfirm}
             className="bg-primary-600 text-white rounded-xl px-6 py-2.5 text-sm font-medium hover:bg-primary-700 transition-colors"
           >
-            开始转换
+            {t('开始转换')}
           </button>
         </div>
       </div>
@@ -156,7 +158,7 @@ export default function ExamDetectedModal({ files, onConfirm, onCancel }: ExamDe
 
 /* ---- Sub-components ---- */
 
-function BatchFileList({ files }: { files: File[] }) {
+function BatchFileList({ files, t }: { files: File[]; t: (text: string) => string }) {
   return (
     <div className="space-y-1.5">
       <div className="space-y-1 max-h-28 overflow-y-auto">
@@ -167,7 +169,7 @@ function BatchFileList({ files }: { files: File[] }) {
           </div>
         ))}
       </div>
-      <p className="text-xs text-gray-500">共 {files.length} 份文件</p>
+      <p className="text-xs text-gray-500">{t('共')} {files.length} {t('份文件')}</p>
     </div>
   );
 }

@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { X, Settings2, MessageCircle, GitBranch, Activity, FileEdit, Sliders } from 'lucide-react';
 import { SpaceConfig, LearningMode, AIStyle, KnowledgeBoundary, LearningFlow, LEARNING_MODE_CONFIG } from '@/types/self-study';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { NOTE_TEMPLATES, MOCK_AGENTS, MOCK_WORKFLOWS, MOCK_STRATEGIES } from '../constants/mockData';
+import { getMockAgents, getMockWorkflows, getMockStrategies, getNoteTemplates } from '../constants/mockData';
 import FreeModeConfigModal from './FreeModeConfigModal';
 import GuidedModeConfigModal from './GuidedModeConfigModal';
 import MetaConfigModal from './MetaConfigModal';
@@ -22,6 +22,12 @@ export default function SettingsModal({ config, onSave, onClose }: SettingsModal
   const [showMetaModal, setShowMetaModal] = useState(false);
   const { t } = useLanguage();
 
+  // 使用 t() 获取国际化后的 mock 数据
+  const MOCK_AGENTS = useMemo(() => getMockAgents(t), [t]);
+  const MOCK_WORKFLOWS = useMemo(() => getMockWorkflows(t), [t]);
+  const MOCK_STRATEGIES = useMemo(() => getMockStrategies(t), [t]);
+  const NOTE_TEMPLATES = useMemo(() => getNoteTemplates(t), [t]);
+
   // Initialize default configs if not present
   if (!localConfig.freeConfig) {
     localConfig.freeConfig = {
@@ -38,7 +44,7 @@ export default function SettingsModal({ config, onSave, onClose }: SettingsModal
   }
   if (!localConfig.metaConfig) {
     localConfig.metaConfig = {
-      selectedStrategyId: MOCK_STRATEGIES[1].id, // Default to standard
+      selectedStrategyId: MOCK_STRATEGIES[1].id,
       teacherPrompt: '',
     };
   }
@@ -95,8 +101,8 @@ export default function SettingsModal({ config, onSave, onClose }: SettingsModal
                             className="sr-only"
                           />
                           <div className="flex-1">
-                            <p className="text-sm font-medium text-gray-900">{LEARNING_MODE_CONFIG[mode].label}</p>
-                            <p className="text-xs text-gray-500">{LEARNING_MODE_CONFIG[mode].feeling}</p>
+                            <p className="text-sm font-medium text-gray-900">{t(LEARNING_MODE_CONFIG[mode].label)}</p>
+                            <p className="text-xs text-gray-500">{t(LEARNING_MODE_CONFIG[mode].feeling)}</p>
                           </div>
                         </label>
                       ))}
@@ -129,18 +135,18 @@ export default function SettingsModal({ config, onSave, onClose }: SettingsModal
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
                         <MessageCircle size={16} className="text-primary-600" />
-                        <span className="text-sm font-medium text-gray-700">自由对话模式</span>
+                        <span className="text-sm font-medium text-gray-700">{t('自由对话模式')}</span>
                       </div>
                       <button
                         onClick={() => setShowFreeModal(true)}
                         className="text-xs px-3 py-1.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
                       >
-                        配置 AI 助手
+                        {t('配置 AI 助手')}
                       </button>
                     </div>
                     <div className="text-xs text-gray-600 space-y-1">
-                      <p>• 当前助手: <span className="font-medium">{selectedAgent?.name || '未选择'}</span></p>
-                      <p>• 知识围栏: <span className="font-medium">{localConfig.freeConfig?.enableFence ? '已启用' : '未启用'}</span></p>
+                      <p>{t('• 当前助手:')} <span className="font-medium">{selectedAgent?.name || t('未选择')}</span></p>
+                      <p>{t('• 知识围栏:')} <span className="font-medium">{localConfig.freeConfig?.enableFence ? t('已启用') : t('未启用')}</span></p>
                     </div>
                   </div>
 
@@ -149,18 +155,18 @@ export default function SettingsModal({ config, onSave, onClose }: SettingsModal
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
                         <GitBranch size={16} className="text-emerald-600" />
-                        <span className="text-sm font-medium text-gray-700">引导学习模式</span>
+                        <span className="text-sm font-medium text-gray-700">{t('引导学习模式')}</span>
                       </div>
                       <button
                         onClick={() => setShowGuidedModal(true)}
                         className="text-xs px-3 py-1.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
                       >
-                        配置教学法
+                        {t('配置教学法')}
                       </button>
                     </div>
                     <div className="text-xs text-gray-600 space-y-1">
-                      <p>• 当前教学法: <span className="font-medium">{selectedWorkflow?.name || '未选择'}</span></p>
-                      <p>• 自定义阶段: <span className="font-medium">{Object.keys(localConfig.guidedConfig?.stagePrompts || {}).length} 个</span></p>
+                      <p>{t('• 当前教学法:')} <span className="font-medium">{selectedWorkflow?.name || t('未选择')}</span></p>
+                      <p>{t('• 自定义阶段:')} <span className="font-medium">{Object.keys(localConfig.guidedConfig?.stagePrompts || {}).length} {t('个')}</span></p>
                     </div>
                   </div>
                 </div>
@@ -194,17 +200,17 @@ export default function SettingsModal({ config, onSave, onClose }: SettingsModal
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
                         <Activity size={16} className="text-accent-600" />
-                        <span className="text-sm font-medium text-gray-700">学情监控 (元认知)</span>
+                        <span className="text-sm font-medium text-gray-700">{t('学情监控 (元认知)')}</span>
                       </div>
                       <button
                         onClick={() => setShowMetaModal(true)}
                         className="text-xs px-3 py-1.5 bg-accent-600 text-white rounded-lg hover:bg-accent-700 transition-colors"
                       >
-                        配置监控
+                        {t('配置监控')}
                       </button>
                     </div>
                     <div className="text-xs text-gray-600">
-                      <p>• 监控策略: <span className="font-medium">{selectedStrategy?.name || '未选择'}</span></p>
+                      <p>{t('• 监控策略:')} <span className="font-medium">{selectedStrategy?.name || t('未选择')}</span></p>
                     </div>
                   </div>
                 </div>

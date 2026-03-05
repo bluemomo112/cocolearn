@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { X, Link as LinkIcon, Globe } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 type ResourceTypeOption = 'link' | 'interactive';
 type InteractiveCategory = 'animation' | 'visualization' | 'simulation' | 'test';
@@ -12,18 +13,20 @@ interface LinkInputModalProps {
   onAdd: (url: string, title?: string, resourceType?: ResourceTypeOption, interactiveCategory?: InteractiveCategory) => void;
 }
 
-const INTERACTIVE_CATEGORIES: { value: InteractiveCategory; label: string; icon: string }[] = [
-  { value: 'animation', label: '说明动画', icon: '🎬' },
-  { value: 'visualization', label: '可视化', icon: '📊' },
-  { value: 'simulation', label: '互动模拟', icon: '🔬' },
-  { value: 'test', label: '互动测试', icon: '🧪' },
-];
-
 export default function LinkInputModal({ isOpen, onClose, onAdd }: LinkInputModalProps) {
   const [url, setUrl] = useState('');
   const [title, setTitle] = useState('');
   const [resourceType, setResourceType] = useState<ResourceTypeOption>('link');
   const [interactiveCategory, setInteractiveCategory] = useState<InteractiveCategory>('animation');
+  const { t } = useLanguage();
+
+  // 使用 t() 获取国际化后的互动分类
+  const INTERACTIVE_CATEGORIES = useMemo(() => [
+    { value: 'animation' as const, label: t('说明动画'), icon: '🎬' },
+    { value: 'visualization' as const, label: t('可视化'), icon: '📊' },
+    { value: 'simulation' as const, label: t('互动模拟'), icon: '🔬' },
+    { value: 'test' as const, label: t('互动测试'), icon: '🧪' },
+  ], [t]);
 
   if (!isOpen) return null;
 
@@ -59,7 +62,7 @@ export default function LinkInputModal({ isOpen, onClose, onAdd }: LinkInputModa
       <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl shadow-2xl z-50 w-[90%] max-w-lg">
         {/* 头部 */}
         <div className="p-6 border-b border-gray-200 flex items-center justify-between">
-          <h3 className="text-xl font-semibold text-gray-900">添加链接</h3>
+          <h3 className="text-xl font-semibold text-gray-900">{t('添加链接')}</h3>
           <button
             onClick={handleClose}
             className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
@@ -73,7 +76,7 @@ export default function LinkInputModal({ isOpen, onClose, onAdd }: LinkInputModa
           {/* 资源类型选择 */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              资源类型
+              {t('资源类型')}
             </label>
             <div className="flex gap-3">
               <button
@@ -85,7 +88,7 @@ export default function LinkInputModal({ isOpen, onClose, onAdd }: LinkInputModa
                 }`}
               >
                 <LinkIcon size={16} />
-                <span className="text-sm font-medium">普通链接</span>
+                <span className="text-sm font-medium">{t('普通链接')}</span>
               </button>
               <button
                 onClick={() => setResourceType('interactive')}
@@ -96,7 +99,7 @@ export default function LinkInputModal({ isOpen, onClose, onAdd }: LinkInputModa
                 }`}
               >
                 <Globe size={16} />
-                <span className="text-sm font-medium">互动网页</span>
+                <span className="text-sm font-medium">{t('互动网页')}</span>
               </button>
             </div>
           </div>
@@ -105,7 +108,7 @@ export default function LinkInputModal({ isOpen, onClose, onAdd }: LinkInputModa
           {resourceType === 'interactive' && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                互动类型
+                {t('互动类型')}
               </label>
               <div className="grid grid-cols-2 gap-2">
                 {INTERACTIVE_CATEGORIES.map((cat) => (
@@ -129,7 +132,7 @@ export default function LinkInputModal({ isOpen, onClose, onAdd }: LinkInputModa
           {/* URL 输入 */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              链接地址 *
+              {t('链接地址 *')}
             </label>
             <div className="relative">
               <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -146,17 +149,17 @@ export default function LinkInputModal({ isOpen, onClose, onAdd }: LinkInputModa
           {/* 标题输入（可选） */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              资源标题（可选）
+              {t('资源标题（可选）')}
             </label>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="为这个链接起个名字"
+              placeholder={t('为这个链接起个名字')}
               className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
             />
             <p className="text-xs text-gray-500 mt-1">
-              如果不填写，将自动使用网页标题
+              {t('如果不填写，将自动使用网页标题')}
             </p>
           </div>
         </div>
@@ -167,14 +170,14 @@ export default function LinkInputModal({ isOpen, onClose, onAdd }: LinkInputModa
             onClick={handleClose}
             className="flex-1 px-4 py-2 border border-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-colors"
           >
-            取消
+            {t('取消')}
           </button>
           <button
             onClick={handleAdd}
             disabled={!url.trim()}
             className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-xl font-medium hover:bg-primary-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
           >
-            添加
+            {t('添加')}
           </button>
         </div>
       </div>
