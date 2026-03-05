@@ -150,6 +150,16 @@ export interface TaskSubmission {
   details?: any[]; // 客观题的详细结果
 }
 
+// 任务尝试历史记录
+export interface TaskAttemptHistory {
+  taskId: string;
+  attempts: Array<{
+    attemptNumber: number;
+    submittedAt: Date;
+    score?: number;
+  }>;
+}
+
 export interface ResourceAccessLog {
   resourceId: string;
   startTime: Date;

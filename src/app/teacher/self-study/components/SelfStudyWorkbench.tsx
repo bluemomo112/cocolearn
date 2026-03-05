@@ -1245,6 +1245,20 @@ export default function SelfStudyWorkbench({
     }
   };
 
+  // 任务历史记录
+  const [taskHistory, setTaskHistory] = usePersistedState<Array<{
+    taskId: string;
+    attempts: Array<{
+      attemptNumber: number;
+      submittedAt: Date;
+      score?: number;
+    }>;
+  }>>(`self-study:wb:${config.id}:taskHistory`, []);
+
+  // 语音输入状态
+  const [isRecordingVoice, setIsRecordingVoice] = useState(false);
+  const recognitionRef = useRef<any>(null);
+
   // 计时器状态
   const [elapsedTime, setElapsedTime] = usePersistedState<number>(`self-study:wb:${config.id}:elapsedTime`, 0);
   const [isTimerRunning, setIsTimerRunning] = useState(true);
@@ -1353,6 +1367,30 @@ export default function SelfStudyWorkbench({
       }
     }
   }, [mode, generatedTasks, completedTasks, expandedTask]);
+
+  // 初始化 Web Speech API
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const SpeechRecognition = (window as any).SpeechRecognition ||
+                                (window as any).webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        const recognitionInstance = new SpeechRecognition();
+        recognitionInstance.continuous = false;
+        recognitionInstance.lang = 'zh-CN';
+
+        recognitionInstance.onresult = (event: any) => {
+          const transcript = event.results[0][0].transcript;
+          setInputMessage(prev => prev + transcript);
+        };
+
+        recognitionInstance.onend = () => {
+          setIsRecordingVoice(false);
+        };
+
+        recognitionRef.current = recognitionInstance;
+      }
+    }
+  }, []);
 
   // 任务编辑弹窗
   const [editingTask, setEditingTask] = useState<typeof MOCK_GENERATED_TASKS[0] | null>(null);
@@ -1922,6 +1960,35 @@ export default function SelfStudyWorkbench({
           setFlashingButtonId(null);
         }
       }, 1500);
+    }
+  };
+
+  // 获取任务尝试次数
+  const getAttemptCount = (taskId: string) => {
+    return taskHistory.find(h => h.taskId === taskId)?.attempts.length || 0;
+  };
+
+  // 重做任务
+  const handleRedoTask = (taskId: string) => {
+    // 重置任务状态
+    setMessages(prev => prev.map(msg =>
+      msg.embeddedTask?.id === taskId
+        ? { ...msg, taskState: { currentQuestionIndex: 0, selectedAnswers: {}, submissionText: '', status: 'in_progress' } }
+        : msg
+    ));
+    // 从已完成列表移除
+    setCompletedTasksArray(prev => prev.filter(id => id !== taskId));
+  };
+
+  // 语音输入切换
+  const toggleVoiceInput = () => {
+    if (!recognitionRef.current) return;
+
+    if (isRecordingVoice) {
+      recognitionRef.current.stop();
+    } else {
+      recognitionRef.current.start();
+      setIsRecordingVoice(true);
     }
   };
 
@@ -2755,6 +2822,25 @@ export default function SelfStudyWorkbench({
             setTaskStatus('idle');
           }, 2000); // 2秒后重置，让用户看到结果
         }
+
+        // 保存任务历史记录
+        const attemptNumber = (taskHistory.find(h => h.taskId === taskId)?.attempts.length || 0) + 1;
+        setTaskHistory(prev => {
+          const existing = prev.find(h => h.taskId === taskId);
+          const newAttempt = {
+            attemptNumber,
+            submittedAt: new Date(),
+            score: data.quickResult?.correctCount,
+          };
+          if (existing) {
+            return prev.map(h =>
+              h.taskId === taskId
+                ? { ...h, attempts: [...h.attempts, newAttempt] }
+                : h
+            );
+          }
+          return [...prev, { taskId, attempts: [newAttempt] }];
+        });
 
         // 添加loading消息到对话区
         const loadingMessage: ChatMessage = {
@@ -3703,8 +3789,28 @@ export default function SelfStudyWorkbench({
                               {(task as any).settings?.source === 'exam_converted' && (
                                 <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">试卷</span>
                               )}
+                              {completedTasks.has(task.id) && getAttemptCount(task.id) > 0 && (
+                                <>
+                                  <span>•</span>
+                                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-green-100 text-green-700">
+                                    第{getAttemptCount(task.id)}次
+                                  </span>
+                                </>
+                              )}
                             </div>
                           </div>
+                          {completedTasks.has(task.id) && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleRedoTask(task.id);
+                              }}
+                              className="px-2 py-1 text-xs text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded transition-all"
+                              title={t('重做任务')}
+                            >
+                              {t('重做')}
+                            </button>
+                          )}
                           {!isStudentMode && (
                             <button
                               onClick={(e) => {
@@ -4138,8 +4244,28 @@ export default function SelfStudyWorkbench({
                               {(task as any).settings?.source === 'exam_converted' && (
                                 <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">试卷</span>
                               )}
+                              {completedTasks.has(task.id) && getAttemptCount(task.id) > 0 && (
+                                <>
+                                  <span>•</span>
+                                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-green-100 text-green-700">
+                                    第{getAttemptCount(task.id)}次
+                                  </span>
+                                </>
+                              )}
                             </div>
                           </div>
+                          {completedTasks.has(task.id) && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleRedoTask(task.id);
+                              }}
+                              className="px-2 py-1 text-xs text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded transition-all"
+                              title={t('重做任务')}
+                            >
+                              {t('重做')}
+                            </button>
+                          )}
                           {!isStudentMode && (
                             <button
                               onClick={(e) => {
@@ -4510,8 +4636,22 @@ export default function SelfStudyWorkbench({
                     : t('回答问题或提出疑问...')
                 }
                 disabled={isLoading}
-                className="w-full bg-gray-50 border border-gray-200 rounded-lg pl-4 pr-12 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-50"
+                className="w-full bg-gray-50 border border-gray-200 rounded-lg pl-4 pr-24 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-50"
               />
+              {/* Mic button */}
+              <button
+                onClick={toggleVoiceInput}
+                disabled={isLoading}
+                className={`absolute right-14 top-1/2 -translate-y-1/2 p-2 rounded-lg transition-colors ${
+                  isRecordingVoice
+                    ? 'bg-red-500 text-white'
+                    : 'text-gray-400 hover:text-gray-600'
+                }`}
+                title={isRecordingVoice ? t('停止录音') : t('语音输入')}
+              >
+                <Mic size={16} />
+              </button>
+              {/* Send button */}
               <button
                 onClick={handleSendMessage}
                 disabled={isLoading || !inputMessage.trim()}
