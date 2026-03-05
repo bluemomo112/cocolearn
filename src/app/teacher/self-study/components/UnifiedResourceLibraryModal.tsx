@@ -510,7 +510,7 @@ export default function UnifiedResourceLibraryModal({
 
             {/* 历史测验列表 */}
             {activeTab === 'historical_tests' && (
-              <div className="space-y-3">
+              <div className="space-y-2 min-h-[300px]">
                 {filteredHistoricalTests.length === 0 ? (
                   <div className="text-center py-12 text-gray-400">
                     <p>没有找到相关测验</p>
@@ -541,9 +541,9 @@ export default function UnifiedResourceLibraryModal({
                           </div>
                         </div>
 
-                        <div className="flex-1">
-                          <div className="font-medium text-gray-900 mb-2">{test.title}</div>
-                          <div className="flex items-center gap-4 text-sm text-gray-600 flex-wrap">
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-sm font-semibold text-gray-900 mb-2">{test.title}</h4>
+                          <div className="flex items-center gap-4 text-xs text-gray-600 flex-wrap">
                             <span>📅 {test.date}</span>
                             <span>📊 {test.score}/{test.totalScore}</span>
                             <span>✅ {test.correctCount}/{test.questionCount} 题</span>
