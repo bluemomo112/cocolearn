@@ -39,24 +39,26 @@ import TaskSettingsPopover from './TaskSettingsPopover';
 import ResourceSettingsPopover from './ResourceSettingsPopover';
 import type { TaskSettings, ResourceVisibility } from '@/types/shared-context';
 
-// 导入拆分的组件和工具
-import { THEME, COLLAPSED_WIDTH } from './workbench/shared/constants';
-import { getIconComponent } from './workbench/shared/utils';
-import { Resizer } from './workbench/shared/Resizer';
-import { RightPanel } from './workbench/workspace/RightPanel';
-import { EnhancedNotesPanel } from './workbench/workspace/EnhancedNotesPanel';
-import { LearningStatusPanel } from './workbench/workspace/LearningStatusPanel';
-import type { ChatMessage, Note, VoiceRecording, SelfStudyWorkbenchProps } from './workbench/shared/types';
-
-// Mock learning path data (ai_guided mode) - will be created inside component with t()
-const MOCK_CURRENT_NODE = 'node_3';
-
-// 导入拆分的组件
+// ── workbench/ 子组件（只负责渲染，状态和 handler 留在本文件）
+// 详见 ARCHITECTURE.md 了解各文件职责
 import { WorkbenchHeader } from './workbench/header/WorkbenchHeader';
 import { LeftPanel } from './workbench/resource/LeftPanel';
 import { ChatPanel } from './workbench/chat/ChatPanel';
-// Mock generated tasks for self-directed mode - will be created inside component with t()
+import { RightPanel } from './workbench/workspace/RightPanel';
+import { EnhancedNotesPanel } from './workbench/workspace/EnhancedNotesPanel';
+import { LearningStatusPanel } from './workbench/workspace/LearningStatusPanel';
+import { Resizer } from './workbench/shared/Resizer';
+import { THEME, COLLAPSED_WIDTH } from './workbench/shared/constants';
+import { getIconComponent } from './workbench/shared/utils';
+import type { ChatMessage, Note, VoiceRecording, SelfStudyWorkbenchProps } from './workbench/shared/types';
+
+const MOCK_CURRENT_NODE = 'node_3';
+
+// ─────────────────────────────────────────────────────────────
 // 主组件
+// 本文件职责：全局状态管理 + 事件处理 + 三栏布局编排
+// 子组件渲染逻辑已拆分到 workbench/ 各目录
+// ─────────────────────────────────────────────────────────────
 export default function SelfStudyWorkbench({
   config: initialConfig,
   spaceId,
@@ -73,6 +75,9 @@ export default function SelfStudyWorkbench({
   const router = useRouter();
   const isStudentMode = mode === 'student';
 
+  // ─────────────────────────────────────────────────────────────
+  // SECTION 1: Mock 数据（组件内，依赖 t() 翻译函数）
+  // ─────────────────────────────────────────────────────────────
   // 使用 t() 的 Mock 数据（支持简繁转换）
   const GRADES = [
     t('一年级'), t('二年级'), t('三年级'), t('四年级'), t('五年级'),
@@ -477,6 +482,11 @@ export default function SelfStudyWorkbench({
     },
   ];
 
+  // ─────────────────────────────────────────────────────────────
+  // SECTION 2: State 定义
+  // 所有状态分组说明见 ARCHITECTURE.md → "State 分组" 表
+  // ─────────────────────────────────────────────────────────────
+
   // 布局状态
   const [leftWidth, setLeftWidth] = useState(25);
   const [rightWidth, setRightWidth] = useState(25);
@@ -696,7 +706,12 @@ export default function SelfStudyWorkbench({
   // 左侧面板内联查看的资源
   const [inlineViewingResource, setInlineViewingResource] = useState<InlineViewResource | null>(null);
 
-  // 统一的资源点击处理
+  // ─────────────────────────────────────────────────────────────
+  // SECTION 3: Handlers（事件处理函数）
+  // 子 section 标注各自归属的面板
+  // ─────────────────────────────────────────────────────────────
+
+  // [资源/任务] 统一的资源点击处理
   const handleResourceClick = (resource: Resource | typeof aiGeneratedResources[0]) => {
     const hasUrl = 'url' in resource && !!resource.url;
     const isInteractive = (resource.type === 'interactive' || resource.type === 'ai_generated') && hasUrl &&
@@ -745,9 +760,7 @@ export default function SelfStudyWorkbench({
     }, 1500);
   };
 
-  // 处理Studio工具点击
-  // 資源類工具的固定 Mock 數據
-  // 資源類工具的結構化 Mock 數據
+  // [左侧面板] Studio 工具点击处理
   const RESOURCE_MOCK_DATA: Record<string, { 
     title: string; 
     description: string; 
@@ -1227,6 +1240,7 @@ export default function SelfStudyWorkbench({
     }
   }, [isAIGenerating, generatedTasks.length]);
 
+  // ── [对话区] ChatPanel handlers ──────────────────────────────
   // 快速回复处理函数
   const handleQuickReply = (messageText: string) => {
     const userMessage: ChatMessage = {
@@ -1462,6 +1476,7 @@ export default function SelfStudyWorkbench({
     }
   };
 
+  // ── [任务] TaskExpandedCard handlers ─────────────────────────
   // 获取任务尝试次数
   const getAttemptCount = (taskId: string) => {
     return taskHistory.find(h => h.taskId === taskId)?.attempts.length || 0;
@@ -1498,6 +1513,7 @@ export default function SelfStudyWorkbench({
     setIsTimerRunning(true);
   };
 
+  // ── [Header] WorkbenchHeader handlers ────────────────────────
   // 发布相关函数
   const handlePublish = async (metadata: import('@/types/self-study').PublishMetadata, scope: PublishScope) => {
     // 生成分享链接
@@ -1561,6 +1577,7 @@ export default function SelfStudyWorkbench({
   // 试卷关键词正则
   const EXAM_PATTERN = /(?:试卷|测验|测试|考试|期中|期末|月考|模拟|真题|quiz|exam|test|midterm|final|assessment)/i;
 
+  // ── [Modal] 资源导入 handlers ─────────────────────────────────
   // 处理文件上传
   const handleFileUpload = (files: File[]) => {
     // 检测是否包含试卷文件
@@ -2068,6 +2085,7 @@ export default function SelfStudyWorkbench({
     }, 1000);
   };
 
+  // ── [Header] 标题编辑 handlers ───────────────────────────────
   // 处理空间名称保存
   const handleTitleSave = () => {
     if (editedTitle.trim() && editedTitle !== config.title) {
@@ -2202,6 +2220,7 @@ export default function SelfStudyWorkbench({
     }));
   };
 
+  // ── [任务×对话] 跨 section 核心逻辑 ─────────────────────────
   // 处理用户点击任务 - 将任务作为智能体推送的消息嵌入对话
   const handleTaskClick = (task: any) => {
     // 创建一条智能体消息，嵌入任务卡片
@@ -2256,7 +2275,8 @@ export default function SelfStudyWorkbench({
     }));
   };
 
-  // 切换任务完成状态 - 两阶段提交
+  // toggleTaskCompletion - 两阶段提交（核心逻辑，涉及 4+ 个 section 的 state）
+  // 修改前请参考 ARCHITECTURE.md → "已知技术债"
   const toggleTaskCompletion = async (taskId: string, answer?: string) => {
     // 如果正在提交或批改中，不再处理
     if (taskStatus === 'submitting' || taskStatus === 'grading') {
@@ -2465,7 +2485,10 @@ export default function SelfStudyWorkbench({
     }
   };
 
-  // ===== 内联 UI 子组件 =====
+  // ─────────────────────────────────────────────────────────────
+  // SECTION 4: 内联 UI 子组件
+  // 待提取到 workbench/chat/ 目录（见 ARCHITECTURE.md 技术债）
+  // ─────────────────────────────────────────────────────────────
 
   // 知识检查点卡片
   const KnowledgeCheckpointCard = ({ message }: { message: ChatMessage }) => {
@@ -2591,6 +2614,11 @@ export default function SelfStudyWorkbench({
       )}
     </div>
   );
+
+  // ─────────────────────────────────────────────────────────────
+  // SECTION 5: JSX Render（三栏布局编排 + Modal 渲染）
+  // 子组件渲染：WorkbenchHeader / LeftPanel / ChatPanel / RightPanel
+  // ─────────────────────────────────────────────────────────────
 
   // 学习路径进度计算
   const masteredCount = learningPath.filter(n => n.status === 'mastered').length;
