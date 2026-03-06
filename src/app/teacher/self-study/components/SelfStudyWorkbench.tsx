@@ -43,7 +43,6 @@ import type { TaskSettings, ResourceVisibility } from '@/types/shared-context';
 import { THEME, COLLAPSED_WIDTH } from './workbench/shared/constants';
 import { getIconComponent } from './workbench/shared/utils';
 import { Resizer } from './workbench/shared/Resizer';
-import { WorkspaceSection } from './workbench/workspace/WorkspaceSection';
 import { RightPanel } from './workbench/workspace/RightPanel';
 import { EnhancedNotesPanel } from './workbench/workspace/EnhancedNotesPanel';
 import { LearningStatusPanel } from './workbench/workspace/LearningStatusPanel';
@@ -54,10 +53,7 @@ const MOCK_CURRENT_NODE = 'node_3';
 
 // 导入拆分的组件
 import { WorkbenchHeader } from './workbench/header/WorkbenchHeader';
-import { ResourceSection } from './workbench/resource/ResourceSection';
 import { LeftPanel } from './workbench/resource/LeftPanel';
-import { TaskSection } from './workbench/task/TaskSection';
-import { ChatSection } from './workbench/chat/ChatSection';
 import { ChatPanel } from './workbench/chat/ChatPanel';
 // Mock generated tasks for self-directed mode - will be created inside component with t()
 // 主组件
