@@ -9,7 +9,7 @@ interface WorkbenchHeaderProps {
   isStudentMode: boolean;
   isEditingTitle: boolean;
   editedTitle: string;
-  onBack: () => void;
+  onBack?: () => void;
   onTitleEdit: () => void;
   onTitleSave: () => void;
   onTitleCancel: () => void;
