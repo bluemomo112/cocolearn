@@ -18,7 +18,7 @@ import {
   ChevronRight, ChevronLeft, ChevronDown, ChevronUp, ListChecks, CheckCircle2,
   Circle, Sparkles, Activity, Settings, Database, Pencil, Check, Zap,
   Bot, MessageSquare, BookOpen, Clock, Search,
-  FileEdit, FolderOpen, Type,
+  FileEdit, FolderOpen, Type, GripVertical, Trash2,
 } from 'lucide-react';
 
 interface LeftPanelProps {
@@ -94,6 +94,145 @@ export function LeftPanel(props: LeftPanelProps) {
   // 粘贴文本弹窗状态
   const [showPasteTextModal, setShowPasteTextModal] = useState(false);
   const [pasteTextContent, setPasteTextContent] = useState('');
+
+  // 统一编辑任务弹窗状态
+  const [unifiedEditTask, setUnifiedEditTask] = useState<any>(null);
+  const [editLocalTask, setEditLocalTask] = useState<any>(null);
+  const [inlineEditingId, setInlineEditingId] = useState<string | null>(null);
+  const [draggedQuestionId, setDraggedQuestionId] = useState<string | null>(null);
+
+  const openUnifiedEditModal = (task: any) => {
+    setUnifiedEditTask(task);
+    setEditLocalTask(JSON.parse(JSON.stringify(task)));
+  };
+
+  const closeUnifiedEditModal = () => {
+    setUnifiedEditTask(null);
+    setEditLocalTask(null);
+    setInlineEditingId(null);
+  };
+
+  const handleUnifiedEditSave = () => {
+    if (editLocalTask) {
+      setEditingTask(editLocalTask);
+      // Trigger save via parent by calling setEditingTask then immediately closing
+      // The parent's TaskEditModal onSave flow handles persistence
+      // Instead, directly update via onSaveTaskSettings pattern
+      const updatedSettings: any = {
+        ...(editLocalTask.settings || {}),
+        showAnswersAfterSubmit: editLocalTask.settings?.showAnswersAfterSubmit ?? true,
+      };
+      onSaveTaskSettings(editLocalTask.id, updatedSettings);
+      // Update the task in generatedTasks via setEditingTask callback
+      setEditingTask(editLocalTask);
+    }
+    closeUnifiedEditModal();
+  };
+
+  const handleDeleteQuestion = (questionId: string) => {
+    if (!editLocalTask) return;
+    const updated = {
+      ...editLocalTask,
+      questions: (editLocalTask.questions || []).filter((q: any) => q.id !== questionId),
+      questionCount: (editLocalTask.questions || []).filter((q: any) => q.id !== questionId).length,
+    };
+    setEditLocalTask(updated);
+  };
+
+  const handleToggleQuestionRequired = (questionId: string) => {
+    if (!editLocalTask) return;
+    const updated = {
+      ...editLocalTask,
+      questions: (editLocalTask.questions || []).map((q: any) =>
+        q.id === questionId ? { ...q, required: !q.required } : q
+      ),
+    };
+    setEditLocalTask(updated);
+  };
+
+  const handleInlineEdit = (questionId: string, field: string, value: string, optionIndex?: number) => {
+    if (!editLocalTask) return;
+    const updated = {
+      ...editLocalTask,
+      questions: (editLocalTask.questions || []).map((q: any) => {
+        if (q.id !== questionId) return q;
+        if (field === 'option' && optionIndex !== undefined) {
+          const newOptions = [...(q.options || [])];
+          newOptions[optionIndex] = value;
+          return { ...q, options: newOptions };
+        }
+        return { ...q, [field]: value };
+      }),
+    };
+    setEditLocalTask(updated);
+  };
+
+  const handleAddManualQuestion = () => {
+    if (!editLocalTask) return;
+    const newQ = {
+      id: `q_${Date.now()}`,
+      type: 'single_choice',
+      content: t('新题目'),
+      options: [t('选项A'), t('选项B'), t('选项C'), t('选项D')],
+      answer: t('选项A'),
+      required: false,
+      points: 1,
+    };
+    const updated = {
+      ...editLocalTask,
+      questions: [...(editLocalTask.questions || []), newQ],
+      questionCount: (editLocalTask.questions || []).length + 1,
+    };
+    setEditLocalTask(updated);
+    // Auto focus the new question for inline editing
+    setInlineEditingId(newQ.id);
+  };
+
+  const handleAIGenerateQuestions = async () => {
+    if (!editLocalTask) return;
+    // Simulate AI generation
+    const newQuestions = Array.from({ length: 3 }, (_, i) => ({
+      id: `q_ai_${Date.now()}_${i}`,
+      type: 'single_choice' as const,
+      content: `${t('AI 生成题目')} ${(editLocalTask.questions || []).length + i + 1}`,
+      options: [t('选项A'), t('选项B'), t('选项C'), t('选项D')],
+      answer: t('选项A'),
+      required: false,
+      points: 1,
+    }));
+    const updated = {
+      ...editLocalTask,
+      questions: [...(editLocalTask.questions || []), ...newQuestions],
+      questionCount: (editLocalTask.questions || []).length + newQuestions.length,
+    };
+    setEditLocalTask(updated);
+  };
+
+  const handleDragOver = (e: React.DragEvent, targetId: string) => {
+    e.preventDefault();
+    if (!draggedQuestionId || draggedQuestionId === targetId || !editLocalTask) return;
+    const questions = [...(editLocalTask.questions || [])];
+    const fromIdx = questions.findIndex((q: any) => q.id === draggedQuestionId);
+    const toIdx = questions.findIndex((q: any) => q.id === targetId);
+    if (fromIdx < 0 || toIdx < 0) return;
+    const [moved] = questions.splice(fromIdx, 1);
+    questions.splice(toIdx, 0, moved);
+    setEditLocalTask({ ...editLocalTask, questions });
+  };
+
+  const handleAddManualTask = () => {
+    const newTask = {
+      id: `manual_task_${Date.now()}`,
+      type: 'quiz' as const,
+      title: t('新任务'),
+      description: '',
+      status: 'optional' as const,
+      questionCount: 0,
+      questions: [],
+      settings: { showAnswersAfterSubmit: true, showExplanationsAfterSubmit: true, allowRetry: true, fullscreenMode: false, allowViewResources: false, source: 'manual' as const },
+    };
+    openUnifiedEditModal(newTask);
+  };
 
   const handlePasteTextConfirm = () => {
     if (!pasteTextContent.trim()) return;
@@ -507,28 +646,6 @@ export function LeftPanel(props: LeftPanelProps) {
                       </h3>
                     </div>
                     <div className="flex items-center gap-2">
-                      {collapsedPanels.tasks && generatedTasks.length === 0 && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onGenerateTest();
-                          }}
-                          disabled={isGeneratingTask}
-                          className="px-2.5 py-1 bg-primary-600 hover:bg-primary-700 text-white text-xs font-medium rounded-lg transition-colors flex items-center gap-1 disabled:opacity-70"
-                        >
-                          {isGeneratingTask ? (
-                            <>
-                              <Activity size={12} className="animate-spin" />
-                              {t('生成中...')}
-                            </>
-                          ) : (
-                            <>
-                              <Zap size={12} />
-                              {t('生成任务')}
-                            </>
-                          )}
-                        </button>
-                      )}
                       {collapsedPanels.tasks ? (
                         <ChevronDown size={16} className="text-gray-400" />
                       ) : (
@@ -584,24 +701,14 @@ export function LeftPanel(props: LeftPanelProps) {
                     )}
                     {generatedTasks.length === 0 ? (
                       <div className="text-center py-6 text-gray-400">
-                        <Zap size={24} className="mx-auto mb-2 opacity-50" />
-                        <p className="text-xs mb-3">{t('点击"生成任务"创建学习任务')}</p>
+                        <ListChecks size={24} className="mx-auto mb-2 opacity-50" />
+                        <p className="text-xs mb-3">{t('暂无学习任务')}</p>
                         <button
-                          onClick={onGenerateTest}
-                          disabled={isGeneratingTask}
-                          className="px-4 py-2 bg-fresh-500 hover:bg-fresh-600 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2 mx-auto disabled:opacity-70"
+                          onClick={handleAddManualTask}
+                          className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-lg transition-colors flex items-center gap-2 mx-auto"
                         >
-                          {isGeneratingTask ? (
-                            <>
-                              <Activity size={14} className="animate-spin" />
-                              {t('生成中...')}
-                            </>
-                          ) : (
-                            <>
-                              <Zap size={14} />
-                              {t('生成任务')}
-                            </>
-                          )}
+                          <Plus size={14} />
+                          {t('手动添加')}
                         </button>
                       </div>
                     ) : (
@@ -662,7 +769,7 @@ export function LeftPanel(props: LeftPanelProps) {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              setEditingTask(task);
+                              openUnifiedEditModal(task);
                             }}
                             className="opacity-0 group-hover:opacity-100 px-2 py-1 text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all"
                             title={t('编辑任务')}
@@ -675,26 +782,14 @@ export function LeftPanel(props: LeftPanelProps) {
                       </>
                     )}
 
-                    {/* 生成更多任务按钮 - 仅当已有任务时显示 */}
-                    {generatedTasks.length > 0 && (
-                      <button
-                        onClick={onGenerateTest}
-                        disabled={isGeneratingTask}
-                        className="w-full px-3 py-2.5 border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-gray-400 hover:bg-gray-50 transition-all flex items-center justify-center gap-2 disabled:opacity-70"
-                      >
-                        {isGeneratingTask ? (
-                          <>
-                            <Activity size={14} className="animate-spin" />
-                            {t('生成中...')}
-                          </>
-                        ) : (
-                          <>
-                            <Sparkles size={14} />
-                            {t('AI 生成更多任务')}
-                          </>
-                        )}
-                      </button>
-                    )}
+                    {/* 手动添加任务按钮 */}
+                    <button
+                      onClick={handleAddManualTask}
+                      className="w-full px-3 py-2.5 border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-gray-400 hover:bg-gray-50 transition-all flex items-center justify-center gap-2"
+                    >
+                      <Plus size={14} />
+                      {t('手动添加')}
+                    </button>
                   </div>
                 )}
               </div>
@@ -937,28 +1032,6 @@ export function LeftPanel(props: LeftPanelProps) {
                       <p className="text-xs text-gray-500 mt-1">{t('AI 生成的测试和练习')}</p>
                     </div>
                     <div className="flex items-center gap-2">
-                      {collapsedPanels.tasks && generatedTasks.length === 0 && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onGenerateTest();
-                          }}
-                          disabled={isGeneratingTask}
-                          className="px-2.5 py-1 bg-primary-600 hover:bg-primary-700 text-white text-xs font-medium rounded-lg transition-colors flex items-center gap-1 disabled:opacity-70"
-                        >
-                          {isGeneratingTask ? (
-                            <>
-                              <Activity size={12} className="animate-spin" />
-                              {t('生成中...')}
-                            </>
-                          ) : (
-                            <>
-                              <Zap size={12} />
-                              {t('生成测试')}
-                            </>
-                          )}
-                        </button>
-                      )}
                       {collapsedPanels.tasks ? (
                         <ChevronDown size={16} className="text-gray-400" />
                       ) : (
@@ -1015,23 +1088,13 @@ export function LeftPanel(props: LeftPanelProps) {
                     {generatedTasks.length === 0 ? (
                       <div className="text-center py-6 text-gray-400">
                         <Zap size={24} className="mx-auto mb-2 opacity-50" />
-                        <p className="text-xs mb-3">{t('点击"生成测试"创建学习任务')}</p>
+                        <p className="text-xs mb-3">{t('暂无学习任务')}</p>
                         <button
-                          onClick={onGenerateTest}
-                          disabled={isGeneratingTask}
-                          className="px-4 py-2 bg-fresh-500 hover:bg-fresh-600 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2 mx-auto disabled:opacity-70"
+                          onClick={handleAddManualTask}
+                          className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 text-sm font-medium rounded-lg transition-colors flex items-center gap-2 mx-auto"
                         >
-                          {isGeneratingTask ? (
-                            <>
-                              <Activity size={14} className="animate-spin" />
-                              {t('生成中...')}
-                            </>
-                          ) : (
-                            <>
-                              <Zap size={14} />
-                              {t('生成测试')}
-                            </>
-                          )}
+                          <Plus size={14} />
+                          {t('手动添加')}
                         </button>
                       </div>
                     ) : (
@@ -1105,26 +1168,14 @@ export function LeftPanel(props: LeftPanelProps) {
                       </>
                     )}
 
-                    {/* 生成更多任务按钮 - 仅当已有任务时显示 */}
-                    {generatedTasks.length > 0 && (
-                      <button
-                        onClick={onGenerateTest}
-                        disabled={isGeneratingTask}
-                        className="w-full px-3 py-2.5 border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-gray-400 hover:bg-gray-50 transition-all flex items-center justify-center gap-2 disabled:opacity-70"
-                      >
-                        {isGeneratingTask ? (
-                          <>
-                            <Activity size={14} className="animate-spin" />
-                            {t('生成中...')}
-                          </>
-                        ) : (
-                          <>
-                            <Sparkles size={14} />
-                            {t('AI 生成更多任务')}
-                          </>
-                        )}
-                      </button>
-                    )}
+                    {/* 手动添加任务按钮 */}
+                    <button
+                      onClick={handleAddManualTask}
+                      className="w-full px-3 py-2.5 border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-gray-400 hover:bg-gray-50 transition-all flex items-center justify-center gap-2"
+                    >
+                      <Plus size={14} />
+                      {t('手动添加')}
+                    </button>
                   </div>
                 )}
               </div>
@@ -1171,6 +1222,149 @@ export function LeftPanel(props: LeftPanelProps) {
               >
                 {t('确定')}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 统一编辑任务弹窗 */}
+      {unifiedEditTask && editLocalTask && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center" onClick={closeUnifiedEditModal}>
+          <div className="bg-white rounded-xl shadow-2xl w-[600px] max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            {/* 弹窗头部 */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
+              <h3 className="text-base font-semibold text-gray-800">{t('编辑任务')}</h3>
+              <button onClick={closeUnifiedEditModal} className="p-1 hover:bg-gray-100 rounded-lg"><X size={18} className="text-gray-500" /></button>
+            </div>
+
+            {/* 弹窗内容 */}
+            <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+              {/* 任务标题 */}
+              <div>
+                <label className="text-xs font-medium text-gray-500 mb-1 block">{t('任务标题')}</label>
+                <input
+                  type="text"
+                  value={editLocalTask.title || ''}
+                  onChange={(e) => setEditLocalTask({ ...editLocalTask, title: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                />
+              </div>
+
+              {/* 题目列表 */}
+              <div>
+                <label className="text-xs font-medium text-gray-500 mb-2 block">{t('题目列表')}</label>
+                <div className="space-y-2">
+                  {(editLocalTask.questions || []).map((q: any, idx: number) => (
+                    <div
+                      key={q.id}
+                      draggable
+                      onDragStart={() => setDraggedQuestionId(q.id)}
+                      onDragOver={(e) => handleDragOver(e, q.id)}
+                      onDragEnd={() => setDraggedQuestionId(null)}
+                      className="border border-gray-200 rounded-lg p-3 bg-gray-50 hover:bg-white transition-colors group"
+                    >
+                      <div className="flex items-start gap-2">
+                        <GripVertical size={14} className="text-gray-300 mt-1 cursor-grab flex-shrink-0" />
+                        <span className="text-xs text-gray-400 mt-0.5 flex-shrink-0">{idx + 1}.</span>
+                        <div className="flex-1 min-w-0">
+                          {/* 题目内容 - 双击编辑 */}
+                          {inlineEditingId === q.id ? (
+                            <input
+                              autoFocus
+                              value={q.content || ''}
+                              onChange={(e) => handleInlineEdit(q.id, 'content', e.target.value)}
+                              onBlur={() => setInlineEditingId(null)}
+                              onKeyDown={(e) => e.key === 'Enter' && setInlineEditingId(null)}
+                              className="w-full text-sm px-2 py-1 border border-primary-300 rounded focus:outline-none focus:ring-1 focus:ring-primary-500"
+                            />
+                          ) : (
+                            <p
+                              className="text-sm text-gray-700 cursor-text hover:bg-gray-100 px-2 py-1 rounded"
+                              onDoubleClick={() => setInlineEditingId(q.id)}
+                              title={t('双击编辑')}
+                            >
+                              {q.content || t('空题目')}
+                            </p>
+                          )}
+                          {/* 选项 */}
+                          {q.options && (
+                            <div className="mt-1 space-y-0.5">
+                              {q.options.map((opt: string, optIdx: number) => (
+                                <div key={optIdx} className="flex items-center gap-1 text-xs text-gray-500">
+                                  <span className="w-4 text-center">{String.fromCharCode(65 + optIdx)}.</span>
+                                  <span
+                                    className="cursor-text hover:bg-gray-100 px-1 rounded"
+                                    onDoubleClick={() => {
+                                      const newVal = prompt(t('编辑选项'), opt);
+                                      if (newVal !== null) handleInlineEdit(q.id, 'option', newVal, optIdx);
+                                    }}
+                                  >
+                                    {opt}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        {/* 必修开关 */}
+                        <button
+                          onClick={() => handleToggleQuestionRequired(q.id)}
+                          className={`text-[10px] px-2 py-0.5 rounded-full flex-shrink-0 ${q.required ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-400'}`}
+                        >
+                          {q.required ? t('必修') : t('选修')}
+                        </button>
+                        {/* 删除 */}
+                        <button
+                          onClick={() => handleDeleteQuestion(q.id)}
+                          className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-50 rounded text-gray-400 hover:text-red-500 flex-shrink-0"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {/* 添加题目按钮 */}
+                <div className="flex gap-2 mt-3">
+                  <button
+                    onClick={handleAIGenerateQuestions}
+                    className="flex-1 px-3 py-2 border border-dashed border-gray-300 rounded-lg text-xs text-gray-500 hover:border-primary-400 hover:text-primary-600 hover:bg-primary-50 transition-colors flex items-center justify-center gap-1"
+                  >
+                    <Sparkles size={12} />
+                    {t('AI 生成题目')}
+                  </button>
+                  <button
+                    onClick={handleAddManualQuestion}
+                    className="flex-1 px-3 py-2 border border-dashed border-gray-300 rounded-lg text-xs text-gray-500 hover:border-gray-400 hover:bg-gray-50 transition-colors flex items-center justify-center gap-1"
+                  >
+                    <Plus size={12} />
+                    {t('手动添加')}
+                  </button>
+                </div>
+              </div>
+
+              {/* 答案可见性 */}
+              <div className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-lg">
+                <div>
+                  <p className="text-sm font-medium text-gray-700">{t('答案可见性')}</p>
+                  <p className="text-xs text-gray-400">{editLocalTask.settings?.showAnswersAfterSubmit ? t('完成后显示正确答案') : t('完成后不显示正确答案，要求再次思考')}</p>
+                </div>
+                <button
+                  onClick={() => setEditLocalTask({
+                    ...editLocalTask,
+                    settings: { ...(editLocalTask.settings || {}), showAnswersAfterSubmit: !editLocalTask.settings?.showAnswersAfterSubmit }
+                  })}
+                  className={`w-10 h-5 rounded-full transition-colors ${editLocalTask.settings?.showAnswersAfterSubmit ? 'bg-primary-500' : 'bg-gray-300'}`}
+                >
+                  <div className={`w-4 h-4 bg-white rounded-full shadow transition-transform ${editLocalTask.settings?.showAnswersAfterSubmit ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                </button>
+              </div>
+            </div>
+
+            {/* 弹窗底部 */}
+            <div className="flex justify-end gap-3 px-5 py-4 border-t border-gray-200">
+              <button onClick={closeUnifiedEditModal} className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg">{t('取消')}</button>
+              <button onClick={handleUnifiedEditSave} className="px-4 py-2 text-sm text-white bg-primary-600 hover:bg-primary-700 rounded-lg">{t('保存')}</button>
             </div>
           </div>
         </div>
