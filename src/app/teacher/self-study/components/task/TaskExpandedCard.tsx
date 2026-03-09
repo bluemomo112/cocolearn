@@ -3,7 +3,7 @@
 import {
   ChevronLeft, ChevronRight, ChevronDown, ChevronUp,
   Check, X, Zap, Brain, FileEdit, Activity, AlertCircle,
-  CheckCircle, XCircle,
+  CheckCircle, XCircle, Minimize2,
 } from 'lucide-react';
 import { Task } from '@/types/shared-context';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -93,8 +93,9 @@ function FullscreenMode({ task, idx, selectedAnswers, submissionText, onAnswer, 
           </div>
           <div className="flex items-center gap-1">
             {onToggleMode && (
-              <button onClick={onToggleMode} className="p-2 hover:bg-gray-100 rounded-lg transition-colors" title={t('缩小到对话区')}>
-                <ChevronDown size={18} className="text-gray-500" />
+              <button onClick={onToggleMode} className="p-2 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-1" title={t('缩小到左侧')}>
+                <Minimize2 size={16} className="text-gray-500" />
+                <span className="text-xs text-gray-500 hidden sm:inline">{t('缩小')}</span>
               </button>
             )}
             <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">

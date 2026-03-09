@@ -7,6 +7,7 @@ import ResourceInlineViewer, { InlineViewResource } from '../../ResourceInlineVi
 import { useLanguage } from '@/contexts/LanguageContext';
 import TaskExpandedCard from '../../task/TaskExpandedCard';
 import TaskResultReview from '../../task/TaskResultReview';
+import TaskInlineViewer from '../../task/TaskInlineViewer';
 import { QuickResultData, ExamProcessingStep } from '../../task/taskTypes';
 import TaskSettingsPopover from '../../TaskSettingsPopover';
 import ResourceSettingsPopover from '../../ResourceSettingsPopover';
@@ -70,6 +71,10 @@ interface LeftPanelProps {
   selectedResourceIds: Set<string>;
   toggleResourceSelection: (id: string) => void;
   onSetViewingResource?: (resource: Resource | null) => void;
+  explainQuestion?: TaskQuestion | null;
+  onSetExpandedTask?: (task: Task | null) => void;
+  onSetTaskDisplayMode?: (mode: 'fullscreen' | 'embedded' | 'result_review') => void;
+  onSetExplainQuestion?: (q: TaskQuestion | null) => void;
 }
 
 export function LeftPanel(props: LeftPanelProps) {
@@ -92,6 +97,7 @@ export function LeftPanel(props: LeftPanelProps) {
     selectedResourceIds, toggleResourceSelection,
     selectedTaskIds, toggleAllTasks, toggleAllResources, toggleTaskSelection, setEditingTask, onSaveTask,
     onSetViewingResource,
+    explainQuestion, onSetExpandedTask, onSetTaskDisplayMode, onSetExplainQuestion,
   } = props;
 
   // 粘贴文本弹窗状态
@@ -749,14 +755,32 @@ export function LeftPanel(props: LeftPanelProps) {
                   <div className="flex-1 overflow-y-auto p-4 space-y-2">
                     {expandedTask && taskDisplayMode === 'embedded' ? (
                       <div className="h-full -m-4">
-                        <TaskExpandedCard
+                        <TaskInlineViewer
                           task={expandedTask}
-                          displayMode="embedded"
-                          isCompleted={completedTasks.has(expandedTask.id)}
-                          taskStatus={taskStatus}
+                          mode={explainQuestion ? 'explaining' : 'doing'}
+                          currentQuestionIndex={
+                            messages.find(m => m.embeddedTask?.id === expandedTask.id)?.taskState?.currentQuestionIndex || 0
+                          }
+                          selectedAnswers={
+                            messages.find(m => m.embeddedTask?.id === expandedTask.id)?.taskState?.selectedAnswers || {}
+                          }
                           quickResult={quickResult}
-                          onClose={() => onTaskClick(expandedTask)}
-                          onComplete={(taskId, answer) => onToggleTaskCompletion(expandedTask.id)}
+                          explainQuestion={explainQuestion}
+                          onFullscreen={() => {
+                            if (explainQuestion) {
+                              onSetExplainQuestion?.(null);
+                              onSetTaskDisplayMode?.('result_review');
+                            } else if (completedTasks.has(expandedTask.id) && quickResult) {
+                              onSetTaskDisplayMode?.('result_review');
+                            } else {
+                              onSetTaskDisplayMode?.('fullscreen');
+                            }
+                          }}
+                          onBack={() => {
+                            onSetExplainQuestion?.(null);
+                            onSetExpandedTask?.(null);
+                            onSetTaskDisplayMode?.('fullscreen');
+                          }}
                         />
                       </div>
                     ) : (
@@ -1155,14 +1179,32 @@ export function LeftPanel(props: LeftPanelProps) {
                   <div className="flex-1 overflow-y-auto p-4 space-y-2">
                     {expandedTask && taskDisplayMode === 'embedded' ? (
                       <div className="h-full -m-4">
-                        <TaskExpandedCard
+                        <TaskInlineViewer
                           task={expandedTask}
-                          displayMode="embedded"
-                          isCompleted={completedTasks.has(expandedTask.id)}
-                          taskStatus={taskStatus}
+                          mode={explainQuestion ? 'explaining' : 'doing'}
+                          currentQuestionIndex={
+                            messages.find(m => m.embeddedTask?.id === expandedTask.id)?.taskState?.currentQuestionIndex || 0
+                          }
+                          selectedAnswers={
+                            messages.find(m => m.embeddedTask?.id === expandedTask.id)?.taskState?.selectedAnswers || {}
+                          }
                           quickResult={quickResult}
-                          onClose={() => onTaskClick(expandedTask)}
-                          onComplete={(taskId, answer) => onToggleTaskCompletion(expandedTask.id)}
+                          explainQuestion={explainQuestion}
+                          onFullscreen={() => {
+                            if (explainQuestion) {
+                              onSetExplainQuestion?.(null);
+                              onSetTaskDisplayMode?.('result_review');
+                            } else if (completedTasks.has(expandedTask.id) && quickResult) {
+                              onSetTaskDisplayMode?.('result_review');
+                            } else {
+                              onSetTaskDisplayMode?.('fullscreen');
+                            }
+                          }}
+                          onBack={() => {
+                            onSetExplainQuestion?.(null);
+                            onSetExpandedTask?.(null);
+                            onSetTaskDisplayMode?.('fullscreen');
+                          }}
                         />
                       </div>
                     ) : (

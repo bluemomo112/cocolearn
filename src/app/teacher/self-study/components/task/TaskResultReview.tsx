@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ChevronLeft, ChevronRight, Award, Lightbulb, RotateCcw, MessageCircle, BookmarkCheck, Trash2, Eye } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Award, Lightbulb, RotateCcw, MessageCircle, BookmarkCheck, Trash2, Eye, Minimize2, Sparkles, AlertTriangle, Target } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Task, TaskQuestion } from '@/types/shared-context';
 import QuestionRenderer, { getQuestionTypeLabel } from './QuestionRenderer';
@@ -18,11 +18,13 @@ interface TaskResultReviewProps {
   onGeneratePractice?: () => void;
   onBackToChat?: () => void;
   onExplainQuestion?: (question: TaskQuestion, userAnswer: string | string[], correctAnswer: string | string[]) => void;
+  onShrinkToInline?: () => void;
 }
 
 export default function TaskResultReview({
   task, quickResult, selectedAnswers, onClose,
   onRetryWrongQuestions, onRedoTask, onGeneratePractice, onBackToChat, onExplainQuestion,
+  onShrinkToInline,
 }: TaskResultReviewProps) {
   const { t } = useLanguage();
   const questions = task.questions || [];
@@ -61,6 +63,11 @@ export default function TaskResultReview({
         <div className="flex items-center gap-2 text-sm">
           <span className="text-gray-500">{t('得分')}</span>
           <span className={`text-lg font-bold ${scoreColor}`}>{quickResult.correctCount}/{quickResult.totalCount}</span>
+          {onShrinkToInline && (
+            <button onClick={onShrinkToInline} className="ml-2 p-2 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-1" title={t('缩小到左侧')}>
+              <Minimize2 size={16} className="text-gray-500" />
+            </button>
+          )}
         </div>
       </div>
 
@@ -259,7 +266,7 @@ function ReviewSummary({ result, pct, color, stats, onClose, onRetryWrongQuestio
       </div>
 
       {/* AI evaluation */}
-      <div className="bg-primary-50 border border-primary-200 rounded-2xl p-6 mb-10">
+      <div className="bg-primary-50 border border-primary-200 rounded-2xl p-6 mb-6">
         <div className="flex items-center gap-2 mb-3">
           <Award size={20} className="text-primary-600" />
           <h3 className="text-sm font-semibold text-primary-800">{t('AI 综合评价')}</h3>
@@ -272,6 +279,48 @@ function ReviewSummary({ result, pct, color, stats, onClose, onRetryWrongQuestio
             : t('还需要加油！建议重新回顾学习材料，特别关注错题涉及的核心概念，然后再次尝试。')}
         </p>
       </div>
+
+      {/* AI 错题归因 & 薄弱知识点 */}
+      {hasWrongQuestions && (
+        <div className="space-y-4 mb-10">
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <AlertTriangle size={18} className="text-amber-600" />
+              <h3 className="text-sm font-semibold text-amber-800">{t('错题归因')}</h3>
+            </div>
+            <ul className="space-y-2">
+              {result.details.filter(d => !d.correct).map((d, i) => (
+                <li key={i} className="text-sm text-amber-900 flex items-start gap-2">
+                  <span className="w-5 h-5 rounded-full bg-red-100 text-red-600 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">{i + 1}</span>
+                  <span>{d.explanation || t('概念理解不够深入，需要加强练习')}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="bg-blue-50 border border-blue-200 rounded-2xl p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <Target size={18} className="text-blue-600" />
+              <h3 className="text-sm font-semibold text-blue-800">{t('学习建议')}</h3>
+            </div>
+            <ul className="space-y-1.5 text-sm text-blue-900">
+              <li className="flex items-center gap-2">
+                <Sparkles size={14} className="text-blue-500 shrink-0" />
+                {t('针对错题知识点进行专项复习')}
+              </li>
+              <li className="flex items-center gap-2">
+                <Sparkles size={14} className="text-blue-500 shrink-0" />
+                {t('点击错题旁的"AI讲解"获取详细解析')}
+              </li>
+              <li className="flex items-center gap-2">
+                <Sparkles size={14} className="text-blue-500 shrink-0" />
+                {pct >= 60 ? t('尝试更高难度的练习巩固薄弱环节') : t('建议重新学习相关材料后再次练习')}
+              </li>
+            </ul>
+          </div>
+        </div>
+      )}
+
+      {!hasWrongQuestions && <div className="mb-10" />}
 
       {/* Bottom action buttons — always 3 in a row */}
       <div className="flex gap-3">

@@ -509,6 +509,7 @@ export default function SelfStudyWorkbench({
   const [expandedTask, setExpandedTask] = useState<Task | null>(null);
   const [taskDisplayMode, setTaskDisplayMode] = useState<'fullscreen' | 'embedded' | 'result_review'>('fullscreen');
   const [taskStatus, setTaskStatus] = useState<'idle' | 'submitting' | 'grading' | 'completed'>('idle');
+  const [explainQuestion, setExplainQuestion] = useState<TaskQuestion | null>(null);
   const [quickResultMap, setQuickResultMap] = useState<Record<string, { allCorrect: boolean; correctCount: number; totalCount: number; details: any[] }>>({});
   const quickResult = expandedTask ? quickResultMap[expandedTask.id] || null : null;
   const [completedTasksArray, setCompletedTasksArray] = usePersistedState<string[]>(`self-study:wb:${config.id}:completedTasks`, []);
@@ -1893,8 +1894,9 @@ export default function SelfStudyWorkbench({
 
   const handleExplainQuestion = (question: TaskQuestion, userAnswer: string | string[], correctAnswer: string | string[]) => {
     console.log('[ExplainQuestion] 深入详解题目:', question.id);
-    // 关闭结果回顾，回到对话区
+    // 缩小到左侧内嵌，进入三栏协同学习
     setTaskDisplayMode('embedded');
+    setExplainQuestion(question);
 
     // 格式化答案
     const formatAnswer = (ans: string | string[]) => {
@@ -2269,15 +2271,11 @@ export default function SelfStudyWorkbench({
       return;
     }
 
-    // 创建一条智能体消息，嵌入任务卡片
+    // 创建一条轻量通知消息
     const taskIntroMessage: ChatMessage = {
       id: `msg_task_${task.id}_${Date.now()}`,
       role: 'assistant',
-      content: task.type === 'quiz'
-        ? `好的，让我们来做一个知识测验，检验一下你的掌握情况：`
-        : task.type === 'reflection'
-        ? `现在是一个很好的时机来反思你的学习过程。请认真思考以下问题：`
-        : `接下来让我们完成这个任务，这将帮助你更深入地理解所学内容：`,
+      content: `📝 已开始做题：「${task.title}」`,
       timestamp: new Date(),
       embeddedTask: task,
       // 初始化任务状态
@@ -2719,6 +2717,7 @@ export default function SelfStudyWorkbench({
               onGeneratePractice={handleGeneratePractice}
               onBackToChat={handleBackToChat}
               onExplainQuestion={handleExplainQuestion}
+              onShrinkToInline={() => { setTaskDisplayMode('embedded'); }}
             />
           </div>
         );
@@ -2791,6 +2790,10 @@ export default function SelfStudyWorkbench({
           onSaveTask={handleSaveTask}
           onAddResource={handleAddResource}
           onSetViewingResource={setViewingResource}
+          explainQuestion={explainQuestion}
+          onSetExpandedTask={setExpandedTask}
+          onSetTaskDisplayMode={setTaskDisplayMode}
+          onSetExplainQuestion={setExplainQuestion}
         />
 
         {/* 左侧调整器 - 仅在未折叠时显示 */}

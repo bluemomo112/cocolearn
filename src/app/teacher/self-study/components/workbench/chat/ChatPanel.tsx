@@ -359,45 +359,48 @@ export function ChatPanel(props: ChatPanelProps) {
                     <ResourceReferenceTag resourceRef={message.resourceRef} />
                   )}
 
-                  {/* 3.1 折叠式任务卡片 */}
+                  {/* 3.1 简化任务状态卡片 */}
                   {message.role === 'assistant' && message.embeddedTask && (() => {
                     const task = message.embeddedTask;
                     const isCompleted = completedTasks.has(task.id);
                     const questionCount = task.questions?.length ?? 0;
                     const answeredCount = message.taskState
-                      ? Object.keys(message.taskState.selectedAnswers).length
+                      ? Object.keys(message.taskState.selectedAnswers).filter(k => {
+                          const v = message.taskState!.selectedAnswers[k];
+                          return v !== undefined && v !== '' && (!Array.isArray(v) || v.length > 0);
+                        }).length
                       : 0;
-                    const statusLabel = isCompleted
-                      ? t('已完成')
-                      : answeredCount > 0
-                      ? `${t('已完成')} ${answeredCount}/${questionCount}`
-                      : t('未完成');
-                    const statusColor = isCompleted
-                      ? 'bg-emerald-100 text-emerald-700'
-                      : answeredCount > 0
-                      ? 'bg-amber-100 text-amber-700'
-                      : 'bg-gray-100 text-gray-600';
+                    const isInProgress = answeredCount > 0 && !isCompleted;
                     const TaskIcon = task.type === 'quiz' ? ListChecks : task.type === 'reflection' ? Lightbulb : ClipboardList;
+                    const taskQuickResult = quickResult;
+                    const hasResult = isCompleted && taskQuickResult && expandedTask?.id === task.id;
 
                     return (
                       <div
                         className="mt-2 flex items-center gap-3 px-4 py-3 bg-white border border-gray-200 rounded-xl hover:border-primary-300 hover:shadow-sm cursor-pointer transition-all group"
-                        style={{ minHeight: 60, maxHeight: 80 }}
+                        style={{ minHeight: 56 }}
                         onClick={() => handleTaskClick(task)}
                       >
-                        <div className="w-10 h-10 rounded-lg bg-primary-50 flex items-center justify-center flex-shrink-0 group-hover:bg-primary-100 transition-colors">
-                          <TaskIcon size={20} className="text-primary-600" />
+                        <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${
+                          isCompleted ? 'bg-green-50' : isInProgress ? 'bg-amber-50' : 'bg-primary-50 group-hover:bg-primary-100'
+                        }`}>
+                          <TaskIcon size={18} className={isCompleted ? 'text-green-600' : isInProgress ? 'text-amber-600' : 'text-primary-600'} />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="text-sm font-medium text-gray-800 truncate">{task.title}</div>
-                          {questionCount > 0 && (
-                            <div className="text-xs text-gray-400 mt-0.5">{questionCount} {t('题')}</div>
-                          )}
+                          <div className="text-xs text-gray-400 mt-0.5">
+                            {isCompleted && hasResult
+                              ? `${t('得分')} ${taskQuickResult!.correctCount}/${taskQuickResult!.totalCount}`
+                              : isInProgress
+                              ? `${t('进度')} ${answeredCount}/${questionCount}`
+                              : `${questionCount} ${t('题')}`}
+                          </div>
                         </div>
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium flex-shrink-0 ${statusColor}`}>
-                          {statusLabel}
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-medium flex-shrink-0 ${
+                          isCompleted ? 'bg-green-100 text-green-700' : isInProgress ? 'bg-amber-100 text-amber-700' : 'bg-primary-100 text-primary-700'
+                        }`}>
+                          {isCompleted ? t('查看结果') : isInProgress ? t('继续做题') : t('开始做题')}
                         </span>
-                        <ChevronRight size={16} className="text-gray-300 group-hover:text-primary-500 flex-shrink-0 transition-colors" />
                       </div>
                     );
                   })()}
