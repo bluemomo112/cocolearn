@@ -14,8 +14,8 @@ import {
   ChevronRight, ChevronLeft, ChevronDown, ChevronUp, Activity,
   Pencil, BookOpen, Target, Lightbulb, MessageCircle, Clock,
   ListChecks, CheckCircle2, Circle, Eye, Play, Zap, FileText,
-  AlertCircle, RotateCcw, Pause, GitBranch, Copy, ThumbsUp,
-  ThumbsDown, Save, Settings, ClipboardList
+  AlertCircle, RotateCcw, Pause, GitBranch, Copy,
+  Save, ClipboardList
 } from 'lucide-react';
 
 interface ChatPanelProps {
@@ -56,7 +56,6 @@ export function ChatPanel(props: ChatPanelProps) {
   const { t } = useLanguage();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
-  const [feedbackMap, setFeedbackMap] = useState<Record<string, 'up' | 'down'>>({});
   const [savedMessageIds, setSavedMessageIds] = useState<Set<string>>(new Set());
   const {
     config, messages, inputMessage, isRecordingVoice, isLoading,
@@ -86,13 +85,6 @@ export function ChatPanel(props: ChatPanelProps) {
       setCopiedMessageId(messageId);
       setTimeout(() => setCopiedMessageId(null), 2000);
     });
-  };
-
-  const handleFeedback = (messageId: string, type: 'up' | 'down') => {
-    setFeedbackMap(prev => ({
-      ...prev,
-      [messageId]: prev[messageId] === type ? undefined as any : type,
-    }));
   };
 
   const handleSaveToNote = (messageId: string, content: string) => {
@@ -271,9 +263,9 @@ export function ChatPanel(props: ChatPanelProps) {
                                       {button.label}
                                     </span>
                                     {button.description && (
-                                      <span className={`text-xs mt-0.5 block line-clamp-2 ${
+                                      <span className={`text-xs mt-0.5 block truncate ${
                                         isGenerating ? 'text-gray-300' : 'text-gray-400 group-hover:text-gray-500'
-                                      }`}>
+                                      }`} title={button.description}>
                                         {button.description}
                                       </span>
                                     )}
@@ -285,14 +277,6 @@ export function ChatPanel(props: ChatPanelProps) {
                                     )}
                                   </div>
                                 </div>
-                                {/* hover 配置按钮 */}
-                                {!isGenerating && (
-                                  <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                                    onClick={(e) => e.stopPropagation()}
-                                  >
-                                    <Settings size={14} className="text-gray-300 hover:text-gray-500 cursor-pointer" />
-                                  </div>
-                                )}
                               </div>
                             );
                           })}
@@ -301,9 +285,11 @@ export function ChatPanel(props: ChatPanelProps) {
                     )}
                   </div>
 
-                  {/* 3.4 AI 回复工具条 - 始终显示 */}
+                  {/* 3.4 AI 回复工具条 - hover/touch 时显示 */}
                   {message.role === 'assistant' && (
-                    <div className="mt-1 flex items-center gap-1">
+                    <div className="mt-1 flex items-center gap-1 opacity-0 hover:opacity-100 focus-within:opacity-100 transition-opacity"
+                      onTouchStart={(e) => { (e.currentTarget as HTMLElement).style.opacity = '1'; }}
+                    >
                       <button
                         onClick={() => handleSaveToNote(message.id, message.content)}
                         className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs transition-colors ${
@@ -327,29 +313,6 @@ export function ChatPanel(props: ChatPanelProps) {
                       >
                         {copiedMessageId === message.id ? <Check size={12} /> : <Copy size={12} />}
                         <span>{copiedMessageId === message.id ? t('已复制') : t('复制')}</span>
-                      </button>
-                      <div className="w-px h-3 bg-gray-200 mx-0.5" />
-                      <button
-                        onClick={() => handleFeedback(message.id, 'up')}
-                        className={`p-1 rounded transition-colors ${
-                          feedbackMap[message.id] === 'up'
-                            ? 'text-primary-600 bg-primary-50'
-                            : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
-                        }`}
-                        title={t('有帮助')}
-                      >
-                        <ThumbsUp size={12} />
-                      </button>
-                      <button
-                        onClick={() => handleFeedback(message.id, 'down')}
-                        className={`p-1 rounded transition-colors ${
-                          feedbackMap[message.id] === 'down'
-                            ? 'text-red-500 bg-red-50'
-                            : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
-                        }`}
-                        title={t('无帮助')}
-                      >
-                        <ThumbsDown size={12} />
                       </button>
                     </div>
                   )}
