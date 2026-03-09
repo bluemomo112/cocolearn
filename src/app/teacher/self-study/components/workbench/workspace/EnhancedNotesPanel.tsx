@@ -9,7 +9,7 @@ import { usePersistedState } from '../../../utils/storage';
 import { Note, VoiceRecording } from '../shared/types';
 import {
   Plus, Sparkles, Activity, Brain, Pencil, Edit, X, Eye,
-  ImageIcon, Mic, Trash2, Play
+  ImageIcon, Mic, Trash2, Play, FolderPlus, Link
 } from 'lucide-react';
 
 interface EnhancedNotesPanelProps {
@@ -17,9 +17,10 @@ interface EnhancedNotesPanelProps {
   isAIGenerating?: boolean;
   getThemeClass: (type: 'bg' | 'bgHover' | 'text' | 'border' | 'icon') => string;
   configId?: string;
+  onAddToResource?: (note: Note) => void;
 }
 
-export function EnhancedNotesPanel({ learningMode, isAIGenerating, getThemeClass, configId }: EnhancedNotesPanelProps) {
+export function EnhancedNotesPanel({ learningMode, isAIGenerating, getThemeClass, configId, onAddToResource }: EnhancedNotesPanelProps) {
   const { t } = useLanguage();
   const [notes, setNotes] = usePersistedState<Note[]>(`self-study:wb:${configId ?? 'default'}:notes`, []);
   const [activeNoteId, setActiveNoteId] = useState('');
@@ -29,6 +30,7 @@ export function EnhancedNotesPanel({ learningMode, isAIGenerating, getThemeClass
   const [showNoteEditor, setShowNoteEditor] = useState(false);
   const [isGeneratingNote, setIsGeneratingNote] = useState(false);
   const [generationProgress, setGenerationProgress] = useState(0);
+  const [addedNoteIds, setAddedNoteIds] = useState<Set<string>>(new Set());
 
   const activeNote = notes.find((n) => n.id === activeNoteId) || notes[0];
 
@@ -163,6 +165,13 @@ export function EnhancedNotesPanel({ learningMode, isAIGenerating, getThemeClass
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const handleAddToResource = (note: Note, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (addedNoteIds.has(note.id) || !onAddToResource) return;
+    onAddToResource(note);
+    setAddedNoteIds((prev) => new Set(prev).add(note.id));
+  };
+
   // Note list view
   if (!showNoteEditor) {
     return (
@@ -241,7 +250,29 @@ export function EnhancedNotesPanel({ learningMode, isAIGenerating, getThemeClass
                       {new Date(note.updatedAt).toLocaleString('zh-CN')}
                     </div>
                   </div>
-                  <Edit size={14} className="text-gray-400 flex-shrink-0 mt-1" />
+                  <div className="flex items-center gap-1 flex-shrink-0 mt-1">
+                    {addedNoteIds.has(note.id) && (
+                      <span className="flex items-center gap-0.5 text-xs text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">
+                        <Link size={10} />
+                        {t('已添加')}
+                      </span>
+                    )}
+                    {onAddToResource && (
+                      <button
+                        onClick={(e) => handleAddToResource(note, e)}
+                        disabled={addedNoteIds.has(note.id)}
+                        className={`p-1 rounded transition-colors ${
+                          addedNoteIds.has(note.id)
+                            ? 'text-gray-300 cursor-not-allowed'
+                            : 'text-gray-400 hover:text-primary-600 hover:bg-primary-50'
+                        }`}
+                        title={addedNoteIds.has(note.id) ? t('已添加到资源') : t('添加到资源')}
+                      >
+                        <FolderPlus size={14} />
+                      </button>
+                    )}
+                    <Edit size={14} className="text-gray-400" />
+                  </div>
                 </div>
               </div>
             ))
@@ -291,6 +322,23 @@ export function EnhancedNotesPanel({ learningMode, isAIGenerating, getThemeClass
           </button>
           {isRecording && (
             <span className="text-xs font-mono text-red-600">{formatRecTime(recordingTime)}</span>
+          )}
+          {onAddToResource && (
+            <button
+              onClick={(e) => handleAddToResource(activeNote, e)}
+              disabled={addedNoteIds.has(activeNoteId)}
+              className={`p-2 rounded-lg transition-colors flex items-center gap-1 ${
+                addedNoteIds.has(activeNoteId)
+                  ? 'text-emerald-600 bg-emerald-50 cursor-not-allowed'
+                  : 'hover:bg-primary-50 text-gray-600 hover:text-primary-600'
+              }`}
+              title={addedNoteIds.has(activeNoteId) ? t('已添加到资源') : t('添加到资源')}
+            >
+              {addedNoteIds.has(activeNoteId) ? <Link size={16} /> : <FolderPlus size={16} />}
+              {addedNoteIds.has(activeNoteId) && (
+                <span className="text-xs">{t('已添加')}</span>
+              )}
+            </button>
           )}
           <div className="h-4 w-px bg-gray-300" />
           <button

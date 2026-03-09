@@ -4,18 +4,18 @@ import React, { useRef, useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { SpaceConfig, LearningMode, LearningPathNode } from '@/types/self-study';
-import { Resource, Task } from '@/types/shared-context';
+import { Task } from '@/types/shared-context';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { ChatMessage } from '../shared/types';
 import { getIconComponent } from '../shared/utils';
-import TaskExpandedCard from '../../task/TaskExpandedCard';
 import { QuickResultData } from '../../task/taskTypes';
 import {
   Send, Bot, Brain, Sparkles, MessageSquare, Mic, X, Check,
   ChevronRight, ChevronLeft, ChevronDown, ChevronUp, Activity,
   Pencil, BookOpen, Target, Lightbulb, MessageCircle, Clock,
   ListChecks, CheckCircle2, Circle, Eye, Play, Zap, FileText,
-  AlertCircle, RotateCcw, Pause, GitBranch
+  AlertCircle, RotateCcw, Pause, GitBranch, Copy, ThumbsUp,
+  ThumbsDown, Save, Settings, ClipboardList
 } from 'lucide-react';
 
 interface ChatPanelProps {
@@ -46,6 +46,7 @@ interface ChatPanelProps {
   onToggleTaskDisplayMode: () => void;
   onUpdateTaskState: (taskId: string, stateUpdate: any) => void;
   onSetReflectionDismissed: (dismissed: boolean) => void;
+  onSaveToNote?: (messageContent: string) => void;
   renderKnowledgeCheckpoint?: (message: ChatMessage) => React.ReactNode;
   renderTopicTransition?: (message: ChatMessage) => React.ReactNode;
   renderModeTransition?: (message: ChatMessage) => React.ReactNode;
@@ -54,6 +55,9 @@ interface ChatPanelProps {
 export function ChatPanel(props: ChatPanelProps) {
   const { t } = useLanguage();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
+  const [feedbackMap, setFeedbackMap] = useState<Record<string, 'up' | 'down'>>({});
+  const [savedMessageIds, setSavedMessageIds] = useState<Set<string>>(new Set());
   const {
     config, messages, inputMessage, isRecordingVoice, isLoading,
     expandedTask, completedTasks, taskDisplayMode, taskStatus, quickResult,
@@ -71,10 +75,30 @@ export function ChatPanel(props: ChatPanelProps) {
     onToggleTaskDisplayMode: toggleTaskDisplayMode,
     onUpdateTaskState: updateTaskState,
     onSetReflectionDismissed: setIsReflectionDismissed,
+    onSaveToNote,
     renderKnowledgeCheckpoint,
     renderTopicTransition,
     renderModeTransition,
   } = props;
+
+  const handleCopyMessage = (messageId: string, content: string) => {
+    navigator.clipboard.writeText(content).then(() => {
+      setCopiedMessageId(messageId);
+      setTimeout(() => setCopiedMessageId(null), 2000);
+    });
+  };
+
+  const handleFeedback = (messageId: string, type: 'up' | 'down') => {
+    setFeedbackMap(prev => ({
+      ...prev,
+      [messageId]: prev[messageId] === type ? undefined as any : type,
+    }));
+  };
+
+  const handleSaveToNote = (messageId: string, content: string) => {
+    setSavedMessageIds(prev => new Set(prev).add(messageId));
+    onSaveToNote?.(content);
+  };
 
   const masteredCount = learningPath.filter(n => n.status === 'mastered').length;
   const totalNodes = learningPath.length;
@@ -204,45 +228,72 @@ export function ChatPanel(props: ChatPanelProps) {
                       </div>
                     </div>
 
-                    {/* 功能按钮 - 内嵌在对话框底部 */}
-                    {message.role === 'assistant' && message.suggestions?.actionButtons && message.suggestions.actionButtons.length > 0 && (
+                    {/* 功能卡片 - 仅在没有推荐回复时显示 (3.2 互斥 + 3.3 富卡片) */}
+                    {message.role === 'assistant'
+                      && message.suggestions?.actionButtons && message.suggestions.actionButtons.length > 0
+                      && !(message.suggestions?.quickReplies && message.suggestions.quickReplies.length > 0) && (
                       <div className="px-4 py-3 bg-gray-50 border-t border-gray-100">
-                        <div className="flex flex-wrap gap-2">
-                          {message.suggestions.actionButtons.map((button) => {
+                        <div className="grid grid-cols-2 gap-2">
+                          {message.suggestions.actionButtons.slice(0, 4).map((button) => {
                             const IconComponent = getIconComponent(button.iconName);
                             const buttonFullId = `${message.id}-${button.id}`;
                             const isGenerating = generatingButtonId === buttonFullId;
                             const isFlashing = flashingButtonId === buttonFullId;
 
                             return (
-                              <button
+                              <div
                                 key={button.id}
                                 onClick={() => !isGenerating && handleChatAction(button.studioToolId, buttonFullId)}
-                                className={`px-3 py-2 text-sm font-medium rounded-lg border flex items-center gap-2 group transition-all ${
+                                className={`relative p-3 rounded-lg border group transition-all ${
                                   isGenerating
-                                    ? 'bg-gray-50 border-gray-200 animate-pulse cursor-wait'
+                                    ? 'bg-gray-50 border-gray-200 cursor-wait'
                                     : isFlashing
-                                    ? 'bg-primary-100 border-primary-500 ring-2 ring-primary-400 shadow-lg scale-105'
-                                    : 'bg-white border-gray-200 hover:border-primary-300 hover:bg-primary-50 text-gray-700 hover:text-primary-700 hover:shadow-sm cursor-pointer'
+                                    ? 'bg-primary-50 border-primary-500 ring-2 ring-primary-400 shadow-lg scale-[1.02]'
+                                    : 'bg-white border-gray-200 hover:border-primary-300 hover:bg-primary-50 hover:shadow-sm cursor-pointer'
                                 }`}
                               >
-                                {IconComponent && <IconComponent size={16} className={`transition-colors ${
-                                  isGenerating
-                                    ? 'text-gray-500'
-                                    : isFlashing
-                                    ? 'text-primary-600 animate-pulse'
-                                    : 'text-gray-500 group-hover:text-primary-600'
-                                }`} />}
-                                <span className={`font-medium ${isFlashing ? 'text-primary-700' : ''}`}>{button.label}</span>
-                                {isGenerating ? (
-                                  <span className="text-xs text-gray-500 flex items-center gap-1 ml-auto">
-                                    <Activity size={10} className="animate-spin" />
-                                    {t('生成中...')}
-                                  </span>
-                                ) : !isFlashing && (
-                                  <ChevronRight size={14} className={`transition-colors text-gray-400 group-hover:text-primary-500 ml-auto`} />
+                                <div className="flex items-start gap-2.5">
+                                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                                    isGenerating ? 'bg-gray-100' : isFlashing ? 'bg-primary-100' : 'bg-gray-100 group-hover:bg-primary-100'
+                                  }`}>
+                                    {isGenerating ? (
+                                      <Activity size={16} className="text-gray-400 animate-spin" />
+                                    ) : (
+                                      IconComponent && <IconComponent size={16} className={`transition-colors ${
+                                        isFlashing ? 'text-primary-600' : 'text-gray-500 group-hover:text-primary-600'
+                                      }`} />
+                                    )}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <span className={`text-sm font-medium block ${
+                                      isGenerating ? 'text-gray-400' : isFlashing ? 'text-primary-700' : 'text-gray-700 group-hover:text-primary-700'
+                                    }`}>
+                                      {button.label}
+                                    </span>
+                                    {button.description && (
+                                      <span className={`text-xs mt-0.5 block line-clamp-2 ${
+                                        isGenerating ? 'text-gray-300' : 'text-gray-400 group-hover:text-gray-500'
+                                      }`}>
+                                        {button.description}
+                                      </span>
+                                    )}
+                                    {isGenerating && (
+                                      <span className="text-xs text-gray-400 mt-1 flex items-center gap-1">
+                                        <Activity size={10} className="animate-spin" />
+                                        {t('生成中...')}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                                {/* hover 配置按钮 */}
+                                {!isGenerating && (
+                                  <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    <Settings size={14} className="text-gray-300 hover:text-gray-500 cursor-pointer" />
+                                  </div>
                                 )}
-                              </button>
+                              </div>
                             );
                           })}
                         </div>
@@ -250,42 +301,103 @@ export function ChatPanel(props: ChatPanelProps) {
                     )}
                   </div>
 
+                  {/* 3.4 AI 回复工具条 - 始终显示 */}
+                  {message.role === 'assistant' && (
+                    <div className="mt-1 flex items-center gap-1">
+                      <button
+                        onClick={() => handleSaveToNote(message.id, message.content)}
+                        className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs transition-colors ${
+                          savedMessageIds.has(message.id)
+                            ? 'text-emerald-600 bg-emerald-50'
+                            : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                        }`}
+                        title={t('保存到笔记')}
+                      >
+                        {savedMessageIds.has(message.id) ? <Check size={12} /> : <Save size={12} />}
+                        <span>{savedMessageIds.has(message.id) ? t('已保存') : t('保存到笔记')}</span>
+                      </button>
+                      <button
+                        onClick={() => handleCopyMessage(message.id, message.content)}
+                        className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs transition-colors ${
+                          copiedMessageId === message.id
+                            ? 'text-emerald-600 bg-emerald-50'
+                            : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                        }`}
+                        title={t('复制')}
+                      >
+                        {copiedMessageId === message.id ? <Check size={12} /> : <Copy size={12} />}
+                        <span>{copiedMessageId === message.id ? t('已复制') : t('复制')}</span>
+                      </button>
+                      <div className="w-px h-3 bg-gray-200 mx-0.5" />
+                      <button
+                        onClick={() => handleFeedback(message.id, 'up')}
+                        className={`p-1 rounded transition-colors ${
+                          feedbackMap[message.id] === 'up'
+                            ? 'text-primary-600 bg-primary-50'
+                            : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                        }`}
+                        title={t('有帮助')}
+                      >
+                        <ThumbsUp size={12} />
+                      </button>
+                      <button
+                        onClick={() => handleFeedback(message.id, 'down')}
+                        className={`p-1 rounded transition-colors ${
+                          feedbackMap[message.id] === 'down'
+                            ? 'text-red-500 bg-red-50'
+                            : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                        }`}
+                        title={t('无帮助')}
+                      >
+                        <ThumbsDown size={12} />
+                      </button>
+                    </div>
+                  )}
+
                   {/* 资源引用标签 */}
                   {message.role === 'assistant' && message.resourceRef && (
                     <ResourceReferenceTag resourceRef={message.resourceRef} />
                   )}
 
-                  {/* 嵌入的任务卡片 (作为智能体消息的一部分) */}
+                  {/* 3.1 折叠式任务卡片 */}
                   {message.role === 'assistant' && message.embeddedTask && (() => {
-                    const isCurrentTask = expandedTask?.id === message.embeddedTask.id;
-                    const shouldShowEmbedded = !isCurrentTask || taskDisplayMode === 'embedded';
-
-                    if (!shouldShowEmbedded) {
-                      // 当前任务正在全屏显示或结果回顾中
-                      return (
-                        <div className="mt-2 p-4 bg-gray-50 rounded-xl border border-gray-200">
-                          <div className="flex items-center gap-2 text-sm text-gray-600">
-                            <div className="w-2 h-2 bg-primary-500 rounded-full animate-pulse"></div>
-                            <span>{taskDisplayMode === 'result_review' ? '正在查看结果回顾...' : '正在全屏做题中...'}</span>
-                          </div>
-                        </div>
-                      );
-                    }
+                    const task = message.embeddedTask;
+                    const isCompleted = completedTasks.has(task.id);
+                    const questionCount = task.questions?.length ?? 0;
+                    const answeredCount = message.taskState
+                      ? Object.keys(message.taskState.selectedAnswers).length
+                      : 0;
+                    const statusLabel = isCompleted
+                      ? t('已完成')
+                      : answeredCount > 0
+                      ? `${t('已完成')} ${answeredCount}/${questionCount}`
+                      : t('未完成');
+                    const statusColor = isCompleted
+                      ? 'bg-emerald-100 text-emerald-700'
+                      : answeredCount > 0
+                      ? 'bg-amber-100 text-amber-700'
+                      : 'bg-gray-100 text-gray-600';
+                    const TaskIcon = task.type === 'quiz' ? ListChecks : task.type === 'reflection' ? Lightbulb : ClipboardList;
 
                     return (
-                      <div className="mt-2">
-                        <TaskExpandedCard
-                          task={message.embeddedTask}
-                          onClose={closeTask}
-                          onComplete={toggleTaskCompletion}
-                          isCompleted={completedTasks.has(message.embeddedTask.id)}
-                          taskStatus={taskStatus}
-                          quickResult={quickResult}
-                          displayMode="embedded"
-                          onToggleMode={toggleTaskDisplayMode}
-                          taskState={message.taskState}
-                          onStateUpdate={(stateUpdate) => updateTaskState(message.embeddedTask!.id, stateUpdate)}
-                        />
+                      <div
+                        className="mt-2 flex items-center gap-3 px-4 py-3 bg-white border border-gray-200 rounded-xl hover:border-primary-300 hover:shadow-sm cursor-pointer transition-all group"
+                        style={{ minHeight: 60, maxHeight: 80 }}
+                        onClick={() => handleTaskClick(task)}
+                      >
+                        <div className="w-10 h-10 rounded-lg bg-primary-50 flex items-center justify-center flex-shrink-0 group-hover:bg-primary-100 transition-colors">
+                          <TaskIcon size={20} className="text-primary-600" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium text-gray-800 truncate">{task.title}</div>
+                          {questionCount > 0 && (
+                            <div className="text-xs text-gray-400 mt-0.5">{questionCount} {t('题')}</div>
+                          )}
+                        </div>
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium flex-shrink-0 ${statusColor}`}>
+                          {statusLabel}
+                        </span>
+                        <ChevronRight size={16} className="text-gray-300 group-hover:text-primary-500 flex-shrink-0 transition-colors" />
                       </div>
                     );
                   })()}

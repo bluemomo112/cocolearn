@@ -18,7 +18,7 @@ import {
   ChevronRight, ChevronLeft, ChevronDown, ChevronUp, ListChecks, CheckCircle2,
   Circle, Sparkles, Activity, Settings, Database, Pencil, Check, Zap,
   Bot, MessageSquare, BookOpen, Clock, Search,
-  FileEdit, FolderOpen,
+  FileEdit, FolderOpen, Type,
 } from 'lucide-react';
 
 interface LeftPanelProps {
@@ -65,6 +65,7 @@ interface LeftPanelProps {
   toggleTaskSelection: (id: string) => void;
   setEditingTask: (task: any) => void;
 
+  onAddResource?: (resource: Resource) => void;
   selectedResourceIds: Set<string>;
   toggleResourceSelection: (id: string) => void;
 }
@@ -85,9 +86,28 @@ export function LeftPanel(props: LeftPanelProps) {
     onSetSettingsTaskId, onSetSettingsResourceId,
     onSetInlineViewingResource,
     onToggleTaskCompletion,
+    onAddResource,
     selectedResourceIds, toggleResourceSelection,
     selectedTaskIds, toggleAllTasks, toggleAllResources, toggleTaskSelection, setEditingTask,
   } = props;
+
+  // 粘贴文本弹窗状态
+  const [showPasteTextModal, setShowPasteTextModal] = useState(false);
+  const [pasteTextContent, setPasteTextContent] = useState('');
+
+  const handlePasteTextConfirm = () => {
+    if (!pasteTextContent.trim()) return;
+    const newResource: Resource = {
+      id: `resource_text_${Date.now()}`,
+      title: pasteTextContent.trim().slice(0, 50) + (pasteTextContent.trim().length > 50 ? '...' : ''),
+      type: 'document',
+      description: t('粘贴的文本内容'),
+      textContent: pasteTextContent.trim(),
+    };
+    onAddResource?.(newResource);
+    setPasteTextContent('');
+    setShowPasteTextModal(false);
+  };
 
   // Re-create the original JSX
   return (
@@ -250,16 +270,16 @@ export function LeftPanel(props: LeftPanelProps) {
                     onClick={() => onFileUploadOpen()}
                     className="w-full px-3 py-2.5 border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-gray-400 hover:text-gray-700 hover:bg-gray-50 transition-all flex items-center justify-center gap-2"
                   >
-                    <Plus size={16} />
-                    {t('添加资料来源')}
+                    <Upload size={16} />
+                    {t('上传文件')}
                   </button>
                   <div className="flex gap-2">
                     <button
-                      onClick={() => onFileUploadOpen()}
+                      onClick={() => onKnowledgeBaseOpen()}
                       className="flex-1 px-2 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-600 hover:bg-gray-100 transition-colors flex items-center justify-center gap-1"
                     >
-                      <Upload size={12} />
-                      {t('上传文件')}
+                      <Database size={12} />
+                      {t('从资源库导入')}
                     </button>
                     <button
                       onClick={() => onLinkInputOpen()}
@@ -269,11 +289,11 @@ export function LeftPanel(props: LeftPanelProps) {
                       {t('粘贴链接')}
                     </button>
                     <button
-                      onClick={() => onKnowledgeBaseOpen()}
+                      onClick={() => setShowPasteTextModal(true)}
                       className="flex-1 px-2 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-600 hover:bg-gray-100 transition-colors flex items-center justify-center gap-1"
                     >
-                      <Database size={12} />
-                      {t('从资源库导入')}
+                      <Type size={12} />
+                      {t('直接粘贴文本')}
                     </button>
                   </div>
                 </div>
@@ -600,78 +620,54 @@ export function LeftPanel(props: LeftPanelProps) {
                         <div
                           key={task.id}
                           onClick={() => onTaskClick(task)}
-                          className={`flex items-start gap-3 p-3 bg-white border border-gray-200 rounded-lg hover:${getThemeClass('border')} hover:shadow-sm transition-all cursor-pointer group`}
+                          className={`flex items-center gap-3 p-3 ${completedTasks.has(task.id) ? 'bg-green-50 border-green-200' : 'bg-white border-gray-200'} border rounded-lg hover:${getThemeClass('border')} hover:shadow-sm transition-all cursor-pointer group`}
                         >
                           {/* 选中指示器 */}
                           <div
                             onClick={(e) => { e.stopPropagation(); toggleTaskSelection(task.id); }}
-                            className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5 ${selectedTaskIds.has(task.id) ? 'border-gray-400 bg-gray-500' : 'border-gray-300 bg-white'}`}
+                            className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 ${selectedTaskIds.has(task.id) ? 'border-gray-400 bg-gray-500' : 'border-gray-300 bg-white'}`}
                           >
                             {selectedTaskIds.has(task.id) && <Check size={12} className="text-white" />}
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                              <div className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 bg-gray-100">
-                                {task.type === 'quiz' ? (
-                                  <Zap size={12} className="text-gray-600" />
-                                ) : (
-                                  <Brain size={12} className="text-gray-600" />
-                                )}
-                              </div>
-                              <p className="text-sm font-medium text-gray-700 truncate">{task.title}</p>
+                          {/* 完成状态图标 */}
+                          {completedTasks.has(task.id) ? (
+                            <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 bg-green-100">
+                              <CheckCircle2 size={14} className="text-green-600" />
                             </div>
-                            <div className="flex items-center gap-2 text-xs text-gray-400 ml-8">
+                          ) : (
+                            <div className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 bg-gray-100">
+                              {task.type === 'quiz' ? (
+                                <Zap size={12} className="text-gray-600" />
+                              ) : (
+                                <Brain size={12} className="text-gray-600" />
+                              )}
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className={`text-sm font-medium truncate ${completedTasks.has(task.id) ? 'text-green-700' : 'text-gray-700'}`}>{task.title}</p>
+                            <div className="flex items-center gap-2 text-xs text-gray-400">
                               {task.type === 'quiz' && task.questionCount && (
                                 <span>{task.questionCount} {t('道题')}</span>
                               )}
-                              <span>•</span>
-                              <span>{new Date(task.generatedAt).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}</span>
-                              {(task as any).settings?.source === 'exam_converted' && (
-                                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">试卷</span>
-                              )}
                               {completedTasks.has(task.id) && getAttemptCount(task.id) > 0 && (
-                                <>
-                                  <span>•</span>
-                                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-green-100 text-green-700">
-                                    第{getAttemptCount(task.id)}次
-                                  </span>
-                                </>
+                                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-green-100 text-green-700">
+                                  {t('第')}{getAttemptCount(task.id)}{t('次')}
+                                </span>
+                              )}
+                              {(task as any).settings?.source === 'exam_converted' && (
+                                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">{t('试卷')}</span>
                               )}
                             </div>
                           </div>
-                          {completedTasks.has(task.id) && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onRedoTask(task.id);
-                              }}
-                              className="px-2 py-1 text-xs text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded transition-all"
-                              title={t('重做任务')}
-                            >
-                              {t('重做')}
-                            </button>
-                          )}
-                          {!isStudentMode && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onSetSettingsTaskId(task.id);
-                              }}
-                              className="opacity-0 group-hover:opacity-100 p-2 hover:bg-gray-100 rounded-lg transition-all"
-                              title={t('任务设置')}
-                            >
-                              <Settings size={16} className="text-gray-400" />
-                            </button>
-                          )}
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               setEditingTask(task);
                             }}
-                            className="opacity-0 group-hover:opacity-100 p-2 hover:bg-gray-100 rounded-lg transition-all"
+                            className="opacity-0 group-hover:opacity-100 px-2 py-1 text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all"
                             title={t('编辑任务')}
                           >
-                            <Pencil size={16} className="text-gray-400" />
+                            <Pencil size={14} />
                           </button>
                           <ChevronRight size={16} className="text-gray-400" />
                         </div>
@@ -720,16 +716,16 @@ export function LeftPanel(props: LeftPanelProps) {
                     onClick={() => onFileUploadOpen()}
                     className="w-full px-3 py-2.5 border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-gray-400 hover:text-gray-700 hover:bg-gray-50 transition-all flex items-center justify-center gap-2"
                   >
-                    <Plus size={16} />
-                    {t('添加资料来源')}
+                    <Upload size={16} />
+                    {t('上传文件')}
                   </button>
                   <div className="flex gap-2">
                     <button
-                      onClick={() => onFileUploadOpen()}
+                      onClick={() => onKnowledgeBaseOpen()}
                       className="flex-1 px-2 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-600 hover:bg-gray-100 transition-colors flex items-center justify-center gap-1"
                     >
-                      <Upload size={12} />
-                      {t('上传文件')}
+                      <Database size={12} />
+                      {t('从资源库导入')}
                     </button>
                     <button
                       onClick={() => onLinkInputOpen()}
@@ -739,11 +735,11 @@ export function LeftPanel(props: LeftPanelProps) {
                       {t('粘贴链接')}
                     </button>
                     <button
-                      onClick={() => onKnowledgeBaseOpen()}
+                      onClick={() => setShowPasteTextModal(true)}
                       className="flex-1 px-2 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-600 hover:bg-gray-100 transition-colors flex items-center justify-center gap-1"
                     >
-                      <Database size={12} />
-                      {t('从资源库导入')}
+                      <Type size={12} />
+                      {t('直接粘贴文本')}
                     </button>
                   </div>
                 </div>
@@ -1054,78 +1050,54 @@ export function LeftPanel(props: LeftPanelProps) {
                         <div
                           key={task.id}
                           onClick={() => onTaskClick(task)}
-                          className={`flex items-start gap-3 p-3 bg-white border border-gray-200 rounded-lg hover:${getThemeClass('border')} hover:shadow-sm transition-all cursor-pointer group`}
+                          className={`flex items-center gap-3 p-3 ${completedTasks.has(task.id) ? 'bg-green-50 border-green-200' : 'bg-white border-gray-200'} border rounded-lg hover:${getThemeClass('border')} hover:shadow-sm transition-all cursor-pointer group`}
                         >
                           {/* 选中指示器 */}
                           <div
                             onClick={(e) => { e.stopPropagation(); toggleTaskSelection(task.id); }}
-                            className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5 ${selectedTaskIds.has(task.id) ? 'border-gray-400 bg-gray-500' : 'border-gray-300 bg-white'}`}
+                            className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 ${selectedTaskIds.has(task.id) ? 'border-gray-400 bg-gray-500' : 'border-gray-300 bg-white'}`}
                           >
                             {selectedTaskIds.has(task.id) && <Check size={12} className="text-white" />}
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                              <div className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 bg-gray-100">
-                                {task.type === 'quiz' ? (
-                                  <Zap size={12} className="text-gray-600" />
-                                ) : (
-                                  <Brain size={12} className="text-gray-600" />
-                                )}
-                              </div>
-                              <p className="text-sm font-medium text-gray-700 truncate">{task.title}</p>
+                          {/* 完成状态图标 */}
+                          {completedTasks.has(task.id) ? (
+                            <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 bg-green-100">
+                              <CheckCircle2 size={14} className="text-green-600" />
                             </div>
-                            <div className="flex items-center gap-2 text-xs text-gray-400 ml-8">
+                          ) : (
+                            <div className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 bg-gray-100">
+                              {task.type === 'quiz' ? (
+                                <Zap size={12} className="text-gray-600" />
+                              ) : (
+                                <Brain size={12} className="text-gray-600" />
+                              )}
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className={`text-sm font-medium truncate ${completedTasks.has(task.id) ? 'text-green-700' : 'text-gray-700'}`}>{task.title}</p>
+                            <div className="flex items-center gap-2 text-xs text-gray-400">
                               {task.type === 'quiz' && task.questionCount && (
                                 <span>{task.questionCount} {t('道题')}</span>
                               )}
-                              <span>•</span>
-                              <span>{new Date(task.generatedAt).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}</span>
-                              {(task as any).settings?.source === 'exam_converted' && (
-                                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">试卷</span>
-                              )}
                               {completedTasks.has(task.id) && getAttemptCount(task.id) > 0 && (
-                                <>
-                                  <span>•</span>
-                                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-green-100 text-green-700">
-                                    第{getAttemptCount(task.id)}次
-                                  </span>
-                                </>
+                                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-green-100 text-green-700">
+                                  {t('第')}{getAttemptCount(task.id)}{t('次')}
+                                </span>
+                              )}
+                              {(task as any).settings?.source === 'exam_converted' && (
+                                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">{t('试卷')}</span>
                               )}
                             </div>
                           </div>
-                          {completedTasks.has(task.id) && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onRedoTask(task.id);
-                              }}
-                              className="px-2 py-1 text-xs text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded transition-all"
-                              title={t('重做任务')}
-                            >
-                              {t('重做')}
-                            </button>
-                          )}
-                          {!isStudentMode && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onSetSettingsTaskId(task.id);
-                              }}
-                              className="opacity-0 group-hover:opacity-100 p-2 hover:bg-gray-100 rounded-lg transition-all"
-                              title={t('任务设置')}
-                            >
-                              <Settings size={16} className="text-gray-400" />
-                            </button>
-                          )}
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               setEditingTask(task);
                             }}
-                            className="opacity-0 group-hover:opacity-100 p-2 hover:bg-gray-100 rounded-lg transition-all"
+                            className="opacity-0 group-hover:opacity-100 px-2 py-1 text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all"
                             title={t('编辑任务')}
                           >
-                            <Pencil size={16} className="text-gray-400" />
+                            <Pencil size={14} />
                           </button>
                           <ChevronRight size={16} className="text-gray-400" />
                         </div>
@@ -1162,6 +1134,47 @@ export function LeftPanel(props: LeftPanelProps) {
             </>
           )}
         </div>
+
+      {/* 粘贴文本弹窗 */}
+      {showPasteTextModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowPasteTextModal(false)}>
+          <div className="bg-white rounded-xl shadow-xl w-[480px] max-w-[90vw] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
+              <h3 className="text-base font-semibold text-gray-800">{t('粘贴文本')}</h3>
+              <button
+                onClick={() => setShowPasteTextModal(false)}
+                className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X size={18} className="text-gray-400" />
+              </button>
+            </div>
+            <div className="p-5">
+              <textarea
+                value={pasteTextContent}
+                onChange={(e) => setPasteTextContent(e.target.value)}
+                placeholder={t('在此粘贴或输入文本内容...')}
+                className="w-full h-48 px-3 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-700 placeholder-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                autoFocus
+              />
+            </div>
+            <div className="flex justify-end gap-3 px-5 py-4 border-t border-gray-200">
+              <button
+                onClick={() => { setPasteTextContent(''); setShowPasteTextModal(false); }}
+                className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                {t('取消')}
+              </button>
+              <button
+                onClick={handlePasteTextConfirm}
+                disabled={!pasteTextContent.trim()}
+                className="px-4 py-2 text-sm text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {t('确定')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </>
   );

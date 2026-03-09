@@ -234,6 +234,7 @@ function FullscreenMode({ task, idx, selectedAnswers, submissionText, onAnswer, 
 }
 
 function EmbeddedMode({ task, selectedAnswers, submissionText, onAnswer, submit, onClose, onToggleMode, taskStatus, isCompleted, quickResult, onStateUpdate }: any) {
+  const { t } = useLanguage();
   return (
     <div className="bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden mb-4">
       <div className={`px-4 py-3 flex items-center justify-between ${
@@ -251,12 +252,12 @@ function EmbeddedMode({ task, selectedAnswers, submissionText, onAnswer, submit,
           </div>
           <div>
             <h3 className="font-semibold text-gray-800">{task.title}</h3>
-            <p className="text-xs text-gray-500">{task.required ? '必修任务' : '选修任务'}</p>
+            <p className="text-xs text-gray-500">{task.required ? t('必修任务') : t('选修任务')}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
           {onToggleMode && (
-            <button onClick={onToggleMode} className="w-8 h-8 rounded-lg bg-white/80 hover:bg-white flex items-center justify-center" title="放大到全屏">
+            <button onClick={onToggleMode} className="w-8 h-8 rounded-lg bg-white/80 hover:bg-white flex items-center justify-center" title={t('放大到全屏')}>
               <ChevronUp size={16} className="text-gray-500" />
             </button>
           )}
@@ -294,7 +295,7 @@ function EmbeddedMode({ task, selectedAnswers, submissionText, onAnswer, submit,
               </div>
             )}
             <textarea value={submissionText} onChange={(e: any) => onStateUpdate?.({ submissionText: e.target.value })}
-              placeholder={task.submissionPlaceholder || '请在这里提交你的作业内容...'}
+              placeholder={task.submissionPlaceholder || t('请在这里提交你的作业内容...')}
               className="w-full h-40 p-3 border border-gray-200 rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary-500" />
           </div>
         )}
@@ -305,11 +306,11 @@ function EmbeddedMode({ task, selectedAnswers, submissionText, onAnswer, submit,
               <div className="flex items-center gap-1.5">
                 {quickResult.allCorrect ? <Check size={14} className="text-green-600" /> : <AlertCircle size={14} className="text-amber-600" />}
                 <span className={`text-xs font-bold ${quickResult.allCorrect ? 'text-green-700' : 'text-amber-700'}`}>
-                  {quickResult.allCorrect ? '全部正确！' : '部分正确'}
+                  {quickResult.allCorrect ? t('全部正确！') : t('部分正确')}
                 </span>
               </div>
               <span className={`text-xs font-medium ${quickResult.allCorrect ? 'text-green-600' : 'text-amber-600'}`}>
-                {quickResult.correctCount}/{quickResult.totalCount} 题正确
+                {quickResult.correctCount}/{quickResult.totalCount} {t('题正确')}
               </span>
             </div>
           </div>

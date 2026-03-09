@@ -45,6 +45,7 @@ export interface ChatMessage {
     actionButtons?: Array<{
       id: string;
       label: string;
+      description?: string; // 功能卡片描述文字
       iconName: string; // Lucide icon name
       studioToolId: string;
     }>;

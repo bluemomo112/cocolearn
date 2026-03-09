@@ -1927,6 +1927,14 @@ export default function SelfStudyWorkbench({
     setIsLinkInputOpen(false);
   };
 
+  // 处理直接添加资源（如粘贴文本）
+  const handleAddResource = (resource: Resource) => {
+    handleUpdateConfig({
+      ...config,
+      resources: [...config.resources, resource],
+    });
+  };
+
   // 处理知识库导入 - 错题本
   const handleKnowledgeBaseImport = (errorQuestions: ErrorQuestion[]) => {
     console.log('[Demo] 加载场景 D2：错题本导入');
@@ -2728,6 +2736,7 @@ export default function SelfStudyWorkbench({
           toggleAllResources={toggleAllResources}
           toggleTaskSelection={toggleTaskSelection}
           setEditingTask={setEditingTask}
+          onAddResource={handleAddResource}
         />
 
         {/* 左侧调整器 - 仅在未折叠时显示 */}
