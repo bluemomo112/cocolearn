@@ -1903,21 +1903,31 @@ export default function SelfStudyWorkbench({
       return Array.isArray(ans) ? ans.join(', ') : ans;
     };
 
-    // 构建详细的讲解内容
-    const detailedExplanation = question.explanation
-      ? `${question.explanation}\n\n---\n\n**深入分析：**\n\n这道题的关键在于理解核心概念。让我从几个维度帮你分析：\n\n**🎯 知识点定位**\n这道题主要考查的是基础概念的理解和应用。你需要掌握相关定义，并能在具体情境中灵活运用。\n\n**💡 解题思路**\n1. 首先，仔细审题，明确题目问的是什么\n2. 然后，回忆相关的知识点和概念\n3. 最后，结合题目信息进行逻辑推理\n\n**⚠️ 易错点提醒**\n很多同学在这类题目上容易出错，主要原因是：\n- 对概念的理解不够深入\n- 容易混淆相似的概念\n- 没有注意题目中的关键信息\n\n**📚 知识拓展**\n这个知识点在实际应用中非常重要，建议你：\n- 多做几道类似的题目巩固理解\n- 尝试用自己的话解释这个概念\n- 思考这个知识点在不同场景下的应用`
-      : `让我为你深入讲解这道题：\n\n**🎯 知识点定位**\n这道题考查的是核心概念的理解。你需要掌握相关定义，并能在具体情境中灵活运用。\n\n**💡 解题思路**\n1. **审题**：仔细阅读题目，找出关键信息\n2. **回忆**：联想相关的知识点和概念\n3. **推理**：结合题目信息进行逻辑分析\n4. **验证**：检查答案是否符合题意\n\n**⚠️ 易错点提醒**\n这类题目的常见错误：\n- 对概念理解不够准确\n- 容易被干扰选项误导\n- 忽略了题目中的限定条件\n\n**📚 学习建议**\n为了更好地掌握这个知识点：\n- 回顾教材中的相关章节\n- 多做几道类似题目\n- 尝试总结解题规律\n- 与同学讨论交流理解`;
+    // 先发送用户消息（模拟用户请求）
+    const userMsg: ChatMessage = {
+      id: `msg_user_explain_${Date.now()}`,
+      role: 'user',
+      content: `请帮我详细解释一下这道题，我选了 ${formatAnswer(userAnswer)}，正确答案是 ${formatAnswer(correctAnswer)}。`,
+      timestamp: new Date(),
+    };
 
-    // 发送AI讲解消息
+    // AI 简短引导回复
+    const isCorrect = formatAnswer(userAnswer) === formatAnswer(correctAnswer);
+    const briefExplanation = question.explanation
+      ? question.explanation
+      : isCorrect
+      ? '虽然你答对了，但让我帮你梳理一下解题思路，加深理解。'
+      : '这道题的关键在于区分几个相似概念。让我帮你理清思路。';
+
     const explainMsg: ChatMessage = {
       id: `msg_explain_${Date.now()}`,
       role: 'assistant',
-      content: `📝 **深入详解这道错题**\n\n---\n\n**📋 题目回顾**\n${question.content}\n\n**📊 答案对比**\n- 你的答案：${formatAnswer(userAnswer)}\n- 正确答案：${formatAnswer(correctAnswer)}\n\n---\n\n${detailedExplanation}\n\n---\n\n💬 如果还有不清楚的地方，随时问我！我可以换个角度再解释，或者举更多例子帮你理解。`,
+      content: briefExplanation,
       timestamp: new Date(),
       suggestions: {
         quickReplies: [
-          { id: 'more_examples', label: '再举个例子' },
-          { id: 'related_concepts', label: '相关知识点' },
+          { id: 'why_wrong', label: '为什么我的答案不对？' },
+          { id: 'more_examples', label: '能举个例子吗？' },
           { id: 'understand', label: '我明白了' },
         ],
         actionButtons: [
@@ -1931,7 +1941,7 @@ export default function SelfStudyWorkbench({
       },
     };
 
-    setMessages(prev => [...prev, explainMsg]);
+    setMessages(prev => [...prev, userMsg, explainMsg]);
   };
 
   // 处理链接添加

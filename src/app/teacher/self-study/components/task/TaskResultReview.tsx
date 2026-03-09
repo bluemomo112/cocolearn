@@ -269,44 +269,91 @@ function ReviewSummary({ result, pct, color, stats, onClose, onRetryWrongQuestio
         </div>
       </div>
 
-      {/* AI evaluation */}
-      <div className="bg-primary-50 border border-primary-200 rounded-2xl p-6 mb-6">
-        <div className="flex items-center gap-2 mb-3">
-          <Award size={20} className="text-primary-600" />
-          <h3 className="text-sm font-semibold text-primary-800">{t('AI 综合评价')}</h3>
+      {/* AI evaluation — 卡片化设计 */}
+      <div className={`relative overflow-hidden rounded-2xl p-6 mb-6 ${
+        pct >= 80 ? 'bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200' :
+        pct >= 60 ? 'bg-gradient-to-br from-amber-50 to-yellow-50 border border-amber-200' :
+        'bg-gradient-to-br from-red-50 to-orange-50 border border-red-200'
+      }`}>
+        <div className="flex items-start gap-4">
+          <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
+            pct >= 80 ? 'bg-green-100' : pct >= 60 ? 'bg-amber-100' : 'bg-red-100'
+          }`}>
+            <span className="text-2xl">{pct >= 80 ? '🎉' : pct >= 60 ? '💪' : '📖'}</span>
+          </div>
+          <div className="flex-1">
+            <h3 className={`text-base font-semibold mb-1 ${
+              pct >= 80 ? 'text-green-800' : pct >= 60 ? 'text-amber-800' : 'text-red-800'
+            }`}>
+              {pct >= 80 ? t('表现优秀') : pct >= 60 ? t('继续加油') : t('需要巩固')}
+            </h3>
+            <p className={`text-sm leading-relaxed ${
+              pct >= 80 ? 'text-green-700' : pct >= 60 ? 'text-amber-700' : 'text-red-700'
+            }`}>
+              {pct >= 80
+                ? t('你对本节知识掌握扎实，建议挑战更高难度的内容。')
+                : pct >= 60
+                ? t('大部分知识点已掌握，建议针对错题知识点复习巩固。')
+                : t('建议重新回顾学习材料，关注错题涉及的核心概念。')}
+            </p>
+          </div>
         </div>
-        <p className="text-sm text-primary-900 leading-relaxed">
-          {pct >= 80
-            ? t('表现优秀！你对本节知识的掌握非常扎实，建议继续挑战更高难度的内容。')
-            : pct >= 60
-            ? t('表现不错！大部分知识点已经掌握，建议针对错题涉及的知识点进行复习巩固。')
-            : t('还需要加油！建议重新回顾学习材料，特别关注错题涉及的核心概念，然后再次尝试。')}
-        </p>
       </div>
 
-      {/* AI 错题归因 & 薄弱知识点 */}
+      {/* 题型正确率卡片 */}
+      {Object.keys(stats).length > 1 && (
+        <div className="grid grid-cols-2 gap-3 mb-6">
+          {Object.entries(stats).map(([label, s]) => {
+            const typePct = Math.round((s.correct / s.total) * 100);
+            return (
+              <div key={label} className="bg-white border border-gray-200 rounded-xl p-4 flex items-center gap-3">
+                <div className="relative w-10 h-10 flex-shrink-0">
+                  <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
+                    <circle cx="18" cy="18" r="15" fill="none" stroke="#f3f4f6" strokeWidth="3" />
+                    <circle cx="18" cy="18" r="15" fill="none"
+                      stroke={typePct >= 80 ? '#22c55e' : typePct >= 60 ? '#f59e0b' : '#ef4444'}
+                      strokeWidth="3" strokeLinecap="round"
+                      strokeDasharray={`${(typePct / 100) * 94.25} 94.25`} />
+                  </svg>
+                  <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-gray-700">{typePct}%</span>
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-gray-800">{label}</p>
+                  <p className="text-xs text-gray-400">{s.correct}/{s.total}</p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* AI 错题归因 & 学习建议 */}
       {hasWrongQuestions && (
-        <div className="space-y-4 mb-10">
-          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5">
+        <div className="space-y-3 mb-10">
+          <div className="bg-white border border-amber-200 rounded-2xl p-5 shadow-sm">
             <div className="flex items-center gap-2 mb-3">
-              <AlertTriangle size={18} className="text-amber-600" />
-              <h3 className="text-sm font-semibold text-amber-800">{t('错题归因')}</h3>
+              <div className="w-7 h-7 rounded-lg bg-amber-100 flex items-center justify-center">
+                <AlertTriangle size={14} className="text-amber-600" />
+              </div>
+              <h3 className="text-sm font-semibold text-gray-800">{t('错题归因')}</h3>
             </div>
             <ul className="space-y-2">
               {result.details.filter(d => !d.correct).map((d, i) => (
-                <li key={i} className="text-sm text-amber-900 flex items-start gap-2">
+                <li key={i} className="text-sm text-gray-700 flex items-start gap-2">
                   <span className="w-5 h-5 rounded-full bg-red-100 text-red-600 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">{i + 1}</span>
                   <span>{d.explanation || t('概念理解不够深入，需要加强练习')}</span>
                 </li>
               ))}
             </ul>
           </div>
-          <div className="bg-blue-50 border border-blue-200 rounded-2xl p-5">
+          <div className="bg-white border border-blue-200 rounded-2xl p-5 shadow-sm">
             <div className="flex items-center gap-2 mb-3">
-              <Target size={18} className="text-blue-600" />
-              <h3 className="text-sm font-semibold text-blue-800">{t('学习建议')}</h3>
+              <div className="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center">
+                <Target size={14} className="text-blue-600" />
+              </div>
+              <h3 className="text-sm font-semibold text-gray-800">{t('学习建议')}</h3>
             </div>
-            <ul className="space-y-1.5 text-sm text-blue-900">
+            <ul className="space-y-2 text-sm text-gray-700">
               <li className="flex items-center gap-2">
                 <Sparkles size={14} className="text-blue-500 shrink-0" />
                 {t('针对错题知识点进行专项复习')}

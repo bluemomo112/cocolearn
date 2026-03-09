@@ -104,6 +104,9 @@ export function LeftPanel(props: LeftPanelProps) {
   const [showPasteTextModal, setShowPasteTextModal] = useState(false);
   const [pasteTextContent, setPasteTextContent] = useState('');
 
+  // 资源区域折叠状态
+  const [isResourceCollapsed, setIsResourceCollapsed] = useState(false);
+
   // 统一编辑任务弹窗状态
   const [unifiedEditTask, setUnifiedEditTask] = useState<any>(null);
   const [editLocalTask, setEditLocalTask] = useState<any>(null);
@@ -487,16 +490,38 @@ export function LeftPanel(props: LeftPanelProps) {
             {config.learningMode === 'ai_guided' ? (
             // AI引导模式：上方资源（用户+AI） + 下方学习任务
             <>
-              {/* 资源区域 - 任务收起时自动扩展 */}
+              {/* 资源区域 - 任务收起时自动扩展，支持折叠 */}
               <div
-                className="flex flex-col min-h-0 overflow-hidden"
+                className="flex flex-col min-h-0 overflow-hidden transition-all"
                 style={{
-                  flex: collapsedPanels.tasks ? '1 1 auto' : '0 0 50%'
+                  flex: isResourceCollapsed
+                    ? '0 0 auto'
+                    : collapsedPanels.tasks
+                    ? '1 1 auto'
+                    : '0 0 50%'
                 }}
               >
+                {/* 资源区域标题栏 - 带折叠按钮 */}
+                <div
+                  className={`px-4 border-b border-gray-200 cursor-pointer hover:bg-gray-50 transition-all flex items-center justify-between ${isResourceCollapsed ? 'h-10' : 'h-0'}`}
+                  onClick={() => setIsResourceCollapsed(!isResourceCollapsed)}
+                >
+                  {isResourceCollapsed && (
+                    <>
+                      <h3 className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+                        <FolderOpen size={16} className="text-gray-500" />
+                        {t('学习资源')}
+                      </h3>
+                      <ChevronDown size={16} className="text-gray-400" />
+                    </>
+                  )}
+                </div>
+
+                {/* 资源内容区域 */}
+                {!isResourceCollapsed && (
+                  <>
                 {/* 添加资源入口（与自由探索模式一致） */}
-                <div className="p-3 border-b border-gray-100 space-y-2">
-                  <button
+                <div className="p-3 border-b border-gray-100 space-y-2">\n                  <button
                     onClick={() => onFileUploadOpen()}
                     className="w-full px-3 py-2.5 border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-gray-400 hover:text-gray-700 hover:bg-gray-50 transition-all flex items-center justify-center gap-2"
                   >
@@ -714,13 +739,27 @@ export function LeftPanel(props: LeftPanelProps) {
                   </>
                   )}
                 </div>
+                {/* 资源区域折叠按钮 */}
+                {!isResourceCollapsed && (
+                  <div className="px-4 py-1.5 border-t border-gray-100 flex justify-center flex-shrink-0">
+                    <button
+                      onClick={() => setIsResourceCollapsed(true)}
+                      className="text-xs text-gray-400 hover:text-gray-600 flex items-center gap-1 hover:bg-gray-100 px-3 py-1 rounded-lg transition-colors"
+                    >
+                      <ChevronUp size={12} />
+                      {t('收起资源')}
+                    </button>
+                  </div>
+                )}
+                </>
+                )}
               </div>
 
-              {/* 学习任务区域 - 可折叠，展开时占50% */}
+              {/* 学习任务区域 - 可折叠，资源收起时自动扩展，展开时占50% */}
               <div
                 className="flex flex-col min-h-0 border-t border-gray-200 transition-all overflow-hidden"
                 style={{
-                  flex: collapsedPanels.tasks ? '0 0 auto' : '0 0 50%'
+                  flex: collapsedPanels.tasks ? '0 0 auto' : isResourceCollapsed ? '1 1 auto' : '0 0 50%'
                 }}
               >
                 {/* 可折叠的标题栏 - 收起时高度与中间对话区输入框对齐 */}
@@ -926,13 +965,35 @@ export function LeftPanel(props: LeftPanelProps) {
           ) : (
             // 自由探索模式：Sources 面板（类似 NotebookLM）+ 任务区（类似 student-workbench）
             <>
-              {/* 资源区域 - 任务收起时自动扩展 */}
+              {/* 资源区域 - 任务收起时自动扩展，支持折叠 */}
               <div
-                className="flex flex-col min-h-0 overflow-hidden"
+                className="flex flex-col min-h-0 overflow-hidden transition-all"
                 style={{
-                  flex: collapsedPanels.tasks ? '1 1 auto' : '0 0 50%'
+                  flex: isResourceCollapsed
+                    ? '0 0 auto'
+                    : collapsedPanels.tasks
+                    ? '1 1 auto'
+                    : '0 0 50%'
                 }}
               >
+                {/* 资源区域折叠标题栏 */}
+                <div
+                  className={`px-4 border-b border-gray-200 cursor-pointer hover:bg-gray-50 transition-all flex items-center justify-between ${isResourceCollapsed ? 'h-10' : 'h-0'}`}
+                  onClick={() => setIsResourceCollapsed(!isResourceCollapsed)}
+                >
+                  {isResourceCollapsed && (
+                    <>
+                      <h3 className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+                        <FolderOpen size={16} className="text-gray-500" />
+                        {t('学习资源')}
+                      </h3>
+                      <ChevronDown size={16} className="text-gray-400" />
+                    </>
+                  )}
+                </div>
+
+                {!isResourceCollapsed && (
+                <>
 
                 {/* 添加资源入口 */}
                 <div className="p-3 border-b border-gray-100 space-y-2">
@@ -1137,13 +1198,27 @@ export function LeftPanel(props: LeftPanelProps) {
                   </>
                   )}
                 </div>
+                {/* 资源区域折叠按钮 */}
+                {!isResourceCollapsed && (
+                  <div className="px-4 py-1.5 border-t border-gray-100 flex justify-center flex-shrink-0">
+                    <button
+                      onClick={() => setIsResourceCollapsed(true)}
+                      className="text-xs text-gray-400 hover:text-gray-600 flex items-center gap-1 hover:bg-gray-100 px-3 py-1 rounded-lg transition-colors"
+                    >
+                      <ChevronUp size={12} />
+                      {t('收起资源')}
+                    </button>
+                  </div>
+                )}
+                </>
+                )}
               </div>
 
-              {/* 任务区域 - 可折叠，展开时占50% */}
+              {/* 任务区域 - 可折叠，资源收起时自动扩展，展开时占50% */}
               <div
                 className="flex flex-col min-h-0 border-t border-gray-200 transition-all overflow-hidden"
                 style={{
-                  flex: collapsedPanels.tasks ? '0 0 auto' : '0 0 50%'
+                  flex: collapsedPanels.tasks ? '0 0 auto' : isResourceCollapsed ? '1 1 auto' : '0 0 50%'
                 }}
               >
                 {/* 可折叠的标题栏 - 收起时高度与中间对话区输入框对齐 */}
