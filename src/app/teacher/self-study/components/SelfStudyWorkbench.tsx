@@ -1803,6 +1803,17 @@ export default function SelfStudyWorkbench({
     setSettingsTaskId(null);
   };
 
+  // 保存任务（新增或更新）- 用于统一编辑弹窗
+  const handleSaveTask = (task: any) => {
+    setGeneratedTasks(prev => {
+      const exists = prev.some(t => t.id === task.id);
+      if (exists) {
+        return prev.map(t => t.id === task.id ? task : t);
+      }
+      return [task, ...prev];
+    });
+  };
+
   // 保存资源可见性
   const handleSaveResourceVisibility = (resourceId: string, visibility: ResourceVisibility) => {
     console.log('[ResourceVisibility] 保存:', resourceId, visibility);
@@ -1816,11 +1827,25 @@ export default function SelfStudyWorkbench({
   };
 
   // 错题闭环 handlers
+  // 回顾错题：保留答案，回到全屏查看
   const handleRetryWrongQuestions = () => {
-    console.log('[ErrorLoop] 重做错题');
+    console.log('[ErrorLoop] 回顾错题');
     if (expandedTask) {
       setTaskDisplayMode('fullscreen');
+    }
+  };
+
+  // 重做：清空答案，从第1题重新开始
+  const handleRedoCurrentTask = () => {
+    console.log('[ErrorLoop] 重做任务');
+    if (expandedTask) {
       setQuickResult(null);
+      setMessages(prev => prev.map(msg =>
+        msg.embeddedTask?.id === expandedTask.id
+          ? { ...msg, taskState: { currentQuestionIndex: 0, selectedAnswers: {}, submissionText: '', status: 'in_progress' } }
+          : msg
+      ));
+      setTaskDisplayMode('fullscreen');
     }
   };
 
@@ -1848,10 +1873,11 @@ export default function SelfStudyWorkbench({
   const handleBackToChat = () => {
     console.log('[ErrorLoop] 回到对话区');
     setTaskDisplayMode('embedded');
-    // 同步错题上下文到对话
+    // 同步错题上下文到对话（仅当AI分析消息尚未存在时）
     if (expandedTask && quickResult) {
+      const hasAnalysis = messages.some(m => m.id === `msg_${expandedTask.id}_analysis`);
       const wrongDetails = quickResult.details.filter(d => !d.correct);
-      if (wrongDetails.length > 0) {
+      if (!hasAnalysis && wrongDetails.length > 0) {
         const syncMsg: ChatMessage = {
           id: `msg_error_sync_${Date.now()}`,
           role: 'assistant',
@@ -2231,6 +2257,14 @@ export default function SelfStudyWorkbench({
   // ── [任务×对话] 跨 section 核心逻辑 ─────────────────────────
   // 处理用户点击任务 - 将任务作为智能体推送的消息嵌入对话
   const handleTaskClick = (task: any) => {
+    // 去重：如果该任务已有对应消息，直接展开，不再创建新消息
+    const existingMessage = messages.find(m => m.embeddedTask?.id === task.id);
+    if (existingMessage) {
+      setExpandedTask(task);
+      setTaskDisplayMode('fullscreen');
+      return;
+    }
+
     // 创建一条智能体消息，嵌入任务卡片
     const taskIntroMessage: ChatMessage = {
       id: `msg_task_${task.id}_${Date.now()}`,
@@ -2671,6 +2705,7 @@ export default function SelfStudyWorkbench({
               selectedAnswers={taskMessage?.taskState?.selectedAnswers || {}}
               onClose={() => { setTaskDisplayMode('embedded'); }}
               onRetryWrongQuestions={handleRetryWrongQuestions}
+              onRedoTask={handleRedoCurrentTask}
               onGeneratePractice={handleGeneratePractice}
               onBackToChat={handleBackToChat}
               onExplainQuestion={handleExplainQuestion}
@@ -2743,6 +2778,7 @@ export default function SelfStudyWorkbench({
           toggleAllResources={toggleAllResources}
           toggleTaskSelection={toggleTaskSelection}
           setEditingTask={setEditingTask}
+          onSaveTask={handleSaveTask}
           onAddResource={handleAddResource}
         />
 

@@ -64,6 +64,7 @@ interface LeftPanelProps {
   toggleAllResources: () => void;
   toggleTaskSelection: (id: string) => void;
   setEditingTask: (task: any) => void;
+  onSaveTask?: (task: any) => void;
 
   onAddResource?: (resource: Resource) => void;
   selectedResourceIds: Set<string>;
@@ -88,7 +89,7 @@ export function LeftPanel(props: LeftPanelProps) {
     onToggleTaskCompletion,
     onAddResource,
     selectedResourceIds, toggleResourceSelection,
-    selectedTaskIds, toggleAllTasks, toggleAllResources, toggleTaskSelection, setEditingTask,
+    selectedTaskIds, toggleAllTasks, toggleAllResources, toggleTaskSelection, setEditingTask, onSaveTask,
   } = props;
 
   // 粘贴文本弹窗状态
@@ -116,17 +117,16 @@ export function LeftPanel(props: LeftPanelProps) {
 
   const handleUnifiedEditSave = () => {
     if (editLocalTask) {
-      setEditingTask(editLocalTask);
-      // Trigger save via parent by calling setEditingTask then immediately closing
-      // The parent's TaskEditModal onSave flow handles persistence
-      // Instead, directly update via onSaveTaskSettings pattern
+      // Save task settings via dedicated handler
       const updatedSettings: any = {
         ...(editLocalTask.settings || {}),
         showAnswersAfterSubmit: editLocalTask.settings?.showAnswersAfterSubmit ?? true,
       };
       onSaveTaskSettings(editLocalTask.id, updatedSettings);
-      // Update the task in generatedTasks via setEditingTask callback
-      setEditingTask(editLocalTask);
+      // Save the full task (add or update) via parent callback
+      if (onSaveTask) {
+        onSaveTask(editLocalTask);
+      }
     }
     closeUnifiedEditModal();
   };

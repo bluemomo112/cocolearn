@@ -14,6 +14,7 @@ interface TaskResultReviewProps {
   selectedAnswers: Record<string, string | string[]>;
   onClose: () => void;
   onRetryWrongQuestions?: () => void;
+  onRedoTask?: () => void;
   onGeneratePractice?: () => void;
   onBackToChat?: () => void;
   onExplainQuestion?: (question: TaskQuestion, userAnswer: string | string[], correctAnswer: string | string[]) => void;
@@ -21,7 +22,7 @@ interface TaskResultReviewProps {
 
 export default function TaskResultReview({
   task, quickResult, selectedAnswers, onClose,
-  onRetryWrongQuestions, onGeneratePractice, onBackToChat, onExplainQuestion,
+  onRetryWrongQuestions, onRedoTask, onGeneratePractice, onBackToChat, onExplainQuestion,
 }: TaskResultReviewProps) {
   const { t } = useLanguage();
   const questions = task.questions || [];
@@ -83,6 +84,7 @@ export default function TaskResultReview({
               result={quickResult} pct={scorePercent} color={scoreColor} stats={typeStats}
               onClose={onClose}
               onRetryWrongQuestions={onRetryWrongQuestions}
+              onRedoTask={onRedoTask}
               onGeneratePractice={onGeneratePractice}
               onBackToChat={onBackToChat}
             />
@@ -198,11 +200,12 @@ function ReviewQuestion({ q, idx, detail, answer, onExplainQuestion }: {
   );
 }
 
-function ReviewSummary({ result, pct, color, stats, onClose, onRetryWrongQuestions, onGeneratePractice, onBackToChat }: {
+function ReviewSummary({ result, pct, color, stats, onClose, onRetryWrongQuestions, onRedoTask, onGeneratePractice, onBackToChat }: {
   result: QuickResultData; pct: number; color: string;
   stats: Record<string, { total: number; correct: number }>;
   onClose: () => void;
   onRetryWrongQuestions?: () => void;
+  onRedoTask?: () => void;
   onGeneratePractice?: () => void;
   onBackToChat?: () => void;
 }) {
@@ -278,8 +281,8 @@ function ReviewSummary({ result, pct, color, stats, onClose, onRetryWrongQuestio
             <Eye size={18} />{t('回顾错题')}
           </button>
         )}
-        {onRetryWrongQuestions && (
-          <button onClick={onRetryWrongQuestions}
+        {onRedoTask && (
+          <button onClick={onRedoTask}
             className="flex-1 py-3.5 rounded-xl border-2 border-blue-300 bg-blue-50 text-blue-700 font-medium hover:bg-blue-100 transition-colors flex items-center justify-center gap-2">
             <RotateCcw size={18} />{t('重做')}
           </button>
