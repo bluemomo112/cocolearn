@@ -103,6 +103,15 @@ export function LeftPanel(props: LeftPanelProps) {
   const [draggedQuestionId, setDraggedQuestionId] = useState<string | null>(null);
   const [inlineEditingOptionId, setInlineEditingOptionId] = useState<string | null>(null);
   const [showQuestionTypeMenu, setShowQuestionTypeMenu] = useState(false);
+  // 题目编辑器状态
+  const [editingQuestion, setEditingQuestion] = useState<any>(null);
+  const [showQuestionEditor, setShowQuestionEditor] = useState(false);
+  // AI生成配置
+  const [showAIGenConfig, setShowAIGenConfig] = useState(false);
+  const [isAIGenModalLoading, setIsAIGenModalLoading] = useState(false);
+  const [aiGenConfig, setAiGenConfig] = useState({ questionTypes: ['single_choice'] as string[], questionCount: 3, difficulty: 'medium' as 'easy' | 'medium' | 'hard' });
+
+  const typeLabels: Record<string, string> = { single_choice: '单选题', multiple_choice: '多选题', true_false: '判断题', fill_blank: '填空题', short_answer: '简答题' };
 
   const openUnifiedEditModal = (task: any) => {
     setUnifiedEditTask(task);
@@ -113,6 +122,56 @@ export function LeftPanel(props: LeftPanelProps) {
     setUnifiedEditTask(null);
     setEditLocalTask(null);
     setInlineEditingId(null);
+    setShowQuestionEditor(false);
+    setEditingQuestion(null);
+    setShowAIGenConfig(false);
+  };
+
+  const handleEditQuestionOpen = (question: any) => {
+    setEditingQuestion({ ...question });
+    setShowQuestionEditor(true);
+  };
+
+  const handleNewQuestion = (type: string) => {
+    const defaults: Record<string, any> = {
+      single_choice: { options: [t('选项A'), t('选项B'), t('选项C'), t('选项D')], answer: t('选项A') },
+      multiple_choice: { options: [t('选项A'), t('选项B'), t('选项C'), t('选项D')], answer: [t('选项A'), t('选项B')] },
+      true_false: { options: [t('正确'), t('错误')], answer: t('正确') },
+      fill_blank: { options: [], answer: '' },
+      short_answer: { options: [], answer: '' },
+    };
+    setEditingQuestion({ id: `q_${Date.now()}`, type, content: '', ...(defaults[type] || defaults.single_choice), required: false, points: 1 });
+    setShowQuestionEditor(true);
+    setShowQuestionTypeMenu(false);
+  };
+
+  const handleSaveQuestion = () => {
+    if (!editingQuestion || !editLocalTask) return;
+    const exists = (editLocalTask.questions || []).some((q: any) => q.id === editingQuestion.id);
+    const questions = exists
+      ? editLocalTask.questions.map((q: any) => q.id === editingQuestion.id ? editingQuestion : q)
+      : [...(editLocalTask.questions || []), editingQuestion];
+    setEditLocalTask({ ...editLocalTask, questions, questionCount: questions.length });
+    setShowQuestionEditor(false);
+    setEditingQuestion(null);
+  };
+
+  const handleAIGenerate = () => {
+    if (!editLocalTask) return;
+    setIsAIGenModalLoading(true);
+    setTimeout(() => {
+      const newQs = Array.from({ length: aiGenConfig.questionCount }, (_, i) => {
+        const type = aiGenConfig.questionTypes[i % aiGenConfig.questionTypes.length];
+        const base: any = { id: `q_ai_${Date.now()}_${i}`, type, content: `${typeLabels[type] || '题目'} ${(editLocalTask.questions || []).length + i + 1}`, required: false, points: 1, aiGenerated: true };
+        if (type === 'single_choice' || type === 'multiple_choice') { base.options = [t('选项A'), t('选项B'), t('选项C'), t('选项D')]; base.answer = type === 'multiple_choice' ? [t('选项A'), t('选项B')] : t('选项A'); }
+        else if (type === 'true_false') { base.options = [t('正确'), t('错误')]; base.answer = t('正确'); }
+        else if (type === 'fill_blank') { base.answer = t('参考答案'); }
+        else { base.answer = ''; }
+        return base;
+      });
+      setEditLocalTask({ ...editLocalTask, questions: [...(editLocalTask.questions || []), ...newQs], questionCount: (editLocalTask.questions || []).length + newQs.length });
+      setIsAIGenModalLoading(false);
+    }, 1500);
   };
 
   const handleUnifiedEditSave = () => {
@@ -1286,7 +1345,7 @@ export function LeftPanel(props: LeftPanelProps) {
       {/* 统一编辑任务弹窗 */}
       {unifiedEditTask && editLocalTask && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center" onClick={closeUnifiedEditModal}>
-          <div className="bg-white rounded-xl shadow-2xl w-[600px] max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white rounded-xl shadow-2xl w-[640px] max-h-[85vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
             {/* 弹窗头部 */}
             <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
               <h3 className="text-base font-semibold text-gray-800">{t('编辑任务')}</h3>
@@ -1308,7 +1367,9 @@ export function LeftPanel(props: LeftPanelProps) {
 
               {/* 题目列表 */}
               <div>
-                <label className="text-xs font-medium text-gray-500 mb-2 block">{t('题目列表')}</label>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-xs font-medium text-gray-500">{t('题目列表')} ({(editLocalTask.questions || []).length})</label>
+                </div>
                 <div className="space-y-2">
                   {(editLocalTask.questions || []).map((q: any, idx: number) => (
                     <div
@@ -1317,69 +1378,36 @@ export function LeftPanel(props: LeftPanelProps) {
                       onDragStart={() => setDraggedQuestionId(q.id)}
                       onDragOver={(e) => handleDragOver(e, q.id)}
                       onDragEnd={() => setDraggedQuestionId(null)}
-                      className="border border-gray-200 rounded-lg p-3 bg-gray-50 hover:bg-white transition-colors group"
+                      onClick={() => handleEditQuestionOpen(q)}
+                      className="border border-gray-200 rounded-lg p-3 bg-gray-50 hover:bg-white hover:border-primary-200 transition-colors group cursor-pointer"
                     >
                       <div className="flex items-start gap-2">
                         <GripVertical size={14} className="text-gray-300 mt-1 cursor-grab flex-shrink-0" />
                         <span className="text-xs text-gray-400 mt-0.5 flex-shrink-0">{idx + 1}.</span>
                         <div className="flex-1 min-w-0">
-                          {/* 题目内容 - 双击编辑 */}
-                          {inlineEditingId === q.id ? (
-                            <input
-                              autoFocus
-                              value={q.content || ''}
-                              onChange={(e) => handleInlineEdit(q.id, 'content', e.target.value)}
-                              onBlur={() => setInlineEditingId(null)}
-                              onKeyDown={(e) => e.key === 'Enter' && setInlineEditingId(null)}
-                              className="w-full text-sm px-2 py-1 border border-primary-300 rounded focus:outline-none focus:ring-1 focus:ring-primary-500"
-                            />
-                          ) : (
-                            <p
-                              className="text-sm text-gray-700 cursor-text hover:bg-gray-100 px-2 py-1 rounded"
-                              onDoubleClick={() => setInlineEditingId(q.id)}
-                              title={t('双击编辑')}
-                            >
-                              {q.content || t('空题目')}
-                            </p>
-                          )}
-                          {/* 选项 */}
-                          {q.options && (
-                            <div className="mt-1 space-y-0.5">
-                              {q.options.map((opt: string, optIdx: number) => (
-                                <div key={optIdx} className="flex items-center gap-1 text-xs text-gray-500">
-                                  <span className="w-4 text-center">{String.fromCharCode(65 + optIdx)}.</span>
-                                  {inlineEditingOptionId === `${q.id}_${optIdx}` ? (
-                                    <input
-                                      autoFocus
-                                      value={opt}
-                                      onChange={(e) => handleInlineEdit(q.id, 'option', e.target.value, optIdx)}
-                                      onBlur={() => setInlineEditingOptionId(null)}
-                                      onKeyDown={(e) => e.key === 'Enter' && setInlineEditingOptionId(null)}
-                                      className="flex-1 text-xs px-1 py-0.5 border border-primary-300 rounded focus:outline-none focus:ring-1 focus:ring-primary-500"
-                                    />
-                                  ) : (
-                                    <span
-                                      className="cursor-text hover:bg-gray-100 px-1 rounded"
-                                      onDoubleClick={() => setInlineEditingOptionId(`${q.id}_${optIdx}`)}
-                                    >
-                                      {opt}
-                                    </span>
-                                  )}
-                                </div>
-                              ))}
-                            </div>
-                          )}
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-100 text-blue-600 font-medium">{typeLabels[q.type] || q.type}</span>
+                            {q.aiGenerated && <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-100 text-purple-600">AI</span>}
+                          </div>
+                          <p className="text-sm text-gray-700 truncate">{q.content || t('空题目')}</p>
+                          {/* 正确答案指示 */}
+                          <p className="text-xs mt-0.5 text-gray-400">
+                            {q.type === 'short_answer' ? t('AI评分') :
+                             q.type === 'fill_blank' ? `${t('参考')}: ${q.answer || '-'}` :
+                             Array.isArray(q.answer) ? `✓ ${q.answer.join(', ')}` :
+                             q.answer ? `✓ ${q.answer}` : '-'}
+                          </p>
                         </div>
                         {/* 必修开关 */}
                         <button
-                          onClick={() => handleToggleQuestionRequired(q.id)}
+                          onClick={(e) => { e.stopPropagation(); handleToggleQuestionRequired(q.id); }}
                           className={`text-[10px] px-2 py-0.5 rounded-full flex-shrink-0 ${q.required ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-400'}`}
                         >
                           {q.required ? t('必修') : t('选修')}
                         </button>
                         {/* 删除 */}
                         <button
-                          onClick={() => handleDeleteQuestion(q.id)}
+                          onClick={(e) => { e.stopPropagation(); handleDeleteQuestion(q.id); }}
                           className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-50 rounded text-gray-400 hover:text-red-500 flex-shrink-0"
                         >
                           <Trash2 size={12} />
@@ -1399,24 +1427,86 @@ export function LeftPanel(props: LeftPanelProps) {
                   </button>
                   {showQuestionTypeMenu && (
                     <div className="absolute bottom-full left-0 right-0 mb-1 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-10">
-                      {[
-                        { type: 'single_choice', label: '单选题' },
-                        { type: 'multiple_choice', label: '多选题' },
-                        { type: 'true_false', label: '判断题' },
-                        { type: 'fill_blank', label: '填空题' },
-                        { type: 'short_answer', label: '简答题' },
-                      ].map(item => (
+                      {Object.entries(typeLabels).map(([type, label]) => (
                         <button
-                          key={item.type}
-                          onClick={() => handleAddManualQuestion(item.type)}
+                          key={type}
+                          onClick={() => handleNewQuestion(type)}
                           className="w-full px-3 py-1.5 text-left text-xs text-gray-600 hover:bg-gray-50 transition-colors"
                         >
-                          {t(item.label)}
+                          {label}
                         </button>
                       ))}
                     </div>
                   )}
                 </div>
+              </div>
+
+              {/* AI 生成题目 */}
+              <div className="border border-gray-200 rounded-lg overflow-hidden">
+                <button
+                  onClick={() => setShowAIGenConfig(!showAIGenConfig)}
+                  className="w-full flex items-center justify-between px-3 py-2 bg-gray-50 hover:bg-gray-100 transition-colors text-sm"
+                >
+                  <span className="flex items-center gap-1.5 text-gray-600 font-medium">
+                    <Sparkles size={14} />
+                    {t('AI 生成题目')}
+                  </span>
+                  <ChevronDown size={14} className={`text-gray-400 transition-transform ${showAIGenConfig ? 'rotate-180' : ''}`} />
+                </button>
+                {showAIGenConfig && (
+                  <div className="p-3 space-y-3 border-t border-gray-200">
+                    <div>
+                      <label className="text-xs font-medium text-gray-500 mb-1.5 block">{t('题型')}</label>
+                      <div className="flex flex-wrap gap-1.5">
+                        {Object.entries(typeLabels).map(([type, label]) => (
+                          <button
+                            key={type}
+                            onClick={() => setAiGenConfig(prev => ({
+                              ...prev,
+                              questionTypes: prev.questionTypes.includes(type)
+                                ? prev.questionTypes.filter(t2 => t2 !== type)
+                                : [...prev.questionTypes, type]
+                            }))}
+                            className={`px-2 py-1 text-xs rounded-lg border transition-colors ${
+                              aiGenConfig.questionTypes.includes(type)
+                                ? 'bg-primary-50 border-primary-300 text-primary-700'
+                                : 'bg-white border-gray-200 text-gray-500 hover:border-gray-300'
+                            }`}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="flex gap-3">
+                      <div className="flex-1">
+                        <label className="text-xs font-medium text-gray-500 mb-1 block">{t('数量')}</label>
+                        <input type="number" min={1} max={10} value={aiGenConfig.questionCount}
+                          onChange={(e) => setAiGenConfig(prev => ({ ...prev, questionCount: Math.max(1, Math.min(10, parseInt(e.target.value) || 1)) }))}
+                          className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-primary-500"
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <label className="text-xs font-medium text-gray-500 mb-1 block">{t('难度')}</label>
+                        <select value={aiGenConfig.difficulty}
+                          onChange={(e) => setAiGenConfig(prev => ({ ...prev, difficulty: e.target.value as any }))}
+                          className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-primary-500"
+                        >
+                          <option value="easy">{t('简单')}</option>
+                          <option value="medium">{t('中等')}</option>
+                          <option value="hard">{t('困难')}</option>
+                        </select>
+                      </div>
+                    </div>
+                    <button
+                      onClick={handleAIGenerate}
+                      disabled={isAIGenModalLoading || aiGenConfig.questionTypes.length === 0}
+                      className="w-full px-3 py-2 bg-primary-600 text-white text-xs rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-1.5"
+                    >
+                      {isAIGenModalLoading ? <><Activity size={12} className="animate-spin" />{t('生成中...')}</> : <><Sparkles size={12} />{t('生成题目')}</>}
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* 答案可见性 */}
@@ -1441,6 +1531,128 @@ export function LeftPanel(props: LeftPanelProps) {
             <div className="flex justify-end gap-3 px-5 py-4 border-t border-gray-200">
               <button onClick={closeUnifiedEditModal} className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg">{t('取消')}</button>
               <button onClick={handleUnifiedEditSave} className="px-4 py-2 text-sm text-white bg-primary-600 hover:bg-primary-700 rounded-lg">{t('保存')}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 题目编辑器 sub-modal */}
+      {showQuestionEditor && editingQuestion && (
+        <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center" onClick={() => { setShowQuestionEditor(false); setEditingQuestion(null); }}>
+          <div className="bg-white rounded-xl shadow-2xl w-[500px] max-h-[70vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-5 py-3 border-b border-gray-200 bg-gradient-to-r from-green-500 to-primary-500 rounded-t-xl">
+              <h4 className="text-sm font-semibold text-white">{editingQuestion.id?.startsWith('q_') && !(editLocalTask?.questions || []).some((q: any) => q.id === editingQuestion.id) ? t('添加题目') : t('编辑题目')}</h4>
+              <button onClick={() => { setShowQuestionEditor(false); setEditingQuestion(null); }} className="p-1 hover:bg-white/20 rounded-lg"><X size={16} className="text-white" /></button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-5 space-y-4">
+              {/* 题型选择 */}
+              <div>
+                <label className="text-xs font-medium text-gray-500 mb-1 block">{t('题型')}</label>
+                <select
+                  value={editingQuestion.type}
+                  onChange={(e) => {
+                    const newType = e.target.value;
+                    const defaults: Record<string, any> = {
+                      single_choice: { options: [t('选项A'), t('选项B'), t('选项C'), t('选项D')], answer: t('选项A') },
+                      multiple_choice: { options: [t('选项A'), t('选项B'), t('选项C'), t('选项D')], answer: [t('选项A'), t('选项B')] },
+                      true_false: { options: [t('正确'), t('错误')], answer: t('正确') },
+                      fill_blank: { options: [], answer: '' },
+                      short_answer: { options: [], answer: '' },
+                    };
+                    setEditingQuestion({ ...editingQuestion, type: newType, ...(defaults[newType] || {}) });
+                  }}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                >
+                  {Object.entries(typeLabels).map(([val, label]) => (
+                    <option key={val} value={val}>{label}</option>
+                  ))}
+                </select>
+              </div>
+              {/* 题目内容 */}
+              <div>
+                <label className="text-xs font-medium text-gray-500 mb-1 block">{t('题目内容')} <span className="text-red-400">*</span></label>
+                <textarea
+                  value={editingQuestion.content || ''}
+                  onChange={(e) => setEditingQuestion({ ...editingQuestion, content: e.target.value })}
+                  placeholder={t('请输入题目内容...')}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 min-h-[60px] resize-none"
+                />
+              </div>
+              {/* 选项和答案 - 按题型 */}
+              {(editingQuestion.type === 'single_choice' || editingQuestion.type === 'multiple_choice') && (
+                <div>
+                  <label className="text-xs font-medium text-gray-500 mb-2 block">{t('选项')} <span className="text-xs text-gray-400 font-normal">({editingQuestion.type === 'single_choice' ? t('点击单选按钮标记正确答案') : t('勾选正确答案')})</span></label>
+                  <div className="space-y-2">
+                    {(editingQuestion.options || []).map((opt: string, i: number) => (
+                      <div key={i} className="flex items-center gap-2">
+                        {editingQuestion.type === 'single_choice' ? (
+                          <input type="radio" name="correct" checked={editingQuestion.answer === opt}
+                            onChange={() => setEditingQuestion({ ...editingQuestion, answer: opt })}
+                            className="w-4 h-4 text-green-600" />
+                        ) : (
+                          <input type="checkbox" checked={Array.isArray(editingQuestion.answer) && editingQuestion.answer.includes(opt)}
+                            onChange={(e) => {
+                              const arr = Array.isArray(editingQuestion.answer) ? [...editingQuestion.answer] : [];
+                              if (e.target.checked) arr.push(opt); else { const idx2 = arr.indexOf(opt); if (idx2 >= 0) arr.splice(idx2, 1); }
+                              setEditingQuestion({ ...editingQuestion, answer: arr });
+                            }}
+                            className="w-4 h-4 text-green-600 rounded" />
+                        )}
+                        <span className="text-xs text-gray-400 w-4">{String.fromCharCode(65 + i)}.</span>
+                        <input
+                          value={opt}
+                          onChange={(e) => {
+                            const newOpts = [...(editingQuestion.options || [])];
+                            const oldOpt = newOpts[i];
+                            newOpts[i] = e.target.value;
+                            // Update answer if it referenced the old option text
+                            let newAnswer = editingQuestion.answer;
+                            if (editingQuestion.type === 'single_choice' && newAnswer === oldOpt) { newAnswer = e.target.value; }
+                            else if (Array.isArray(newAnswer)) { newAnswer = newAnswer.map((a: string) => a === oldOpt ? e.target.value : a); }
+                            setEditingQuestion({ ...editingQuestion, options: newOpts, answer: newAnswer });
+                          }}
+                          className="flex-1 px-2 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary-500"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {editingQuestion.type === 'true_false' && (
+                <div>
+                  <label className="text-xs font-medium text-gray-500 mb-2 block">{t('正确答案')}</label>
+                  <div className="flex gap-4">
+                    {[t('正确'), t('错误')].map(val => (
+                      <label key={val} className="flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="tf" checked={editingQuestion.answer === val}
+                          onChange={() => setEditingQuestion({ ...editingQuestion, answer: val })}
+                          className="w-4 h-4 text-green-600" />
+                        <span className="text-sm text-gray-700">{val}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {editingQuestion.type === 'fill_blank' && (
+                <div>
+                  <label className="text-xs font-medium text-gray-500 mb-1 block">{t('参考答案')}</label>
+                  <input
+                    value={editingQuestion.answer || ''}
+                    onChange={(e) => setEditingQuestion({ ...editingQuestion, answer: e.target.value })}
+                    placeholder={t('请输入参考答案...')}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  />
+                </div>
+              )}
+              {editingQuestion.type === 'short_answer' && (
+                <div className="px-3 py-2 bg-gray-50 rounded-lg">
+                  <p className="text-xs text-gray-500">{t('简答题将由 AI 自动评分')}</p>
+                </div>
+              )}
+            </div>
+            <div className="flex justify-end gap-3 px-5 py-3 border-t border-gray-200">
+              <button onClick={() => { setShowQuestionEditor(false); setEditingQuestion(null); }} className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg">{t('取消')}</button>
+              <button onClick={handleSaveQuestion} disabled={!editingQuestion.content?.trim()} className="px-4 py-2 text-sm text-white bg-green-600 hover:bg-green-700 disabled:opacity-50 rounded-lg">{t('保存')}</button>
             </div>
           </div>
         </div>
