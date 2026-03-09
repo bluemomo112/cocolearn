@@ -5,7 +5,6 @@ import { X, Settings2, MessageCircle, GitBranch, Activity, FileEdit, Sliders, Ch
 import { SpaceConfig, LearningMode, AIStyle, KnowledgeBoundary, LearningFlow, LEARNING_MODE_CONFIG } from '@/types/self-study';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getMockAgents, getMockWorkflows, getMockStrategies, getNoteTemplates } from '../constants/mockData';
-import MetaConfigModal from './MetaConfigModal';
 
 interface SettingsModalProps {
   config: SpaceConfig;
@@ -15,7 +14,7 @@ interface SettingsModalProps {
 
 export default function SettingsModal({ config, onSave, onClose }: SettingsModalProps) {
   const [localConfig, setLocalConfig] = useState(config);
-  const [showMetaModal, setShowMetaModal] = useState(false);
+  const [showMetaConfig, setShowMetaConfig] = useState(false);
   const [expandedSection, setExpandedSection] = useState<'free' | 'guided' | null>(null);
   const [expandedStage, setExpandedStage] = useState<string | null>(null);
   const { t } = useLanguage();
@@ -430,23 +429,49 @@ export default function SettingsModal({ config, onSave, onClose }: SettingsModal
                     </select>
                   </div>
 
-                  {/* AI 监控配置 */}
+                  {/* AI 监控配置 - 内联折叠 */}
                   <div className="p-4 bg-accent-50/30 rounded-xl border border-accent-100">
-                    <div className="flex items-center justify-between mb-3">
+                    <div
+                      className="flex items-center justify-between cursor-pointer"
+                      onClick={() => setShowMetaConfig(!showMetaConfig)}
+                    >
                       <div className="flex items-center gap-2">
                         <Activity size={16} className="text-accent-600" />
                         <span className="text-sm font-medium text-gray-700">{t('学情监控 (元认知)')}</span>
                       </div>
-                      <button
-                        onClick={() => setShowMetaModal(true)}
-                        className="text-xs px-3 py-1.5 bg-accent-600 text-white rounded-lg hover:bg-accent-700 transition-colors"
-                      >
-                        {t('配置监控')}
-                      </button>
+                      <ChevronDown size={16} className={`text-gray-400 transition-transform ${showMetaConfig ? 'rotate-180' : ''}`} />
                     </div>
-                    <div className="text-xs text-gray-600">
-                      <p>{t('• 监控策略:')} <span className="font-medium">{selectedStrategy?.name || t('未选择')}</span></p>
-                    </div>
+                    {showMetaConfig && (
+                      <div className="mt-3 space-y-3 pt-3 border-t border-accent-100">
+                        {/* Strategy selection */}
+                        <div>
+                          <label className="block text-xs font-medium text-gray-600 mb-2">{t('选择监控策略')}</label>
+                          <div className="space-y-1.5">
+                            {MOCK_STRATEGIES.map((strategy) => (
+                              <label key={strategy.id} className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-all border text-xs ${
+                                localConfig.metaConfig?.selectedStrategyId === strategy.id ? 'bg-accent-50 border-accent-300' : 'bg-white border-gray-200 hover:border-accent-200'
+                              }`}>
+                                <input type="radio" name="strategy" checked={localConfig.metaConfig?.selectedStrategyId === strategy.id} onChange={() => setLocalConfig({...localConfig, metaConfig: {...localConfig.metaConfig!, selectedStrategyId: strategy.id}})} className="w-3 h-3 text-accent-600" />
+                                <div>
+                                  <p className="font-medium text-gray-700">{strategy.name}</p>
+                                  <p className="text-gray-500">{strategy.description}</p>
+                                </div>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                        {/* Teacher prompt */}
+                        <div>
+                          <label className="block text-xs font-medium text-gray-600 mb-1">{t('教师追加指令')}</label>
+                          <textarea
+                            value={localConfig.metaConfig?.teacherPrompt || ''}
+                            onChange={(e) => setLocalConfig({...localConfig, metaConfig: {...localConfig.metaConfig!, teacherPrompt: e.target.value}})}
+                            placeholder={t('例如：当学生在视频资源上停留超过5分钟未操作时，提醒他们...')}
+                            className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-700 focus:ring-1 focus:ring-accent-500 outline-none min-h-[60px] resize-none"
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </section>
@@ -576,17 +601,6 @@ export default function SettingsModal({ config, onSave, onClose }: SettingsModal
         </div>
       </div>
 
-      {/* Sub-modals */}
-      {showMetaModal && localConfig.metaConfig && (
-        <MetaConfigModal
-          config={localConfig.metaConfig}
-          onSave={(newConfig) => {
-            setLocalConfig({ ...localConfig, metaConfig: newConfig });
-            setShowMetaModal(false);
-          }}
-          onClose={() => setShowMetaModal(false)}
-        />
-      )}
     </>
   );
 }

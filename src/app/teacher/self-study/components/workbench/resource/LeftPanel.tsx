@@ -100,6 +100,8 @@ export function LeftPanel(props: LeftPanelProps) {
   const [editLocalTask, setEditLocalTask] = useState<any>(null);
   const [inlineEditingId, setInlineEditingId] = useState<string | null>(null);
   const [draggedQuestionId, setDraggedQuestionId] = useState<string | null>(null);
+  const [inlineEditingOptionId, setInlineEditingOptionId] = useState<string | null>(null);
+  const [showQuestionTypeMenu, setShowQuestionTypeMenu] = useState(false);
 
   const openUnifiedEditModal = (task: any) => {
     setUnifiedEditTask(task);
@@ -167,14 +169,36 @@ export function LeftPanel(props: LeftPanelProps) {
     setEditLocalTask(updated);
   };
 
-  const handleAddManualQuestion = () => {
+  const handleAddManualQuestion = (questionType: string = 'single_choice') => {
     if (!editLocalTask) return;
+    const typeDefaults: Record<string, any> = {
+      single_choice: {
+        options: [t('选项A'), t('选项B'), t('选项C'), t('选项D')],
+        answer: t('选项A'),
+      },
+      multiple_choice: {
+        options: [t('选项A'), t('选项B'), t('选项C'), t('选项D')],
+        answer: [t('选项A'), t('选项B')],
+      },
+      true_false: {
+        options: [t('正确'), t('错误')],
+        answer: t('正确'),
+      },
+      fill_blank: {
+        options: [],
+        answer: '',
+      },
+      short_answer: {
+        options: [],
+        answer: '',
+      },
+    };
+    const defaults = typeDefaults[questionType] || typeDefaults.single_choice;
     const newQ = {
       id: `q_${Date.now()}`,
-      type: 'single_choice',
+      type: questionType,
       content: t('新题目'),
-      options: [t('选项A'), t('选项B'), t('选项C'), t('选项D')],
-      answer: t('选项A'),
+      ...defaults,
       required: false,
       points: 1,
     };
@@ -184,8 +208,8 @@ export function LeftPanel(props: LeftPanelProps) {
       questionCount: (editLocalTask.questions || []).length + 1,
     };
     setEditLocalTask(updated);
-    // Auto focus the new question for inline editing
     setInlineEditingId(newQ.id);
+    setShowQuestionTypeMenu(false);
   };
 
   const handleAIGenerateQuestions = async () => {
@@ -658,6 +682,20 @@ export function LeftPanel(props: LeftPanelProps) {
                 {/* 可折叠的内容区域 */}
                 {!collapsedPanels.tasks && (
                   <div className="flex-1 overflow-y-auto p-4 space-y-2">
+                    {expandedTask && taskDisplayMode === 'embedded' ? (
+                      <div className="h-full -m-4">
+                        <TaskExpandedCard
+                          task={expandedTask}
+                          displayMode="embedded"
+                          isCompleted={completedTasks.has(expandedTask.id)}
+                          taskStatus={taskStatus}
+                          quickResult={quickResult}
+                          onClose={() => onTaskClick(expandedTask)}
+                          onComplete={(taskId, answer) => onToggleTaskCompletion(expandedTask.id)}
+                        />
+                      </div>
+                    ) : (
+                    <>
                     {/* AI生成进度指示器 */}
                     {isAIGenerating && (
                       <div className="px-3 py-3 bg-gray-50 border border-gray-200 rounded-lg">
@@ -790,6 +828,8 @@ export function LeftPanel(props: LeftPanelProps) {
                       <Plus size={14} />
                       {t('手动添加')}
                     </button>
+                    </>
+                    )}
                   </div>
                 )}
               </div>
@@ -1044,6 +1084,20 @@ export function LeftPanel(props: LeftPanelProps) {
                 {/* 可折叠的内容区域 */}
                 {!collapsedPanels.tasks && (
                   <div className="flex-1 overflow-y-auto p-4 space-y-2">
+                    {expandedTask && taskDisplayMode === 'embedded' ? (
+                      <div className="h-full -m-4">
+                        <TaskExpandedCard
+                          task={expandedTask}
+                          displayMode="embedded"
+                          isCompleted={completedTasks.has(expandedTask.id)}
+                          taskStatus={taskStatus}
+                          quickResult={quickResult}
+                          onClose={() => onTaskClick(expandedTask)}
+                          onComplete={(taskId, answer) => onToggleTaskCompletion(expandedTask.id)}
+                        />
+                      </div>
+                    ) : (
+                    <>
                     {/* AI生成进度指示器 */}
                     {isAIGenerating && (
                       <div className="px-3 py-3 bg-gray-50 border border-gray-200 rounded-lg">
@@ -1155,7 +1209,7 @@ export function LeftPanel(props: LeftPanelProps) {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              setEditingTask(task);
+                              openUnifiedEditModal(task);
                             }}
                             className="opacity-0 group-hover:opacity-100 px-2 py-1 text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all"
                             title={t('编辑任务')}
@@ -1176,6 +1230,8 @@ export function LeftPanel(props: LeftPanelProps) {
                       <Plus size={14} />
                       {t('手动添加')}
                     </button>
+                    </>
+                    )}
                   </div>
                 )}
               </div>
@@ -1292,15 +1348,23 @@ export function LeftPanel(props: LeftPanelProps) {
                               {q.options.map((opt: string, optIdx: number) => (
                                 <div key={optIdx} className="flex items-center gap-1 text-xs text-gray-500">
                                   <span className="w-4 text-center">{String.fromCharCode(65 + optIdx)}.</span>
-                                  <span
-                                    className="cursor-text hover:bg-gray-100 px-1 rounded"
-                                    onDoubleClick={() => {
-                                      const newVal = prompt(t('编辑选项'), opt);
-                                      if (newVal !== null) handleInlineEdit(q.id, 'option', newVal, optIdx);
-                                    }}
-                                  >
-                                    {opt}
-                                  </span>
+                                  {inlineEditingOptionId === `${q.id}_${optIdx}` ? (
+                                    <input
+                                      autoFocus
+                                      value={opt}
+                                      onChange={(e) => handleInlineEdit(q.id, 'option', e.target.value, optIdx)}
+                                      onBlur={() => setInlineEditingOptionId(null)}
+                                      onKeyDown={(e) => e.key === 'Enter' && setInlineEditingOptionId(null)}
+                                      className="flex-1 text-xs px-1 py-0.5 border border-primary-300 rounded focus:outline-none focus:ring-1 focus:ring-primary-500"
+                                    />
+                                  ) : (
+                                    <span
+                                      className="cursor-text hover:bg-gray-100 px-1 rounded"
+                                      onDoubleClick={() => setInlineEditingOptionId(`${q.id}_${optIdx}`)}
+                                    >
+                                      {opt}
+                                    </span>
+                                  )}
                                 </div>
                               ))}
                             </div>
@@ -1325,21 +1389,33 @@ export function LeftPanel(props: LeftPanelProps) {
                   ))}
                 </div>
                 {/* 添加题目按钮 */}
-                <div className="flex gap-2 mt-3">
+                <div className="mt-3 relative">
                   <button
-                    onClick={handleAIGenerateQuestions}
-                    className="flex-1 px-3 py-2 border border-dashed border-gray-300 rounded-lg text-xs text-gray-500 hover:border-primary-400 hover:text-primary-600 hover:bg-primary-50 transition-colors flex items-center justify-center gap-1"
-                  >
-                    <Sparkles size={12} />
-                    {t('AI 生成题目')}
-                  </button>
-                  <button
-                    onClick={handleAddManualQuestion}
-                    className="flex-1 px-3 py-2 border border-dashed border-gray-300 rounded-lg text-xs text-gray-500 hover:border-gray-400 hover:bg-gray-50 transition-colors flex items-center justify-center gap-1"
+                    onClick={() => setShowQuestionTypeMenu(!showQuestionTypeMenu)}
+                    className="w-full px-3 py-2 border border-dashed border-gray-300 rounded-lg text-xs text-gray-500 hover:border-gray-400 hover:bg-gray-50 transition-colors flex items-center justify-center gap-1"
                   >
                     <Plus size={12} />
                     {t('手动添加')}
                   </button>
+                  {showQuestionTypeMenu && (
+                    <div className="absolute bottom-full left-0 right-0 mb-1 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-10">
+                      {[
+                        { type: 'single_choice', label: '单选题' },
+                        { type: 'multiple_choice', label: '多选题' },
+                        { type: 'true_false', label: '判断题' },
+                        { type: 'fill_blank', label: '填空题' },
+                        { type: 'short_answer', label: '简答题' },
+                      ].map(item => (
+                        <button
+                          key={item.type}
+                          onClick={() => handleAddManualQuestion(item.type)}
+                          className="w-full px-3 py-1.5 text-left text-xs text-gray-600 hover:bg-gray-50 transition-colors"
+                        >
+                          {t(item.label)}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
 

@@ -49,7 +49,7 @@ export default function PublishModal({
     includeLearningPath: true,
   });
   const [isPublishing, setIsPublishing] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(isPublished);
   const [copiedLink, setCopiedLink] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
   const qrRef = useRef<SVGSVGElement>(null);

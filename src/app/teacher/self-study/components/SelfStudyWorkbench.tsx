@@ -2338,11 +2338,14 @@ export default function SelfStudyWorkbench({
         // 只有全对才标记任务为已完成
         if (data.quickResult.allCorrect) {
           setTaskStatus('completed');
-          setCompletedTasks((prev) => {
-            const newSet = new Set(prev);
-            newSet.add(taskId);
-            return newSet;
-          });
+          // Delay the completion state update so result review shows first
+          setTimeout(() => {
+            setCompletedTasks((prev) => {
+              const newSet = new Set(prev);
+              newSet.add(taskId);
+              return newSet;
+            });
+          }, 500);
         } else {
           // 未全对，重置状态允许重做
           setTimeout(() => {
@@ -2640,18 +2643,20 @@ export default function SelfStudyWorkbench({
         // 获取当前任务的消息和状态
         const taskMessage = messages.find(m => m.embeddedTask?.id === expandedTask.id);
         return (
-          <TaskExpandedCard
-            task={expandedTask}
-            onClose={closeTask}
-            onComplete={toggleTaskCompletion}
-            isCompleted={completedTasks.has(expandedTask.id)}
-            taskStatus={taskStatus}
-            quickResult={quickResult}
-            displayMode="fullscreen"
-            onToggleMode={toggleTaskDisplayMode}
-            taskState={taskMessage?.taskState}
-            onStateUpdate={(stateUpdate) => updateTaskState(expandedTask.id, stateUpdate)}
-          />
+          <div className="animate-in fade-in duration-200">
+            <TaskExpandedCard
+              task={expandedTask}
+              onClose={closeTask}
+              onComplete={toggleTaskCompletion}
+              isCompleted={completedTasks.has(expandedTask.id)}
+              taskStatus={taskStatus}
+              quickResult={quickResult}
+              displayMode="fullscreen"
+              onToggleMode={toggleTaskDisplayMode}
+              taskState={taskMessage?.taskState}
+              onStateUpdate={(stateUpdate) => updateTaskState(expandedTask.id, stateUpdate)}
+            />
+          </div>
         );
       })()}
 
@@ -2659,16 +2664,18 @@ export default function SelfStudyWorkbench({
       {expandedTask && taskDisplayMode === 'result_review' && quickResult && (() => {
         const taskMessage = messages.find(m => m.embeddedTask?.id === expandedTask.id);
         return (
-          <TaskResultReview
-            task={expandedTask}
-            quickResult={quickResult}
-            selectedAnswers={taskMessage?.taskState?.selectedAnswers || {}}
-            onClose={() => { setTaskDisplayMode('embedded'); }}
-            onRetryWrongQuestions={handleRetryWrongQuestions}
-            onGeneratePractice={handleGeneratePractice}
-            onBackToChat={handleBackToChat}
-            onExplainQuestion={handleExplainQuestion}
-          />
+          <div className="animate-in fade-in duration-300">
+            <TaskResultReview
+              task={expandedTask}
+              quickResult={quickResult}
+              selectedAnswers={taskMessage?.taskState?.selectedAnswers || {}}
+              onClose={() => { setTaskDisplayMode('embedded'); }}
+              onRetryWrongQuestions={handleRetryWrongQuestions}
+              onGeneratePractice={handleGeneratePractice}
+              onBackToChat={handleBackToChat}
+              onExplainQuestion={handleExplainQuestion}
+            />
+          </div>
         );
       })()}
 
