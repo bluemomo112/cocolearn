@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
-import { X, Share2, Copy, Check, BarChart3 } from 'lucide-react';
+import { useState, useRef, useCallback } from 'react';
+import { X, Share2, Copy, Check, BarChart3, Download } from 'lucide-react';
 import { PublishScope, PublishMetadata } from '@/types/self-study';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface PublishModalProps {
   isOpen: boolean;
@@ -50,6 +51,9 @@ export default function PublishModal({
   const [isPublishing, setIsPublishing] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [copiedCode, setCopiedCode] = useState(false);
+  const qrRef = useRef<SVGSVGElement>(null);
+  const { t } = useLanguage();
 
   if (!isOpen) return null;
 
@@ -80,6 +84,30 @@ export default function PublishModal({
     setCopiedLink(true);
     setTimeout(() => setCopiedLink(false), 2000);
   };
+
+  const copyCodeToClipboard = async (text: string) => {
+    await navigator.clipboard.writeText(text);
+    setCopiedCode(true);
+    setTimeout(() => setCopiedCode(false), 2000);
+  };
+
+  const downloadQRCode = useCallback(() => {
+    if (!qrRef.current) return;
+    const svgData = new XMLSerializer().serializeToString(qrRef.current);
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    img.onload = () => {
+      canvas.width = img.width * 2;
+      canvas.height = img.height * 2;
+      ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
+      const a = document.createElement('a');
+      a.download = `qrcode-${metadata.spaceName || 'space'}.png`;
+      a.href = canvas.toDataURL('image/png');
+      a.click();
+    };
+    img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
+  }, [metadata.spaceName]);
 
   const toggleSubject = (subject: string) => {
     setMetadata({
@@ -298,18 +326,76 @@ export default function PublishModal({
                   <Check size={32} className="text-primary-600" />
                 </div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  发布成功！
+                  {t('发布成功！')}
                 </h3>
                 <p className="text-gray-600">
-                  学习空间已成功发布，你可以分享给学生了
+                  {t('学习空间已成功发布，你可以分享给学生了')}
                 </p>
+              </div>
+
+              {/* 二维码 */}
+              <div className="flex flex-col items-center">
+                <div className="border-2 border-gray-200 rounded-xl p-4 bg-white">
+                  <svg
+                    ref={qrRef}
+                    width="160"
+                    height="160"
+                    viewBox="0 0 160 160"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <rect width="160" height="160" fill="white" />
+                    {/* QR 定位角 - 左上 */}
+                    <rect x="8" y="8" width="40" height="40" rx="4" fill="none" stroke="#16a34a" strokeWidth="4" />
+                    <rect x="16" y="16" width="24" height="24" rx="2" fill="#16a34a" />
+                    {/* QR 定位角 - 右上 */}
+                    <rect x="112" y="8" width="40" height="40" rx="4" fill="none" stroke="#16a34a" strokeWidth="4" />
+                    <rect x="120" y="16" width="24" height="24" rx="2" fill="#16a34a" />
+                    {/* QR 定位角 - 左下 */}
+                    <rect x="8" y="112" width="40" height="40" rx="4" fill="none" stroke="#16a34a" strokeWidth="4" />
+                    <rect x="16" y="120" width="24" height="24" rx="2" fill="#16a34a" />
+                    {/* 中间数据区域模拟 */}
+                    {[56, 64, 72, 80, 88, 96, 104].map((x) =>
+                      [56, 64, 72, 80, 88, 96, 104].map((y) => (
+                        <rect
+                          key={`${x}-${y}`}
+                          x={x}
+                          y={y}
+                          width="6"
+                          height="6"
+                          fill={(x + y) % 16 === 0 || (x * y) % 13 < 5 ? '#16a34a' : 'transparent'}
+                        />
+                      ))
+                    )}
+                    {/* 散布的数据点 */}
+                    {[
+                      [56, 16], [64, 24], [72, 16], [80, 32], [88, 24], [96, 16],
+                      [56, 32], [72, 40], [88, 40], [96, 32],
+                      [16, 56], [24, 64], [32, 72], [16, 80], [24, 88], [32, 96],
+                      [40, 64], [40, 80], [40, 96],
+                      [112, 56], [120, 64], [128, 72], [136, 80], [120, 88], [128, 96],
+                      [16, 104], [24, 104], [56, 112], [64, 120], [72, 128],
+                      [80, 112], [88, 120], [96, 128], [104, 112],
+                      [112, 112], [120, 120], [128, 128], [136, 136], [144, 120],
+                    ].map(([x, y]) => (
+                      <rect key={`d-${x}-${y}`} x={x} y={y} width="6" height="6" fill="#16a34a" />
+                    ))}
+                  </svg>
+                </div>
+                <button
+                  onClick={downloadQRCode}
+                  className="mt-3 text-sm text-primary-600 hover:text-primary-700 flex items-center gap-1.5 transition-colors"
+                >
+                  <Download size={14} />
+                  {t('下载二维码')}
+                </button>
               </div>
 
               {/* 分享信息 */}
               <div className="space-y-4">
+                {/* 测验链接 + 复制 */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    分享链接
+                    {t('分享链接')}
                   </label>
                   <div className="flex gap-2">
                     <input
@@ -323,16 +409,16 @@ export default function PublishModal({
                       className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors flex items-center gap-2"
                     >
                       {copiedLink ? <Check size={16} /> : <Copy size={16} />}
-                      {copiedLink ? '已复制' : '复制'}
+                      {copiedLink ? t('已复制') : t('复制')}
                     </button>
                   </div>
                 </div>
 
-                {/* 访问码（仅匿名模式） */}
+                {/* 课程码 + 复制（仅匿名模式） */}
                 {metadata.isAnonymous && metadata.accessCode && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      访问码
+                      {t('课程码')}
                     </label>
                     <div className="flex gap-2">
                       <input
@@ -342,15 +428,15 @@ export default function PublishModal({
                         className="flex-1 px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-sm font-mono text-lg tracking-wider text-center"
                       />
                       <button
-                        onClick={() => metadata.accessCode && copyToClipboard(metadata.accessCode)}
+                        onClick={() => metadata.accessCode && copyCodeToClipboard(metadata.accessCode)}
                         className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors flex items-center gap-2"
                       >
-                        {copiedLink ? <Check size={16} /> : <Copy size={16} />}
-                        {copiedLink ? '已复制' : '复制'}
+                        {copiedCode ? <Check size={16} /> : <Copy size={16} />}
+                        {copiedCode ? t('已复制') : t('复制')}
                       </button>
                     </div>
                     <p className="text-xs text-gray-500 mt-2">
-                      学生需要输入此访问码才能进入学习空间
+                      {t('学生需要输入此课程码才能进入学习空间')}
                     </p>
                   </div>
                 )}
@@ -362,12 +448,12 @@ export default function PublishModal({
                   <BarChart3 size={20} className="text-blue-600 flex-shrink-0 mt-0.5" />
                   <div className="text-sm text-blue-900">
                     <p className="font-medium mb-1">
-                      {metadata.isAnonymous ? '学生可以匿名访问学习空间' : '学生可以访问学习空间'}
+                      {metadata.isAnonymous ? t('学生可以匿名访问学习空间') : t('学生可以访问学习空间')}
                     </p>
                     <p className="text-blue-700">
                       {metadata.isAnonymous
-                        ? '学生打开链接并输入访问码后，需要输入姓名即可进入学习空间'
-                        : '学生打开链接后可以从班级名录中选择自己的姓名登录'}
+                        ? t('学生打开链接并输入访问码后，需要输入姓名即可进入学习空间')
+                        : t('学生打开链接后可以从班级名录中选择自己的姓名登录')}
                     </p>
                   </div>
                 </div>
@@ -384,23 +470,31 @@ export default function PublishModal({
                 onClick={onClose}
                 className="px-4 py-2 text-gray-700 hover:bg-gray-200 rounded-lg transition-colors"
               >
-                取消
+                {t('取消')}
               </button>
               <button
                 onClick={handlePublish}
                 disabled={isPublishing}
                 className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isPublishing ? '发布中...' : isPublished ? '重新发布' : '发布'}
+                {isPublishing ? t('发布中...') : isPublished ? t('重新发布') : t('发布')}
               </button>
             </>
           ) : (
-            <button
-              onClick={onClose}
-              className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
-            >
-              完成
-            </button>
+            <>
+              <button
+                onClick={() => setShowSuccess(false)}
+                className="px-4 py-2 text-gray-700 hover:bg-gray-200 rounded-lg transition-colors"
+              >
+                {t('继续发布到其他班级')}
+              </button>
+              <button
+                onClick={onClose}
+                className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+              >
+                {t('完成')}
+              </button>
+            </>
           )}
         </div>
       </div>

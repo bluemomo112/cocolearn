@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Award, Lightbulb, RotateCcw, Sparkles, MessageCircle, BookmarkCheck, Trash2 } from 'lucide-react';
+import { useState } from 'react';
+import { ChevronLeft, ChevronRight, Award, Lightbulb, RotateCcw, MessageCircle, BookmarkCheck, Trash2, Eye } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Task, TaskQuestion } from '@/types/shared-context';
 import QuestionRenderer, { getQuestionTypeLabel } from './QuestionRenderer';
 import RichContent from './RichContent';
 import { QuickResultData } from './taskTypes';
-import ErrorQuestionChat from './ErrorQuestionChat';
 
 interface TaskResultReviewProps {
   task: Task;
@@ -23,6 +23,7 @@ export default function TaskResultReview({
   task, quickResult, selectedAnswers, onClose,
   onRetryWrongQuestions, onGeneratePractice, onBackToChat, onExplainQuestion,
 }: TaskResultReviewProps) {
+  const { t } = useLanguage();
   const questions = task.questions || [];
   const [currentPage, setCurrentPage] = useState(0);
   const isSummaryPage = currentPage === questions.length;
@@ -53,11 +54,11 @@ export default function TaskResultReview({
     <div className="fixed inset-0 z-50 bg-white flex flex-col">
       <div className="h-16 px-8 flex items-center justify-between border-b border-gray-200 bg-white">
         <button onClick={onClose} className="flex items-center gap-2 text-gray-600 hover:text-gray-800">
-          <ChevronLeft size={20} /><span className="text-sm font-medium">返回对话</span>
+          <ChevronLeft size={20} /><span className="text-sm font-medium">{t('返回对话')}</span>
         </button>
-        <span className="text-base font-semibold text-gray-900">结果回顾</span>
+        <span className="text-base font-semibold text-gray-900">{t('结果回顾')}</span>
         <div className="flex items-center gap-2 text-sm">
-          <span className="text-gray-500">得分</span>
+          <span className="text-gray-500">{t('得分')}</span>
           <span className={`text-lg font-bold ${scoreColor}`}>{quickResult.correctCount}/{quickResult.totalCount}</span>
         </div>
       </div>
@@ -71,7 +72,7 @@ export default function TaskResultReview({
           ))}
           <button onClick={() => setCurrentPage(questions.length)}
             className={`px-3 h-9 rounded-full text-xs font-bold transition-all ${getNavColor(questions.length)} ${isSummaryPage ? 'ring-2 ring-offset-2 ring-gray-400 scale-110' : 'hover:opacity-80'}`}
-          >总评</button>
+          >{t('总评')}</button>
         </div>
       </div>
 
@@ -108,12 +109,12 @@ export default function TaskResultReview({
       <div className="h-20 px-8 flex items-center justify-between border-t border-gray-200 bg-white">
         <button onClick={() => setCurrentPage(p => Math.max(0, p - 1))} disabled={currentPage === 0}
           className="px-6 py-3 rounded-xl border-2 border-gray-200 text-gray-700 font-medium hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2">
-          <ChevronLeft size={18} />上一题
+          <ChevronLeft size={18} />{t('上一题')}
         </button>
-        <span className="text-sm text-gray-500">{isSummaryPage ? '总评' : `${currentPage + 1} / ${questions.length}`}</span>
+        <span className="text-sm text-gray-500">{isSummaryPage ? t('总评') : `${currentPage + 1} / ${questions.length}`}</span>
         <button onClick={() => setCurrentPage(p => Math.min(questions.length, p + 1))} disabled={isSummaryPage}
           className="px-6 py-3 rounded-xl bg-primary-600 text-white font-medium hover:bg-primary-700 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2">
-          {currentPage === questions.length - 1 ? '查看总评' : '下一题'}<ChevronRight size={18} />
+          {currentPage === questions.length - 1 ? t('查看总评') : t('下一题')}<ChevronRight size={18} />
         </button>
       </div>
     </div>
@@ -205,85 +206,87 @@ function ReviewSummary({ result, pct, color, stats, onClose, onRetryWrongQuestio
   onGeneratePractice?: () => void;
   onBackToChat?: () => void;
 }) {
+  const { t } = useLanguage();
   const stroke = pct >= 80 ? '#22c55e' : pct >= 60 ? '#f59e0b' : '#ef4444';
-  const dash = (pct / 100) * 327;
-  const hasWrongQuestions = result.correctCount < result.totalCount;
+  const circumference = 2 * Math.PI * 52; // ~326.73
+  const dash = (pct / 100) * circumference;
+  const wrongCount = result.details.filter(d => d.correct === false && d.userAnswer && (Array.isArray(d.userAnswer) ? d.userAnswer.length > 0 : d.userAnswer !== '')).length;
+  const skippedCount = result.totalCount - result.correctCount - wrongCount;
+  const hasWrongQuestions = wrongCount > 0;
 
   return (
     <div className="max-w-2xl mx-auto py-12 px-8">
-      <div className="flex flex-col items-center mb-10">
-        <div className="relative w-40 h-40 mb-4">
-          <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
-            <circle cx="60" cy="60" r="52" fill="none" stroke="#e5e7eb" strokeWidth="8" />
-            <circle cx="60" cy="60" r="52" fill="none" stroke={stroke} strokeWidth="8"
-              strokeLinecap="round" strokeDasharray={`${dash} 327`} />
-          </svg>
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-4xl font-bold text-gray-900">{result.correctCount}</span>
-            <span className="text-sm text-gray-500">/ {result.totalCount}</span>
+      {/* Ring chart + stats row */}
+      <div className="flex items-center justify-center gap-12 mb-10">
+        {/* Ring progress chart */}
+        <div className="flex flex-col items-center">
+          <div className="relative w-44 h-44">
+            <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
+              <circle cx="60" cy="60" r="52" fill="none" stroke="#f3f4f6" strokeWidth="10" />
+              <circle cx="60" cy="60" r="52" fill="none" stroke={stroke} strokeWidth="10"
+                strokeLinecap="round"
+                strokeDasharray={`${dash} ${circumference}`}
+                className="transition-all duration-700 ease-out" />
+            </svg>
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <span className="text-5xl font-bold text-gray-900">{pct}%</span>
+              <span className="text-sm text-gray-400 mt-1">{result.correctCount} / {result.totalCount}</span>
+            </div>
           </div>
         </div>
-        <p className={`text-2xl font-bold ${color}`}>正确率 {pct}%</p>
-      </div>
 
-      <div className="bg-gray-50 rounded-2xl p-6 mb-8">
-        <h3 className="text-sm font-semibold text-gray-700 mb-4">各题型表现</h3>
-        <div className="space-y-3">
-          {Object.entries(stats).map(([label, s]) => {
-            const p = s.total > 0 ? Math.round((s.correct / s.total) * 100) : 0;
-            return (
-              <div key={label} className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">{label}</span>
-                <div className="flex items-center gap-3">
-                  <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div className={`h-full rounded-full ${s.correct === s.total ? 'bg-green-500' : s.correct > 0 ? 'bg-amber-500' : 'bg-red-500'}`}
-                      style={{ width: `${p}%` }} />
-                  </div>
-                  <span className="text-xs text-gray-500 w-12 text-right">{s.correct}/{s.total}</span>
-                </div>
-              </div>
-            );
-          })}
+        {/* Right-side breakdown stats */}
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center gap-3">
+            <span className="w-3 h-3 rounded-full bg-green-500 shrink-0" />
+            <span className="text-sm text-gray-600 w-16">{t('正确')}</span>
+            <span className="text-lg font-semibold text-gray-900">{result.correctCount}</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="w-3 h-3 rounded-full bg-red-500 shrink-0" />
+            <span className="text-sm text-gray-600 w-16">{t('错误')}</span>
+            <span className="text-lg font-semibold text-gray-900">{wrongCount}</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="w-3 h-3 rounded-full bg-gray-300 shrink-0" />
+            <span className="text-sm text-gray-600 w-16">{t('跳过')}</span>
+            <span className="text-lg font-semibold text-gray-900">{skippedCount}</span>
+          </div>
         </div>
       </div>
 
-      <div className="bg-primary-50 border border-primary-200 rounded-2xl p-6 mb-8">
+      {/* AI evaluation */}
+      <div className="bg-primary-50 border border-primary-200 rounded-2xl p-6 mb-10">
         <div className="flex items-center gap-2 mb-3">
           <Award size={20} className="text-primary-600" />
-          <h3 className="text-sm font-semibold text-primary-800">AI 综合评价</h3>
+          <h3 className="text-sm font-semibold text-primary-800">{t('AI 综合评价')}</h3>
         </div>
         <p className="text-sm text-primary-900 leading-relaxed">
           {pct >= 80
-            ? '表现优秀！你对本节知识的掌握非常扎实，建议继续挑战更高难度的内容。'
+            ? t('表现优秀！你对本节知识的掌握非常扎实，建议继续挑战更高难度的内容。')
             : pct >= 60
-            ? '表现不错！大部分知识点已经掌握，建议针对错题涉及的知识点进行复习巩固。'
-            : '还需要加油！建议重新回顾学习材料，特别关注错题涉及的核心概念，然后再次尝试。'}
+            ? t('表现不错！大部分知识点已经掌握，建议针对错题涉及的知识点进行复习巩固。')
+            : t('还需要加油！建议重新回顾学习材料，特别关注错题涉及的核心概念，然后再次尝试。')}
         </p>
       </div>
 
-      <div className="space-y-3">
-        {hasWrongQuestions && (
-          <div className="flex gap-3">
-            {onRetryWrongQuestions && (
-              <button onClick={onRetryWrongQuestions}
-                className="flex-1 py-3.5 rounded-xl border-2 border-amber-300 bg-amber-50 text-amber-700 font-medium hover:bg-amber-100 transition-colors flex items-center justify-center gap-2">
-                <RotateCcw size={18} />重做错题
-              </button>
-            )}
-            {onGeneratePractice && (
-              <button onClick={onGeneratePractice}
-                className="flex-1 py-3.5 rounded-xl border-2 border-purple-300 bg-purple-50 text-purple-700 font-medium hover:bg-purple-100 transition-colors flex items-center justify-center gap-2">
-                <Sparkles size={18} />生成针对性练习
-              </button>
-            )}
-          </div>
+      {/* Bottom action buttons — always 3 in a row */}
+      <div className="flex gap-3">
+        {hasWrongQuestions && onRetryWrongQuestions && (
+          <button onClick={onRetryWrongQuestions}
+            className="flex-1 py-3.5 rounded-xl border-2 border-amber-300 bg-amber-50 text-amber-700 font-medium hover:bg-amber-100 transition-colors flex items-center justify-center gap-2">
+            <Eye size={18} />{t('回顾错题')}
+          </button>
+        )}
+        {onRetryWrongQuestions && (
+          <button onClick={onRetryWrongQuestions}
+            className="flex-1 py-3.5 rounded-xl border-2 border-blue-300 bg-blue-50 text-blue-700 font-medium hover:bg-blue-100 transition-colors flex items-center justify-center gap-2">
+            <RotateCcw size={18} />{t('重做')}
+          </button>
         )}
         <button onClick={onBackToChat || onClose}
-          className="w-full py-4 rounded-xl bg-primary-600 text-white font-medium hover:bg-primary-700 transition-colors flex flex-col items-center justify-center gap-1">
-          <div className="flex items-center gap-2">
-            <MessageCircle size={18} />回到对话区继续学习
-          </div>
-          <span className="text-xs text-primary-200 font-normal">错题分析已同步到AI对话上下文</span>
+          className="flex-1 py-3.5 rounded-xl bg-primary-600 text-white font-medium hover:bg-primary-700 transition-colors flex items-center justify-center gap-2">
+          <MessageCircle size={18} />{t('回到AI对话')}
         </button>
       </div>
     </div>

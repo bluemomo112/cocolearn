@@ -3,8 +3,10 @@
 import {
   ChevronLeft, ChevronRight, ChevronDown, ChevronUp,
   Check, X, Zap, Brain, FileEdit, Activity, AlertCircle,
+  CheckCircle, XCircle,
 } from 'lucide-react';
 import { Task } from '@/types/shared-context';
+import { useLanguage } from '@/contexts/LanguageContext';
 import QuestionRenderer, { getQuestionTypeLabel } from './QuestionRenderer';
 import RichContent from './RichContent';
 import SubmissionToolbar from './SubmissionToolbar';
@@ -66,90 +68,168 @@ export default function TaskExpandedCard(props: TaskExpandedCardProps) {
 }
 
 function FullscreenMode({ task, idx, selectedAnswers, submissionText, onAnswer, submit, goNext, goPrev, goTo, onClose, onToggleMode, taskStatus, isCompleted, quickResult, onStateUpdate }: any) {
+  const { t } = useLanguage();
+
+  // 获取当前题目的即时反馈
+  const getQuestionFeedback = (questionId: string) => {
+    if (!quickResult?.details) return null;
+    return quickResult.details.find((d: any) => d.questionId === questionId) || null;
+  };
+
   return (
-    <div className="fixed inset-0 z-50 bg-white flex flex-col">
-      <div className="h-16 px-8 flex items-center justify-between border-b border-gray-200 bg-white">
-        <button onClick={onClose} className="flex items-center gap-2 text-gray-600 hover:text-gray-800">
-          <ChevronLeft size={20} /><span className="text-sm font-medium">退出</span>
-        </button>
-        <div className="flex items-center gap-6">
-          {task.type === 'quiz' && task.questions && (
-            <span className="text-sm text-gray-600 font-medium">{idx + 1} / {task.questions.length}</span>
-          )}
-          {onToggleMode && (
-            <button onClick={onToggleMode} className="p-2 hover:bg-gray-100 rounded-lg" title="缩小到对话区">
-              <ChevronDown size={20} className="text-gray-600" />
-            </button>
-          )}
-        </div>
-      </div>
+    <>
+      {/* 背景遮罩 */}
+      <div className="fixed inset-0 bg-black/60 z-50" onClick={onClose} />
 
-      <div className="flex-1 overflow-auto flex items-center justify-center p-8 bg-gray-50">
-        <div className="w-full max-w-3xl">
-          {task.type === 'quiz' && task.questions?.[idx] && (() => {
-            const q = task.questions[idx];
-            return (
-              <div className="space-y-8">
-                <div className="flex items-center gap-3">
-                  <span className="px-3 py-1 bg-blue-50 text-blue-600 text-sm font-medium rounded-full">
-                    {getQuestionTypeLabel(q.type)}
-                  </span>
+      {/* 模态框 - 97% 大小，四周留白 */}
+      <div className="fixed z-50 inset-[1.5%] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+        {/* Header */}
+        <div className="h-14 px-6 flex items-center justify-between border-b border-gray-200 bg-white flex-shrink-0">
+          <div className="flex items-center gap-3">
+            <h3 className="text-base font-semibold text-gray-900 truncate">{task.title}</h3>
+            {task.type === 'quiz' && task.questions && (
+              <span className="text-sm text-gray-500 font-medium">{idx + 1} / {task.questions.length}</span>
+            )}
+          </div>
+          <div className="flex items-center gap-1">
+            {onToggleMode && (
+              <button onClick={onToggleMode} className="p-2 hover:bg-gray-100 rounded-lg transition-colors" title={t('缩小到对话区')}>
+                <ChevronDown size={18} className="text-gray-500" />
+              </button>
+            )}
+            <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+              <X size={18} className="text-gray-500" />
+            </button>
+          </div>
+        </div>
+
+        {/* Body */}
+        <div className="flex-1 overflow-auto flex items-center justify-center p-8 bg-gray-50">
+          <div className="w-full max-w-3xl">
+            {task.type === 'quiz' && task.questions?.[idx] && (() => {
+              const q = task.questions[idx];
+              const feedback = getQuestionFeedback(q.id);
+              const hasAnswered = selectedAnswers[q.id] !== undefined && selectedAnswers[q.id] !== '';
+              const showFeedback = !!feedback;
+
+              return (
+                <div className="space-y-8">
+                  <div className="flex items-center gap-3">
+                    <span className="px-3 py-1 bg-blue-50 text-blue-600 text-sm font-medium rounded-full">
+                      {getQuestionTypeLabel(q.type)}
+                    </span>
+                    {showFeedback && (
+                      <span className={`px-3 py-1 text-sm font-medium rounded-full flex items-center gap-1.5 ${
+                        feedback.correct ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'
+                      }`}>
+                        {feedback.correct ? <CheckCircle size={14} /> : <XCircle size={14} />}
+                        {feedback.correct ? t('回答正确') : t('回答错误')}
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-2xl font-medium text-gray-900 leading-relaxed">
+                    <RichContent content={q.content} />
+                  </div>
+                  <QuestionRenderer
+                    question={q}
+                    selectedAnswer={selectedAnswers[q.id]}
+                    onAnswer={onAnswer}
+                    showResult={showFeedback}
+                    isCorrect={feedback?.correct}
+                    correctAnswer={feedback?.correctAnswer}
+                  />
+
+                  {/* 答题反馈区域 */}
+                  {showFeedback && !feedback.correct && (
+                    <div className="rounded-xl border border-red-200 bg-red-50/50 p-5 space-y-3">
+                      <div className="flex items-center gap-2 text-red-600">
+                        <XCircle size={18} />
+                        <span className="font-medium text-sm">{t('没关系，继续加油')}</span>
+                      </div>
+                      {feedback.correctAnswer && (
+                        <div className="text-sm text-gray-700">
+                          <span className="font-medium text-green-700">{t('正确答案')}：</span>
+                          <span className="text-green-700">
+                            {Array.isArray(feedback.correctAnswer) ? feedback.correctAnswer.join(', ') : feedback.correctAnswer}
+                          </span>
+                        </div>
+                      )}
+                      {feedback.explanation && (
+                        <div className="text-sm text-gray-600 pt-1 border-t border-red-100">
+                          <RichContent content={feedback.explanation} compact />
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {showFeedback && feedback.correct && feedback.explanation && (
+                    <div className="rounded-xl border border-green-200 bg-green-50/50 p-5 space-y-2">
+                      <div className="flex items-center gap-2 text-green-600">
+                        <CheckCircle size={18} />
+                        <span className="font-medium text-sm">{t('回答正确')}</span>
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        <RichContent content={feedback.explanation} compact />
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <div className="text-3xl font-medium text-gray-900 leading-relaxed">
-                  <RichContent content={q.content} />
-                </div>
-                <QuestionRenderer question={q} selectedAnswer={selectedAnswers[q.id]} onAnswer={onAnswer} />
+              );
+            })()}
+
+            {(task.type === 'assignment' || task.type === 'reflection') && (
+              <div className="space-y-6">
+                <h2 className="text-2xl font-medium text-gray-900">{task.title}</h2>
+                {task.description && <p className="text-base text-gray-600">{task.description}</p>}
+                <SubmissionToolbar value={submissionText} onChange={(v: string) => onStateUpdate?.({ submissionText: v })} />
               </div>
-            );
-          })()}
+            )}
+          </div>
+        </div>
 
-          {(task.type === 'assignment' || task.type === 'reflection') && (
-            <div className="space-y-6">
-              <h2 className="text-2xl font-medium text-gray-900">{task.title}</h2>
-              {task.description && <p className="text-base text-gray-600">{task.description}</p>}
-              <SubmissionToolbar value={submissionText} onChange={(v: string) => onStateUpdate?.({ submissionText: v })} />
-            </div>
-          )}
+        {/* Footer - 导航 + 提交 */}
+        <div className="h-20 px-8 flex items-center justify-between border-t border-gray-200 bg-white flex-shrink-0">
+          <div className="flex items-center gap-4">
+            {task.type === 'quiz' && task.questions && (
+              <button onClick={goPrev} disabled={idx === 0}
+                className="px-6 py-3 rounded-xl border-2 border-gray-200 text-gray-700 font-medium hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2 transition-colors">
+                <ChevronLeft size={18} />{t('上一题')}
+              </button>
+            )}
+            {task.type === 'quiz' && task.questions && task.questions.length > 1 && (
+              <div className="flex items-center gap-2">
+                {task.questions.map((_: any, i: number) => {
+                  const qId = task.questions[i].id;
+                  const answered = selectedAnswers[qId];
+                  const fb = getQuestionFeedback(qId);
+                  return (
+                    <button key={i} onClick={() => goTo(i)}
+                      className={`w-8 h-8 rounded-full text-xs font-medium transition-all ${
+                        i === idx ? 'bg-primary-500 text-white ring-2 ring-primary-200'
+                        : fb?.correct ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                        : fb && !fb.correct ? 'bg-red-100 text-red-700 hover:bg-red-200'
+                        : answered ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}>{i + 1}</button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+          <div className="flex items-center gap-4">
+            {task.type === 'quiz' && task.questions && idx < task.questions.length - 1 && (
+              <button onClick={goNext}
+                className="px-6 py-3 rounded-xl bg-primary-600 text-white font-medium hover:bg-primary-700 flex items-center gap-2 transition-colors">
+                {t('下一题')}<ChevronRight size={18} />
+              </button>
+            )}
+            {((task.type === 'quiz' && task.questions && idx === task.questions.length - 1) || task.type !== 'quiz') && (
+              <SubmitButton taskStatus={taskStatus} isCompleted={isCompleted} quickResult={quickResult} onSubmit={submit} size="lg" />
+            )}
+          </div>
         </div>
       </div>
-
-      <div className="h-20 px-8 flex items-center justify-between border-t border-gray-200 bg-white">
-        <div className="flex items-center gap-4">
-          {task.type === 'quiz' && task.questions && (
-            <button onClick={goPrev} disabled={idx === 0}
-              className="px-6 py-3 rounded-xl border-2 border-gray-200 text-gray-700 font-medium hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2">
-              <ChevronLeft size={18} />上一题
-            </button>
-          )}
-          {task.type === 'quiz' && task.questions && task.questions.length > 1 && (
-            <div className="flex items-center gap-2">
-              {task.questions.map((_: any, i: number) => {
-                const answered = task.questions && selectedAnswers[task.questions[i].id];
-                return (
-                  <button key={i} onClick={() => goTo(i)}
-                    className={`w-8 h-8 rounded-full text-xs font-medium transition-all ${
-                      i === idx ? 'bg-primary-500 text-white'
-                      : answered ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}>{i + 1}</button>
-                );
-              })}
-            </div>
-          )}
-        </div>
-        <div className="flex items-center gap-4">
-          {task.type === 'quiz' && task.questions && idx < task.questions.length - 1 && (
-            <button onClick={goNext}
-              className="px-6 py-3 rounded-xl bg-primary-600 text-white font-medium hover:bg-primary-700 flex items-center gap-2">
-              下一题<ChevronRight size={18} />
-            </button>
-          )}
-          {((task.type === 'quiz' && task.questions && idx === task.questions.length - 1) || task.type !== 'quiz') && (
-            <SubmitButton taskStatus={taskStatus} isCompleted={isCompleted} quickResult={quickResult} onSubmit={submit} size="lg" />
-          )}
-        </div>
-      </div>
-    </div>
+    </>
   );
 }
 
@@ -242,6 +322,7 @@ function EmbeddedMode({ task, selectedAnswers, submissionText, onAnswer, submit,
 }
 
 function SubmitButton({ taskStatus, isCompleted, quickResult, onSubmit, size }: any) {
+  const { t } = useLanguage();
   const isSm = size === 'sm';
   const base = isSm ? 'mt-3 w-full py-2 rounded-lg text-xs' : 'px-8 py-3 rounded-xl';
   const disabled = taskStatus === 'submitting' || taskStatus === 'grading';
@@ -254,10 +335,10 @@ function SubmitButton({ taskStatus, isCompleted, quickResult, onSubmit, size }: 
         : done ? 'bg-green-100 text-green-700 cursor-not-allowed'
         : 'bg-primary-600 text-white hover:bg-primary-700'
       }`}>
-      {taskStatus === 'submitting' ? (<><Activity size={isSm ? 16 : 18} className="animate-spin" />提交中...</>)
-      : taskStatus === 'grading' ? (<><Activity size={isSm ? 16 : 18} className="animate-spin" />批改中...</>)
-      : done ? (<><Check size={isSm ? 16 : 18} />已完成</>)
-      : (<><Check size={isSm ? 16 : 18} />{quickResult && !quickResult.allCorrect ? '重新提交' : '提交任务'}</>)}
+      {taskStatus === 'submitting' ? (<><Activity size={isSm ? 16 : 18} className="animate-spin" />{t('提交中...')}</>)
+      : taskStatus === 'grading' ? (<><Activity size={isSm ? 16 : 18} className="animate-spin" />{t('批改中...')}</>)
+      : done ? (<><Check size={isSm ? 16 : 18} />{t('已完成')}</>)
+      : (<><Check size={isSm ? 16 : 18} />{quickResult && !quickResult.allCorrect ? t('重新提交') : t('提交任务')}</>)}
     </button>
   );
 }
