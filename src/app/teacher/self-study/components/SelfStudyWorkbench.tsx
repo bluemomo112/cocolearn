@@ -727,10 +727,9 @@ export default function SelfStudyWorkbench({
       data: 'data' in resource ? resource.data : undefined,
     };
 
-    setInlineViewingResource(viewResource);
-
     if (isInteractive || hasCustomViewer) {
-      // H5 资源和自定义 viewer 资源默认全屏打开
+      // H5/自定义 viewer 类：只设 viewingResource（全屏），清除 inlineViewingResource
+      setInlineViewingResource(null);
       setViewingResource({
         id: resource.id,
         title: resource.title,
@@ -742,6 +741,10 @@ export default function SelfStudyWorkbench({
         data: 'data' in resource ? resource.data : undefined,
         textContent: 'textContent' in resource ? resource.textContent : undefined,
       } as any);
+    } else {
+      // 文档/文本类：只设 inlineViewingResource（左侧内嵌），清除 viewingResource
+      setViewingResource(null);
+      setInlineViewingResource(viewResource);
     }
   };
 
@@ -2787,6 +2790,7 @@ export default function SelfStudyWorkbench({
           setEditingTask={setEditingTask}
           onSaveTask={handleSaveTask}
           onAddResource={handleAddResource}
+          onSetViewingResource={setViewingResource}
         />
 
         {/* 左侧调整器 - 仅在未折叠时显示 */}
@@ -3086,10 +3090,12 @@ export default function SelfStudyWorkbench({
               title: viewingResource.title,
               type: viewingResource.type,
               icon: viewingResource.type === 'interactive' ? '🔬' : '📄',
-              toolId: viewingResource.id,
+              toolId: (viewingResource as any).toolId || viewingResource.id,
               url: viewingResource.url,
               description: viewingResource.description,
               interactiveCategory: viewingResource.interactiveCategory,
+              data: (viewingResource as any).data,
+              textContent: (viewingResource as any).textContent,
             });
             setViewingResource(null);
           }

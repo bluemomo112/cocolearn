@@ -69,6 +69,7 @@ interface LeftPanelProps {
   onAddResource?: (resource: Resource) => void;
   selectedResourceIds: Set<string>;
   toggleResourceSelection: (id: string) => void;
+  onSetViewingResource?: (resource: Resource | null) => void;
 }
 
 export function LeftPanel(props: LeftPanelProps) {
@@ -90,6 +91,7 @@ export function LeftPanel(props: LeftPanelProps) {
     onAddResource,
     selectedResourceIds, toggleResourceSelection,
     selectedTaskIds, toggleAllTasks, toggleAllResources, toggleTaskSelection, setEditingTask, onSaveTask,
+    onSetViewingResource,
   } = props;
 
   // 粘贴文本弹窗状态
@@ -543,15 +545,19 @@ export function LeftPanel(props: LeftPanelProps) {
                         resource={inlineViewingResource}
                         onBack={() => onSetInlineViewingResource(null)}
                         onFullscreen={() => {
-                          if (inlineViewingResource.url) {
-                            onSetInlineViewingResource({
-                              id: inlineViewingResource.id,
-                              title: inlineViewingResource.title,
-                              type: 'interactive',
-                              description: inlineViewingResource.description || '',
-                              url: inlineViewingResource.url,
-                            });
-                          }
+                          // 切到全屏：设 viewingResource + 清除 inlineViewingResource
+                          onSetViewingResource?.({
+                            id: inlineViewingResource.id,
+                            title: inlineViewingResource.title,
+                            type: 'interactive',
+                            description: inlineViewingResource.description || '',
+                            url: inlineViewingResource.url,
+                            interactiveCategory: inlineViewingResource.interactiveCategory,
+                            toolId: inlineViewingResource.toolId,
+                            data: inlineViewingResource.data,
+                            textContent: inlineViewingResource.textContent,
+                          } as any);
+                          onSetInlineViewingResource(null);
                         }}
                       />
                     </div>
@@ -963,15 +969,19 @@ export function LeftPanel(props: LeftPanelProps) {
                         resource={inlineViewingResource}
                         onBack={() => onSetInlineViewingResource(null)}
                         onFullscreen={() => {
-                          if (inlineViewingResource.url) {
-                            onSetInlineViewingResource({
-                              id: inlineViewingResource.id,
-                              title: inlineViewingResource.title,
-                              type: 'interactive',
-                              description: inlineViewingResource.description || '',
-                              url: inlineViewingResource.url,
-                            });
-                          }
+                          // 切到全屏：设 viewingResource + 清除 inlineViewingResource
+                          onSetViewingResource?.({
+                            id: inlineViewingResource.id,
+                            title: inlineViewingResource.title,
+                            type: 'interactive',
+                            description: inlineViewingResource.description || '',
+                            url: inlineViewingResource.url,
+                            interactiveCategory: inlineViewingResource.interactiveCategory,
+                            toolId: inlineViewingResource.toolId,
+                            data: inlineViewingResource.data,
+                            textContent: inlineViewingResource.textContent,
+                          } as any);
+                          onSetInlineViewingResource(null);
                         }}
                       />
                     </div>
