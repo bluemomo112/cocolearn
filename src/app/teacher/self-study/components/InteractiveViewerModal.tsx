@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { X, Maximize2, Minimize2, Loader2, Play, Pause, Volume2, RotateCcw, ChevronLeft, ChevronRight, FileText } from 'lucide-react';
+import { X, Minimize2, Loader2, Play, Pause, Volume2, RotateCcw, ChevronLeft, ChevronRight, FileText } from 'lucide-react';
 import { Resource } from '@/types/shared-context';
 import { useLanguage } from '@/contexts/LanguageContext';
 import ReactMarkdown from 'react-markdown';
@@ -242,7 +242,6 @@ export default function InteractiveViewerModal({ resource, onClose, onShrinkToIn
     simulation: { label: t('模拟'), color: 'bg-green-100 text-green-700' },
     test: { label: t('测试'), color: 'bg-amber-100 text-amber-700' },
   };
-  const [isFullscreen, setIsFullscreen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   if (!resource) return null;
@@ -256,14 +255,9 @@ export default function InteractiveViewerModal({ resource, onClose, onShrinkToIn
       {/* 背景遮罩 */}
       <div className="fixed inset-0 bg-black/60 z-50" onClick={onClose} />
 
-      {/* 模态框 */}
+      {/* 模态框 - 始终 97% 大小 */}
       <div
-        className={`fixed z-50 bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden transition-all duration-300 ${
-          isFullscreen
-            ? 'inset-2'
-            : 'left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[90vw] max-w-6xl'
-        }`}
-        style={isFullscreen ? undefined : { height: '85vh' }}
+        className="fixed z-50 bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden inset-[1.5%]"
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-3 border-b border-gray-200 flex-shrink-0">
@@ -278,23 +272,15 @@ export default function InteractiveViewerModal({ resource, onClose, onShrinkToIn
             )}
           </div>
           <div className="flex items-center gap-1 flex-shrink-0">
-            <button
-              onClick={() => {
-                if (onShrinkToInline && isFullscreen) {
-                  onShrinkToInline();
-                } else {
-                  setIsFullscreen(!isFullscreen);
-                }
-              }}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              title={isFullscreen ? (onShrinkToInline ? t('缩小到侧栏') : t('退出全屏')) : t('全屏')}
-            >
-              {isFullscreen ? (
+            {onShrinkToInline && (
+              <button
+                onClick={onShrinkToInline}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                title={t('缩小到侧栏')}
+              >
                 <Minimize2 size={18} className="text-gray-500" />
-              ) : (
-                <Maximize2 size={18} className="text-gray-500" />
-              )}
-            </button>
+              </button>
+            )}
             <button
               onClick={onClose}
               className="p-2 hover:bg-gray-100 rounded-lg transition-colors"

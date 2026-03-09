@@ -54,7 +54,10 @@ export default function TaskResultReview({
   const currentDetail = currentQuestion ? getResult(currentQuestion.id) : undefined;
 
   return (
-    <div className="fixed inset-0 z-50 bg-white flex flex-col">
+    <>
+      {/* 背景遮罩 */}
+      <div className="fixed inset-0 bg-black/60 z-50" />
+      <div className="fixed z-50 inset-[1.5%] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden">
       <div className="h-16 px-8 flex items-center justify-between border-b border-gray-200 bg-white">
         <button onClick={onClose} className="flex items-center gap-2 text-gray-600 hover:text-gray-800">
           <ChevronLeft size={20} /><span className="text-sm font-medium">{t('返回对话')}</span>
@@ -127,6 +130,7 @@ export default function TaskResultReview({
         </button>
       </div>
     </div>
+    </>
   );
 }
 

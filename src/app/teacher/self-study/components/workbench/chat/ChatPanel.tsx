@@ -200,10 +200,12 @@ export function ChatPanel(props: ChatPanelProps) {
                     <Bot size={16} className="text-white" />
                   </div>
                 )}
-                <div className={`${message.role === 'user' ? 'max-w-[80%]' : 'flex flex-col gap-2 max-w-[80%]'}`}>
+                <div className={`${message.role === 'user' ? 'max-w-[80%]' : 'max-w-[80%]'}`}>
+                  {/* 消息气泡 + 工具条横向排列 */}
+                  <div className={`flex items-end gap-1 ${message.role === 'assistant' ? 'group' : ''}`}>
                   {/* 消息气泡 */}
                   <div
-                    className={`rounded-lg ${
+                    className={`rounded-lg flex-1 min-w-0 ${
                       message.role === 'user'
                         ? 'bg-primary-600 text-white rounded-tr-none'
                         : 'bg-white border border-gray-200 rounded-tl-none overflow-hidden'
@@ -285,37 +287,36 @@ export function ChatPanel(props: ChatPanelProps) {
                     )}
                   </div>
 
-                  {/* 3.4 AI 回复工具条 - hover/touch 时显示 */}
+                  {/* 3.4 AI 回复工具条 - 气泡右侧，hover/touch 时显示 */}
                   {message.role === 'assistant' && (
-                    <div className="mt-1 flex items-center gap-1 opacity-0 hover:opacity-100 focus-within:opacity-100 transition-opacity"
+                    <div className="flex flex-col gap-0.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity flex-shrink-0"
                       onTouchStart={(e) => { (e.currentTarget as HTMLElement).style.opacity = '1'; }}
                     >
                       <button
                         onClick={() => handleSaveToNote(message.id, message.content)}
-                        className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs transition-colors ${
+                        className={`p-1.5 rounded transition-colors ${
                           savedMessageIds.has(message.id)
                             ? 'text-emerald-600 bg-emerald-50'
                             : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
                         }`}
-                        title={t('保存到笔记')}
+                        title={savedMessageIds.has(message.id) ? t('已保存') : t('保存到笔记')}
                       >
                         {savedMessageIds.has(message.id) ? <Check size={12} /> : <Save size={12} />}
-                        <span>{savedMessageIds.has(message.id) ? t('已保存') : t('保存到笔记')}</span>
                       </button>
                       <button
                         onClick={() => handleCopyMessage(message.id, message.content)}
-                        className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs transition-colors ${
+                        className={`p-1.5 rounded transition-colors ${
                           copiedMessageId === message.id
                             ? 'text-emerald-600 bg-emerald-50'
                             : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
                         }`}
-                        title={t('复制')}
+                        title={copiedMessageId === message.id ? t('已复制') : t('复制')}
                       >
                         {copiedMessageId === message.id ? <Check size={12} /> : <Copy size={12} />}
-                        <span>{copiedMessageId === message.id ? t('已复制') : t('复制')}</span>
                       </button>
                     </div>
                   )}
+                  </div>
 
                   {/* 资源引用标签 */}
                   {message.role === 'assistant' && message.resourceRef && (

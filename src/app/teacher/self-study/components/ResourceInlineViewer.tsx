@@ -268,7 +268,7 @@ export default function ResourceInlineViewer({ resource, onBack, onFullscreen }:
 
   const hasIframeContent = !!resource.url;
   const hasCustomViewer = ['flashcards', 'audio_overview', 'timeline', 'mind_map'].includes(resource.toolId || '');
-  const canFullscreen = hasIframeContent || hasCustomViewer;
+  const canFullscreen = true; // 所有资源都可以全屏查看
   const category = resource.interactiveCategory
     ? CATEGORY_CONFIG[resource.interactiveCategory]
     : null;
