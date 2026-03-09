@@ -509,12 +509,8 @@ export default function SelfStudyWorkbench({
   const [expandedTask, setExpandedTask] = useState<Task | null>(null);
   const [taskDisplayMode, setTaskDisplayMode] = useState<'fullscreen' | 'embedded' | 'result_review'>('fullscreen');
   const [taskStatus, setTaskStatus] = useState<'idle' | 'submitting' | 'grading' | 'completed'>('idle');
-  const [quickResult, setQuickResult] = useState<{
-    allCorrect: boolean;
-    correctCount: number;
-    totalCount: number;
-    details: any[];
-  } | null>(null);
+  const [quickResultMap, setQuickResultMap] = useState<Record<string, { allCorrect: boolean; correctCount: number; totalCount: number; details: any[] }>>({});
+  const quickResult = expandedTask ? quickResultMap[expandedTask.id] || null : null;
   const [completedTasksArray, setCompletedTasksArray] = usePersistedState<string[]>(`self-study:wb:${config.id}:completedTasks`, []);
   const completedTasks = new Set(completedTasksArray);
   const setCompletedTasks = (updater: Set<string> | ((prev: Set<string>) => Set<string>)) => {
@@ -1839,7 +1835,7 @@ export default function SelfStudyWorkbench({
   const handleRedoCurrentTask = () => {
     console.log('[ErrorLoop] 重做任务');
     if (expandedTask) {
-      setQuickResult(null);
+      setQuickResultMap(prev => { const { [expandedTask.id]: _, ...rest } = prev; return rest; });
       setMessages(prev => prev.map(msg =>
         msg.embeddedTask?.id === expandedTask.id
           ? { ...msg, taskState: { currentQuestionIndex: 0, selectedAnswers: {}, submissionText: '', status: 'in_progress' } }
@@ -2261,7 +2257,12 @@ export default function SelfStudyWorkbench({
     const existingMessage = messages.find(m => m.embeddedTask?.id === task.id);
     if (existingMessage) {
       setExpandedTask(task);
-      setTaskDisplayMode('fullscreen');
+      // 已完成且有结果 → 显示结果页；否则全屏做题
+      if (completedTasks.has(task.id) && task.id in quickResultMap) {
+        setTaskDisplayMode('result_review');
+      } else {
+        setTaskDisplayMode('fullscreen');
+      }
       return;
     }
 
@@ -2287,7 +2288,11 @@ export default function SelfStudyWorkbench({
 
     setMessages(prev => [...prev, taskIntroMessage]);
     setExpandedTask(task);
-    setTaskDisplayMode('fullscreen'); // 默认以全屏模式打开
+    if (completedTasks.has(task.id) && task.id in quickResultMap) {
+      setTaskDisplayMode('result_review');
+    } else {
+      setTaskDisplayMode('fullscreen');
+    }
   };
 
   // 切换任务显示模式
@@ -2362,7 +2367,7 @@ export default function SelfStudyWorkbench({
       // 处理客观题（quiz）- 两阶段流程
       if (data.taskType === 'quiz' && data.quickResult) {
         // 立即显示快速判题结果
-        setQuickResult(data.quickResult);
+        setQuickResultMap(prev => { return { ...prev, [taskId]: data.quickResult }; });
 
         // 全屏模式下自动进入结果回顾
         if (taskDisplayMode === 'fullscreen') {
@@ -2515,7 +2520,9 @@ export default function SelfStudyWorkbench({
 
       // 重置状态
       setTaskStatus('idle');
-      setQuickResult(null);
+      if (expandedTask) {
+        setQuickResultMap(prev => { const { [expandedTask.id]: _, ...rest } = prev; return rest; });
+      }
 
       // 显示错误消息
       const errorMessage: ChatMessage = {
