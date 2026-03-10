@@ -75,6 +75,8 @@ interface LeftPanelProps {
   onSetExpandedTask?: (task: Task | null) => void;
   onSetTaskDisplayMode?: (mode: 'fullscreen' | 'embedded' | 'result_review') => void;
   onSetExplainQuestion?: (q: TaskQuestion | null) => void;
+  isResourceCollapsed?: boolean;
+  onSetResourceCollapsed?: (collapsed: boolean) => void;
 }
 
 export function LeftPanel(props: LeftPanelProps) {
@@ -98,14 +100,24 @@ export function LeftPanel(props: LeftPanelProps) {
     selectedTaskIds, toggleAllTasks, toggleAllResources, toggleTaskSelection, setEditingTask, onSaveTask,
     onSetViewingResource,
     explainQuestion, onSetExpandedTask, onSetTaskDisplayMode, onSetExplainQuestion,
+    isResourceCollapsed: externalIsResourceCollapsed,
+    onSetResourceCollapsed,
   } = props;
 
   // 粘贴文本弹窗状态
   const [showPasteTextModal, setShowPasteTextModal] = useState(false);
   const [pasteTextContent, setPasteTextContent] = useState('');
 
-  // 资源区域折叠状态
-  const [isResourceCollapsed, setIsResourceCollapsed] = useState(false);
+  // 资源区域折叠状态（支持受控和非受控）
+  const [internalIsResourceCollapsed, setInternalIsResourceCollapsed] = useState(false);
+  const isResourceCollapsed = externalIsResourceCollapsed ?? internalIsResourceCollapsed;
+  const setIsResourceCollapsed = (collapsed: boolean) => {
+    if (onSetResourceCollapsed) {
+      onSetResourceCollapsed(collapsed);
+    } else {
+      setInternalIsResourceCollapsed(collapsed);
+    }
+  };
 
   // 统一编辑任务弹窗状态
   const [unifiedEditTask, setUnifiedEditTask] = useState<any>(null);
@@ -879,15 +891,25 @@ export function LeftPanel(props: LeftPanelProps) {
                       </div>
                     ) : (
                       <>
-                        {/* 全选控制 */}
+                        {/* 全选控制 + 手动添加 */}
                         <div className="flex items-center justify-between px-1 mb-1">
                           <span className="text-xs text-gray-500">{generatedTasks.length} {t('个任务')}</span>
-                          <button
-                            onClick={() => toggleAllTasks()}
-                            className="text-xs text-gray-600 hover:text-gray-800 font-medium p-2 rounded-lg"
-                          >
-                            {selectedTaskIds.size === generatedTasks.length ? t('取消全选') : t('全选')}
-                          </button>
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={handleAddManualTask}
+                              className="text-xs text-gray-600 hover:text-gray-800 font-medium p-2 rounded-lg flex items-center gap-1"
+                              title={t('手动添加任务')}
+                            >
+                              <Plus size={12} />
+                              {t('手动添加')}
+                            </button>
+                            <button
+                              onClick={() => toggleAllTasks()}
+                              className="text-xs text-gray-600 hover:text-gray-800 font-medium p-2 rounded-lg"
+                            >
+                              {selectedTaskIds.size === generatedTasks.length ? t('取消全选') : t('全选')}
+                            </button>
+                          </div>
                         </div>
                         {generatedTasks.map((task) => (
                         <div
@@ -948,14 +970,6 @@ export function LeftPanel(props: LeftPanelProps) {
                       </>
                     )}
 
-                    {/* 手动添加任务按钮 */}
-                    <button
-                      onClick={handleAddManualTask}
-                      className="w-full px-3 py-2.5 border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-gray-400 hover:bg-gray-50 transition-all flex items-center justify-center gap-2"
-                    >
-                      <Plus size={14} />
-                      {t('手动添加')}
-                    </button>
                     </>
                     )}
                   </div>
@@ -1339,15 +1353,25 @@ export function LeftPanel(props: LeftPanelProps) {
                       </div>
                     ) : (
                       <>
-                        {/* 全选控制 */}
+                        {/* 全选控制 + 手动添加 */}
                         <div className="flex items-center justify-between px-1 mb-1">
                           <span className="text-xs text-gray-500">{generatedTasks.length} {t('个任务')}</span>
-                          <button
-                            onClick={() => toggleAllTasks()}
-                            className="text-xs text-gray-600 hover:text-gray-800 font-medium p-2 rounded-lg"
-                          >
-                            {selectedTaskIds.size === generatedTasks.length ? t('取消全选') : t('全选')}
-                          </button>
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={handleAddManualTask}
+                              className="text-xs text-gray-600 hover:text-gray-800 font-medium p-2 rounded-lg flex items-center gap-1"
+                              title={t('手动添加任务')}
+                            >
+                              <Plus size={12} />
+                              {t('手动添加')}
+                            </button>
+                            <button
+                              onClick={() => toggleAllTasks()}
+                              className="text-xs text-gray-600 hover:text-gray-800 font-medium p-2 rounded-lg"
+                            >
+                              {selectedTaskIds.size === generatedTasks.length ? t('取消全选') : t('全选')}
+                            </button>
+                          </div>
                         </div>
                         {generatedTasks.map((task) => (
                         <div
@@ -1408,14 +1432,6 @@ export function LeftPanel(props: LeftPanelProps) {
                       </>
                     )}
 
-                    {/* 手动添加任务按钮 */}
-                    <button
-                      onClick={handleAddManualTask}
-                      className="w-full px-3 py-2.5 border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-gray-400 hover:bg-gray-50 transition-all flex items-center justify-center gap-2"
-                    >
-                      <Plus size={14} />
-                      {t('手动添加')}
-                    </button>
                     </>
                     )}
                   </div>

@@ -627,6 +627,9 @@ export default function SelfStudyWorkbench({
     studio: false,
   });
 
+
+  // 资源区域折叠状态（独立控制）
+  const [isResourceCollapsed, setIsResourceCollapsed] = useState(false);
   // 生成的任务列表（初始为空）
   const [generatedTasks, setGeneratedTasks] = usePersistedState<typeof MOCK_GENERATED_TASKS>(`self-study:wb:${config.id}:generatedTasks`, []);
   const [isGeneratingTask, setIsGeneratingTask] = useState(false);
@@ -1894,8 +1897,18 @@ export default function SelfStudyWorkbench({
 
   const handleExplainQuestion = (question: TaskQuestion, userAnswer: string | string[], correctAnswer: string | string[]) => {
     console.log('[ExplainQuestion] 深入详解题目:', question.id);
-    // 缩小到左侧内嵌，进入三栏协同学习
+
+    // 1. 关闭弹窗，切换到内嵌模式
     setTaskDisplayMode('embedded');
+
+    // 2. 自动收起资源区域，展开任务区域
+    setIsResourceCollapsed(true);  // 收起资源
+    setCollapsedPanels(prev => ({
+      ...prev,
+      tasks: false,   // 展开任务
+    }));
+
+    // 3. 设置当前详解的题目
     setExplainQuestion(question);
 
     // 格式化答案
@@ -2804,6 +2817,8 @@ export default function SelfStudyWorkbench({
           onSetExpandedTask={setExpandedTask}
           onSetTaskDisplayMode={setTaskDisplayMode}
           onSetExplainQuestion={setExplainQuestion}
+          isResourceCollapsed={isResourceCollapsed}
+          onSetResourceCollapsed={setIsResourceCollapsed}
         />
 
         {/* 左侧调整器 - 仅在未折叠时显示 */}
