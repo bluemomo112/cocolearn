@@ -40,6 +40,7 @@ import ResourceSettingsPopover from './ResourceSettingsPopover';
 import type { TaskSettings, ResourceVisibility } from '@/types/shared-context';
 import { generateMockAIReply as generateMockReply } from '@/data/mockAIReplies';
 import type { MockReplyContext } from '@/data/mockAIReplies';
+import { generateExplainQuestionDialogue, generateQuickReplyResponse } from '@/data/mockQuickReplies';
 
 // ── workbench/ 子组件（只负责渲染，状态和 handler 留在本文件）
 // 详见 ARCHITECTURE.md 了解各文件职责
@@ -1336,7 +1337,7 @@ export default function SelfStudyWorkbench({
   };
 
   // 快速回复处理函数
-  const handleQuickReply = (messageText: string) => {
+  const handleQuickReply = (messageText: string, replyId?: string) => {
     const userMessage: ChatMessage = {
       id: `msg_${Date.now()}`,
       role: 'user',
@@ -1347,9 +1348,16 @@ export default function SelfStudyWorkbench({
     setMessages((prev) => [...prev, userMessage]);
     setIsLoading(true);
 
-    const userInput = messageText.toLowerCase();
     setTimeout(() => {
-      const aiContent = generateMockAIReply(userInput);
+      // 如果有 replyId，使用预设的响应
+      let aiContent: string;
+      if (replyId) {
+        aiContent = generateQuickReplyResponse(replyId);
+      } else {
+        // 否则使用通用的 AI 回复生成
+        const userInput = messageText.toLowerCase();
+        aiContent = generateMockAIReply(userInput);
+      }
 
       const aiReply: ChatMessage = {
         id: `msg_${Date.now()}_ai`,
@@ -1945,45 +1953,35 @@ export default function SelfStudyWorkbench({
       return Array.isArray(ans) ? ans.join(', ') : ans;
     };
 
-    // 先发送用户消息（模拟用户请求）
+    const isCorrect = formatAnswer(userAnswer) === formatAnswer(correctAnswer);
+
+    // 使用新的对话生成函数
+    const dialogue = generateExplainQuestionDialogue(question, userAnswer, correctAnswer, isCorrect);
+
+    // 用户消息
     const userMsg: ChatMessage = {
       id: `msg_user_explain_${Date.now()}`,
       role: 'user',
-      content: `请帮我详细解释一下这道题，我选了 ${formatAnswer(userAnswer)}，正确答案是 ${formatAnswer(correctAnswer)}。`,
+      content: dialogue.userMessage,
       timestamp: new Date(),
     };
 
-    // AI 简短引导回复
-    const isCorrect = formatAnswer(userAnswer) === formatAnswer(correctAnswer);
-    const briefExplanation = question.explanation
-      ? question.explanation
-      : isCorrect
-      ? '虽然你答对了，但让我帮你梳理一下解题思路，加深理解。'
-      : '这道题的关键在于区分几个相似概念。让我帮你理清思路。';
+    // AI 回复消息（分成多条短消息）
+    const aiMessages: ChatMessage[] = dialogue.aiMessages.map((content, index) => ({
+      id: `msg_explain_${Date.now()}_${index}`,
+      role: 'assistant' as const,
+      content,
+      timestamp: new Date(Date.now() + index * 100),
+      // 最后一条消息添加快捷回复和功能按钮
+      ...(index === dialogue.aiMessages.length - 1 ? {
+        suggestions: {
+          quickReplies: dialogue.quickReplies,
+          actionButtons: dialogue.actionButtons,
+        },
+      } : {}),
+    }));
 
-    const explainMsg: ChatMessage = {
-      id: `msg_explain_${Date.now()}`,
-      role: 'assistant',
-      content: briefExplanation,
-      timestamp: new Date(),
-      suggestions: {
-        quickReplies: [
-          { id: 'why_wrong', label: '为什么我的答案不对？' },
-          { id: 'more_examples', label: '能举个例子吗？' },
-          { id: 'understand', label: '我明白了' },
-        ],
-        actionButtons: [
-          {
-            id: 'generate_variant',
-            label: '生成变种题',
-            iconName: 'RotateCcw',
-            studioToolId: 'generate_variant_question',
-          },
-        ],
-      },
-    };
-
-    setMessages(prev => [...prev, userMsg, explainMsg]);
+    setMessages(prev => [...prev, userMsg, ...aiMessages]);
   };
 
   // 处理链接添加

@@ -36,7 +36,7 @@ interface ChatPanelProps {
   getThemeClass: (type: 'bg' | 'bgHover' | 'text' | 'border' | 'icon') => string;
   onSendMessage: () => void;
   onInputChange: (value: string) => void;
-  onQuickReply: (reply: string) => void;
+  onQuickReply: (reply: string, replyId?: string) => void;
   onChatAction: (actionId: string, studioToolId: string) => void;
   onModeChange: (mode: LearningMode) => void;
   onToggleVoiceInput: () => void;
@@ -375,7 +375,7 @@ export function ChatPanel(props: ChatPanelProps) {
                       {message.suggestions.quickReplies.map((reply) => (
                         <button
                           key={reply.id}
-                          onClick={() => handleQuickReply(reply.label)}
+                          onClick={() => handleQuickReply(reply.label, reply.id)}
                           className="px-4 py-3 text-sm text-left rounded-lg border border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300 text-gray-700 transition-all hover:shadow-sm flex items-start gap-2"
                         >
                           <Send size={14} className="text-gray-400 mt-0.5 flex-shrink-0" />
