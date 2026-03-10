@@ -2850,6 +2850,7 @@ export default function SelfStudyWorkbench({
           onSetExpandedTask={setExpandedTask}
           onSetTaskDisplayMode={setTaskDisplayMode}
           onSetExplainQuestion={setExplainQuestion}
+          onExplainQuestion={handleExplainQuestion}
           isResourceCollapsed={isResourceCollapsed}
           onSetResourceCollapsed={setIsResourceCollapsed}
         />

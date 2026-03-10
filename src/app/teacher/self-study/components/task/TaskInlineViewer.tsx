@@ -1,6 +1,6 @@
 'use client';
 
-import { Maximize2, ChevronLeft, CheckCircle, XCircle } from 'lucide-react';
+import { Maximize2, ChevronLeft, ChevronRight, CheckCircle, XCircle, Lightbulb } from 'lucide-react';
 import { Task, TaskQuestion } from '@/types/shared-context';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getQuestionTypeLabel } from './QuestionRenderer';
@@ -16,11 +16,15 @@ interface TaskInlineViewerProps {
   explainQuestion?: TaskQuestion | null;
   onFullscreen: () => void;
   onBack: () => void;
+  onPrevQuestion?: () => void;
+  onNextQuestion?: () => void;
+  onExplainQuestion?: (question: TaskQuestion, userAnswer: string | string[], correctAnswer: string | string[]) => void;
 }
 
 export default function TaskInlineViewer({
   task, mode, currentQuestionIndex, selectedAnswers,
   quickResult, explainQuestion, onFullscreen, onBack,
+  onPrevQuestion, onNextQuestion, onExplainQuestion,
 }: TaskInlineViewerProps) {
   const { t } = useLanguage();
   const questions = task.questions || [];
@@ -32,6 +36,9 @@ export default function TaskInlineViewer({
     const isCorrect = detail?.correct ?? false;
     const userAnswer = detail?.userAnswer || selectedAnswers[explainQuestion.id] || '';
     const correctAnswer = detail?.correctAnswer || explainQuestion.answer || '';
+
+    // 当前题目在列表中的索引
+    const currentIdx = questions.findIndex(q => q.id === explainQuestion.id);
 
     return (
       <div className="h-full flex flex-col">
@@ -52,6 +59,7 @@ export default function TaskInlineViewer({
             <span className="px-2 py-0.5 bg-blue-50 text-blue-600 text-xs font-medium rounded-full">
               {getQuestionTypeLabel(explainQuestion.type)}
             </span>
+            <span className="text-xs text-gray-400 ml-auto">{currentIdx + 1} / {totalQuestions}</span>
           </div>
           <div className="text-sm font-medium text-gray-900 leading-relaxed">
             <RichContent content={explainQuestion.content} />
@@ -85,6 +93,34 @@ export default function TaskInlineViewer({
               </div>
             </div>
           )}
+        </div>
+
+        {/* 底部导航栏：上一题 / 详解 / 下一题 */}
+        <div className="px-3 py-2.5 border-t border-gray-200 bg-white flex items-center justify-between gap-2 flex-shrink-0">
+          <button
+            onClick={onPrevQuestion}
+            disabled={currentIdx <= 0}
+            className="px-3 py-2 rounded-lg border border-gray-200 text-gray-600 text-xs font-medium hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1"
+          >
+            <ChevronLeft size={14} />{t('上一题')}
+          </button>
+          <button
+            onClick={() => {
+              if (onExplainQuestion) {
+                onExplainQuestion(explainQuestion, userAnswer, correctAnswer);
+              }
+            }}
+            className="px-3 py-2 rounded-lg bg-primary-50 border border-primary-200 text-primary-700 text-xs font-medium hover:bg-primary-100 flex items-center gap-1"
+          >
+            <Lightbulb size={14} />{t('详细解释')}
+          </button>
+          <button
+            onClick={onNextQuestion}
+            disabled={currentIdx >= totalQuestions - 1}
+            className="px-3 py-2 rounded-lg bg-primary-600 text-white text-xs font-medium hover:bg-primary-700 disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1"
+          >
+            {t('下一题')}<ChevronRight size={14} />
+          </button>
         </div>
       </div>
     );

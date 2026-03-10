@@ -76,6 +76,7 @@ interface LeftPanelProps {
   onSetExpandedTask?: (task: Task | null) => void;
   onSetTaskDisplayMode?: (mode: 'fullscreen' | 'embedded' | 'result_review') => void;
   onSetExplainQuestion?: (q: TaskQuestion | null) => void;
+  onExplainQuestion?: (question: TaskQuestion, userAnswer: string | string[], correctAnswer: string | string[]) => void;
   isResourceCollapsed?: boolean;
   onSetResourceCollapsed?: (collapsed: boolean) => void;
 }
@@ -101,6 +102,7 @@ export function LeftPanel(props: LeftPanelProps) {
     selectedTaskIds, toggleAllTasks, toggleAllResources, toggleTaskSelection, setEditingTask, onSaveTask,
     onSetViewingResource,
     explainQuestion, onSetExpandedTask, onSetTaskDisplayMode, onSetExplainQuestion,
+    onExplainQuestion,
     isResourceCollapsed: externalIsResourceCollapsed,
     onSetResourceCollapsed,
   } = props;
@@ -607,6 +609,21 @@ export function LeftPanel(props: LeftPanelProps) {
                             onSetExpandedTask?.(null);
                             onSetTaskDisplayMode?.('fullscreen');
                           }}
+                          onPrevQuestion={() => {
+                            const questions = expandedTask.questions || [];
+                            const currentIdx = explainQuestion ? questions.findIndex(q => q.id === explainQuestion.id) : -1;
+                            if (currentIdx > 0) {
+                              onSetExplainQuestion?.(questions[currentIdx - 1]);
+                            }
+                          }}
+                          onNextQuestion={() => {
+                            const questions = expandedTask.questions || [];
+                            const currentIdx = explainQuestion ? questions.findIndex(q => q.id === explainQuestion.id) : -1;
+                            if (currentIdx >= 0 && currentIdx < questions.length - 1) {
+                              onSetExplainQuestion?.(questions[currentIdx + 1]);
+                            }
+                          }}
+                          onExplainQuestion={onExplainQuestion}
                         />
                       </div>
                     ) : (
