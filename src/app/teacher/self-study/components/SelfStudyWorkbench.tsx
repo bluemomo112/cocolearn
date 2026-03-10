@@ -38,6 +38,8 @@ import ExamDetectedModal from './ExamDetectedModal';
 import TaskSettingsPopover from './TaskSettingsPopover';
 import ResourceSettingsPopover from './ResourceSettingsPopover';
 import type { TaskSettings, ResourceVisibility } from '@/types/shared-context';
+import { generateMockAIReply as generateMockReply } from '@/data/mockAIReplies';
+import type { MockReplyContext } from '@/data/mockAIReplies';
 
 // ── workbench/ 子组件（只负责渲染，状态和 handler 留在本文件）
 // 详见 ARCHITECTURE.md 了解各文件职责
@@ -1315,40 +1317,22 @@ export default function SelfStudyWorkbench({
 
   // ── [对话区] ChatPanel handlers ──────────────────────────────
 
-  // 生成 mock AI 回复内容（统一逻辑，避免 handleQuickReply 和 handleSendMessage 重复）
+  // 生成 mock AI 回复内容（使用独立的 mock 数据文件）
   const generateMockAIReply = (userInput: string): string => {
-    let aiContent = '';
+    const userMsgCount = messages.filter(m => m.role === 'user').length + 1;
+    const masteredCount = learningPath.filter(n => n.status === 'mastered').length;
+    const totalNodes = learningPath.length;
+    const currentNode = learningPath.find(n => n.id === currentNodeId);
 
-    if (config.learningMode === 'self_directed') {
-      if (userInput.includes('搜索') || userInput.includes('概念')) {
-        aiContent = `🔍 **${t('概念解析')}**\n\n${t('让我帮你搜索相关概念...')}\n\n${t('根据知识库检索，这个概念的核心要点是：')}\n\n1. **${t('定义')}**：...\n2. **${t('特征')}**：...\n3. **${t('应用场景')}**：...\n\n${t('你想深入了解哪个方面？')}`;
-      } else if (userInput.includes('总结') || userInput.includes('要点')) {
-        aiContent = `📋 **${t('要点总结')}**\n\n${t('根据你目前的学习内容，我来帮你梳理关键要点：')}\n\n**${t('核心概念')}**\n- ${t('要点一：...')}\n- ${t('要点二：...')}\n\n**${t('重要公式')}**\n- ${t('公式一：...')}\n\n**${t('常见误区')}**\n- ${t('注意事项：...')}\n\n${t('需要我详细解释某个要点吗？')}`;
-      } else if (userInput.includes('例子') || userInput.includes('举例')) {
-        aiContent = `💡 **${t('实例说明')}**\n\n${t('让我用一个生活中的例子来解释：')}\n\n${t('想象一下...')}\n\n${t('这就像是...')}\n\n${t('通过这个例子，你能理解核心原理了吗？')}`;
-      } else {
-        aiContent = `${t('这是一个很好的问题！让我来帮你解答...')}\n\n${t('根据你的问题，我认为关键点在于：')}\n\n1. **${t('首先')}**，${t('我们需要理解...')}\n2. **${t('其次')}**，${t('要注意...')}\n3. **${t('最后')}**，${t('可以这样应用...')}\n\n${t('你还有其他想了解的吗？')}`;
-      }
-      const userMsgCount = messages.filter(m => m.role === 'user').length + 1;
-      if (userMsgCount % 4 === 0 && userMsgCount >= 4) {
-        aiContent += `\n\n---\n💡 ${t('顺便说一下，根据你的提问，你已经涉及了')} ${masteredCount}/${totalNodes} ${t('个核心知识点。想看看完整的学习路径吗？')}`;
-      }
-    } else {
-      if (userInput.includes('考考') || userInput.includes('测试')) {
-        aiContent = `🧪 **${t('知识检测')}**\n\n${t('好的，让我来考考你！')}\n\n**${t('问题')}**：${t('关于「')}${learningPath.find(n => n.id === currentNodeId)?.title}${t('」，请回答：')}\n\n${t('这个概念的核心定义是什么？它与前面学过的内容有什么联系？')}\n\n💭 *${t('提示：可以结合之前学习的基础概念来思考')}*`;
-      } else if (userInput.includes('下一') || userInput.includes('继续')) {
-        aiContent = `⏭️ **${t('进入下一知识点')}**\n\n${t('很好！你已经掌握了当前内容。')}\n\n📍 ${t('正在为你准备下一个知识点：「')}${learningPath.find(n => n.status === 'pending')?.title || t('综合应用')}${t('」')}\n\n🔄 *${t('正在从知识库加载相关资源...')}*\n\n${t('准备好了吗？让我们开始吧！')}`;
-      } else if (userInput.includes('路径') || userInput.includes('进度')) {
-        const mastered = learningPath.filter(n => n.status === 'mastered').length;
-        aiContent = `🗺️ **${t('学习路径概览')}**\n\n**${t('当前进度')}**：${mastered}/${learningPath.length} ${t('个知识点已掌握')}\n\n**${t('学习路径')}**：\n${learningPath.map((n, i) => `${n.status === 'mastered' ? '✅' : n.id === currentNodeId ? '📍' : '⬜'} ${i + 1}. ${n.title}`).join('\n')}\n\n${t('继续加油！你已经完成了')} ${Math.round((mastered / learningPath.length) * 100)}%`;
-      } else if (userInput.includes('提示') || userInput.includes('帮助')) {
-        aiContent = `💡 **${t('学习提示')}**\n\n${t('关于「')}${learningPath.find(n => n.id === currentNodeId)?.title}${t('」，这里有一些提示：')}\n\n1. 🔑 **${t('关键词')}**：${t('注意理解核心术语的含义')}\n2. 🔗 **${t('联系')}**：${t('思考与前面知识点的关联')}\n3. 📝 **${t('练习')}**：${t('尝试用自己的话复述')}\n\n${t('需要更具体的帮助吗？')}`;
-      } else {
-        aiContent = `${t('很好的思考！👍')}\n\n${t('让我来引导你深入理解这个概念...')}\n\n**${t('关键点')}**：\n1. ${t('首先，我们需要明确...')}\n2. ${t('其次，要理解...')}\n3. ${t('最后，可以这样应用...')}\n\n🎯 **${t('小测验')}**：${t('现在，你能用自己的话解释一下吗？这样我可以确认你是否理解了。')}`;
-      }
-    }
+    const context: MockReplyContext = {
+      learningMode: config.learningMode,
+      userMsgCount,
+      masteredCount,
+      totalNodes,
+      currentNodeTitle: currentNode?.title,
+    };
 
-    return aiContent;
+    return generateMockReply(userInput, context);
   };
 
   // 快速回复处理函数
