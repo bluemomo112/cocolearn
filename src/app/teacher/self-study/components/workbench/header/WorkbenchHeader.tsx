@@ -9,6 +9,8 @@ interface WorkbenchHeaderProps {
   isStudentMode: boolean;
   isEditingTitle: boolean;
   editedTitle: string;
+  demoMode?: boolean;
+  currentScenario?: string | null;
   onBack?: () => void;
   onTitleEdit: () => void;
   onTitleSave: () => void;
@@ -18,6 +20,8 @@ interface WorkbenchHeaderProps {
   onPublishOpen: () => void;
   onViewAnalytics: () => void;
   onNoteInfoOpen: () => void;
+  onLoadScenario?: (scenarioId: string) => void;
+  onExitDemoMode?: () => void;
 }
 
 export function WorkbenchHeader({
@@ -25,6 +29,8 @@ export function WorkbenchHeader({
   isStudentMode,
   isEditingTitle,
   editedTitle,
+  demoMode = false,
+  currentScenario = null,
   onBack,
   onTitleEdit,
   onTitleSave,
@@ -34,6 +40,8 @@ export function WorkbenchHeader({
   onPublishOpen,
   onViewAnalytics,
   onNoteInfoOpen,
+  onLoadScenario,
+  onExitDemoMode,
 }: WorkbenchHeaderProps) {
   const { t } = useLanguage();
 
@@ -99,6 +107,47 @@ export function WorkbenchHeader({
             )}
           </div>
         </div>
+
+        {/* 中间：场景选择器（演示模式） */}
+        {!isStudentMode && onLoadScenario && (
+          <div className="flex items-center gap-3">
+            {demoMode && (
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-50 border border-amber-200 rounded-lg">
+                <span className="text-xs font-medium text-amber-700">演示模式</span>
+                {onExitDemoMode && (
+                  <button
+                    onClick={onExitDemoMode}
+                    className="text-xs text-amber-600 hover:text-amber-800 underline"
+                  >
+                    退出
+                  </button>
+                )}
+              </div>
+            )}
+            <select
+              value={currentScenario || ''}
+              onChange={(e) => e.target.value && onLoadScenario(e.target.value)}
+              className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg bg-white hover:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors"
+            >
+              <option value="">选择演示场景</option>
+              <optgroup label="新手指导">
+                <option value="onboarding_guide">新手指导</option>
+              </optgroup>
+              <optgroup label="任务流程">
+                <option value="resource_generation">资源生成流程</option>
+                <option value="task_completion">任务完成流程</option>
+              </optgroup>
+              <optgroup label="AI引导">
+                <option value="socratic_explanation">苏格拉底式讲解</option>
+                <option value="ai_guided_learning">AI引导模式</option>
+              </optgroup>
+              <optgroup label="自由探索">
+                <option value="self_directed_exploration">自由探索模式</option>
+              </optgroup>
+            </select>
+          </div>
+        )}
+
         <div className="flex items-center gap-2">
           {/* 设置 - 仅教师模式显示 */}
           {!isStudentMode && (

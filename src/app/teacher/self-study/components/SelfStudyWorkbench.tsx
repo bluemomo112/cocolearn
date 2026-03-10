@@ -588,6 +588,18 @@ export default function SelfStudyWorkbench({
   // 笔记信息配置弹窗
   const [showNoteInfoModal, setShowNoteInfoModal] = useState(false);
 
+  // 演示模式状态
+  const [demoMode, setDemoMode] = useState(false);
+  const [currentScenario, setCurrentScenario] = useState<string | null>(null);
+  const [savedNormalState, setSavedNormalState] = useState<{
+    messages: ChatMessage[];
+    learningMode: LearningMode;
+    learningPath: LearningPathNode[];
+    resources: Resource[];
+    tasks: Task[];
+    completedTasks: string[];
+  } | null>(null);
+
   // 资源和任务选中状态
   const [selectedResourceIds, setSelectedResourceIds] = useState<Set<string>>(new Set());
   const [selectedTaskIds, setSelectedTaskIds] = useState<Set<string>>(new Set());
@@ -710,6 +722,66 @@ export default function SelfStudyWorkbench({
   // SECTION 3: Handlers（事件处理函数）
   // 子 section 标注各自归属的面板
   // ─────────────────────────────────────────────────────────────
+
+  // [演示模式] 加载场景
+  const loadScenario = (scenarioId: string) => {
+    // 导入场景数据
+    import('@/data/demoScenarios/chatScenarios').then(({ demoScenarios }) => {
+      const scenario = demoScenarios.scenarios.find(s => s.id === scenarioId);
+      if (!scenario) return;
+
+      // 首次进入演示模式时，保存当前状态
+      if (!demoMode) {
+        setSavedNormalState({
+          messages,
+          learningMode: config.learningMode,
+          learningPath,
+          resources: config.resources,
+          tasks: config.tasks,
+          completedTasks: completedTasksArray,
+        });
+      }
+
+      // 加载场景状态
+      setMessages(scenario.initialState.messages);
+      setLearningPath(scenario.initialState.learningPath || []);
+      setCompletedTasksArray(scenario.initialState.completedTasks || []);
+
+      // 更新 config
+      handleUpdateConfig({
+        ...config,
+        learningMode: scenario.initialState.learningMode,
+        resources: scenario.initialState.resources || [],
+        tasks: scenario.initialState.generatedTasks || [],
+      });
+
+      // 设置演示模式状态
+      setDemoMode(true);
+      setCurrentScenario(scenarioId);
+    });
+  };
+
+  // [演示模式] 退出演示模式
+  const exitDemoMode = () => {
+    if (savedNormalState) {
+      // 恢复保存的状态
+      setMessages(savedNormalState.messages);
+      setLearningPath(savedNormalState.learningPath);
+      setCompletedTasksArray(savedNormalState.completedTasks);
+
+      handleUpdateConfig({
+        ...config,
+        learningMode: savedNormalState.learningMode,
+        resources: savedNormalState.resources,
+        tasks: savedNormalState.tasks,
+      });
+    }
+
+    // 清除演示模式状态
+    setDemoMode(false);
+    setCurrentScenario(null);
+    setSavedNormalState(null);
+  };
 
   // [资源/任务] 统一的资源点击处理
   const handleResourceClick = (resource: Resource | typeof aiGeneratedResources[0]) => {
@@ -2752,6 +2824,8 @@ export default function SelfStudyWorkbench({
             isStudentMode={isStudentMode}
             isEditingTitle={isEditingTitle}
             editedTitle={editedTitle}
+            demoMode={demoMode}
+            currentScenario={currentScenario}
             onBack={onBack}
             onTitleEdit={() => setIsEditingTitle(true)}
             onTitleSave={handleTitleSave}
@@ -2761,6 +2835,8 @@ export default function SelfStudyWorkbench({
             onPublishOpen={() => setShowNoteInfoModal(true)}
             onViewAnalytics={handleViewAnalytics}
             onNoteInfoOpen={() => setShowNoteInfoModal(true)}
+            onLoadScenario={loadScenario}
+            onExitDemoMode={exitDemoMode}
           />
 
       {/* 主内容区 - 三栏布局 */}
