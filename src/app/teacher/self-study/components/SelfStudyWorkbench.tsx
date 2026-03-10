@@ -1269,22 +1269,17 @@ export default function SelfStudyWorkbench({
   useEffect(() => {
     if (messages.length > 0) return; // already have persisted messages
 
-    // 设置开场引导消息，带推荐回复和功能按钮
+    // 设置开场引导消息，只用功能按钮（不用快捷回复）
     setMessages([{
       id: 'welcome-guide',
       role: 'assistant',
-      content: '你好！我是你的学习助手 🤖\n\n我可以帮你：\n\n📄 **分析学习资料** - 上传文件或从知识库导入\n💬 **解答疑问** - 直接向我提问任何学习问题\n🎯 **生成学习内容** - 使用右侧学习工具生成思维导图、测试题等\n\n准备好开始学习了吗？',
+      content: '你好！我是你的学习助手 🤖\n\n我可以帮你：\n\n📄 **分析学习资料** - 上传文件或从知识库导入\n💬 **解答疑问** - 直接向我提问任何学习问题\n🎯 **生成学习内容** - 使用右侧学习工具生成思维导图、测试题等',
       timestamp: new Date(),
       suggestions: {
-        quickReplies: [
-          { id: 'start_learning', label: '开始学习' },
-          { id: 'upload_material', label: '我想上传资料' },
-          { id: 'ask_question', label: '我有问题' }
-        ],
         actionButtons: [
-          { id: 'mind_map', label: '生成思维导图', iconName: 'Workflow', studioToolId: 'mind_map' },
-          { id: 'quiz', label: '生成知识测验', iconName: 'TestTube2', studioToolId: 'quiz' },
-          { id: 'flashcards', label: '生成记忆卡片', iconName: 'CreditCard', studioToolId: 'flashcards' }
+          { id: 'mind_map', label: '生成思维导图', iconName: 'Workflow', studioToolId: 'mind_map', description: '可视化知识结构' },
+          { id: 'quiz', label: '生成知识测验', iconName: 'TestTube2', studioToolId: 'quiz', description: '测试理解程度' },
+          { id: 'flashcards', label: '生成记忆卡片', iconName: 'CreditCard', studioToolId: 'flashcards', description: '快速复习要点' }
         ]
       }
     }]);

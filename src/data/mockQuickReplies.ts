@@ -6,7 +6,7 @@
 import { TaskQuestion } from '@/types/shared-context';
 
 /**
- * 题目解释的对话流程
+ * 题目解释的对话流程（苏格拉底式引导）
  */
 export function generateExplainQuestionDialogue(
   question: TaskQuestion,
@@ -19,45 +19,47 @@ export function generateExplainQuestionDialogue(
   };
 
   // 用户消息
-  const userMessage = `这道题我选了 ${formatAnswer(userAnswer)}，${isCorrect ? '对吗？' : '为什么错了？'}`;
+  const userMessage = isCorrect
+    ? `这道题我选了 ${formatAnswer(userAnswer)}，对吗？`
+    : `这道题我选了 ${formatAnswer(userAnswer)}，为什么错了？`;
 
-  // AI 回复（短小、引导式）
+  // AI 回复（苏格拉底式引导，不直接给答案）
   let aiMessages: string[] = [];
 
   if (isCorrect) {
+    // 答对了，引导深入理解
     aiMessages = [
       '对的！👍',
-      '不过我们可以深入理解一下',
-      question.explanation || '这道题的关键是...',
+      '不过咱们深入想想',
+      '你为什么选这个答案？',
     ];
   } else {
+    // 答错了，通过提问引导
     aiMessages = [
-      '咱们一起分析一下',
-      `你选的是 ${formatAnswer(userAnswer)}`,
-      `正确答案是 ${formatAnswer(correctAnswer)}`,
-      question.explanation || '区别在于...',
+      '先别急着看答案',
+      '咱们一起分析',
+      '你选这个答案的理由是什么？',
     ];
   }
 
-  // 快捷回复选项（有价值的）
+  // 快捷回复选项（引导学生思考）
   const quickReplies = isCorrect
     ? [
-        { id: 'similar_question', label: '来道类似的题' },
-        { id: 'harder_question', label: '来道更难的' },
-        { id: 'understand', label: '懂了' },
+        { id: 'explain_reasoning', label: '因为...' },
+        { id: 'not_sure', label: '不太确定' },
       ]
     : [
-        { id: 'step_by_step', label: '一步步讲' },
-        { id: 'give_example', label: '举个例子' },
-        { id: 'similar_question', label: '再来一道' },
+        { id: 'explain_reasoning', label: '我觉得...' },
+        { id: 'need_hint', label: '给个提示' },
+        { id: 'show_answer', label: '直接告诉我吧' },
       ];
 
-  // 功能按钮（演示功能）
+  // 功能按钮
   const actionButtons = [
     {
       id: 'generate_variant',
       label: '生成变种题',
-      description: '基于这道题生成类似题目',
+      description: '练习类似题目',
       iconName: 'RotateCcw',
       studioToolId: 'generate_variant_question',
     },
@@ -72,37 +74,31 @@ export function generateExplainQuestionDialogue(
 }
 
 /**
- * 快捷回复点击后的对话内容
+ * 快捷回复点击后的对话内容（苏格拉底式引导）
  */
 export const quickReplyResponses: Record<string, string[]> = {
-  // 题目解释相关
-  step_by_step: [
-    '好的，咱们一步步来',
-    '首先...',
-    '然后...',
-    '最后...',
-    '这样理解了吗？',
+  // 题目解释 - 苏格拉底式引导
+  explain_reasoning: [
+    '说说你的想法',
+    '为什么这样想？',
   ],
 
-  give_example: [
-    '举个例子',
-    '比如...',
-    '这样就清楚了吧？',
+  not_sure: [
+    '没关系',
+    '咱们一起想',
+    '这道题的关键词是什么？',
   ],
 
-  similar_question: [
-    '好的，再来一道类似的',
-    '这次试试看',
+  need_hint: [
+    '好的，给你个提示',
+    '注意题目中的...',
+    '再想想看',
   ],
 
-  harder_question: [
-    '挑战一下更难的',
-    '这道题需要综合运用',
-  ],
-
-  understand: [
-    '很好！',
-    '那咱们继续',
+  show_answer: [
+    '好吧',
+    '正确答案是...',
+    '理解了吗？',
   ],
 
   // 学习相关
@@ -117,13 +113,11 @@ export const quickReplyResponses: Record<string, string[]> = {
 
   more_examples: [
     '再举几个例子',
-    '例子1：...',
-    '例子2：...',
+    '比如...',
   ],
 
   practice: [
     '好，来试试',
-    '我给你出道题',
   ],
 
   explain_more: [
@@ -132,14 +126,13 @@ export const quickReplyResponses: Record<string, string[]> = {
   ],
 
   example: [
-    '举个例子吧',
+    '举个例子',
     '就像...',
   ],
 
   // AI 引导模式
   more_quiz: [
     '继续考',
-    '下一题',
   ],
 
   hint: [
@@ -154,11 +147,10 @@ export const quickReplyResponses: Record<string, string[]> = {
 
   review: [
     '好的，复习一下',
-    '之前学了...',
   ],
 
   next: [
-    '进入下一个知识点',
+    '进入下一个',
   ],
 
   related: [
