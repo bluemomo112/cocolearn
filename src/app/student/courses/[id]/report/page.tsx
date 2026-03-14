@@ -24,7 +24,7 @@ import {
   Info,
 } from 'lucide-react';
 import CompetencyRadarChart from '../../../components/CompetencyRadarChart';
-import { CompetencyType } from '@/types/shared-context';
+import { CompetencyType } from '@cross/self-learn';
 
 // 定义 CompetencyRating 为 1-4 的数字
 type CompetencyRating = 1 | 2 | 3 | 4;

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Message, TaskSubmission } from '@/types/shared-context';
+import { Message, TaskSubmission } from '@cross/self-learn';
 
 // Demo 模式：返回 mock 数据，不调用真实 AI
 const DEMO_MODE = true;

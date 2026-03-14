@@ -2,9 +2,7 @@
 
 import { use, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { loadFromStorage } from '../utils/storage';
-import { SpaceConfig } from '@/types/self-study';
-import SelfStudyWorkbench from '../components/SelfStudyWorkbench';
+import { loadFromStorage, SpaceConfig, SelfStudyWorkbench } from '@cross/self-learn';
 
 export default function SpacePage({ params }: { params: Promise<{ spaceId: string }> }) {
   const { spaceId } = use(params);

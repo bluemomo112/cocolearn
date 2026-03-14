@@ -1,4 +1,4 @@
-import { Resource, Task } from '@/types/shared-context';
+import { Resource, Task } from '@cross/self-learn';
 
 /**
  * Mock资源数据

@@ -5,7 +5,7 @@ import {
   MetacognitionAgentContext,
   ResourceViewStats,
   TaskCompletionDetail
-} from '@/types/shared-context';
+} from '@cross/self-learn';
 
 /**
  * 构建资源查看统计

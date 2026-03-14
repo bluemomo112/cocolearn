@@ -1,4 +1,4 @@
-import { TaskQuestion } from '@/types/shared-context';
+import { TaskQuestion } from '@cross/self-learn';
 
 /**
  * 错题记录接口

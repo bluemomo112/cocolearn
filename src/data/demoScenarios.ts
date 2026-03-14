@@ -3,7 +3,7 @@
  * 用于交互式演示系统的预设场景数据
  */
 
-import { Resource, Task } from '@/types/shared-context';
+import { Resource, Task } from '@cross/self-learn';
 
 // ============ 场景 A：任意文件上传（脚本化对话演示）============
 export const arbitraryFileScenario = {

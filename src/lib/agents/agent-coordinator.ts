@@ -7,7 +7,7 @@ import {
   CompetencyUpdate,
   TaskAssessment,
   MetacognitionResult
-} from '@/types/shared-context';
+} from '@cross/self-learn';
 
 export interface AgentResponse {
   message: string;

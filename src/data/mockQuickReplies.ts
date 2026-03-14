@@ -3,7 +3,7 @@
  * 口语化、有价值、能演示功能
  */
 
-import { TaskQuestion } from '@/types/shared-context';
+import { TaskQuestion } from '@cross/self-learn';
 
 /**
  * 题目解释的对话流程（苏格拉底式引导）

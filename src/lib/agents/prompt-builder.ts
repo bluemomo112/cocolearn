@@ -4,7 +4,7 @@ import {
   MetacognitionAgentContext,
   ResourceViewStats,
   TaskCompletionDetail
-} from '@/types/shared-context';
+} from '@cross/self-learn';
 
 /**
  * 格式化资源查看统计

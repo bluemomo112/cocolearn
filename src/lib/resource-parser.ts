@@ -1,7 +1,7 @@
 import mammoth from 'mammoth';
 import fs from 'fs/promises';
 import path from 'path';
-import { Resource } from '@/types/shared-context';
+import { Resource } from '@cross/self-learn';
 
 /**
  * 提取资源文件内容

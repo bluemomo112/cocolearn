@@ -3,9 +3,8 @@
  * 用于自学模式的场景化演示
  */
 
-import { ChatMessage } from '@/app/teacher/self-study/components/workbench/shared/types';
-import { Resource, Task } from '@/types/shared-context';
-import { LearningMode, LearningPathNode } from '@/types/self-study';
+import { ChatMessage } from '@cross/self-learn/components/workbench/shared/types';
+import { Resource, Task, LearningMode, LearningPathNode } from '@cross/self-learn';
 
 /**
  * 场景分类

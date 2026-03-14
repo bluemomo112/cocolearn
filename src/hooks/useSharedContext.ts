@@ -12,7 +12,7 @@ import {
   CompetencyProfile,
   CompetencyData,
   BehaviorSignal
-} from '@/types/shared-context';
+} from '@cross/self-learn';
 import { mockResources, mockTasks } from '@/data/mockLearningData';
 
 // 创建初始能力数据

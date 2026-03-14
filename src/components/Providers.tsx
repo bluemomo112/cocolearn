@@ -1,6 +1,6 @@
 'use client';
 
-import { LanguageProvider } from '@/contexts/LanguageContext';
+import { LanguageProvider } from '@cross/self-learn';
 import { ReactNode } from 'react';
 
 export default function Providers({ children }: { children: ReactNode }) {

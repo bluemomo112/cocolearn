@@ -72,7 +72,7 @@ import {
 } from '@/data/mockCompetencyData';
 import { mockResources, mockTasks } from '@/data/mockLearningData';
 import GrowthTimelinePanel from '../components/GrowthTimelinePanel';
-import { Resource, Task, TaskQuestion, TaskRubric } from '@/types/shared-context';
+import { Resource, Task, TaskQuestion, TaskRubric } from '@cross/self-learn';
 
 // 任务展开卡片组件 - 在中间聊天区显示
 function TaskExpandedCard({

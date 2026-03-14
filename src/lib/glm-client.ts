@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import { Message } from '@/types/shared-context';
+import { Message } from '@cross/self-learn';
 
 // 创建GLM客户端
 const client = new OpenAI({

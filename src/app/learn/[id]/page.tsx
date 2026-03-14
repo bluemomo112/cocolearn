@@ -1,7 +1,7 @@
 'use client';
 
 import { useParams } from 'next/navigation';
-import SelfStudyWorkbench from '@/app/teacher/self-study/components/SelfStudyWorkbench';
+import { SelfStudyWorkbench } from '@cross/self-learn';
 
 export default function LearnPage() {
   const params = useParams();

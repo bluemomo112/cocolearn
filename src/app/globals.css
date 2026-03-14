@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@source "../../../self-learn/src/**/*.{ts,tsx}";
 @import 'tdesign-react/es/style/index.css';
 
 :root {

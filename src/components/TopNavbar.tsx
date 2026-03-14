@@ -4,8 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import ThemeSwitcher from './ThemeSwitcher'
-import LanguageSwitch from './LanguageSwitch'
-import { useLanguage } from '@/contexts/LanguageContext'
+import { LanguageSwitch, useLanguage } from '@cross/self-learn'
 
 interface NavItem {
   id: string

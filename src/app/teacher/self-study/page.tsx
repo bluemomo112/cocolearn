@@ -1,19 +1,27 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { SpaceSummary, SpaceConfig, createDefaultSpaceConfig } from '@/types/self-study';
-import { Resource } from '@/types/shared-context';
-import { usePersistedState, clearSpaceStorage } from './utils/storage';
-import { useLanguage } from '@/contexts/LanguageContext';
-import Onboarding from './components/Onboarding';
-import SpaceManager from './components/SpaceManager';
-import SelfStudyWorkbench from './components/SelfStudyWorkbench';
-import SpaceResults from './components/SpaceResults';
-import CreationMethodModal from './components/CreationMethodModal';
-import FileUploadModal from './components/FileUploadModal';
-import UnifiedResourceLibraryModal from './components/UnifiedResourceLibraryModal';
-import AIGenerateFormModal from './components/AIGenerateFormModal';
-import type { ErrorQuestion, HistoricalTest, Note, InteractiveWebpage } from '@/data/mockKnowledgeBase';
+import {
+  SpaceSummary,
+  SpaceConfig,
+  createDefaultSpaceConfig,
+  Resource,
+  usePersistedState,
+  clearSpaceStorage,
+  useLanguage,
+  Onboarding,
+  SpaceManager,
+  SelfStudyWorkbench,
+  SpaceResults,
+  CreationMethodModal,
+  FileUploadModal,
+  UnifiedResourceLibraryModal,
+  AIGenerateFormModal,
+  type ErrorQuestion,
+  type HistoricalTest,
+  type Note,
+  type InteractiveWebpage,
+} from '@cross/self-learn';
 
 type ViewState = 'manager' | 'onboarding' | 'workbench' | 'results';
 

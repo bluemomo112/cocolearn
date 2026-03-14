@@ -1,7 +1,7 @@
 'use client'
 
 import { use } from 'react'
-import SpaceResults from '../../components/SpaceResults'
+import { SpaceResults } from '@cross/self-learn'
 
 interface SpaceResultsPageProps {
   params: Promise<{
