@@ -29,14 +29,14 @@ const mockCompetencyProfile = {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { action, taskId, taskAnswer, message } = body;
+    const { action, taskId, taskAnswer, message, subjectiveQuestionIds } = body;
 
     if (DEMO_MODE) {
       // Demo 模式：返回 mock 数据
       if (action === 'chat') {
         return handleMockChat(message);
       } else if (action === 'submit_task') {
-        return handleMockTaskSubmission(taskId, taskAnswer);
+        return handleMockTaskSubmission(taskId, taskAnswer, subjectiveQuestionIds || []);
       }
     }
 
@@ -71,25 +71,30 @@ function handleMockChat(userMessage: string) {
 /**
  * Mock 任务提交处理
  */
-function handleMockTaskSubmission(taskId: string, answer: string) {
-  // 尝试解析为 quiz 答案
+function handleMockTaskSubmission(taskId: string, answer: string, subjectiveQuestionIds: string[] = []) {
+  // 尝试解析为 quiz 答案（必须是 object，key 为 questionId）
   try {
     const userAnswers = JSON.parse(answer);
-    // 假设是 quiz，返回 mock 结果
+    if (typeof userAnswers !== 'object' || userAnswers === null || Array.isArray(userAnswers)) {
+      throw new Error('not a quiz answer object');
+    }
+    const allIds = Object.keys(userAnswers);
+    const details = allIds.map(qId => ({
+      questionId: qId,
+      correct: !subjectiveQuestionIds.includes(qId), // 主观题先标 false，前端会覆盖
+      userAnswer: userAnswers[qId],
+      correctAnswer: subjectiveQuestionIds.includes(qId) ? '' : userAnswers[qId],
+    }));
+    const objectiveCount = allIds.filter(id => !subjectiveQuestionIds.includes(id)).length;
     return NextResponse.json({
       success: true,
       taskType: 'quiz',
       attemptNumber: 1,
       quickResult: {
-        allCorrect: true,
-        correctCount: Object.keys(userAnswers).length,
-        totalCount: Object.keys(userAnswers).length,
-        details: Object.keys(userAnswers).map(qId => ({
-          questionId: qId,
-          isCorrect: true,
-          userAnswer: userAnswers[qId],
-          correctAnswer: userAnswers[qId],
-        })),
+        allCorrect: subjectiveQuestionIds.length === 0,
+        correctCount: objectiveCount,
+        totalCount: allIds.length,
+        details,
       },
       needsAnalysis: true,
     });
