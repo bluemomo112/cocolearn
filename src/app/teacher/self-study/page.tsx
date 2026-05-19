@@ -511,73 +511,73 @@ export default function SelfStudyPage() {
 
   return (
     <div className="fixed inset-0 z-50 bg-gray-50 overflow-hidden flex flex-col">
-      {viewState === 'manager' && (
-        <SpaceManager
-          spaces={spaces}
-          onCreateSpace={handleCreateSpace}
-          onOpenSpace={handleOpenSpace}
-          onDeleteSpace={handleDeleteSpace}
+        {viewState === 'manager' && (
+          <SpaceManager
+            spaces={spaces}
+            onCreateSpace={handleCreateSpace}
+            onOpenSpace={handleOpenSpace}
+            onDeleteSpace={handleDeleteSpace}
+          />
+        )}
+
+        {viewState === 'onboarding' && (
+          <Onboarding
+            onComplete={handleOnboardingComplete}
+            onCancel={spaces.length > 0 ? handleCancelOnboarding : undefined}
+          />
+        )}
+
+        {viewState === 'workbench' && currentSpace && (
+          <SelfStudyWorkbench
+            config={currentSpace}
+            onBack={handleBackToManager}
+            onUpdateConfig={(updated) => setCurrentSpace(updated)}
+            isAIGenerating={isAIGenerating || isImportingResources}
+            onCreateNewSpace={handleCreateSpace}
+            onViewResults={() => setViewState('results')}
+            pendingExamFiles={pendingExamFiles}
+            onExamFilesHandled={() => setPendingExamFiles(null)}
+          />
+        )}
+
+        {viewState === 'results' && currentSpace && (
+          <SpaceResults
+            spaceId={currentSpace.id}
+            onBack={handleBackFromResults}
+          />
+        )}
+
+        {/* 创建方式选择模态框 */}
+        <CreationMethodModal
+          isOpen={showCreationMethodModal}
+          onClose={() => setShowCreationMethodModal(false)}
+          onSelectMethod={handleCreationMethodSelect}
         />
-      )}
 
-      {viewState === 'onboarding' && (
-        <Onboarding
-          onComplete={handleOnboardingComplete}
-          onCancel={spaces.length > 0 ? handleCancelOnboarding : undefined}
+        {/* 文件上传模态框 */}
+        <FileUploadModal
+          isOpen={showFileUploadModal}
+          onClose={() => setShowFileUploadModal(false)}
+          onUpload={handleFileUpload}
         />
-      )}
 
-      {viewState === 'workbench' && currentSpace && (
-        <SelfStudyWorkbench
-          config={currentSpace}
-          onBack={handleBackToManager}
-          onUpdateConfig={(updated) => setCurrentSpace(updated)}
-          isAIGenerating={isAIGenerating || isImportingResources}
-          onCreateNewSpace={handleCreateSpace}
-          onViewResults={() => setViewState('results')}
-          pendingExamFiles={pendingExamFiles}
-          onExamFilesHandled={() => setPendingExamFiles(null)}
+        {/* 资源库选择模态框 */}
+        <UnifiedResourceLibraryModal
+          isOpen={showResourceLibraryModal}
+          onClose={() => setShowResourceLibraryModal(false)}
+          onImportResources={handleResourceSelect}
+          onImportErrorQuestions={handleErrorQuestionsImport}
+          onImportHistoricalTest={handleHistoricalTestImport}
+          onImportNotes={handleNotesImport}
+          onImportWebpages={handleWebpagesImport}
         />
-      )}
 
-      {viewState === 'results' && currentSpace && (
-        <SpaceResults
-          spaceId={currentSpace.id}
-          onBack={handleBackFromResults}
+        {/* AI生成表单模态框 */}
+        <AIGenerateFormModal
+          isOpen={showAIGenerateModal}
+          onClose={() => setShowAIGenerateModal(false)}
+          onGenerate={handleAIGenerate}
         />
-      )}
-
-      {/* 创建方式选择模态框 */}
-      <CreationMethodModal
-        isOpen={showCreationMethodModal}
-        onClose={() => setShowCreationMethodModal(false)}
-        onSelectMethod={handleCreationMethodSelect}
-      />
-
-      {/* 文件上传模态框 */}
-      <FileUploadModal
-        isOpen={showFileUploadModal}
-        onClose={() => setShowFileUploadModal(false)}
-        onUpload={handleFileUpload}
-      />
-
-      {/* 资源库选择模态框 */}
-      <UnifiedResourceLibraryModal
-        isOpen={showResourceLibraryModal}
-        onClose={() => setShowResourceLibraryModal(false)}
-        onImportResources={handleResourceSelect}
-        onImportErrorQuestions={handleErrorQuestionsImport}
-        onImportHistoricalTest={handleHistoricalTestImport}
-        onImportNotes={handleNotesImport}
-        onImportWebpages={handleWebpagesImport}
-      />
-
-      {/* AI生成表单模态框 */}
-      <AIGenerateFormModal
-        isOpen={showAIGenerateModal}
-        onClose={() => setShowAIGenerateModal(false)}
-        onGenerate={handleAIGenerate}
-      />
     </div>
   );
 }

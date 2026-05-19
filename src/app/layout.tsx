@@ -4,8 +4,8 @@ import Providers from "@/components/Providers";
 import ThemeProvider from "@/components/ThemeProvider";
 
 export const metadata: Metadata = {
-  title: "跨学科AI学习平台",
-  description: "大规模个性化教学平台 - 跨学科AI学习平台",
+  title: "自学平台",
+  description: "大规模个性化教学平台 - 自学平台",
 };
 
 export default function RootLayout({
