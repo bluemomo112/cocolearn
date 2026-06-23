@@ -135,7 +135,7 @@ interface CompetencyFilterOptions {
 }
 
 export default function TeacherDashboard() {
-  const [activeTab, setActiveTab] = useState<'my-courses' | 'self-study' | 'insights' | 'knowledge' | 'growth'>('my-courses')
+  const [activeTab, setActiveTab] = useState<'my-courses' | 'self-study' | 'insights' | 'knowledge' | 'growth' | 'students' | 'ai-apps'>('my-courses')
   const [showCourseTypeModal, setShowCourseTypeModal] = useState(false)
 
   // 获取当前日期
@@ -188,6 +188,16 @@ export default function TeacherDashboard() {
             { id: 'growth', label: '成长档案', icon: (
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+              </svg>
+            )},
+            { id: 'students', label: '学生管理', icon: (
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+            )},
+            { id: 'ai-apps', label: 'AI应用', icon: (
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2h-2" />
               </svg>
             )},
           ].map((tab) => (
@@ -501,6 +511,18 @@ export default function TeacherDashboard() {
         {activeTab === 'growth' && (
           <div className="animate-fade-in">
             <GrowthArchive />
+          </div>
+        )}
+
+        {activeTab === 'students' && (
+          <div className="animate-fade-in">
+            <StudentManagement />
+          </div>
+        )}
+
+        {activeTab === 'ai-apps' && (
+          <div className="animate-fade-in">
+            <AIApplications />
           </div>
         )}
       </div>
@@ -1836,6 +1858,582 @@ function SelfStudyEntry() {
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+// 学生管理组件
+function StudentManagement() {
+  const [selectedClass, setSelectedClass] = useState<string>('class_1')
+  const [showCreateClass, setShowCreateClass] = useState(false)
+  const [showCreateStudent, setShowCreateStudent] = useState(false)
+
+  const classes = [
+    { id: 'class_1', name: '七年级(1)班', grade: '初中', studentCount: 38, year: '2024', subject: '跨学科综合' },
+    { id: 'class_2', name: '七年级(2)班', grade: '初中', studentCount: 36, year: '2024', subject: '跨学科综合' },
+    { id: 'class_3', name: '八年级(3)班', grade: '初中', studentCount: 34, year: '2023', subject: 'STEAM探究' },
+  ]
+
+  const studentsByClass: Record<string, { id: string; name: string; avatar: string; joinDate: string; lastActive: string; completionRate: number; status: 'active' | 'inactive' }[]> = {
+    class_1: [
+      { id: 's1', name: '陈晓雯', avatar: '陈', joinDate: '2024-09-01', lastActive: '今天', completionRate: 92, status: 'active' },
+      { id: 's2', name: '林俊杰', avatar: '林', joinDate: '2024-09-01', lastActive: '今天', completionRate: 85, status: 'active' },
+      { id: 's3', name: '黄思远', avatar: '黄', joinDate: '2024-09-01', lastActive: '昨天', completionRate: 78, status: 'active' },
+      { id: 's4', name: '吴雅琪', avatar: '吴', joinDate: '2024-09-01', lastActive: '3天前', completionRate: 60, status: 'inactive' },
+      { id: 's5', name: '张浩然', avatar: '张', joinDate: '2024-09-01', lastActive: '今天', completionRate: 95, status: 'active' },
+      { id: 's6', name: '刘梦婷', avatar: '刘', joinDate: '2024-09-01', lastActive: '昨天', completionRate: 88, status: 'active' },
+    ],
+    class_2: [
+      { id: 's7', name: '王子豪', avatar: '王', joinDate: '2024-09-01', lastActive: '今天', completionRate: 90, status: 'active' },
+      { id: 's8', name: '李欣怡', avatar: '李', joinDate: '2024-09-01', lastActive: '今天', completionRate: 82, status: 'active' },
+      { id: 's9', name: '赵宇轩', avatar: '赵', joinDate: '2024-09-01', lastActive: '2天前', completionRate: 55, status: 'inactive' },
+    ],
+    class_3: [
+      { id: 's10', name: '孙悦', avatar: '孙', joinDate: '2023-09-01', lastActive: '今天', completionRate: 96, status: 'active' },
+      { id: 's11', name: '周浩', avatar: '周', joinDate: '2023-09-01', lastActive: '昨天', completionRate: 74, status: 'active' },
+    ],
+  }
+
+  const currentClass = classes.find(c => c.id === selectedClass)
+  const students = studentsByClass[selectedClass] || []
+  const activeCount = students.filter(s => s.status === 'active').length
+
+  return (
+    <div className="space-y-6">
+      {/* 统计概览 */}
+      <div className="grid grid-cols-3 gap-4">
+        <div className="bg-white rounded-2xl p-5 border border-gray-100">
+          <p className="text-sm text-gray-500 mb-1">班级总数</p>
+          <p className="text-3xl font-bold text-gray-900">{classes.length}</p>
+          <p className="text-xs text-primary-600 mt-1">+ 创建新班级</p>
+        </div>
+        <div className="bg-white rounded-2xl p-5 border border-gray-100">
+          <p className="text-sm text-gray-500 mb-1">学生总数</p>
+          <p className="text-3xl font-bold text-gray-900">{classes.reduce((sum, c) => sum + c.studentCount, 0)}</p>
+          <p className="text-xs text-gray-400 mt-1">跨 {classes.length} 个班级</p>
+        </div>
+        <div className="bg-white rounded-2xl p-5 border border-gray-100">
+          <p className="text-sm text-gray-500 mb-1">今日活跃</p>
+          <p className="text-3xl font-bold text-gray-900">47</p>
+          <p className="text-xs text-green-600 mt-1">↑ 较昨日 +5</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* 班级列表 */}
+        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+          <div className="p-5 border-b border-gray-100 flex items-center justify-between">
+            <h3 className="font-semibold text-gray-900">我的班级</h3>
+            <button
+              onClick={() => setShowCreateClass(true)}
+              className="px-3 py-1.5 text-sm text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+            >
+              + 新建班级
+            </button>
+          </div>
+          <div className="divide-y divide-gray-50">
+            {classes.map((cls) => (
+              <button
+                key={cls.id}
+                onClick={() => setSelectedClass(cls.id)}
+                className={`w-full p-4 text-left hover:bg-gray-50 transition-colors ${selectedClass === cls.id ? 'bg-primary-50' : ''}`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold ${
+                    selectedClass === cls.id ? 'bg-primary-500 text-white' : 'bg-gray-100 text-gray-600'
+                  }`}>
+                    {cls.name.slice(0, 2)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className={`font-medium text-sm ${selectedClass === cls.id ? 'text-primary-700' : 'text-gray-900'}`}>
+                      {cls.year}级{cls.name}
+                    </p>
+                    <p className="text-xs text-gray-500">{cls.studentCount} 名学生 · {cls.subject}</p>
+                  </div>
+                  {selectedClass === cls.id && (
+                    <svg className="w-4 h-4 text-primary-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  )}
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* 学生列表 */}
+        <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 overflow-hidden">
+          <div className="p-5 border-b border-gray-100 flex items-center justify-between">
+            <div>
+              <h3 className="font-semibold text-gray-900">
+                {currentClass ? `${currentClass.year}级${currentClass.name}` : '学生列表'}
+              </h3>
+              <p className="text-xs text-gray-400 mt-0.5">{activeCount} 人活跃 / 共 {students.length} 人（示例）</p>
+            </div>
+            <button
+              onClick={() => setShowCreateStudent(true)}
+              className="px-3 py-1.5 text-sm bg-primary-600 text-white hover:bg-primary-700 rounded-lg transition-colors"
+            >
+              + 添加学生
+            </button>
+          </div>
+          <div className="divide-y divide-gray-50">
+            {students.map((student) => (
+              <div key={student.id} className="p-4 hover:bg-gray-50 transition-colors">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white font-semibold text-sm">
+                    {student.avatar}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium text-gray-900 text-sm">{student.name}</p>
+                      <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+                        student.status === 'active'
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-gray-100 text-gray-500'
+                      }`}>
+                        {student.status === 'active' ? '活跃' : '不活跃'}
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-400">最近活跃：{student.lastActive}</p>
+                  </div>
+                  <div className="text-right mr-2">
+                    <p className="text-sm font-semibold text-gray-900">{student.completionRate}%</p>
+                    <p className="text-xs text-gray-400">任务完成率</p>
+                  </div>
+                  <div className="w-20 bg-gray-100 rounded-full h-1.5">
+                    <div
+                      className="h-1.5 rounded-full bg-primary-500"
+                      style={{ width: `${student.completionRate}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* 新建班级弹窗 */}
+      {showCreateClass && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowCreateClass(false)} />
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 animate-fade-in-up">
+            <button onClick={() => setShowCreateClass(false)} className="absolute top-4 right-4 p-1.5 hover:bg-gray-100 rounded-lg transition-colors">
+              <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            <h2 className="text-xl font-bold text-gray-900 mb-6">新建班级</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">班级名称</label>
+                <input type="text" placeholder="如：七年级(3)班" className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-300" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">年级</label>
+                <select className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-300">
+                  <option>初中七年级</option>
+                  <option>初中八年级</option>
+                  <option>初中九年级</option>
+                  <option>高中一年级</option>
+                  <option>高中二年级</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">学年</label>
+                <select className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-300">
+                  <option>2025-2026</option>
+                  <option>2024-2025</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">教学模块</label>
+                <select className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-300">
+                  <option>跨学科综合</option>
+                  <option>STEAM探究</option>
+                  <option>C-STEAM创意</option>
+                  <option>项目式学习</option>
+                </select>
+              </div>
+            </div>
+            <div className="flex gap-3 mt-6">
+              <button onClick={() => setShowCreateClass(false)} className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition-colors">取消</button>
+              <button onClick={() => setShowCreateClass(false)} className="flex-1 px-4 py-2.5 bg-primary-600 text-white rounded-xl text-sm hover:bg-primary-700 transition-colors">创建班级</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 添加学生弹窗 */}
+      {showCreateStudent && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowCreateStudent(false)} />
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 animate-fade-in-up">
+            <button onClick={() => setShowCreateStudent(false)} className="absolute top-4 right-4 p-1.5 hover:bg-gray-100 rounded-lg transition-colors">
+              <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            <h2 className="text-xl font-bold text-gray-900 mb-6">添加学生</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">学生姓名</label>
+                <input type="text" placeholder="请输入学生姓名" className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-300" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">学号</label>
+                <input type="text" placeholder="如：2024070101" className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-300" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">班级</label>
+                <select className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-300">
+                  {['2024级七年级(1)班', '2024级七年级(2)班', '2023级八年级(3)班'].map(c => (
+                    <option key={c}>{c}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">或批量导入</label>
+                <button className="w-full px-4 py-2.5 border-2 border-dashed border-gray-200 rounded-xl text-sm text-gray-500 hover:border-primary-300 hover:text-primary-600 transition-colors">
+                  上传名单 Excel / CSV
+                </button>
+              </div>
+            </div>
+            <div className="flex gap-3 mt-6">
+              <button onClick={() => setShowCreateStudent(false)} className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition-colors">取消</button>
+              <button onClick={() => setShowCreateStudent(false)} className="flex-1 px-4 py-2.5 bg-primary-600 text-white rounded-xl text-sm hover:bg-primary-700 transition-colors">添加学生</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// AI应用组件
+function AIApplications() {
+  const [agentTab, setAgentTab] = useState<'personal' | 'shared'>('personal')
+  const [h5Tab, setH5Tab] = useState<'personal' | 'shared'>('personal')
+
+  const personalAgents = [
+    {
+      id: 'a1',
+      name: '跨学科提问助手',
+      desc: '基于布鲁姆认知目标层级，自动生成高阶思维提问，适用于C-STEAM跨学科课堂',
+      icon: '🤖',
+      calls: 128,
+      lastUsed: '今天',
+      tag: '课堂辅助',
+    },
+    {
+      id: 'a2',
+      name: '学生作品评估智能体',
+      desc: '对照跨学科素养评价量表，对学生项目作品进行多维度自动评分与反馈',
+      icon: '📊',
+      calls: 64,
+      lastUsed: '昨天',
+      tag: '评估反馈',
+    },
+    {
+      id: 'a3',
+      name: '课程资源生成器',
+      desc: '根据课程主题与学段，自动生成学习目标、探究任务、评价标准等结构化资源',
+      icon: '✨',
+      calls: 45,
+      lastUsed: '3天前',
+      tag: '资源生成',
+    },
+  ]
+
+  const sharedAgents = [
+    {
+      id: 'sa1',
+      name: 'STEAM概念联结智能体',
+      desc: '帮助学生在科学、技术、工程、艺术、数学之间建立跨学科概念联结',
+      author: '平台精选',
+      uses: 1240,
+      tag: 'C-STEAM',
+    },
+    {
+      id: 'sa2',
+      name: '苏格拉底式对话辅导员',
+      desc: '通过苏格拉底式追问引导学生深度思考，培养元认知能力与批判性思维',
+      author: '教研共创',
+      uses: 892,
+      tag: '深度学习',
+    },
+    {
+      id: 'sa3',
+      name: '项目式学习任务规划器',
+      desc: '协助教师将真实情境问题拆解为驱动性问题与阶段性探究任务序列',
+      author: '平台精选',
+      uses: 675,
+      tag: 'PBL',
+    },
+    {
+      id: 'sa4',
+      name: '形成性评价数据分析师',
+      desc: '实时分析课堂问答与学生作答数据，生成即时教学调整建议',
+      author: '教研共创',
+      uses: 432,
+      tag: '教学评一致',
+    },
+  ]
+
+  const personalH5 = [
+    {
+      id: 'h1',
+      title: '植物光合作用互动模拟',
+      desc: '可调节光照、CO₂浓度等变量，观察光合作用速率变化',
+      subject: '科学·生物',
+      type: '模拟实验',
+      updatedAt: '2026-06-10',
+    },
+    {
+      id: 'h2',
+      title: '古丝绸之路地理与文化地图',
+      desc: '交互式历史地图，展示丝路沿线的地理环境与文明交汇',
+      subject: '历史·地理',
+      type: '交互地图',
+      updatedAt: '2026-05-28',
+    },
+    {
+      id: 'h3',
+      title: '音乐律动与数学比例探究',
+      desc: '通过音频波形与频率比探究音程背后的数学规律',
+      subject: '数学·音乐',
+      type: '数据探究',
+      updatedAt: '2026-06-18',
+    },
+  ]
+
+  const sharedH5 = [
+    {
+      id: 'sh1',
+      title: '城市碳排放与气候变化可视化',
+      desc: '多城市碳排放数据对比，探究工业化对气候的影响机制',
+      subject: '地理·化学',
+      type: '数据可视化',
+      author: '平台精选',
+      uses: 3420,
+    },
+    {
+      id: 'sh2',
+      title: 'C-STEAM创意编程艺术画布',
+      desc: '结合积木式编程与数学坐标系，创作参数化艺术作品',
+      subject: '信息·数学·艺术',
+      type: '创意编程',
+      author: '教研共创',
+      uses: 2180,
+    },
+    {
+      id: 'sh3',
+      title: '桥梁结构受力仿真实验台',
+      desc: '调整材料与形状参数，在虚拟环境中测试桥梁承重能力',
+      subject: '物理·工程',
+      type: '仿真实验',
+      author: '平台精选',
+      uses: 1870,
+    },
+  ]
+
+  const tagColors: Record<string, string> = {
+    '课堂辅助': 'bg-blue-100 text-blue-700',
+    '评估反馈': 'bg-purple-100 text-purple-700',
+    '资源生成': 'bg-amber-100 text-amber-700',
+    'C-STEAM': 'bg-green-100 text-green-700',
+    '深度学习': 'bg-indigo-100 text-indigo-700',
+    'PBL': 'bg-orange-100 text-orange-700',
+    '教学评一致': 'bg-teal-100 text-teal-700',
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* AI 智能体 */}
+      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+        <div className="p-5 border-b border-gray-100">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 bg-primary-100 rounded-xl flex items-center justify-center">
+                <svg className="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2h-2" />
+                </svg>
+              </div>
+              <h3 className="font-semibold text-gray-900">AI 智能体</h3>
+            </div>
+            <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+              <button
+                onClick={() => setAgentTab('personal')}
+                className={`px-3 py-1 text-sm rounded-md transition-all ${agentTab === 'personal' ? 'bg-white text-primary-600 shadow-sm font-medium' : 'text-gray-500'}`}
+              >
+                个人
+              </button>
+              <button
+                onClick={() => setAgentTab('shared')}
+                className={`px-3 py-1 text-sm rounded-md transition-all ${agentTab === 'shared' ? 'bg-white text-primary-600 shadow-sm font-medium' : 'text-gray-500'}`}
+              >
+                共享
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {agentTab === 'personal' && (
+          <div>
+            <div className="divide-y divide-gray-50">
+              {personalAgents.map((agent) => (
+                <div key={agent.id} className="p-4 hover:bg-gray-50 transition-colors">
+                  <div className="flex items-start gap-3">
+                    <div className="w-11 h-11 bg-gradient-to-br from-primary-100 to-accent-100 rounded-xl flex items-center justify-center text-xl shrink-0">
+                      {agent.icon}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <p className="font-medium text-gray-900 text-sm">{agent.name}</p>
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${tagColors[agent.tag] || 'bg-gray-100 text-gray-600'}`}>{agent.tag}</span>
+                      </div>
+                      <p className="text-xs text-gray-500 leading-relaxed">{agent.desc}</p>
+                      <p className="text-xs text-gray-400 mt-1">调用 {agent.calls} 次 · 最近使用：{agent.lastUsed}</p>
+                    </div>
+                    <button className="shrink-0 px-3 py-1.5 text-xs text-primary-600 bg-primary-50 hover:bg-primary-100 rounded-lg transition-colors">
+                      启用
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="p-4 border-t border-gray-50">
+              <button className="w-full py-2.5 border-2 border-dashed border-gray-200 rounded-xl text-sm text-gray-500 hover:border-primary-300 hover:text-primary-600 transition-colors">
+                + 创建新智能体
+              </button>
+            </div>
+          </div>
+        )}
+
+        {agentTab === 'shared' && (
+          <div className="divide-y divide-gray-50">
+            {sharedAgents.map((agent) => (
+              <div key={agent.id} className="p-4 hover:bg-gray-50 transition-colors">
+                <div className="flex items-start gap-3">
+                  <div className="w-11 h-11 bg-gradient-to-br from-amber-100 to-orange-100 rounded-xl flex items-center justify-center shrink-0">
+                    <svg className="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2h-2" />
+                    </svg>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <p className="font-medium text-gray-900 text-sm">{agent.name}</p>
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${tagColors[agent.tag] || 'bg-gray-100 text-gray-600'}`}>{agent.tag}</span>
+                    </div>
+                    <p className="text-xs text-gray-500 leading-relaxed">{agent.desc}</p>
+                    <p className="text-xs text-gray-400 mt-1">{agent.author} · {agent.uses.toLocaleString()} 次使用</p>
+                  </div>
+                  <button className="shrink-0 px-3 py-1.5 text-xs text-primary-600 bg-primary-50 hover:bg-primary-100 rounded-lg transition-colors">
+                    引用
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* H5 资源 */}
+      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+        <div className="p-5 border-b border-gray-100">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 bg-accent-100 rounded-xl flex items-center justify-center">
+                <svg className="w-5 h-5 text-accent-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="font-semibold text-gray-900">H5 互动资源</h3>
+                <p className="text-xs text-gray-400">可嵌入课堂的交互式 HTML5 学习材料</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+              <button
+                onClick={() => setH5Tab('personal')}
+                className={`px-3 py-1 text-sm rounded-md transition-all ${h5Tab === 'personal' ? 'bg-white text-primary-600 shadow-sm font-medium' : 'text-gray-500'}`}
+              >
+                个人
+              </button>
+              <button
+                onClick={() => setH5Tab('shared')}
+                className={`px-3 py-1 text-sm rounded-md transition-all ${h5Tab === 'shared' ? 'bg-white text-primary-600 shadow-sm font-medium' : 'text-gray-500'}`}
+              >
+                共享
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {h5Tab === 'personal' && (
+          <div>
+            <div className="divide-y divide-gray-50">
+              {personalH5.map((item) => (
+                <div key={item.id} className="p-4 hover:bg-gray-50 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <div className="w-11 h-11 bg-gradient-to-br from-teal-100 to-cyan-100 rounded-xl flex items-center justify-center shrink-0">
+                      <svg className="w-6 h-6 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-gray-900 text-sm">{item.title}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">{item.desc}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-xs px-2 py-0.5 bg-teal-50 text-teal-700 rounded-full">{item.subject}</span>
+                        <span className="text-xs text-gray-400">{item.type} · {item.updatedAt}</span>
+                      </div>
+                    </div>
+                    <button className="shrink-0 px-3 py-1.5 text-xs text-primary-600 bg-primary-50 hover:bg-primary-100 rounded-lg transition-colors">
+                      预览
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="p-4 border-t border-gray-50">
+              <button className="w-full py-2.5 border-2 border-dashed border-gray-200 rounded-xl text-sm text-gray-500 hover:border-primary-300 hover:text-primary-600 transition-colors">
+                + 上传 H5 资源
+              </button>
+            </div>
+          </div>
+        )}
+
+        {h5Tab === 'shared' && (
+          <div className="divide-y divide-gray-50">
+            {sharedH5.map((item) => (
+              <div key={item.id} className="p-4 hover:bg-gray-50 transition-colors">
+                <div className="flex items-center gap-3">
+                  <div className="w-11 h-11 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-xl flex items-center justify-center shrink-0">
+                    <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-gray-900 text-sm">{item.title}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">{item.desc}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-xs px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded-full">{item.subject}</span>
+                      <span className="text-xs text-gray-400">{item.author} · {item.uses.toLocaleString()} 次使用</span>
+                    </div>
+                  </div>
+                  <button className="shrink-0 px-3 py-1.5 text-xs text-primary-600 bg-primary-50 hover:bg-primary-100 rounded-lg transition-colors">
+                    引用
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
