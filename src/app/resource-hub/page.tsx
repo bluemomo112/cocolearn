@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import Image from 'next/image'
 
 // 名师课堂数据
@@ -107,49 +107,18 @@ const growthProblems = [
   }
 ]
 
-// 能力成长资源包数据
-const capabilityResources = {
-  teaching_design: {
-    name: '跨学科教学设计',
-    level: 'intermediate',
-    progress: 75,
-    resources: [
-      { type: 'template', title: 'C-POTE教案设计模板库', count: 25, featured: true },
-      { type: 'checklist', title: '教学目标设计自检表', items: 15 },
-      { type: 'video', title: '名师教案设计思路解析', duration: '20分钟' }
-    ]
-  },
-  concept_extraction: {
-    name: '大概念提取',
-    level: 'beginner',
-    progress: 45,
-    resources: [
-      { type: 'video', title: '大概念提取方法讲解', count: 12, featured: true },
-      { type: 'guide', title: '学科概念图谱参考', count: 30 },
-      { type: 'tool', title: '概念关联分析工具', rating: 4.8 }
-    ]
-  },
-  classroom_interaction: {
-    name: '课堂互动技巧',
-    level: 'advanced',
-    progress: 88,
-    resources: [
-      { type: 'course', title: '高阶提问技巧实践', hours: 8, featured: true },
-      { type: 'guide', title: '课堂提问序列设计手册', pages: 22 },
-      { type: 'checklist', title: '课堂互动质量自评量表', items: 18 }
-    ]
-  },
-  assessment: {
-    name: '多元评价策略',
-    level: 'intermediate',
-    progress: 60,
-    resources: [
-      { type: 'rubric', title: '跨学科评价量表集', count: 18 },
-      { type: 'video', title: '有效反馈的艺术', duration: '15分钟', featured: true },
-      { type: 'template', title: '学生表现评价记录表（可编辑）', count: 12 }
-    ]
-  }
-}
+// 即用工具包数据
+const toolkitItems = [
+  { id: 'cpote-template', type: 'template', category: '教案模板', title: 'C-POTE跨学科教案设计模板', desc: '含情境、问题、组织、任务、评价五环节完整结构', format: 'Word', pages: 4, downloads: 2580 },
+  { id: 'bigconcept-worksheet', type: 'template', category: '教案模板', title: '大概念提取工作表', desc: '帮助提炼核心概念并建立跨学科联结', format: 'Word', pages: 2, downloads: 1430 },
+  { id: 'lesson-checklist', type: 'checklist', category: '自检清单', title: '跨学科教案设计自检表', desc: '20项核查点，确保教案符合跨学科设计要求', format: 'PDF', items: 20, downloads: 1890 },
+  { id: 'evidence-checklist', type: 'checklist', category: '自检清单', title: '课堂学习证据收集清单', desc: '记录课堂中学生学习行为与学习成果的观察工具', format: 'PDF', items: 18, downloads: 1240 },
+  { id: 'interdisciplinary-rubric', type: 'rubric', category: '评价量表', title: '跨学科素养多维评价量表集', desc: '18份量表覆盖知识迁移、问题解决、沟通协作等维度', format: 'PDF', count: 18, downloads: 3120 },
+  { id: 'student-record', type: 'rubric', category: '评价量表', title: '学生表现评价记录表', desc: '项目式学习中记录学生全程表现的可编辑表格', format: 'Excel', pages: 1, downloads: 2050 },
+  { id: 'interaction-rubric', type: 'rubric', category: '评价量表', title: '课堂互动质量自评量表', desc: '教师自评课堂提问与互动效果的18项指标', format: 'PDF', items: 18, downloads: 980 },
+  { id: 'bloom-cards', type: 'guide', category: '参考手册', title: '布鲁姆六层提问句式参考卡', desc: '六认知层级提问句式示例，按学科场景分类整理', format: 'PDF', pages: 8, downloads: 4210 },
+  { id: 'cpote-manual', type: 'guide', category: '参考手册', title: 'C-POTE实施操作手册', desc: '从课程设计到落地实施的完整步骤与常见问题', format: 'PDF', pages: 28, downloads: 1760 },
+]
 
 // 情境模拟数据
 const simulationScenarios = [
@@ -235,6 +204,7 @@ export default function ResourceHub() {
   const [selectedVideo, setSelectedVideo] = useState<typeof masterClassrooms[0] | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedProblem, setSelectedProblem] = useState('cpote')
+  const [toolkitFilter, setToolkitFilter] = useState('全部')
 
   const filteredMasters = masterClassrooms.filter(item =>
     searchQuery === '' ||
@@ -268,7 +238,7 @@ export default function ResourceHub() {
           {[
             { icon: '⭐', title: '名师课堂', desc: '观摩优秀教学案例', count: masterClassrooms.length, unit: '精选课程', color: 'text-yellow-500' },
             { icon: '🚀', title: '教学方法', desc: '核心跨学科教学方法', count: growthProblems.length, unit: '核心方法', color: 'text-primary-500' },
-            { icon: '📦', title: '能力自测', desc: '找出短板，按需强化', count: Object.keys(capabilityResources).length, unit: '能力维度', color: 'text-accent-500' },
+            { icon: '🛠️', title: '即用工具包', desc: '直接下载，开箱即用', count: toolkitItems.length, unit: '实用工具', color: 'text-accent-500' },
             { icon: '🎯', title: '教学情境演练', desc: '真实课堂情境模拟', count: simulationScenarios.length, unit: '模拟场景', color: 'text-cyan-500' }
           ].map((item, index) => (
             <div
@@ -556,128 +526,99 @@ export default function ResourceHub() {
           </div>
         </section>
 
-        {/* 3. 能力成长资源包模块 */}
+        {/* 3. 即用工具包模块 */}
         <section className="mb-16 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
           <div className="flex items-center mb-6">
-            <div className="text-3xl mr-3">📦</div>
+            <div className="text-3xl mr-3">🛠️</div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">跨学科教学能力自测</h2>
-              <p className="text-gray-600 text-sm mt-1">自评各项教学能力的掌握程度，找出薄弱环节，直接查看对应强化资源</p>
+              <h2 className="text-2xl font-bold text-gray-900">即用工具包</h2>
+              <p className="text-gray-600 text-sm mt-1">教案模板、评价量表、参考手册，直接下载，开箱即用</p>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {Object.entries(capabilityResources).map(([key, capability], index) => (
-              <div
-                key={key}
-                className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300 animate-fade-in-up"
-                style={{ animationDelay: `${0.1 + index * 0.05}s` }}
+          {/* 分类过滤 */}
+          <div className="flex gap-2 mb-6 flex-wrap">
+            {['全部', '教案模板', '自检清单', '评价量表', '参考手册'].map(cat => (
+              <button
+                key={cat}
+                onClick={() => setToolkitFilter(cat)}
+                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
+                  toolkitFilter === cat
+                    ? 'bg-primary-500 text-white shadow-sm'
+                    : 'bg-white text-gray-600 border border-gray-200 hover:border-primary-300 hover:text-primary-600'
+                }`}
               >
-                {/* 能力标题和进度 */}
-                <div className="flex items-center justify-between mb-5">
-                  <div>
-                    <h3 className="text-lg font-bold text-gray-900">{capability.name}</h3>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${
-                        capability.level === 'beginner' ? 'bg-primary-100 text-primary-700' :
-                        capability.level === 'intermediate' ? 'bg-yellow-100 text-yellow-700' :
-                        'bg-accent-100 text-accent-700'
-                      }`}>
-                        {capability.level === 'beginner' ? '入门级' :
-                         capability.level === 'intermediate' ? '进阶级' : '专家级'}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-2xl font-bold text-primary-600">{capability.progress}%</div>
-                    <div className="text-xs text-gray-500">自评程度</div>
-                  </div>
-                </div>
-
-                {/* 进度条 */}
-                <div className="mb-5">
-                  <div className="w-full bg-gray-100 rounded-full h-2.5">
-                    <div
-                      className="bg-gradient-to-r from-primary-500 to-accent-500 h-2.5 rounded-full transition-all duration-500"
-                      style={{ width: `${capability.progress}%` }}
-                    />
-                  </div>
-                </div>
-
-                {/* 强化资源 */}
-                <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">针对性强化资源</p>
-                <div className="space-y-3">
-                  {capability.resources.map((resource, resourceIndex) => (
-                    <div
-                      key={resourceIndex}
-                      className={`bg-gray-50 rounded-xl p-4 hover:shadow-md hover:bg-white transition-all duration-300 cursor-pointer ${
-                        resource.featured ? 'ring-2 ring-primary-500/20 bg-primary-50/50' : ''
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                          resource.type === 'template' ? 'bg-primary-100' :
-                          resource.type === 'video' ? 'bg-red-100' :
-                          resource.type === 'course' ? 'bg-accent-100' :
-                          resource.type === 'tool' ? 'bg-yellow-100' :
-                          'bg-gray-100'
-                        }`}>
-                          {resource.type === 'template' && (
-                            <svg className="w-4 h-4 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
-                          )}
-                          {resource.type === 'video' && (
-                            <svg className="w-4 h-4 text-red-600" fill="currentColor" viewBox="0 0 24 24">
-                              <path d="M8 5v14l11-7z" />
-                            </svg>
-                          )}
-                          {resource.type === 'course' && (
-                            <svg className="w-4 h-4 text-accent-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                            </svg>
-                          )}
-                          {(resource.type === 'tool' || resource.type === 'game' || resource.type === 'guide') && (
-                            <svg className="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                            </svg>
-                          )}
-                          {(resource.type === 'checklist' || resource.type === 'rubric' || resource.type === 'template' || resource.type === 'guide') && (
-                            <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-                            </svg>
-                          )}
-                        </div>
-                        <div className="flex-1">
-                          <h4 className="font-medium text-gray-800 text-sm">{resource.title}</h4>
-                          <div className="text-xs text-gray-500 mt-0.5">
-                            {'count' in resource && <span>{resource.count}个</span>}
-                            {'duration' in resource && <span>{resource.duration}</span>}
-                            {'hours' in resource && <span>{resource.hours}小时</span>}
-                            {'items' in resource && <span>{resource.items}项</span>}
-                            {'rating' in resource && (
-                              <span className="flex items-center gap-0.5 inline-flex">
-                                <svg className="w-3 h-3 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                </svg>
-                                {resource.rating}
-                              </span>
-                            )}
-                            {'pages' in resource && <span>{resource.pages}页</span>}
-                          </div>
-                        </div>
-                        {resource.featured && (
-                          <span className="px-2 py-0.5 bg-primary-500 text-white text-xs font-medium rounded-full">
-                            推荐
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-              </div>
+                {cat}
+              </button>
             ))}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {toolkitItems
+              .filter(item => toolkitFilter === '全部' || item.category === toolkitFilter)
+              .map((item) => (
+                <div
+                  key={item.id}
+                  className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 flex flex-col"
+                >
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                      item.type === 'template' ? 'bg-primary-100' :
+                      item.type === 'checklist' ? 'bg-yellow-100' :
+                      item.type === 'rubric' ? 'bg-accent-100' :
+                      'bg-cyan-100'
+                    }`}>
+                      {item.type === 'template' && (
+                        <svg className="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                      )}
+                      {item.type === 'checklist' && (
+                        <svg className="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                        </svg>
+                      )}
+                      {item.type === 'rubric' && (
+                        <svg className="w-5 h-5 text-accent-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18M10 6h4M10 18h4" />
+                        </svg>
+                      )}
+                      {item.type === 'guide' && (
+                        <svg className="w-5 h-5 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                        </svg>
+                      )}
+                    </div>
+                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                      item.type === 'template' ? 'bg-primary-50 text-primary-600' :
+                      item.type === 'checklist' ? 'bg-yellow-50 text-yellow-600' :
+                      item.type === 'rubric' ? 'bg-accent-50 text-accent-600' :
+                      'bg-cyan-50 text-cyan-600'
+                    }`}>{item.category}</span>
+                  </div>
+
+                  <h3 className="font-bold text-gray-900 text-sm mb-1.5">{item.title}</h3>
+                  <p className="text-xs text-gray-500 leading-relaxed flex-1 mb-4">{item.desc}</p>
+
+                  <div className="flex items-center justify-between mt-auto">
+                    <div className="flex items-center gap-3 text-xs text-gray-400">
+                      <span className={`px-2 py-0.5 rounded font-medium ${
+                        item.format === 'Word' ? 'bg-blue-50 text-blue-600' :
+                        item.format === 'Excel' ? 'bg-green-50 text-green-600' :
+                        'bg-red-50 text-red-600'
+                      }`}>{item.format}</span>
+                      <span>↓ {item.downloads.toLocaleString()}</span>
+                    </div>
+                    <button className="flex items-center gap-1.5 px-3 py-1.5 bg-primary-50 text-primary-600 rounded-lg text-xs font-medium hover:bg-primary-100 transition-colors">
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                      </svg>
+                      下载
+                    </button>
+                  </div>
+                </div>
+              ))
+            }
           </div>
         </section>
 
