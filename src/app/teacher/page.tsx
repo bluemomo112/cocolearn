@@ -49,9 +49,9 @@ const studentActivities = [
 
 const quickStats = [
   { label: '进行中课程', value: '3', change: '+1', icon: '📚', color: 'blue' },
-  { label: '活跃学生', value: '85', change: '+12', icon: '👥', color: 'blue' },
-  { label: '待批改作业', value: '12', change: '-5', icon: '📝', color: 'amber' },
-  { label: '本周互动', value: '156', change: '+23%', icon: '💬', color: 'blue' },
+  { label: '学生总数', value: '108', change: '+5', icon: '👥', color: 'blue' },
+  { label: '本周提交任务', value: '47', change: '+8', icon: '📝', color: 'blue' },
+  { label: '平均完成率', value: '78%', change: '+4%', icon: '📊', color: 'blue' },
 ]
 
 const todayTasks = [
@@ -135,7 +135,7 @@ interface CompetencyFilterOptions {
 }
 
 export default function TeacherDashboard() {
-  const [activeTab, setActiveTab] = useState<'my-courses' | 'self-study' | 'insights' | 'knowledge' | 'growth' | 'students' | 'ai-apps'>('my-courses')
+  const [activeTab, setActiveTab] = useState<'my-courses' | 'students' | 'insights' | 'ai-apps' | 'knowledge' | 'growth'>('my-courses')
   const [showCourseTypeModal, setShowCourseTypeModal] = useState(false)
 
   // 获取当前日期
@@ -170,14 +170,19 @@ export default function TeacherDashboard() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
               </svg>
             )},
-            { id: 'self-study', label: '自学空间', icon: (
+            { id: 'students', label: '学生管理', icon: (
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
             )},
             { id: 'insights', label: '教学洞察', icon: (
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+            )},
+            { id: 'ai-apps', label: 'AI应用', icon: (
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2h-2" />
               </svg>
             )},
             { id: 'knowledge', label: '知识库', icon: (
@@ -188,16 +193,6 @@ export default function TeacherDashboard() {
             { id: 'growth', label: '成长档案', icon: (
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-              </svg>
-            )},
-            { id: 'students', label: '学生管理', icon: (
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-            )},
-            { id: 'ai-apps', label: 'AI应用', icon: (
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2h-2" />
               </svg>
             )},
           ].map((tab) => (
@@ -411,88 +406,6 @@ export default function TeacherDashboard() {
               </div>
             </div>
 
-            {/* Main Content Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
-              {/* Right Column - Tasks & Activities */}
-              <div className="lg:col-span-2 space-y-6 animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
-                {/* Today's Tasks */}
-                <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-                  <div className="p-5 border-b border-gray-100">
-                    <h3 className="font-semibold text-gray-900">今日待办</h3>
-                  </div>
-                  <div className="p-4 space-y-3">
-                    {todayTasks.map((task) => (
-                      <div
-                        key={task.id}
-                        className={`flex items-center gap-3 p-3 rounded-xl ${
-                          task.done ? 'bg-gray-50' : 'bg-white border border-gray-100'
-                        }`}
-                      >
-                        <button
-                          className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
-                            task.done
-                              ? 'bg-primary-500 border-primary-500'
-                              : 'border-gray-300 hover:border-primary-500'
-                          }`}
-                        >
-                          {task.done && (
-                            <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                            </svg>
-                          )}
-                        </button>
-                        <div className="flex-1 min-w-0">
-                          <p className={`text-sm ${task.done ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
-                            {task.title}
-                          </p>
-                          <p className="text-xs text-gray-400">{task.time}</p>
-                        </div>
-                        <span
-                          className={`w-2 h-2 rounded-full ${
-                            task.priority === 'high'
-                              ? 'bg-red-500'
-                              : task.priority === 'medium'
-                              ? 'bg-amber-500'
-                              : 'bg-gray-300'
-                          }`}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Student Activities */}
-              <div className="animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
-                <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-                  <div className="p-5 border-b border-gray-100">
-                    <h3 className="font-semibold text-gray-900">学生动态</h3>
-                  </div>
-                  <div className="p-4 space-y-3">
-                    {studentActivities.map((activity) => (
-                      <div key={activity.id} className="flex items-start gap-3">
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-accent-600 flex items-center justify-center text-white text-sm font-medium flex-shrink-0">
-                          {activity.avatar}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm text-gray-900">
-                            <span className="font-medium">{activity.name}</span>{' '}
-                            <span className="text-gray-600">{activity.action}</span>
-                          </p>
-                          <p className="text-xs text-gray-400">{activity.course} · {activity.time}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'self-study' && (
-          <div className="animate-fade-in">
-            <SelfStudyEntry />
           </div>
         )}
 
