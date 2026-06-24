@@ -48,10 +48,10 @@ const studentActivities = [
 ]
 
 const quickStats = [
-  { label: '进行中课程', value: '3', change: '+1', icon: '📚', color: 'blue' },
   { label: '学生总数', value: '108', change: '+5', icon: '👥', color: 'blue' },
-  { label: '本周提交任务', value: '47', change: '+8', icon: '📝', color: 'blue' },
-  { label: '平均完成率', value: '78%', change: '+4%', icon: '📊', color: 'blue' },
+  { label: '本周待批改', value: '8项', change: '-3', icon: '📋', color: 'blue' },
+  { label: '跨学科参与度', value: '83%', change: '+4%', icon: '🎯', color: 'blue' },
+  { label: '平均任务完成率', value: '78%', change: '+4%', icon: '📊', color: 'blue' },
 ]
 
 const todayTasks = [
@@ -958,8 +958,86 @@ function TeachingInsights() {
 
   return (
     <div className="space-y-6">
-      {/* Competency Filter Bar */}
-      <CompetencyFilterBar />
+      {/* Key Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {metrics.map((metric, index) => (
+          <div
+            key={metric.label}
+            className="bg-white rounded-2xl p-5 border border-gray-100 animate-fade-in-up"
+            style={{ animationDelay: `${index * 0.1}s` }}
+          >
+            <p className="text-sm text-gray-500 mb-2">{metric.label}</p>
+            <div className="flex items-end justify-between">
+              <p className="text-3xl font-bold text-gray-900">{metric.value}</p>
+              <span className={`text-sm font-medium ${metric.good ? 'text-primary-600' : 'text-red-500'}`}>
+                {metric.trend}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Course Performance + AI Suggestions */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 p-6">
+          <h3 className="font-semibold text-gray-900 mb-4">课程表现对比</h3>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-gray-100">
+                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">课程名称</th>
+                  <th className="text-center py-3 px-4 text-sm font-medium text-gray-500">完成率</th>
+                  <th className="text-center py-3 px-4 text-sm font-medium text-gray-500">满意度</th>
+                  <th className="text-center py-3 px-4 text-sm font-medium text-gray-500">互动率</th>
+                </tr>
+              </thead>
+              <tbody>
+                {coursePerformance.map((course) => (
+                  <tr key={course.name} className="border-b border-gray-50 hover:bg-gray-50">
+                    <td className="py-4 px-4 text-sm font-medium text-gray-900">{course.name}</td>
+                    <td className="py-4 px-4">
+                      <div className="flex items-center justify-center gap-2">
+                        <div className="w-20 h-2 bg-gray-100 rounded-full overflow-hidden">
+                          <div className={`h-full rounded-full ${course.completion >= 80 ? 'bg-primary-500' : course.completion >= 60 ? 'bg-amber-500' : 'bg-red-500'}`} style={{ width: `${course.completion}%` }} />
+                        </div>
+                        <span className="text-sm text-gray-600">{course.completion}%</span>
+                      </div>
+                    </td>
+                    <td className="py-4 px-4 text-center">
+                      <span className="text-sm text-gray-600">⭐ {course.satisfaction}</span>
+                    </td>
+                    <td className="py-4 px-4 text-center">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${course.engagement >= 85 ? 'bg-primary-100 text-primary-600' : course.engagement >= 70 ? 'bg-amber-100 text-amber-600' : 'bg-red-100 text-red-600'}`}>
+                        {course.engagement}%
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-2xl border border-gray-100 p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <svg className="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            <h3 className="font-semibold text-gray-900">AI 教学建议</h3>
+          </div>
+          <div className="space-y-3">
+            {aiSuggestions.map((suggestion, index) => (
+              <div key={index} className={`p-4 rounded-xl border ${suggestion.type === 'warning' ? 'bg-amber-50 border-amber-100' : 'bg-primary-50 border-primary-100'}`}>
+                <h4 className="font-medium text-gray-900 mb-1 text-sm">{suggestion.title}</h4>
+                <p className="text-xs text-gray-600 mb-2">{suggestion.description}</p>
+                <button className={`px-3 py-1 text-xs font-medium rounded-lg ${suggestion.type === 'warning' ? 'bg-amber-100 text-amber-600' : 'bg-primary-100 text-primary-600'}`}>
+                  {suggestion.action}
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
 
       {/* Competency Distribution Section */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
@@ -1116,316 +1194,6 @@ function TeachingInsights() {
           </div>
         </div>
       </div>
-
-      {/* Cross-Course Competency Trends */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="p-5 border-b border-gray-200 bg-gradient-to-r from-cyan-50 to-blue-50">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-              <svg className="w-5 h-5 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-              </svg>
-              跨课程能力发展趋势
-            </h3>
-            <span className="text-xs text-gray-600 bg-white px-3 py-1 rounded-full border border-cyan-200">
-              追踪学生能力成长轨迹
-            </span>
-          </div>
-        </div>
-
-        <div className="p-6">
-          <div className="space-y-6">
-            {(Object.keys(filteredCompetencyTrends) as CompetencyType[])
-              .filter((type) => filteredCompetencyTrends[type].length > 0)
-              .map((competencyType) => {
-                const trends = filteredCompetencyTrends[competencyType];
-                const competencyDef = {
-                  critical_thinking: { name: '批判性思维', icon: '🧠', color: 'blue' },
-                  information_synthesis: { name: '信息整合', icon: '🔗', color: 'purple' },
-                  metacognition: { name: '元认知', icon: '👁️', color: 'indigo' },
-                  question_quality: { name: '提问质量', icon: '❓', color: 'teal' },
-                  creativity: { name: '创造性', icon: '💡', color: 'amber' },
-                  persistence: { name: '坚持性', icon: '🎯', color: 'rose' },
-                }[competencyType];
-
-                // Calculate class average stars for each course
-                const courseAverages = trends.map((point) => {
-                  const total = point.distribution.level1 + point.distribution.level2 + point.distribution.level3 + point.distribution.level4;
-                  const avgStars = (
-                    point.distribution.level1 * 1 +
-                    point.distribution.level2 * 2 +
-                    point.distribution.level3 * 3 +
-                    point.distribution.level4 * 4
-                  ) / total;
-                  return { ...point, avgStars, total };
-                });
-
-                // Determine overall trend
-                const firstAvg = courseAverages[0].avgStars;
-                const lastAvg = courseAverages[courseAverages.length - 1].avgStars;
-                const trendDirection = lastAvg > firstAvg + 0.1 ? 'rising' : lastAvg < firstAvg - 0.1 ? 'declining' : 'stable';
-
-                return (
-                  <div key={competencyType} className="bg-gradient-to-br from-cyan-50/30 to-blue-50/30 rounded-xl p-5 border border-cyan-200">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-12 h-12 rounded-xl bg-${competencyDef.color}-100 flex items-center justify-center text-2xl`}>
-                          {competencyDef.icon}
-                        </div>
-                        <div>
-                          <h4 className="font-bold text-gray-800">{competencyDef.name}</h4>
-                          <p className="text-xs text-gray-500">
-                            {courseAverages.length} 门课程 ·
-                            {trendDirection === 'rising' ? (
-                              <span className="text-green-600 ml-1">↗ 上升趋势</span>
-                            ) : trendDirection === 'declining' ? (
-                              <span className="text-red-600 ml-1">↘ 下降趋势</span>
-                            ) : (
-                              <span className="text-gray-600 ml-1">→ 稳定表现</span>
-                            )}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-xs text-gray-500">当前班级平均</p>
-                        <p className="text-lg font-bold text-cyan-700">{lastAvg.toFixed(1)} ⭐</p>
-                      </div>
-                    </div>
-
-                    {/* Timeline */}
-                    <div className="relative">
-                      {/* Progress Line */}
-                      <div className="absolute top-8 left-0 right-0 h-0.5 bg-gradient-to-r from-cyan-200 via-cyan-300 to-cyan-200"></div>
-
-                      {/* Course Points */}
-                      <div className="flex justify-between items-start relative">
-                        {courseAverages.map((course, idx) => {
-                          const progressPercent = ((course.avgStars - 1) / 3) * 100; // 1-4 stars mapped to 0-100%
-
-                          return (
-                            <div key={course.courseId} className="flex flex-col items-center flex-1 relative">
-                              {/* Connection Line to Next Point */}
-                              {idx < courseAverages.length - 1 && (
-                                <div
-                                  className={`absolute top-8 left-1/2 w-full h-1 ${
-                                    courseAverages[idx + 1].avgStars > course.avgStars
-                                      ? 'bg-gradient-to-r from-cyan-400 to-green-400'
-                                      : courseAverages[idx + 1].avgStars < course.avgStars
-                                      ? 'bg-gradient-to-r from-cyan-400 to-red-400'
-                                      : 'bg-cyan-400'
-                                  }`}
-                                  style={{ zIndex: 1 }}
-                                ></div>
-                              )}
-
-                              {/* Course Point */}
-                              <div className="relative z-10 mb-3">
-                                <div
-                                  className={`w-16 h-16 rounded-full flex flex-col items-center justify-center border-4 border-white shadow-lg ${
-                                    idx === courseAverages.length - 1
-                                      ? 'bg-gradient-to-br from-cyan-500 to-blue-500'
-                                      : 'bg-gradient-to-br from-cyan-400 to-blue-400'
-                                  }`}
-                                >
-                                  <span className="text-white text-lg font-bold">{course.avgStars.toFixed(1)}</span>
-                                  <span className="text-white text-[10px]">⭐</span>
-                                </div>
-                                {idx === courseAverages.length - 1 && (
-                                  <div className="absolute -top-1 -right-1 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center border-2 border-white">
-                                    <span className="text-white text-xs">✓</span>
-                                  </div>
-                                )}
-                              </div>
-
-                              {/* Course Info */}
-                              <div className="text-center max-w-[120px]">
-                                <p className="text-xs font-semibold text-gray-700 mb-1 line-clamp-2">{course.courseName}</p>
-                                <p className="text-[10px] text-gray-500">{course.date}</p>
-                                <div className="mt-2 flex items-center gap-0.5 justify-center">
-                                  {[...Array(4)].map((_, starIdx) => (
-                                    <span
-                                      key={starIdx}
-                                      className={`text-xs ${starIdx < Math.round(course.avgStars) ? 'text-amber-400' : 'text-gray-300'}`}
-                                    >
-                                      ★
-                                    </span>
-                                  ))}
-                                </div>
-                              </div>
-
-                              {/* Progress Indicator */}
-                              {idx < courseAverages.length - 1 && (
-                                <div className="absolute top-20 left-full w-full flex items-center justify-center">
-                                  {courseAverages[idx + 1].avgStars > course.avgStars ? (
-                                    <span className="text-xs text-green-600 font-medium">
-                                      +{(courseAverages[idx + 1].avgStars - course.avgStars).toFixed(1)}
-                                    </span>
-                                  ) : courseAverages[idx + 1].avgStars < course.avgStars ? (
-                                    <span className="text-xs text-red-600 font-medium">
-                                      {(courseAverages[idx + 1].avgStars - course.avgStars).toFixed(1)}
-                                    </span>
-                                  ) : (
-                                    <span className="text-xs text-gray-400 font-medium">-</span>
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* Distribution Summary */}
-                    <div className="mt-6 pt-4 border-t border-cyan-200">
-                      <p className="text-xs text-gray-600 mb-2">最新课程能力分布：</p>
-                      <div className="flex gap-3 text-xs">
-                        <div className="flex items-center gap-1">
-                          <span className="text-amber-400">★★★★</span>
-                          <span className="text-gray-600">{trends[trends.length - 1].distribution.level4}人</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <span className="text-amber-400">★★★</span>
-                          <span className="text-gray-600">{trends[trends.length - 1].distribution.level3}人</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <span className="text-amber-400">★★</span>
-                          <span className="text-gray-600">{trends[trends.length - 1].distribution.level2}人</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <span className="text-gray-400">★</span>
-                          <span className="text-gray-600">{trends[trends.length - 1].distribution.level1}人</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-          </div>
-        </div>
-      </div>
-
-      {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {metrics.map((metric, index) => (
-          <div
-            key={metric.label}
-            className="bg-white rounded-2xl p-5 border border-gray-100 animate-fade-in-up"
-            style={{ animationDelay: `${index * 0.1}s` }}
-          >
-            <p className="text-sm text-gray-500 mb-2">{metric.label}</p>
-            <div className="flex items-end justify-between">
-              <p className="text-3xl font-bold text-gray-900">{metric.value}</p>
-              <span
-                className={`text-sm font-medium ${
-                  metric.good ? 'text-primary-600' : 'text-red-500'
-                }`}
-              >
-                {metric.trend}
-              </span>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Course Performance */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-6 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
-        <h3 className="font-semibold text-gray-900 mb-4">课程表现对比</h3>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-gray-100">
-                <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">课程名称</th>
-                <th className="text-center py-3 px-4 text-sm font-medium text-gray-500">完成率</th>
-                <th className="text-center py-3 px-4 text-sm font-medium text-gray-500">满意度</th>
-                <th className="text-center py-3 px-4 text-sm font-medium text-gray-500">互动率</th>
-              </tr>
-            </thead>
-            <tbody>
-              {coursePerformance.map((course) => (
-                <tr key={course.name} className="border-b border-gray-50 hover:bg-gray-50">
-                  <td className="py-4 px-4 text-sm font-medium text-gray-900">{course.name}</td>
-                  <td className="py-4 px-4">
-                    <div className="flex items-center justify-center gap-2">
-                      <div className="w-24 h-2 bg-gray-100 rounded-full overflow-hidden">
-                        <div
-                          className={`h-full rounded-full ${
-                            course.completion >= 80 ? 'bg-primary-500' : course.completion >= 60 ? 'bg-amber-500' : 'bg-red-500'
-                          }`}
-                          style={{ width: `${course.completion}%` }}
-                        />
-                      </div>
-                      <span className="text-sm text-gray-600">{course.completion}%</span>
-                    </div>
-                  </td>
-                  <td className="py-4 px-4">
-                    <div className="flex items-center justify-center gap-1">
-                      <svg className="w-4 h-4 text-amber-400 fill-current" viewBox="0 0 20 20">
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                      <span className="text-sm text-gray-600">{course.satisfaction}</span>
-                    </div>
-                  </td>
-                  <td className="py-4 px-4 text-center">
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        course.engagement >= 85
-                          ? 'bg-primary-100 text-primary-600'
-                          : course.engagement >= 70
-                          ? 'bg-amber-100 text-amber-600'
-                          : 'bg-red-100 text-red-600'
-                      }`}
-                    >
-                      {course.engagement}%
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* AI Suggestions */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-6 animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
-        <div className="flex items-center gap-2 mb-4">
-          <svg className="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-          </svg>
-          <h3 className="font-semibold text-gray-900">AI 教学建议</h3>
-        </div>
-        <div className="space-y-3">
-          {aiSuggestions.map((suggestion, index) => (
-            <div
-              key={index}
-              className={`p-4 rounded-xl border ${
-                suggestion.type === 'improvement'
-                  ? 'bg-primary-50 border-primary-100'
-                  : suggestion.type === 'success'
-                  ? 'bg-primary-50 border-primary-100'
-                  : 'bg-amber-50 border-amber-100'
-              }`}
-            >
-              <div className="flex items-start justify-between">
-                <div>
-                  <h4 className="font-medium text-gray-900 mb-1">{suggestion.title}</h4>
-                  <p className="text-sm text-gray-600">{suggestion.description}</p>
-                </div>
-                <button
-                  className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
-                    suggestion.type === 'improvement'
-                      ? 'bg-primary-100 text-primary-600 hover:bg-primary-200'
-                      : suggestion.type === 'success'
-                      ? 'bg-primary-100 text-primary-600 hover:bg-primary-200'
-                      : 'bg-amber-100 text-amber-600 hover:bg-amber-200'
-                  }`}
-                >
-                  {suggestion.action}
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
     </div>
   )
 }
@@ -1543,85 +1311,137 @@ function KnowledgeBase() {
 
 // 成长档案组件
 function GrowthArchive() {
-  const achievements = [
-    { id: '1', title: '跨学科教学新星', desc: '完成10门跨学科课程设计', date: '2024-12-15', icon: '🌟' },
-    { id: '2', title: '学生好评教师', desc: '连续3个月学生满意度4.5+', date: '2024-11-20', icon: '❤️' },
-    { id: '3', title: '创新教学先锋', desc: '首次使用AI辅助教学功能', date: '2024-10-08', icon: '🚀' },
+  const overviewStats = [
+    { label: '跨学科课程总数', value: '12', unit: '门', icon: '📚' },
+    { label: '涉及学科组合', value: '8', unit: '种', icon: '🔗' },
+    { label: '专业工作坊', value: '4', unit: '次', icon: '🎓' },
+    { label: '获得认证', value: '3', unit: '项', icon: '🏅' },
   ]
 
-  const growthPath = [
-    { level: 1, name: '入门教师', completed: true, courses: 3 },
-    { level: 2, name: '进阶教师', completed: true, courses: 10 },
-    { level: 3, name: '资深教师', completed: false, courses: 25, current: 15 },
-    { level: 4, name: '专家教师', completed: false, courses: 50 },
+  const competencyProfile = [
+    { name: 'C-POTE跨学科设计', level: 75, desc: '能独立设计完整C-POTE教案' },
+    { name: '大概念提取与联结', level: 60, desc: '能提取1-2个跨学科大概念' },
+    { name: '驱动性问题设计', level: 82, desc: '能设计真实情境驱动性问题' },
+    { name: '形成性评价实施', level: 68, desc: '初步掌握嵌入式过程评价方法' },
+    { name: '人机协同教学', level: 55, desc: 'AI辅助工具应用入门阶段' },
+  ]
+
+  const milestones = [
+    { date: '2023年9月', event: '首次主持跨学科课程设计', detail: '《水循环与气候变化》科学+地理融合课', type: 'start' },
+    { date: '2024年3月', event: '参加C-STEAM设计工作坊', detail: '完成C-POTE模型系统培训，获得结业证书', type: 'training' },
+    { date: '2024年6月', event: '首次完整应用C-POTE模型', detail: '《植物工厂与生物科技》全程设计实践', type: 'milestone' },
+    { date: '2025年1月', event: 'AI辅助跨学科教学认证', detail: '通过人机协同教学能力初级认证', type: 'cert' },
+    { date: '2025年6月', event: '参与跨学科课例研究交流', detail: '在校内教研活动中分享跨学科教学经验', type: 'share' },
+  ]
+
+  const certifications = [
+    { name: 'C-POTE跨学科课程设计', status: 'done', date: '2024-03', org: '跨学科教育发展中心' },
+    { name: 'PBL项目式学习设计初级', status: 'done', date: '2024-11', org: '教师专业发展学院' },
+    { name: 'AI辅助教学能力初级', status: 'done', date: '2025-01', org: '教育技术应用认证' },
+    { name: '跨学科教学评价专项', status: 'progress', progress: 60, org: '校本研修课程' },
   ]
 
   return (
     <div className="space-y-6">
-      {/* 成长概览 */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-gradient-to-br from-primary-500 to-accent-600 rounded-2xl p-5 text-white">
-          <p className="text-white/80 text-sm mb-2">教学时长</p>
-          <p className="text-3xl font-bold">156</p>
-          <p className="text-white/60 text-sm">小时</p>
-        </div>
-        <div className="bg-gradient-to-br from-primary-500 to-accent-600 rounded-2xl p-5 text-white">
-          <p className="text-white/80 text-sm mb-2">累计学生</p>
-          <p className="text-3xl font-bold">328</p>
-          <p className="text-white/60 text-sm">人次</p>
-        </div>
-        <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl p-5 text-white">
-          <p className="text-white/80 text-sm mb-2">获得成就</p>
-          <p className="text-3xl font-bold">12</p>
-          <p className="text-white/60 text-sm">枚徽章</p>
-        </div>
+      {/* 跨学科成长概览 */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {overviewStats.map((stat) => (
+          <div key={stat.label} className="bg-white rounded-2xl p-5 border border-gray-100 text-center">
+            <div className="text-2xl mb-2">{stat.icon}</div>
+            <p className="text-3xl font-bold text-gray-900">{stat.value}<span className="text-sm font-normal text-gray-500 ml-1">{stat.unit}</span></p>
+            <p className="text-xs text-gray-500 mt-1">{stat.label}</p>
+          </div>
+        ))}
       </div>
 
-      {/* 成长路径 */}
+      {/* 跨学科能力画像 */}
       <div className="bg-white rounded-2xl border border-gray-100 p-6">
-        <h3 className="font-semibold text-gray-900 mb-6">成长路径</h3>
-        <div className="flex items-center justify-between">
-          {growthPath.map((level, index) => (
-            <div key={level.level} className="flex-1 flex flex-col items-center">
-              <div className={`relative w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold ${
-                level.completed
-                  ? 'bg-primary-500 text-white'
-                  : level.current
-                  ? 'bg-primary-100 text-primary-600 ring-4 ring-primary-200'
-                  : 'bg-gray-100 text-gray-400'
-              }`}>
-                {level.completed ? '✓' : level.level}
+        <div className="flex items-center justify-between mb-5">
+          <h3 className="font-semibold text-gray-900">跨学科能力画像</h3>
+          <span className="text-xs text-gray-400">基于教学记录自动生成</span>
+        </div>
+        <div className="space-y-4">
+          {competencyProfile.map((item) => (
+            <div key={item.name}>
+              <div className="flex items-center justify-between mb-1.5">
+                <div>
+                  <span className="text-sm font-medium text-gray-800">{item.name}</span>
+                  <span className="text-xs text-gray-400 ml-2">{item.desc}</span>
+                </div>
+                <span className="text-sm font-semibold text-primary-600">{item.level}%</span>
               </div>
-              <p className={`mt-2 text-sm font-medium ${level.completed || level.current ? 'text-gray-900' : 'text-gray-400'}`}>
-                {level.name}
-              </p>
-              <p className="text-xs text-gray-500">
-                {level.current ? `${level.current}/${level.courses} 课程` : `${level.courses} 课程`}
-              </p>
-              {index < growthPath.length - 1 && (
-                <div className={`absolute top-6 left-1/2 w-full h-0.5 ${
-                  level.completed ? 'bg-primary-500' : 'bg-gray-200'
-                }`} style={{ transform: 'translateX(50%)' }} />
-              )}
+              <div className="w-full bg-gray-100 rounded-full h-2">
+                <div
+                  className="bg-gradient-to-r from-primary-500 to-accent-500 h-2 rounded-full transition-all duration-700"
+                  style={{ width: `${item.level}%` }}
+                />
+              </div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* 成就徽章 */}
+      {/* 成长里程碑 */}
       <div className="bg-white rounded-2xl border border-gray-100 p-6">
-        <h3 className="font-semibold text-gray-900 mb-4">最近成就</h3>
+        <h3 className="font-semibold text-gray-900 mb-5">跨学科成长历程</h3>
+        <div className="relative">
+          <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-100" />
+          <div className="space-y-5">
+            {milestones.map((m, index) => (
+              <div key={index} className="flex gap-4 relative">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 z-10 ${
+                  m.type === 'cert' ? 'bg-amber-100 text-amber-600' :
+                  m.type === 'milestone' ? 'bg-primary-100 text-primary-600' :
+                  m.type === 'training' ? 'bg-accent-100 text-accent-600' :
+                  m.type === 'share' ? 'bg-green-100 text-green-600' :
+                  'bg-gray-100 text-gray-500'
+                }`}>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <div className="flex-1 pb-1">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <span className="text-xs text-gray-400">{m.date}</span>
+                    <span className="font-medium text-gray-900 text-sm">{m.event}</span>
+                  </div>
+                  <p className="text-xs text-gray-500">{m.detail}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* 专业认证 */}
+      <div className="bg-white rounded-2xl border border-gray-100 p-6">
+        <h3 className="font-semibold text-gray-900 mb-4">专业发展认证</h3>
         <div className="space-y-3">
-          {achievements.map((achievement) => (
-            <div key={achievement.id} className="flex items-center gap-4 p-3 bg-gray-50 rounded-xl">
-              <div className="w-12 h-12 bg-gradient-to-br from-amber-100 to-orange-100 rounded-xl flex items-center justify-center text-2xl">
-                {achievement.icon}
+          {certifications.map((cert) => (
+            <div key={cert.name} className="flex items-center gap-4 p-3 bg-gray-50 rounded-xl">
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${cert.status === 'done' ? 'bg-primary-100' : 'bg-amber-100'}`}>
+                {cert.status === 'done' ? (
+                  <svg className="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                  </svg>
+                ) : (
+                  <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                )}
               </div>
-              <div className="flex-1">
-                <p className="font-medium text-gray-900">{achievement.title}</p>
-                <p className="text-sm text-gray-500">{achievement.desc}</p>
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-gray-900 text-sm">{cert.name}</p>
+                <p className="text-xs text-gray-400">{cert.org}{cert.date && ` · ${cert.date}`}</p>
+                {cert.status === 'progress' && cert.progress && (
+                  <div className="mt-1.5 w-full bg-gray-200 rounded-full h-1.5">
+                    <div className="bg-amber-400 h-1.5 rounded-full" style={{ width: `${cert.progress}%` }} />
+                  </div>
+                )}
               </div>
-              <p className="text-xs text-gray-400">{achievement.date}</p>
+              <span className={`text-xs font-medium px-2 py-1 rounded-full flex-shrink-0 ${cert.status === 'done' ? 'bg-primary-100 text-primary-600' : 'bg-amber-100 text-amber-600'}`}>
+                {cert.status === 'done' ? '已获得' : `进行中 ${cert.progress}%`}
+              </span>
             </div>
           ))}
         </div>

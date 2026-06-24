@@ -234,9 +234,7 @@ const simulationScenarios = [
 export default function ResourceHub() {
   const [selectedVideo, setSelectedVideo] = useState<typeof masterClassrooms[0] | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedProblem, setSelectedProblem] = useState('')
-  const [activeSection, setActiveSection] = useState<string | null>(null)
-  const carouselRef = useRef<HTMLDivElement>(null)
+  const [selectedProblem, setSelectedProblem] = useState('cpote')
 
   const filteredMasters = masterClassrooms.filter(item =>
     searchQuery === '' ||
@@ -244,16 +242,6 @@ export default function ResourceHub() {
     item.teacher.toLowerCase().includes(searchQuery.toLowerCase()) ||
     item.subject.toLowerCase().includes(searchQuery.toLowerCase())
   )
-
-  const scrollCarousel = (direction: 'left' | 'right') => {
-    if (carouselRef.current) {
-      const scrollAmount = 320
-      carouselRef.current.scrollBy({
-        left: direction === 'left' ? -scrollAmount : scrollAmount,
-        behavior: 'smooth'
-      })
-    }
-  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -280,7 +268,7 @@ export default function ResourceHub() {
           {[
             { icon: '⭐', title: '名师课堂', desc: '观摩优秀教学案例', count: masterClassrooms.length, unit: '精选课程', color: 'text-yellow-500' },
             { icon: '🚀', title: '教学方法', desc: '核心跨学科教学方法', count: growthProblems.length, unit: '核心方法', color: 'text-primary-500' },
-            { icon: '📦', title: '能力资源包', desc: '系统性技能提升', count: Object.keys(capabilityResources).length, unit: '核心能力', color: 'text-accent-500' },
+            { icon: '📦', title: '能力自测', desc: '精准推荐学习路径', count: Object.keys(capabilityResources).length, unit: '能力维度', color: 'text-accent-500' },
             { icon: '🎯', title: '教学情境演练', desc: '真实课堂情境模拟', count: simulationScenarios.length, unit: '模拟场景', color: 'text-cyan-500' }
           ].map((item, index) => (
             <div
@@ -435,7 +423,7 @@ export default function ResourceHub() {
             <div className="text-3xl mr-3">🚀</div>
             <div>
               <h2 className="text-2xl font-bold text-gray-900">教学方法精选</h2>
-              <p className="text-gray-600 text-sm mt-1">针对常见跨学科教学问题，提供专业解决方案</p>
+              <p className="text-gray-600 text-sm mt-1">聚焦跨学科教师核心教学方法，提供配套资源与课例参考</p>
             </div>
           </div>
 
@@ -573,8 +561,8 @@ export default function ResourceHub() {
           <div className="flex items-center mb-6">
             <div className="text-3xl mr-3">📦</div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">能力成长资源包</h2>
-              <p className="text-gray-600 text-sm mt-1">系统化提升跨学科教学核心能力，个性化成长路径</p>
+              <h2 className="text-2xl font-bold text-gray-900">跨学科能力自测 · 推荐学习路径</h2>
+              <p className="text-gray-600 text-sm mt-1">自评当前各维度掌握程度，系统为您匹配对应学习资源</p>
             </div>
           </div>
 
