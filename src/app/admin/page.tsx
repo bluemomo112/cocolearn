@@ -22,23 +22,23 @@ import {
 
 // 模拟数据
 const overviewStats = [
-  { label: '管理中课程', value: '3', change: '+1', changeType: 'up', icon: '📚', color: 'blue' },
-  { label: '学生总数', value: '108', change: '+5', changeType: 'up', icon: '👨‍🎓', color: 'teal' },
-  { label: '本周待批改', value: '12', change: '-3', changeType: 'down', icon: '📝', color: 'amber' },
-  { label: '平均任务完成率', value: '78%', change: '+4%', changeType: 'up', icon: '📊', color: 'blue' },
+  { label: '在用教师', value: '8', change: '+1', changeType: 'up', icon: '👨‍🏫', color: 'blue' },
+  { label: '开设班级', value: '15', change: '+3', changeType: 'up', icon: '🏫', color: 'teal' },
+  { label: '学生总数', value: '426', change: '+23', changeType: 'up', icon: '👨‍🎓', color: 'amber' },
+  { label: '本学期课程', value: '12', change: '+2', changeType: 'up', icon: '📚', color: 'blue' },
 ]
 
 const userTrendData = [
-  { month: '9月', submissions: 42, active: 85 },
-  { month: '10月', submissions: 58, active: 90 },
-  { month: '11月', submissions: 63, active: 88 },
-  { month: '12月', submissions: 55, active: 82 },
-  { month: '1月', submissions: 48, active: 79 },
-  { month: '2月', submissions: 36, active: 72 },
-  { month: '3月', submissions: 67, active: 91 },
-  { month: '4月', submissions: 74, active: 94 },
-  { month: '5月', submissions: 71, active: 93 },
-  { month: '6月', submissions: 60, active: 89 },
+  { month: '9月', submissions: 320, active: 280 },
+  { month: '10月', submissions: 410, active: 330 },
+  { month: '11月', submissions: 450, active: 350 },
+  { month: '12月', submissions: 380, active: 310 },
+  { month: '1月', submissions: 290, active: 260 },
+  { month: '2月', submissions: 240, active: 215 },
+  { month: '3月', submissions: 480, active: 370 },
+  { month: '4月', submissions: 530, active: 395 },
+  { month: '5月', submissions: 510, active: 385 },
+  { month: '6月', submissions: 420, active: 350 },
 ]
 
 const courseDistribution = [
@@ -61,26 +61,31 @@ const weeklyActivity = [
   { day: '周日', tasks: 5, interactions: 21 },
 ]
 
-const topStudents = [
-  { id: '1', name: '张浩然', className: '七年级(1)班', completionRate: 95, submissions: 18, avatar: '张' },
-  { id: '2', name: '孙悦', className: '八年级(3)班', completionRate: 96, submissions: 17, avatar: '孙' },
-  { id: '3', name: '陈晓雯', className: '七年级(1)班', completionRate: 92, submissions: 16, avatar: '陈' },
-  { id: '4', name: '王子豪', className: '七年级(2)班', completionRate: 90, submissions: 15, avatar: '王' },
-  { id: '5', name: '刘梦婷', className: '七年级(1)班', completionRate: 88, submissions: 14, avatar: '刘' },
+const topTeachers = [
+  { id: '1', name: '张老师', department: '理综组', courses: 3, studentCount: 88, rating: 4.9, avatar: '张' },
+  { id: '2', name: '李老师', department: '文综组', courses: 2, studentCount: 72, rating: 4.8, avatar: '李' },
+  { id: '3', name: '王老师', department: '理综组', courses: 3, studentCount: 96, rating: 4.7, avatar: '王' },
+  { id: '4', name: '刘老师', department: '艺综组', courses: 1, studentCount: 36, rating: 4.7, avatar: '刘' },
+  { id: '5', name: '陈老师', department: '文综组', courses: 2, studentCount: 70, rating: 4.6, avatar: '陈' },
 ]
 
 const recentActivities = [
-  { id: '1', type: 'course', action: '完成了单元测验', user: '张浩然', target: '《水循环与气候》', time: '5分钟前' },
-  { id: '2', type: 'submission', action: '提交了项目作品', user: '陈晓雯', target: '《植物工厂探究》', time: '18分钟前' },
-  { id: '3', type: 'report', action: '触发了学习预警', user: '吴雅琪', target: '连续3天未登录', time: '1小时前' },
-  { id: '4', type: 'course', action: '发起了课堂讨论', user: '林俊杰', target: '《数学建模》跨学科话题', time: '2小时前' },
-  { id: '5', type: 'submission', action: '完成了自学空间任务', user: '孙悦', target: '量子力学基础', time: '3小时前' },
+  { id: '1', type: 'course', action: '发布了新课程', user: '张老师', target: '《水循环与生态平衡》', time: '30分钟前' },
+  { id: '2', type: 'submission', action: '完成了本学期首个跨学科项目', user: '八年级(2)班', target: '《城市绿地规划》', time: '2小时前' },
+  { id: '3', type: 'report', action: '学习预警：连续7天未登录', user: '七年级(1)班', target: '3名学生', time: '4小时前' },
+  { id: '4', type: 'course', action: '的《植物工厂探究》完成率达90%', user: '李老师', target: '', time: '昨天' },
+  { id: '5', type: 'report', action: '完成学期中期跨学科教学评估', user: '理综组', target: '', time: '昨天' },
 ]
 
 const classProgress = [
-  { className: '2024级七年级(1)班', students: 38, completionRate: 82, avgScore: 87, activeRate: 92 },
-  { className: '2024级七年级(2)班', students: 36, completionRate: 75, avgScore: 83, activeRate: 86 },
-  { className: '2023级八年级(3)班', students: 34, completionRate: 88, avgScore: 91, activeRate: 95 },
+  { className: '七年级(1)班', students: 30, completionRate: 82, avgScore: 87, activeRate: 92 },
+  { className: '七年级(2)班', students: 29, completionRate: 75, avgScore: 83, activeRate: 86 },
+  { className: '七年级(3)班', students: 28, completionRate: 68, avgScore: 79, activeRate: 78 },
+  { className: '八年级(1)班', students: 30, completionRate: 88, avgScore: 91, activeRate: 95 },
+  { className: '八年级(2)班', students: 29, completionRate: 80, avgScore: 85, activeRate: 88 },
+  { className: '八年级(3)班', students: 28, completionRate: 71, avgScore: 80, activeRate: 82 },
+  { className: '九年级(1)班', students: 30, completionRate: 76, avgScore: 84, activeRate: 85 },
+  { className: '九年级(2)班', students: 28, completionRate: 84, avgScore: 88, activeRate: 91 },
 ]
 
 export default function AdminDashboard() {
@@ -92,8 +97,8 @@ export default function AdminDashboard() {
       <header className="sticky top-0 z-30 h-16 bg-white/80 backdrop-blur-xl border-b border-gray-100">
         <div className="h-full px-6 flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-semibold text-gray-900">教学数据概览</h1>
-            <p className="text-sm text-gray-500">欢迎回来，Mo老师</p>
+            <h1 className="text-xl font-semibold text-gray-900">学校数据总览</h1>
+            <p className="text-sm text-gray-500">欢迎，管理员</p>
           </div>
 
           <div className="flex items-center gap-4">
@@ -167,15 +172,15 @@ export default function AdminDashboard() {
           {/* User Trend Chart */}
           <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 p-6 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
             <div className="flex items-center justify-between mb-6">
-              <h3 className="font-semibold text-gray-900">班级学习活跃度趋势</h3>
+              <h3 className="font-semibold text-gray-900">全校学习活跃度趋势（2025-2026学年）</h3>
               <div className="flex items-center gap-4 text-sm">
                 <span className="flex items-center gap-2">
                   <span className="w-3 h-3 bg-primary-500 rounded-full"></span>
-                  任务提交数
+                  月度任务提交量
                 </span>
                 <span className="flex items-center gap-2">
                   <span className="w-3 h-3 bg-accent-500 rounded-full"></span>
-                  活跃人数
+                  月活跃学生数
                 </span>
               </div>
             </div>
@@ -264,7 +269,7 @@ export default function AdminDashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
           {/* Weekly Activity */}
           <div className="bg-white rounded-2xl border border-gray-100 p-6 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
-            <h3 className="font-semibold text-gray-900 mb-6">本周任务提交统计</h3>
+            <h3 className="font-semibold text-gray-900 mb-6">本周全校任务提交量</h3>
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={weeklyActivity}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
@@ -282,15 +287,15 @@ export default function AdminDashboard() {
             </ResponsiveContainer>
           </div>
 
-          {/* Top Students */}
+          {/* Top Teachers */}
           <div className="bg-white rounded-2xl border border-gray-100 p-6 animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-gray-900">学习积极性榜</h3>
-              <span className="text-xs text-gray-400">按任务完成率排序</span>
+              <h3 className="font-semibold text-gray-900">教师贡献榜</h3>
+              <span className="text-xs text-gray-400">按学生满意度排序</span>
             </div>
             <div className="space-y-3">
-              {topStudents.map((student, index) => (
-                <div key={student.id} className="flex items-center gap-3">
+              {topTeachers.map((teacher, index) => (
+                <div key={teacher.id} className="flex items-center gap-3">
                   <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
                     index === 0 ? 'bg-amber-100 text-amber-600' :
                     index === 1 ? 'bg-gray-200 text-gray-600' :
@@ -300,14 +305,14 @@ export default function AdminDashboard() {
                     {index + 1}
                   </span>
                   <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white text-sm font-medium shrink-0">
-                    {student.avatar}
+                    {teacher.avatar}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">{student.name}</p>
-                    <p className="text-xs text-gray-500 truncate">{student.className}</p>
+                    <p className="text-sm font-medium text-gray-900 truncate">{teacher.name}</p>
+                    <p className="text-xs text-gray-500 truncate">{teacher.department} · {teacher.courses}门课程</p>
                   </div>
                   <div className="text-sm font-semibold text-primary-600">
-                    {student.completionRate}%
+                    ⭐ {teacher.rating}
                   </div>
                 </div>
               ))}
@@ -366,7 +371,10 @@ export default function AdminDashboard() {
         {/* Class Progress Table */}
         <div className="bg-white rounded-2xl border border-gray-100 p-6 animate-fade-in-up" style={{ animationDelay: '0.7s' }}>
           <div className="flex items-center justify-between mb-6">
-            <h3 className="font-semibold text-gray-900">班级学习进度汇总</h3>
+            <div>
+              <h3 className="font-semibold text-gray-900">各班级学习进度对比</h3>
+              <p className="text-xs text-gray-400 mt-0.5">展示 8 / 15 个班级</p>
+            </div>
             <button className="text-sm text-primary-600 hover:text-primary-700 font-medium">
               导出报告 →
             </button>

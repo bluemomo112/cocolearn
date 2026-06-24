@@ -61,48 +61,48 @@ const masterClassrooms = [
   }
 ]
 
-// 教师成长计划问题库
+// 教学方法精选
 const growthProblems = [
   {
-    id: 'integration',
-    problem: '跨学科融合困难',
-    description: '不知道如何将不同学科知识有效整合',
+    id: 'cpote',
+    problem: 'C-POTE跨学科设计模型',
+    description: '情境-问题-组织-任务-评价，系统性跨学科课程设计框架',
     solutions: [
-      { type: 'video', title: 'C-POTE模型实战讲解', duration: '15分钟', views: 4156 },
-      { type: 'template', title: '跨学科教案设计模板库', downloads: 2580 },
-      { type: 'guide', title: '大概念提取实用手册', pages: 24 }
+      { type: 'video', title: 'C-POTE模型完整解析与应用', duration: '18分钟', views: 4156 },
+      { type: 'template', title: 'C-POTE教案设计工作表（可下载）', downloads: 2580 },
+      { type: 'guide', title: '大概念提取与学科联结操作手册', pages: 28 }
     ],
     caseStudies: [
-      { title: '从单一学科到跨学科的转变之路', teacher: '张老师' },
-      { title: '如何找到学科间的自然连接点', teacher: '李老师' }
+      { title: '用C-POTE设计《水循环与生态平衡》跨学科课例分析', teacher: '张老师' },
+      { title: '从C-POTE视角重构《文艺复兴》历史与艺术融合课', teacher: '李老师' }
     ]
   },
   {
-    id: 'engagement',
-    problem: '学生参与度低',
-    description: '课堂上学生不积极参与，缺乏主动性',
+    id: 'bloom',
+    problem: '布鲁姆分类法与高阶提问',
+    description: '基于六层认知目标，设计促进学生深度思考的提问序列',
     solutions: [
-      { type: 'video', title: '5个激发参与度的课堂策略', duration: '8分钟', views: 3240 },
-      { type: 'template', title: '小组角色分工表模板', downloads: 1580 },
-      { type: 'strategy', title: '课堂互动机制设计指南', pages: 12 }
+      { type: 'video', title: '高阶思维提问序列设计实践课', duration: '12分钟', views: 3240 },
+      { type: 'template', title: '六认知层级提问句式参考卡（可下载）', downloads: 1890 },
+      { type: 'guide', title: '跨学科课堂提问梯度设计指南', pages: 16 }
     ],
     caseStudies: [
-      { title: '从沉闷到活跃：一堂跨学科课的转变', teacher: '王老师' },
-      { title: '让每个学生都有话说的课堂设计', teacher: '赵老师' }
+      { title: '从"记忆"到"创造"：一堂地理课的提问升级实录', teacher: '王老师' },
+      { title: '用追问引导学生主动建立跨学科概念联结', teacher: '赵老师' }
     ]
   },
   {
-    id: 'assessment',
-    problem: '评价方式单一',
-    description: '不知道如何设计跨学科的多元评价',
+    id: 'formative',
+    problem: '形成性评价实践策略',
+    description: '嵌入课堂的即时评价方法，及时诊断学习状态并调整教学',
     solutions: [
-      { type: 'video', title: '跨学科评价量表设计', duration: '12分钟', views: 2890 },
-      { type: 'rubric', title: '多维度评价量表集', count: 18 },
-      { type: 'checklist', title: '形成性评价自检清单', items: 20 }
+      { type: 'video', title: '课堂形成性评价设计与实施', duration: '15分钟', views: 2890 },
+      { type: 'rubric', title: '跨学科素养多维评价量表集（18份）', count: 18 },
+      { type: 'checklist', title: '课堂学习证据收集自检清单（20项）', items: 20 }
     ],
     caseStudies: [
-      { title: '项目式学习的评价实践', teacher: '陈老师' },
-      { title: '如何评价学生的综合能力', teacher: '刘老师' }
+      { title: '项目式学习中如何实施全过程形成性评价', teacher: '陈老师' },
+      { title: '"教学评一致性"在跨学科综合课的落地实践', teacher: '刘老师' }
     ]
   }
 ]
@@ -135,8 +135,8 @@ const capabilityResources = {
     progress: 88,
     resources: [
       { type: 'course', title: '高阶提问技巧实践', hours: 8, featured: true },
-      { type: 'game', title: '课堂互动游戏库', count: 45 },
-      { type: 'community', title: '教学互动创新社群', members: 1240 }
+      { type: 'guide', title: '课堂提问序列设计手册', pages: 22 },
+      { type: 'checklist', title: '课堂互动质量自评量表', items: 18 }
     ]
   },
   assessment: {
@@ -146,7 +146,7 @@ const capabilityResources = {
     resources: [
       { type: 'rubric', title: '跨学科评价量表集', count: 18 },
       { type: 'video', title: '有效反馈的艺术', duration: '15分钟', featured: true },
-      { type: 'system', title: '数字化评价系统试用', period: '30天' }
+      { type: 'template', title: '学生表现评价记录表（可编辑）', count: 12 }
     ]
   }
 }
@@ -279,7 +279,7 @@ export default function ResourceHub() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
           {[
             { icon: '⭐', title: '名师课堂', desc: '观摩优秀教学案例', count: masterClassrooms.length, unit: '精选课程', color: 'text-yellow-500' },
-            { icon: '🚀', title: '成长计划', desc: '针对性问题解决', count: growthProblems.length, unit: '常见问题', color: 'text-primary-500' },
+            { icon: '🚀', title: '教学方法', desc: '核心跨学科教学方法', count: growthProblems.length, unit: '核心方法', color: 'text-primary-500' },
             { icon: '📦', title: '能力资源包', desc: '系统性技能提升', count: Object.keys(capabilityResources).length, unit: '核心能力', color: 'text-accent-500' },
             { icon: '🎯', title: '教学情境演练', desc: '真实课堂情境模拟', count: simulationScenarios.length, unit: '模拟场景', color: 'text-cyan-500' }
           ].map((item, index) => (
@@ -434,7 +434,7 @@ export default function ResourceHub() {
           <div className="flex items-center mb-6">
             <div className="text-3xl mr-3">🚀</div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">教师成长计划</h2>
+              <h2 className="text-2xl font-bold text-gray-900">教学方法精选</h2>
               <p className="text-gray-600 text-sm mt-1">针对常见跨学科教学问题，提供专业解决方案</p>
             </div>
           </div>
@@ -443,7 +443,7 @@ export default function ResourceHub() {
             {/* 问题选择器 */}
             <div className="lg:col-span-1">
               <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 sticky top-6">
-                <h3 className="text-lg font-bold text-gray-800 mb-5">选择您遇到的问题</h3>
+                <h3 className="text-lg font-bold text-gray-800 mb-5">选择教学方法</h3>
                 <div className="space-y-3">
                   {growthProblems.map((problem) => (
                     <button
@@ -474,7 +474,7 @@ export default function ResourceHub() {
                     <div className="space-y-6">
                       {/* 解决方案资源 */}
                       <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
-                        <h4 className="text-xl font-bold text-gray-800 mb-5">针对性解决方案</h4>
+                        <h4 className="text-xl font-bold text-gray-800 mb-5">核心资源</h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           {problem.solutions.map((solution, index) => (
                             <div key={index} className="bg-gray-50 rounded-2xl p-5 hover:shadow-md hover:bg-white transition-all duration-300 cursor-pointer group">
@@ -528,7 +528,7 @@ export default function ResourceHub() {
 
                       {/* 成功案例 */}
                       <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
-                        <h4 className="text-xl font-bold text-gray-800 mb-5">成功案例分析</h4>
+                        <h4 className="text-xl font-bold text-gray-800 mb-5">课例参考</h4>
                         <div className="space-y-3">
                           {problem.caseStudies.map((caseStudy, index) => (
                             <div key={index} className="bg-gray-50 rounded-2xl p-4 hover:shadow-md hover:bg-white transition-all duration-300 cursor-pointer">
@@ -653,7 +653,7 @@ export default function ResourceHub() {
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                             </svg>
                           )}
-                          {(resource.type === 'checklist' || resource.type === 'rubric' || resource.type === 'community' || resource.type === 'system') && (
+                          {(resource.type === 'checklist' || resource.type === 'rubric' || resource.type === 'template' || resource.type === 'guide') && (
                             <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                             </svg>
@@ -674,8 +674,7 @@ export default function ResourceHub() {
                                 {resource.rating}
                               </span>
                             )}
-                            {'members' in resource && <span>{resource.members}成员</span>}
-                            {'period' in resource && <span>{resource.period}试用</span>}
+                            {'pages' in resource && <span>{resource.pages}页</span>}
                           </div>
                         </div>
                         {resource.featured && (
@@ -811,58 +810,6 @@ export default function ResourceHub() {
             ))}
           </div>
 
-          {/* 话术优化工坊 */}
-          <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 mt-6 animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
-            <div className="text-center mb-6">
-              <div className="w-14 h-14 bg-gradient-to-br from-primary-100 to-accent-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-7 h-7 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold text-gray-800 mb-2">话术优化工坊</h3>
-              <p className="text-gray-600 text-sm">让AI帮您优化跨学科课堂话术，提升教学效果</p>
-            </div>
-
-            <div className="max-w-4xl mx-auto">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* 输入区域 */}
-                <div className="bg-gray-50 rounded-2xl p-5">
-                  <h4 className="font-bold text-gray-800 mb-3">您的原话术</h4>
-                  <textarea
-                    placeholder="请输入您在跨学科课堂中使用的话术，例如：'这两个概念之间有什么联系？'"
-                    className="w-full h-28 p-4 bg-white rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50 focus:border-primary-500 transition-all resize-none"
-                  />
-                  <button 
-          
-                  className="w-full mt-4 py-3 bg-primary-500 text-white font-medium rounded-xl hover:bg-primary-600 transition-all duration-200">
-                    AI优化建议
-                  </button>
-                </div>
-
-                {/* 输出区域 */}
-                <div className="bg-gray-50 rounded-2xl p-5">
-                  <h4 className="font-bold text-gray-800 mb-3">AI优化建议</h4>
-                  <div className="space-y-3">
-                    <div className="bg-gradient-to-r from-primary-50 to-accent-50 rounded-xl p-4 border border-primary-200">
-                      <div className="font-semibold text-primary-800 mb-2">升级版本 1</div>
-                      <p className="text-primary-700 text-sm">&ldquo;如果我们把生物课学的生态平衡和地理课学的水循环放在一起看，你能发现什么有趣的联系吗？&rdquo;</p>
-                      <div className="text-xs text-primary-600 mt-2">
-                        优化点：具体化学科内容，引导学生主动发现联系
-                      </div>
-                    </div>
-
-                    <div className="bg-gradient-to-r from-accent-50 to-cyan-50 rounded-xl p-4 border border-accent-200">
-                      <div className="font-semibold text-accent-800 mb-2">升级版本 2</div>
-                      <p className="text-accent-700 text-sm">&ldquo;想象一下，如果你是一滴水，你在这个生态系统中会经历怎样的旅程？&rdquo;</p>
-                      <div className="text-xs text-accent-600 mt-2">
-                        优化点：角色代入，激发想象力，促进跨学科思维
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
         </section>
       </div>
 
