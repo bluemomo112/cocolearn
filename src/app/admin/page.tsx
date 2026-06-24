@@ -22,69 +22,65 @@ import {
 
 // 模拟数据
 const overviewStats = [
-  { label: '总教师数', value: '342', change: '+12', changeType: 'up', icon: '👨‍🏫', color: 'blue' },
-  { label: '总学生数', value: '8,562', change: '+256', changeType: 'up', icon: '👨‍🎓', color: 'teal' },
-  { label: '课程总数', value: '156', change: '+8', changeType: 'up', icon: '📚', color: 'blue' },
-  { label: '本周活跃度', value: '94.2%', change: '+2.3%', changeType: 'up', icon: '📊', color: 'amber' },
+  { label: '管理中课程', value: '3', change: '+1', changeType: 'up', icon: '📚', color: 'blue' },
+  { label: '学生总数', value: '108', change: '+5', changeType: 'up', icon: '👨‍🎓', color: 'teal' },
+  { label: '本周待批改', value: '12', change: '-3', changeType: 'down', icon: '📝', color: 'amber' },
+  { label: '平均任务完成率', value: '78%', change: '+4%', changeType: 'up', icon: '📊', color: 'blue' },
 ]
 
 const userTrendData = [
-  { month: '1月', teachers: 280, students: 6500 },
-  { month: '2月', teachers: 295, students: 6800 },
-  { month: '3月', teachers: 310, students: 7200 },
-  { month: '4月', teachers: 318, students: 7600 },
-  { month: '5月', teachers: 325, students: 7900 },
-  { month: '6月', teachers: 332, students: 8100 },
-  { month: '7月', teachers: 335, students: 8200 },
-  { month: '8月', teachers: 338, students: 8350 },
-  { month: '9月', teachers: 340, students: 8450 },
-  { month: '10月', teachers: 341, students: 8500 },
-  { month: '11月', teachers: 342, students: 8550 },
-  { month: '12月', teachers: 342, students: 8562 },
+  { month: '9月', submissions: 42, active: 85 },
+  { month: '10月', submissions: 58, active: 90 },
+  { month: '11月', submissions: 63, active: 88 },
+  { month: '12月', submissions: 55, active: 82 },
+  { month: '1月', submissions: 48, active: 79 },
+  { month: '2月', submissions: 36, active: 72 },
+  { month: '3月', submissions: 67, active: 91 },
+  { month: '4月', submissions: 74, active: 94 },
+  { month: '5月', submissions: 71, active: 93 },
+  { month: '6月', submissions: 60, active: 89 },
 ]
 
 const courseDistribution = [
-  { name: '数学', value: 28, color: '#10b981' },
-  { name: '物理', value: 24, color: '#14b8a6' },
-  { name: '化学', value: 18, color: '#f59e0b' },
-  { name: '生物', value: 16, color: '#22c55e' },
-  { name: '地理', value: 14, color: '#06b6d4' },
-  { name: '历史', value: 12, color: '#14b8a6' },
-  { name: '其他', value: 44, color: '#6b7280' },
+  { name: '科学+数学', value: 22, color: '#10b981' },
+  { name: '历史+地理', value: 18, color: '#14b8a6' },
+  { name: '数学+艺术', value: 15, color: '#f59e0b' },
+  { name: '生物+化学', value: 14, color: '#22c55e' },
+  { name: '物理+工程', value: 12, color: '#06b6d4' },
+  { name: '语文+历史', value: 10, color: '#8b5cf6' },
+  { name: '其他组合', value: 9, color: '#6b7280' },
 ]
 
 const weeklyActivity = [
-  { day: '周一', lessons: 45, interactions: 1250 },
-  { day: '周二', lessons: 52, interactions: 1380 },
-  { day: '周三', lessons: 48, interactions: 1290 },
-  { day: '周四', lessons: 55, interactions: 1420 },
-  { day: '周五', lessons: 42, interactions: 1180 },
-  { day: '周六', lessons: 18, interactions: 520 },
-  { day: '周日', lessons: 12, interactions: 380 },
+  { day: '周一', tasks: 28, interactions: 136 },
+  { day: '周二', tasks: 35, interactions: 158 },
+  { day: '周三', tasks: 31, interactions: 142 },
+  { day: '周四', tasks: 40, interactions: 175 },
+  { day: '周五', tasks: 26, interactions: 118 },
+  { day: '周六', tasks: 8, interactions: 32 },
+  { day: '周日', tasks: 5, interactions: 21 },
 ]
 
-const topTeachers = [
-  { id: '1', name: '张明华', school: '北京四中', courses: 8, students: 245, rating: 4.9, avatar: '张' },
-  { id: '2', name: '李文静', school: '上海中学', courses: 6, students: 198, rating: 4.8, avatar: '李' },
-  { id: '3', name: '王建国', school: '深圳中学', courses: 7, students: 212, rating: 4.8, avatar: '王' },
-  { id: '4', name: '刘晓燕', school: '杭州二中', courses: 5, students: 156, rating: 4.7, avatar: '刘' },
-  { id: '5', name: '陈志强', school: '成都七中', courses: 6, students: 178, rating: 4.7, avatar: '陈' },
+const topStudents = [
+  { id: '1', name: '张浩然', className: '七年级(1)班', completionRate: 95, submissions: 18, avatar: '张' },
+  { id: '2', name: '孙悦', className: '八年级(3)班', completionRate: 96, submissions: 17, avatar: '孙' },
+  { id: '3', name: '陈晓雯', className: '七年级(1)班', completionRate: 92, submissions: 16, avatar: '陈' },
+  { id: '4', name: '王子豪', className: '七年级(2)班', completionRate: 90, submissions: 15, avatar: '王' },
+  { id: '5', name: '刘梦婷', className: '七年级(1)班', completionRate: 88, submissions: 14, avatar: '刘' },
 ]
 
 const recentActivities = [
-  { id: '1', type: 'course', action: '创建了新课程', user: '张明华', target: '《气候变化与生态系统》', time: '5分钟前' },
-  { id: '2', type: 'teacher', action: '完成了教师认证', user: '新教师 王丽', target: '', time: '15分钟前' },
-  { id: '3', type: 'report', action: '生成了月度报告', user: '系统', target: '11月教学报告', time: '30分钟前' },
-  { id: '4', type: 'course', action: '发布了课程', user: '李文静', target: '《数学与音乐》', time: '1小时前' },
-  { id: '5', type: 'alert', action: '触发了异常提醒', user: '系统', target: '服务器负载过高', time: '2小时前' },
+  { id: '1', type: 'course', action: '完成了单元测验', user: '张浩然', target: '《水循环与气候》', time: '5分钟前' },
+  { id: '2', type: 'submission', action: '提交了项目作品', user: '陈晓雯', target: '《植物工厂探究》', time: '18分钟前' },
+  { id: '3', type: 'report', action: '触发了学习预警', user: '吴雅琪', target: '连续3天未登录', time: '1小时前' },
+  { id: '4', type: 'course', action: '发起了课堂讨论', user: '林俊杰', target: '《数学建模》跨学科话题', time: '2小时前' },
+  { id: '5', type: 'submission', action: '完成了自学空间任务', user: '孙悦', target: '量子力学基础', time: '3小时前' },
 ]
 
-const schoolRanking = [
-  { school: '北京四中', teachers: 28, students: 856, courses: 42, score: 96 },
-  { school: '上海中学', teachers: 24, students: 742, courses: 38, score: 94 },
-  { school: '深圳中学', teachers: 22, students: 698, courses: 35, score: 92 },
-  { school: '杭州二中', teachers: 20, students: 612, courses: 32, score: 90 },
-  { school: '成都七中', teachers: 18, students: 545, courses: 28, score: 88 },
+const classProgress = [
+  { className: '2024级七年级(1)班', students: 38, completionRate: 82, avgScore: 87, activeRate: 92 },
+  { className: '2024级七年级(2)班', students: 36, completionRate: 75, avgScore: 83, activeRate: 86 },
+  { className: '2023级八年级(3)班', students: 34, completionRate: 88, avgScore: 91, activeRate: 95 },
 ]
 
 export default function AdminDashboard() {
@@ -96,8 +92,8 @@ export default function AdminDashboard() {
       <header className="sticky top-0 z-30 h-16 bg-white/80 backdrop-blur-xl border-b border-gray-100">
         <div className="h-full px-6 flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-semibold text-gray-900">数据仪表盘</h1>
-            <p className="text-sm text-gray-500">欢迎回来，管理员</p>
+            <h1 className="text-xl font-semibold text-gray-900">教学数据概览</h1>
+            <p className="text-sm text-gray-500">欢迎回来，Mo老师</p>
           </div>
 
           <div className="flex items-center gap-4">
@@ -171,26 +167,26 @@ export default function AdminDashboard() {
           {/* User Trend Chart */}
           <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 p-6 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
             <div className="flex items-center justify-between mb-6">
-              <h3 className="font-semibold text-gray-900">用户增长趋势</h3>
+              <h3 className="font-semibold text-gray-900">班级学习活跃度趋势</h3>
               <div className="flex items-center gap-4 text-sm">
                 <span className="flex items-center gap-2">
                   <span className="w-3 h-3 bg-primary-500 rounded-full"></span>
-                  教师
+                  任务提交数
                 </span>
                 <span className="flex items-center gap-2">
                   <span className="w-3 h-3 bg-accent-500 rounded-full"></span>
-                  学生
+                  活跃人数
                 </span>
               </div>
             </div>
             <ResponsiveContainer width="100%" height={300}>
               <AreaChart data={userTrendData}>
                 <defs>
-                  <linearGradient id="colorTeachers" x1="0" y1="0" x2="0" y2="1">
+                  <linearGradient id="colorSubmissions" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
                     <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                   </linearGradient>
-                  <linearGradient id="colorStudents" x1="0" y1="0" x2="0" y2="1">
+                  <linearGradient id="colorActive" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#14b8a6" stopOpacity={0.3} />
                     <stop offset="95%" stopColor="#14b8a6" stopOpacity={0} />
                   </linearGradient>
@@ -208,19 +204,19 @@ export default function AdminDashboard() {
                 />
                 <Area
                   type="monotone"
-                  dataKey="students"
+                  dataKey="active"
                   stroke="#14b8a6"
                   strokeWidth={2}
                   fillOpacity={1}
-                  fill="url(#colorStudents)"
+                  fill="url(#colorActive)"
                 />
                 <Area
                   type="monotone"
-                  dataKey="teachers"
+                  dataKey="submissions"
                   stroke="#10b981"
                   strokeWidth={2}
                   fillOpacity={1}
-                  fill="url(#colorTeachers)"
+                  fill="url(#colorSubmissions)"
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -228,7 +224,7 @@ export default function AdminDashboard() {
 
           {/* Course Distribution */}
           <div className="bg-white rounded-2xl border border-gray-100 p-6 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
-            <h3 className="font-semibold text-gray-900 mb-6">课程学科分布</h3>
+            <h3 className="font-semibold text-gray-900 mb-6">跨学科组合分布</h3>
             <ResponsiveContainer width="100%" height={220}>
               <PieChart>
                 <Pie
@@ -268,7 +264,7 @@ export default function AdminDashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
           {/* Weekly Activity */}
           <div className="bg-white rounded-2xl border border-gray-100 p-6 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
-            <h3 className="font-semibold text-gray-900 mb-6">本周活动统计</h3>
+            <h3 className="font-semibold text-gray-900 mb-6">本周任务提交统计</h3>
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={weeklyActivity}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
@@ -281,23 +277,21 @@ export default function AdminDashboard() {
                     borderRadius: '12px',
                   }}
                 />
-                <Bar dataKey="lessons" fill="#10b981" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="tasks" fill="#10b981" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
 
-          {/* Top Teachers */}
+          {/* Top Students */}
           <div className="bg-white rounded-2xl border border-gray-100 p-6 animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-gray-900">优秀教师榜</h3>
-              <Link href="/admin/teachers" className="text-sm text-primary-600 hover:text-primary-700 font-medium">
-                查看全部 →
-              </Link>
+              <h3 className="font-semibold text-gray-900">学习积极性榜</h3>
+              <span className="text-xs text-gray-400">按任务完成率排序</span>
             </div>
             <div className="space-y-3">
-              {topTeachers.map((teacher, index) => (
-                <div key={teacher.id} className="flex items-center gap-3">
-                  <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+              {topStudents.map((student, index) => (
+                <div key={student.id} className="flex items-center gap-3">
+                  <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
                     index === 0 ? 'bg-amber-100 text-amber-600' :
                     index === 1 ? 'bg-gray-200 text-gray-600' :
                     index === 2 ? 'bg-orange-100 text-orange-600' :
@@ -305,18 +299,15 @@ export default function AdminDashboard() {
                   }`}>
                     {index + 1}
                   </span>
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white text-sm font-medium">
-                    {teacher.avatar}
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white text-sm font-medium shrink-0">
+                    {student.avatar}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">{teacher.name}</p>
-                    <p className="text-xs text-gray-500 truncate">{teacher.school}</p>
+                    <p className="text-sm font-medium text-gray-900 truncate">{student.name}</p>
+                    <p className="text-xs text-gray-500 truncate">{student.className}</p>
                   </div>
-                  <div className="flex items-center gap-1 text-sm text-amber-500">
-                    <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20">
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                    </svg>
-                    {teacher.rating}
+                  <div className="text-sm font-semibold text-primary-600">
+                    {student.completionRate}%
                   </div>
                 </div>
               ))}
@@ -331,8 +322,8 @@ export default function AdminDashboard() {
                 <div key={activity.id} className="flex items-start gap-3">
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
                     activity.type === 'course' ? 'bg-primary-100 text-primary-600' :
-                    activity.type === 'teacher' ? 'bg-accent-100 text-accent-600' :
-                    activity.type === 'report' ? 'bg-primary-100 text-primary-600' :
+                    activity.type === 'submission' ? 'bg-accent-100 text-accent-600' :
+                    activity.type === 'report' ? 'bg-amber-100 text-amber-600' :
                     'bg-red-100 text-red-600'
                   }`}>
                     {activity.type === 'course' && (
@@ -340,14 +331,14 @@ export default function AdminDashboard() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                       </svg>
                     )}
-                    {activity.type === 'teacher' && (
+                    {activity.type === 'submission' && (
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                       </svg>
                     )}
                     {activity.type === 'report' && (
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                       </svg>
                     )}
                     {activity.type === 'alert' && (
@@ -372,53 +363,49 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* School Ranking Table */}
+        {/* Class Progress Table */}
         <div className="bg-white rounded-2xl border border-gray-100 p-6 animate-fade-in-up" style={{ animationDelay: '0.7s' }}>
           <div className="flex items-center justify-between mb-6">
-            <h3 className="font-semibold text-gray-900">学校排名</h3>
+            <h3 className="font-semibold text-gray-900">班级学习进度汇总</h3>
             <button className="text-sm text-primary-600 hover:text-primary-700 font-medium">
-              查看详细报告 →
+              导出报告 →
             </button>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-gray-100">
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">排名</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">学校名称</th>
-                  <th className="text-center py-3 px-4 text-sm font-medium text-gray-500">教师数</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">班级</th>
                   <th className="text-center py-3 px-4 text-sm font-medium text-gray-500">学生数</th>
-                  <th className="text-center py-3 px-4 text-sm font-medium text-gray-500">课程数</th>
-                  <th className="text-center py-3 px-4 text-sm font-medium text-gray-500">综合评分</th>
+                  <th className="text-center py-3 px-4 text-sm font-medium text-gray-500">任务完成率</th>
+                  <th className="text-center py-3 px-4 text-sm font-medium text-gray-500">平均得分</th>
+                  <th className="text-center py-3 px-4 text-sm font-medium text-gray-500">活跃率</th>
                   <th className="text-right py-3 px-4 text-sm font-medium text-gray-500">操作</th>
                 </tr>
               </thead>
               <tbody>
-                {schoolRanking.map((school, index) => (
-                  <tr key={school.school} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                    <td className="py-4 px-4">
-                      <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                        index === 0 ? 'bg-amber-100 text-amber-600' :
-                        index === 1 ? 'bg-gray-200 text-gray-600' :
-                        index === 2 ? 'bg-orange-100 text-orange-600' :
-                        'bg-gray-100 text-gray-500'
-                      }`}>
-                        {index + 1}
-                      </span>
+                {classProgress.map((cls) => (
+                  <tr key={cls.className} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                    <td className="py-4 px-4 font-medium text-gray-900">{cls.className}</td>
+                    <td className="py-4 px-4 text-center text-gray-600">{cls.students}</td>
+                    <td className="py-4 px-4 text-center">
+                      <div className="flex items-center justify-center gap-2">
+                        <div className="w-20 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                          <div className="h-full bg-primary-500 rounded-full" style={{ width: `${cls.completionRate}%` }} />
+                        </div>
+                        <span className="text-sm text-gray-700">{cls.completionRate}%</span>
+                      </div>
                     </td>
-                    <td className="py-4 px-4 font-medium text-gray-900">{school.school}</td>
-                    <td className="py-4 px-4 text-center text-gray-600">{school.teachers}</td>
-                    <td className="py-4 px-4 text-center text-gray-600">{school.students}</td>
-                    <td className="py-4 px-4 text-center text-gray-600">{school.courses}</td>
                     <td className="py-4 px-4 text-center">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        school.score >= 95 ? 'bg-primary-100 text-primary-600' :
-                        school.score >= 90 ? 'bg-accent-100 text-accent-600' :
+                        cls.avgScore >= 90 ? 'bg-primary-100 text-primary-600' :
+                        cls.avgScore >= 80 ? 'bg-accent-100 text-accent-600' :
                         'bg-amber-100 text-amber-600'
                       }`}>
-                        {school.score}分
+                        {cls.avgScore}分
                       </span>
                     </td>
+                    <td className="py-4 px-4 text-center text-gray-600">{cls.activeRate}%</td>
                     <td className="py-4 px-4 text-right">
                       <button className="text-sm text-primary-600 hover:text-primary-700 font-medium">
                         详情

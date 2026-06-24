@@ -9,12 +9,12 @@ const workshops = [
   {
     id: 'ws_001',
     title: '跨学科教学设计工作坊',
-    description: '通过系统化的学习，掌握跨学科课程设计的核心方法，运用C-POTE模型创建优质教案',
+    description: '通过系统化的学习，掌握跨学科课程设计的核心方法，运用C-POTE模型提炼大概念、设计真实情境任务',
     coverImage: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=600&h=400&fit=crop',
     progress: 60,
     participants: 128,
-    startTime: '2025-01-15',
-    endTime: '2025-02-15',
+    startTime: '2026-03-10',
+    endTime: '2026-04-10',
     status: 'ongoing',
     tags: ['跨学科', '教学设计', 'C-POTE'],
     instructor: {
@@ -24,15 +24,15 @@ const workshops = [
   },
   {
     id: 'ws_002',
-    title: '课堂提问技巧工作坊',
-    description: '学习布鲁姆认知目标层级，设计促进深度思考的提问策略，提升课堂互动质量',
+    title: '课堂提问与深度学习工作坊',
+    description: '基于布鲁姆认知目标层级，设计促进高阶思维的提问序列，培养学生元认知能力与批判性思维',
     coverImage: 'https://images.unsplash.com/photo-1509062522246-3755977927d7?w=600&h=400&fit=crop',
     progress: 100,
     participants: 95,
-    startTime: '2024-12-01',
-    endTime: '2024-12-31',
+    startTime: '2025-10-01',
+    endTime: '2025-10-31',
     status: 'completed',
-    tags: ['提问技巧', '课堂互动', '布鲁姆'],
+    tags: ['提问技巧', '深度学习', '布鲁姆'],
     instructor: {
       name: '李老师',
       avatar: '李'
@@ -40,15 +40,15 @@ const workshops = [
   },
   {
     id: 'ws_003',
-    title: 'AI辅助教学实践工作坊',
-    description: '探索人工智能与学科教学的深度融合，打造智慧课堂，提升教学效率和学习体验',
+    title: 'AI融合教学实践工作坊',
+    description: '探索AI智能体与跨学科教学的深度融合，设计人机协同的学习任务，提升课堂个性化支持能力',
     coverImage: 'https://images.unsplash.com/photo-1677442135703-1787eea5ce01?w=600&h=400&fit=crop',
     progress: 0,
     participants: 0,
-    startTime: '2025-02-01',
-    endTime: '2025-03-01',
+    startTime: '2026-07-01',
+    endTime: '2026-07-31',
     status: 'upcoming',
-    tags: ['AI教学', '智慧课堂', '教育科技'],
+    tags: ['AI融合教学', '智能体', '个性化学习'],
     instructor: {
       name: '王博士',
       avatar: '王'
@@ -56,15 +56,15 @@ const workshops = [
   },
   {
     id: 'ws_004',
-    title: '形成性评价策略工作坊',
-    description: '掌握多样化的形成性评价方法，及时了解学生学习进展，调整教学策略',
+    title: '形成性评价与教学调整工作坊',
+    description: '掌握嵌入式形成性评价策略，通过课堂证据即时诊断学习状态，实现"教学评一致性"',
     coverImage: 'https://images.unsplash.com/photo-1606326608606-aa0b62935f2b?w=600&h=400&fit=crop',
     progress: 35,
     participants: 76,
-    startTime: '2025-01-01',
-    endTime: '2025-01-31',
+    startTime: '2026-05-06',
+    endTime: '2026-06-06',
     status: 'ongoing',
-    tags: ['形成性评价', '学习评估', '教学反馈'],
+    tags: ['形成性评价', '教学评一致', '学习诊断'],
     instructor: {
       name: '陈老师',
       avatar: '陈'
@@ -73,14 +73,14 @@ const workshops = [
   {
     id: 'ws_005',
     title: '项目式学习设计工作坊',
-    description: '掌握PBL(Project-Based Learning)的设计方法，培养学生的综合能力和创新思维',
+    description: '掌握PBL核心设计方法：从真实情境问题出发，设计驱动性问题与探究任务序列，培养学生综合素养',
     coverImage: 'https://images.unsplash.com/photo-1531482615713-2afd69097998?w=600&h=400&fit=crop',
     progress: 100,
     participants: 112,
-    startTime: '2024-11-01',
-    endTime: '2024-11-30',
+    startTime: '2025-09-01',
+    endTime: '2025-09-30',
     status: 'completed',
-    tags: ['PBL', '项目式学习', '创新思维'],
+    tags: ['PBL', '驱动性问题', '综合素养'],
     instructor: {
       name: '刘教授',
       avatar: '刘'

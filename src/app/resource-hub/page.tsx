@@ -281,7 +281,7 @@ export default function ResourceHub() {
             { icon: '⭐', title: '名师课堂', desc: '观摩优秀教学案例', count: masterClassrooms.length, unit: '精选课程', color: 'text-yellow-500' },
             { icon: '🚀', title: '成长计划', desc: '针对性问题解决', count: growthProblems.length, unit: '常见问题', color: 'text-primary-500' },
             { icon: '📦', title: '能力资源包', desc: '系统性技能提升', count: Object.keys(capabilityResources).length, unit: '核心能力', color: 'text-accent-500' },
-            { icon: '🤖', title: 'AI训练场', desc: '情境模拟练习', count: simulationScenarios.length, unit: '模拟场景', color: 'text-cyan-500' }
+            { icon: '🎯', title: '教学情境演练', desc: '真实课堂情境模拟', count: simulationScenarios.length, unit: '模拟场景', color: 'text-cyan-500' }
           ].map((item, index) => (
             <div
               key={item.title}
@@ -696,13 +696,13 @@ export default function ResourceHub() {
           </div>
         </section>
 
-        {/* 4. AI训练场模块 */}
+        {/* 4. 教学情境演练模块 */}
         <section className="mb-16 animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
           <div className="flex items-center mb-6">
-            <div className="text-3xl mr-3">🤖</div>
+            <div className="text-3xl mr-3">🎯</div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">AI训练场</h2>
-              <p className="text-gray-600 text-sm mt-1">情境模拟练习，提升跨学科教学应对能力和技巧</p>
+              <h2 className="text-2xl font-bold text-gray-900">教学情境演练</h2>
+              <p className="text-gray-600 text-sm mt-1">真实课堂情境模拟，提升跨学科教学中的即时应对能力</p>
             </div>
           </div>
 
