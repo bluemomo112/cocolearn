@@ -268,7 +268,7 @@ export default function ResourceHub() {
           {[
             { icon: '⭐', title: '名师课堂', desc: '观摩优秀教学案例', count: masterClassrooms.length, unit: '精选课程', color: 'text-yellow-500' },
             { icon: '🚀', title: '教学方法', desc: '核心跨学科教学方法', count: growthProblems.length, unit: '核心方法', color: 'text-primary-500' },
-            { icon: '📦', title: '能力自测', desc: '精准推荐学习路径', count: Object.keys(capabilityResources).length, unit: '能力维度', color: 'text-accent-500' },
+            { icon: '📦', title: '能力自测', desc: '找出短板，按需强化', count: Object.keys(capabilityResources).length, unit: '能力维度', color: 'text-accent-500' },
             { icon: '🎯', title: '教学情境演练', desc: '真实课堂情境模拟', count: simulationScenarios.length, unit: '模拟场景', color: 'text-cyan-500' }
           ].map((item, index) => (
             <div
@@ -327,7 +327,7 @@ export default function ResourceHub() {
             {filteredMasters.map((classroom, index) => (
               <div
                 key={classroom.id}
-                className="bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group animate-fade-in-up"
+                className="bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group animate-fade-in-up flex flex-col"
                 style={{ animationDelay: `${0.1 + index * 0.05}s` }}
               >
                 {/* 视频缩略图 */}
@@ -368,7 +368,7 @@ export default function ResourceHub() {
                 </div>
 
                 {/* 课堂信息 */}
-                <div className="p-5">
+                <div className="p-5 flex flex-col flex-1">
                   <h3 className="font-bold text-gray-900 text-lg mb-2 line-clamp-2 group-hover:text-primary-600 transition-colors">
                     {classroom.title}
                   </h3>
@@ -396,7 +396,7 @@ export default function ResourceHub() {
                   </div>
 
                   {/* 互动数据 */}
-                  <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                  <div className="flex items-center justify-between pt-3 border-t border-gray-100 mt-auto">
                     <div className="flex items-center gap-4 text-sm text-gray-500">
                       <div className="flex items-center gap-1">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -427,10 +427,10 @@ export default function ResourceHub() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
             {/* 问题选择器 */}
-            <div className="lg:col-span-1">
-              <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 sticky top-6">
+            <div className="lg:col-span-1 flex flex-col">
+              <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 h-full flex flex-col">
                 <h3 className="text-lg font-bold text-gray-800 mb-5">选择教学方法</h3>
                 <div className="space-y-3">
                   {growthProblems.map((problem) => (
@@ -561,8 +561,8 @@ export default function ResourceHub() {
           <div className="flex items-center mb-6">
             <div className="text-3xl mr-3">📦</div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">跨学科能力自测 · 推荐学习路径</h2>
-              <p className="text-gray-600 text-sm mt-1">自评当前各维度掌握程度，系统为您匹配对应学习资源</p>
+              <h2 className="text-2xl font-bold text-gray-900">跨学科教学能力自测</h2>
+              <p className="text-gray-600 text-sm mt-1">自评各项教学能力的掌握程度，找出薄弱环节，直接查看对应强化资源</p>
             </div>
           </div>
 
@@ -590,7 +590,7 @@ export default function ResourceHub() {
                   </div>
                   <div className="text-right">
                     <div className="text-2xl font-bold text-primary-600">{capability.progress}%</div>
-                    <div className="text-xs text-gray-500">掌握度</div>
+                    <div className="text-xs text-gray-500">自评程度</div>
                   </div>
                 </div>
 
@@ -604,7 +604,8 @@ export default function ResourceHub() {
                   </div>
                 </div>
 
-                {/* 资源列表 */}
+                {/* 强化资源 */}
+                <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">针对性强化资源</p>
                 <div className="space-y-3">
                   {capability.resources.map((resource, resourceIndex) => (
                     <div
@@ -675,9 +676,6 @@ export default function ResourceHub() {
                   ))}
                 </div>
 
-                <button className="w-full mt-5 py-3 bg-primary-500 text-white font-medium rounded-xl hover:bg-primary-600 hover:shadow-lg transition-all duration-200">
-                  制定专属成长计划
-                </button>
               </div>
             ))}
           </div>
