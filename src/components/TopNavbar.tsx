@@ -28,16 +28,7 @@ export default function TopNavbar({ user = { name: 'Mo老师', role: 'AI · 高�
   const { t } = useLanguage()
 
   const navItems: NavItem[] = [
-    {
-      id: 'teacher',
-      label: t('教师中心'),
-      href: '/teacher',
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-        </svg>
-      ),
-    },
+
     {
       id: 'course-center',
       label: t('课程中心'),
@@ -48,9 +39,19 @@ export default function TopNavbar({ user = { name: 'Mo老师', role: 'AI · 高�
         </svg>
       ),
     },
+        {
+      id: 'teacher',
+      label: t('我的主页'),
+      href: '/teacher',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+        </svg>
+      ),
+    },
     {
       id: 'resource-hub',
-      label: t('资源库'),
+      label: t('学习资源'),
       href: '/resource-hub',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -92,7 +93,7 @@ export default function TopNavbar({ user = { name: 'Mo老师', role: 'AI · 高�
   }
 
   return (
-    <header className="sticky top-0 z-50 h-16 bg-white/80 backdrop-blur-xl border-b border-gray-100/50">
+    <header className="sticky top-0 z-50 h-16 bg-white/80 backdrop-blur-xl border-b border-gray-100/50 shrink-0">
       <div className="h-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
@@ -101,7 +102,7 @@ export default function TopNavbar({ user = { name: 'Mo老师', role: 'AI · 高�
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
             </svg>
           </div>
-          <span className="font-bold text-lg text-gray-900">CocoLearn</span>
+          <span className="font-bold text-lg text-gray-900">CocoStudy</span>
         </Link>
 
         {/* Navigation */}

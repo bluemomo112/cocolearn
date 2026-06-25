@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import { PublishSuccessModal } from './PublishSuccessModal';
 import {
   X,
   Bot,
@@ -216,17 +218,125 @@ export function Resizer({ onResize, position }: { onResize: (delta: number) => v
   );
 }
 
+// AI 推荐函数（Mock 实现）
+const generateCoverRecommendation = (title: string): string => {
+  // 基于关键词匹配预设图库
+  const coverMap: Record<string, string> = {
+    '水': 'https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=400',
+    '循环': 'https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=400',
+    '植物': 'https://images.unsplash.com/photo-1466781783364-36c955e42a7f?w=400',
+    '动物': 'https://images.unsplash.com/photo-1564349683136-77e08dba1ef7?w=400',
+    '地球': 'https://images.unsplash.com/photo-1614730321146-b6fa6a46bcb4?w=400',
+    '科学': 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=400',
+    '数学': 'https://images.unsplash.com/photo-1509228468518-180dd4864904?w=400',
+    '历史': 'https://images.unsplash.com/photo-1461360370896-922624d12aa1?w=400',
+  };
+
+  for (const [keyword, url] of Object.entries(coverMap)) {
+    if (title.includes(keyword)) {
+      return url;
+    }
+  }
+
+  // 默认封面
+  return 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=400';
+};
+
+const generateTagRecommendations = (title: string, subjects: string[]): string[] => {
+  const allTags = ['知识点', '实验', '探究', '跨学科', '项目式学习', '观察', '分析', '创新'];
+
+  // 基于标题和学科推荐标签
+  const recommendedTags: string[] = [];
+
+  if (title.includes('实验') || title.includes('观察')) {
+    recommendedTags.push('实验', '观察');
+  }
+  if (title.includes('探究') || title.includes('研究')) {
+    recommendedTags.push('探究', '分析');
+  }
+  if (subjects.length > 1) {
+    recommendedTags.push('跨学科');
+  }
+  if (title.includes('项目') || title.includes('设计')) {
+    recommendedTags.push('项目式学习', '创新');
+  }
+
+  // 如果没有匹配，返回默认推荐
+  if (recommendedTags.length === 0) {
+    return ['知识点', '探究'];
+  }
+
+  return [...new Set(recommendedTags)]; // 去重
+};
+
+// 跨学科标签（精选推荐，限制在10个以内）
+const CROSS_DISCIPLINARY_TAGS = [
+  '系统与平衡', '生态系统', '数据分析', '逻辑思维',
+  '文化传承', '可持续发展', '创新思维', '批判性思考',
+  '问题解决', '信息素养',
+];
+
+// 完整学科列表
+const ALL_SUBJECTS = [
+  '语文', '数学', '英语', '物理', '化学', '生物',
+  '历史', '地理', '政治', '科学', '信息技术', '通用技术',
+  '音乐', '美术', '体育', '心理健康', '劳动技术', '综合实践',
+];
+
 // NoteInfoModal - 跨学科配置模态框
 export function NoteInfoModal({ config, onSave, onClose, knowledgeLibrary, grades, classes }: any) {
   const [localConfig, setLocalConfig] = useState({
     title: config.title || '',
-    description: config.description || '',
+    cover: config.cover || '',
+    tags: config.tags || [],
     subjects: config.subjects || [],
     grade: config.grade || '',
     bindClasses: config.bindClasses || [],
   });
+  const [showMoreConfig, setShowMoreConfig] = useState(true);
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
+  const [publishError, setPublishError] = useState('');
+  const [customTagInput, setCustomTagInput] = useState('');
+  const [showShareLink, setShowShareLink] = useState(false);
+  const [publishSuccessData, setPublishSuccessData] = useState<{
+    link: string;
+    code: string;
+  } | null>(null);
 
-  const allSubjects = Object.keys(knowledgeLibrary);
+  // 发布范围选择
+  const [publishScope, setPublishScope] = useState({
+    includeResources: true,
+    includeTasks: true,
+    includeAISettings: true,
+    includeLearningPath: true,
+  });
+
+  const allSubjects = ALL_SUBJECTS;
+
+  // AI 自动推荐封面和标签
+  useEffect(() => {
+    if (!localConfig.title) return;
+
+    const timer = setTimeout(() => {
+      setIsGeneratingAI(true);
+
+      // 模拟 AI 生成延迟
+      setTimeout(() => {
+        const newCover = generateCoverRecommendation(localConfig.title);
+        const newTags = generateTagRecommendations(localConfig.title, localConfig.subjects);
+
+        setLocalConfig((prev) => ({
+          ...prev,
+          cover: newCover,
+          tags: newTags,
+        }));
+
+        setIsGeneratingAI(false);
+      }, 800);
+    }, 500); // 防抖 500ms
+
+    return () => clearTimeout(timer);
+  }, [localConfig.title, localConfig.subjects]);
 
   const toggleSubject = (subject: string) => {
     setLocalConfig((prev: any) => ({
@@ -234,6 +344,15 @@ export function NoteInfoModal({ config, onSave, onClose, knowledgeLibrary, grade
       subjects: prev.subjects.includes(subject)
         ? prev.subjects.filter((s: string) => s !== subject)
         : [...prev.subjects, subject],
+    }));
+  };
+
+  const toggleTag = (tag: string) => {
+    setLocalConfig((prev: any) => ({
+      ...prev,
+      tags: prev.tags.includes(tag)
+        ? prev.tags.filter((t: string) => t !== tag)
+        : [...prev.tags, tag],
     }));
   };
 
@@ -246,120 +365,466 @@ export function NoteInfoModal({ config, onSave, onClose, knowledgeLibrary, grade
     }));
   };
 
+  const regenerateCover = () => {
+    setIsGeneratingAI(true);
+    setTimeout(() => {
+      const newCover = generateCoverRecommendation(localConfig.title);
+      setLocalConfig((prev) => ({ ...prev, cover: newCover }));
+      setIsGeneratingAI(false);
+    }, 800);
+  };
+
+  const handlePublish = () => {
+    console.log('=== 发布按钮被点击 ===');
+    console.log('当前配置:', localConfig);
+    console.log('发布范围:', publishScope);
+    console.log('年级:', localConfig.grade, '班级:', localConfig.bindClasses);
+
+    // 清除之前的错误
+    setPublishError('');
+
+    // 验证发布配置
+    if (!localConfig.grade) {
+      console.log('❌ 验证失败: 未选择年级');
+      setPublishError('请选择年级后再发布');
+      return;
+    }
+    if (localConfig.bindClasses.length === 0) {
+      console.log('❌ 验证失败: 未绑定班级');
+      setPublishError('请至少绑定一个班级后再发布');
+      return;
+    }
+
+    console.log('✅ 验证通过，开始发布...');
+
+    // 生成课程链接和随机码（mock）
+    const courseId = Math.random().toString(36).substring(2, 10);
+    const randomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+    const link = `http://localhost:3000/learn/${courseId}`;
+
+    console.log('生成的发布数据:', { link, code: randomCode });
+
+    // 保存配置（包含发布信息和发布范围）
+    onSave({
+      ...localConfig,
+      publishScope,
+      publishedLink: link,
+      publishedCode: randomCode,
+    });
+
+    // 切换到成功状态（不关闭弹窗）
+    setPublishSuccessData({ link, code: randomCode });
+
+    console.log('✅ 发布成功，切换到成功状态');
+  };
+
+  const handleCloseSuccessModal = () => {
+    console.log('关闭发布成功弹窗');
+    setPublishSuccessData(null);
+    onClose();
+  };
+
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center backdrop-blur-sm" onClick={onClose}>
-      <div className="bg-white w-[800px] max-h-[85vh] rounded-2xl shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
-        <div className="bg-gradient-to-r from-primary-600 to-accent-600 text-white p-5">
-          <h2 className="text-lg font-bold flex items-center gap-2">
-            <Settings size={20} />
-            笔记基本信息配置
-          </h2>
+    <>
+      {/* 发布成功状态 */}
+      {publishSuccessData ? (
+        <PublishSuccessModal
+          courseTitle={localConfig.title}
+          courseLink={publishSuccessData.link}
+          accessCode={publishSuccessData.code}
+          onClose={handleCloseSuccessModal}
+        />
+      ) : (
+        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center backdrop-blur-sm" onClick={onClose}>
+          <div className="bg-white w-[900px] max-h-[90vh] rounded-3xl shadow-2xl overflow-hidden border border-gray-100" onClick={(e) => e.stopPropagation()}>
+        {/* 头部 */}
+        <div className="bg-gradient-to-br from-primary-600 via-primary-700 to-accent-700 text-white px-6 py-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-bold flex items-center gap-2.5">
+                <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+                  <Settings size={22} />
+                </div>
+                笔记基本信息配置
+              </h2>
+              <p className="text-primary-100 text-sm mt-1.5 ml-11">配置课程信息并发布到班级</p>
+            </div>
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+            >
+              <X size={20} />
+            </button>
+          </div>
         </div>
 
-        <div className="p-6 max-h-[calc(85vh-140px)] overflow-y-auto">
-          <div className="space-y-6">
-            {/* 标题和描述 */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">笔记标题 *</label>
+        <div className="p-7 max-h-[calc(90vh-200px)] overflow-y-auto">
+          <div className="space-y-7">
+            {/* 课程基本信息 - 左右布局 */}
+            <div className="flex gap-6">
+              {/* 左侧：标题和学科 */}
+              <div className="flex-1 space-y-5">
+                {/* 标题 */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-800 mb-2.5 flex items-center gap-2">
+                    <div className="w-1 h-4 bg-primary-600 rounded-full"></div>
+                    课程名称
+                    <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={localConfig.title}
+                    onChange={(e) => setLocalConfig({ ...localConfig, title: e.target.value })}
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all hover:border-gray-300"
+                    placeholder="例如：水循环与水资源"
+                  />
+                </div>
+
+                {/* 涉及学科 */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-800 mb-2.5 flex items-center gap-2">
+                    <div className="w-1 h-4 bg-primary-600 rounded-full"></div>
+                    <Network size={16} className="text-primary-600" />
+                    涉及学科
+                    <span className="text-xs font-normal text-gray-500 ml-1">可多选</span>
+                  </label>
+                  <div className="flex flex-wrap gap-2.5">
+                    {allSubjects.map((subject) => (
+                      <button
+                        key={subject}
+                        onClick={() => toggleSubject(subject)}
+                        className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                          localConfig.subjects.includes(subject)
+                            ? 'bg-primary-600 text-white shadow-md shadow-primary-200'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
+                        }`}
+                      >
+                        {subject}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* 右侧：封面 */}
+              <div className="w-64 shrink-0">
+                <label className="block text-sm font-semibold text-gray-800 mb-2.5 flex items-center gap-2">
+                  <div className="w-1 h-4 bg-primary-600 rounded-full"></div>
+                  {isGeneratingAI ? (
+                    <Loader2 size={16} className="text-primary-600 animate-spin" />
+                  ) : (
+                    <Sparkles size={16} className="text-primary-600" />
+                  )}
+                  课程封面
+                  <span className="text-xs font-normal text-gray-500 ml-1">AI 推荐</span>
+                </label>
+                <div className="space-y-3">
+                  <div className="w-full h-40 bg-white rounded-xl overflow-hidden border border-gray-200 shadow-sm relative">
+                    {localConfig.cover ? (
+                      <img src={localConfig.cover} alt="封面" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">
+                        {isGeneratingAI ? 'AI 推荐中...' : '暂无封面'}
+                      </div>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={regenerateCover}
+                    disabled={isGeneratingAI}
+                    className="w-full px-4 py-2.5 text-sm text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded-xl font-medium flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all border border-gray-200"
+                  >
+                    {isGeneratingAI ? (
+                      <Loader2 size={16} className="animate-spin" />
+                    ) : (
+                      <Sparkles size={16} />
+                    )}
+                    重新生成
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* 跨学科标签 */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-800 mb-2.5 flex items-center gap-2">
+                <div className="w-1 h-4 bg-primary-600 rounded-full"></div>
+                {isGeneratingAI ? (
+                  <Loader2 size={16} className="text-primary-600 animate-spin" />
+                ) : (
+                  <Sparkles size={16} className="text-primary-600" />
+                )}
+                跨学科标签
+                <span className="text-xs font-normal text-gray-500 ml-1">AI 推荐，可自定义</span>
+              </label>
+
+              {/* 已选标签展示 */}
+              {localConfig.tags.length > 0 && (
+                <div className="mb-3 flex flex-wrap gap-2">
+                  {localConfig.tags.map((tag: string) => (
+                    <div
+                      key={tag}
+                      className="px-3.5 py-2 rounded-xl text-sm font-medium bg-primary-600 text-white shadow-md shadow-primary-200 flex items-center gap-2"
+                    >
+                      {tag}
+                      <button
+                        onClick={() => toggleTag(tag)}
+                        className="hover:bg-white/20 rounded-full p-0.5 transition-colors"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* 推荐标签 */}
+              <div className="flex flex-wrap gap-2.5 mb-3">
+                {isGeneratingAI && localConfig.tags.length === 0 ? (
+                  <div className="text-sm text-gray-500 flex items-center gap-2 py-2">
+                    <Loader2 size={16} className="animate-spin" />
+                    AI 推荐中...
+                  </div>
+                ) : (
+                  CROSS_DISCIPLINARY_TAGS.filter((tag: string) => !localConfig.tags.includes(tag)).map((tag: string) => (
+                    <button
+                      key={tag}
+                      onClick={() => toggleTag(tag)}
+                      className="px-3.5 py-2 rounded-xl text-sm font-medium transition-all bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200"
+                    >
+                      {tag}
+                    </button>
+                  ))
+                )}
+              </div>
+
+              {/* 自定义标签输入 */}
+              <div className="flex gap-2">
                 <input
                   type="text"
-                  value={localConfig.title}
-                  onChange={(e) => setLocalConfig({ ...localConfig, title: e.target.value })}
-                  className="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary-500 outline-none"
-                  placeholder="例如：水循环与水资源"
+                  value={customTagInput}
+                  onChange={(e) => setCustomTagInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && customTagInput.trim()) {
+                      e.preventDefault();
+                      const newTag = customTagInput.trim();
+                      if (!localConfig.tags.includes(newTag)) {
+                        setLocalConfig({ ...localConfig, tags: [...localConfig.tags, newTag] });
+                      }
+                      setCustomTagInput('');
+                    }
+                  }}
+                  placeholder="输入自定义标签，按回车添加"
+                  className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all hover:border-gray-300"
                 />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">年级</label>
-                <select
-                  value={localConfig.grade}
-                  onChange={(e) => setLocalConfig({ ...localConfig, grade: e.target.value })}
-                  className="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary-500 outline-none"
+                <button
+                  onClick={() => {
+                    if (customTagInput.trim()) {
+                      const newTag = customTagInput.trim();
+                      if (!localConfig.tags.includes(newTag)) {
+                        setLocalConfig({ ...localConfig, tags: [...localConfig.tags, newTag] });
+                      }
+                      setCustomTagInput('');
+                    }
+                  }}
+                  className="px-4 py-2.5 bg-primary-600 text-white rounded-xl hover:bg-primary-700 font-medium transition-all flex items-center gap-2"
                 >
-                  <option value="">请选择年级</option>
-                  {grades.map((grade: string) => (
-                    <option key={grade} value={grade}>{grade}</option>
-                  ))}
-                </select>
+                  <Plus size={16} />
+                  添加
+                </button>
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">描述</label>
-              <textarea
-                value={localConfig.description}
-                onChange={(e) => setLocalConfig({ ...localConfig, description: e.target.value })}
-                className="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary-500 outline-none resize-none"
-                rows={3}
-                placeholder="简要描述本笔记的学习目标和内容"
-              />
-            </div>
+            {/* 发布配置 */}
+            <div className="border-t border-gray-200 pt-6">
+              <button
+                onClick={() => setShowMoreConfig(!showMoreConfig)}
+                className="w-full flex items-center justify-between text-sm font-semibold text-gray-800 hover:text-gray-900 mb-5 group"
+              >
+                <div className="flex items-center gap-2">
+                  <div className="w-1 h-4 bg-primary-600 rounded-full"></div>
+                  发布配置
+                </div>
+                <div className={`p-1.5 rounded-lg group-hover:bg-gray-100 transition-all ${showMoreConfig ? 'rotate-180' : ''}`}>
+                  <ChevronDown size={18} />
+                </div>
+              </button>
 
-            {/* 跨学科选择 */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                <Network size={16} className="text-primary-500" />
-                涉及学科（可多选）
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {allSubjects.map((subject) => (
-                  <button
-                    key={subject}
-                    onClick={() => toggleSubject(subject)}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                      localConfig.subjects.includes(subject)
-                        ? 'bg-primary-500 text-white'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
-                  >
-                    {subject}
-                  </button>
-                ))}
-              </div>
-            </div>
+              {showMoreConfig && (
+                <div className="space-y-5">
+                  {/* 年级 */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2.5">
+                      年级
+                      <span className="text-red-500 ml-1">*</span>
+                    </label>
+                    <select
+                      value={localConfig.grade}
+                      onChange={(e) => {
+                        setLocalConfig({ ...localConfig, grade: e.target.value });
+                        setPublishError('');
+                      }}
+                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all hover:border-gray-300"
+                    >
+                      <option value="">请选择年级</option>
+                      {grades.map((grade: string) => (
+                        <option key={grade} value={grade}>{grade}</option>
+                      ))}
+                    </select>
+                  </div>
 
-            {/* 绑定班级 */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                <Users size={16} className="text-emerald-500" />
-                绑定班级（可多选）
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {classes.map((className: string) => (
-                  <button
-                    key={className}
-                    onClick={() => toggleClass(className)}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                      localConfig.bindClasses.includes(className)
-                        ? 'bg-emerald-500 text-white'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
-                  >
-                    {className}
-                  </button>
-                ))}
-              </div>
+                  {/* 绑定班级 */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2.5 flex items-center gap-2">
+                      <Users size={16} className="text-emerald-600" />
+                      绑定班级
+                      <span className="text-xs font-normal text-gray-500">可多选</span>
+                      <span className="text-red-500">*</span>
+                    </label>
+                    <div className="flex flex-wrap gap-2.5">
+                      {classes.map((className: string) => (
+                        <button
+                          key={className}
+                          onClick={() => {
+                            toggleClass(className);
+                            setPublishError('');
+                          }}
+                          className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                            localConfig.bindClasses.includes(className)
+                              ? 'bg-emerald-600 text-white shadow-md shadow-emerald-200'
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
+                          }`}
+                        >
+                          {className}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* 发布范围选择 */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2.5 flex items-center gap-2">
+                      <Layers size={16} className="text-purple-600" />
+                      发布范围
+                      <span className="text-xs font-normal text-gray-500">可多选</span>
+                    </label>
+                    <div className="flex flex-wrap gap-2.5">
+                      <button
+                        onClick={() => setPublishScope({ ...publishScope, includeResources: !publishScope.includeResources })}
+                        className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                          publishScope.includeResources
+                            ? 'bg-emerald-600 text-white shadow-md shadow-emerald-200'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
+                        }`}
+                      >
+                        学习资源
+                      </button>
+                      <button
+                        onClick={() => setPublishScope({ ...publishScope, includeTasks: !publishScope.includeTasks })}
+                        className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                          publishScope.includeTasks
+                            ? 'bg-emerald-600 text-white shadow-md shadow-emerald-200'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
+                        }`}
+                      >
+                        学习任务
+                      </button>
+                      <button
+                        onClick={() => setPublishScope({ ...publishScope, includeAISettings: !publishScope.includeAISettings })}
+                        className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                          publishScope.includeAISettings
+                            ? 'bg-emerald-600 text-white shadow-md shadow-emerald-200'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
+                        }`}
+                      >
+                        AI 设置
+                      </button>
+                      <button
+                        onClick={() => setPublishScope({ ...publishScope, includeLearningPath: !publishScope.includeLearningPath })}
+                        className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                          publishScope.includeLearningPath
+                            ? 'bg-emerald-600 text-white shadow-md shadow-emerald-200'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
+                        }`}
+                      >
+                        学习路径
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
 
-        <div className="p-4 border-t border-gray-200 flex justify-end gap-3">
-          <button onClick={onClose} className="px-5 py-2 text-gray-600 hover:text-gray-800 font-medium">
-            取消
-          </button>
-          <button
-            onClick={() => {
-              onSave(localConfig);
-              onClose();
-            }}
-            className="px-5 py-2 bg-primary-600 text-white rounded-xl hover:bg-primary-700 font-medium transition-colors"
-          >
-            保存配置
-          </button>
+        {/* 底部操作栏 */}
+        <div className="px-7 py-5 border-t border-gray-200 bg-gray-50">
+          {publishError && (
+            <div className="mb-4 text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl px-4 py-3 flex items-center gap-2">
+              <AlertCircle size={16} className="shrink-0" />
+              <span>{publishError}</span>
+            </div>
+          )}
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={onClose}
+                className="px-5 py-2.5 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-xl font-medium transition-all"
+              >
+                取消
+              </button>
+              {/* 查看分享链接按钮 */}
+              {config.publishedLink && (
+                <button
+                  onClick={() => setShowShareLink(true)}
+                  className="px-5 py-2.5 text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded-xl font-medium transition-all flex items-center gap-2 border border-primary-200"
+                >
+                  <ExternalLink size={16} />
+                  查看分享链接
+                </button>
+              )}
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  console.log('保存草稿按钮被点击');
+                  onSave(localConfig);
+                  onClose();
+                }}
+                className="px-6 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 hover:border-gray-400 font-medium transition-all shadow-sm"
+              >
+                保存草稿
+              </button>
+              <button
+                onClick={(e) => {
+                  console.log('发布按钮点击事件触发', e);
+                  handlePublish();
+                }}
+                className="px-6 py-2.5 bg-gradient-to-r from-primary-600 to-accent-600 text-white rounded-xl hover:from-primary-700 hover:to-accent-700 font-medium transition-all flex items-center gap-2 shadow-lg shadow-primary-200"
+              >
+                <Send size={16} />
+                发布到班级
+              </button>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* 查看分享链接弹窗 - 使用 Portal 渲染到 body */}
+      {showShareLink && config.publishedLink &&
+        createPortal(
+          <PublishSuccessModal
+            courseTitle={localConfig.title}
+            courseLink={config.publishedLink}
+            accessCode={config.publishedCode || ''}
+            onClose={() => setShowShareLink(false)}
+          />,
+          document.body
+        )
+      }
+      </div>
+    )}
+    </>
   );
 }
 
@@ -2108,12 +2573,12 @@ export function StudentPreview({ config, leftWidth, rightWidth }: any) {
 }
 
 // Use视角头部 - 学生使用界面预览
-export function UseViewHeader({ config, onBack }: any) {
+export function UseViewHeader({ config, onBack, onPublish }: any) {
   return (
     <header className="h-10 bg-white/80 backdrop-blur-xl border-b border-gray-100 flex items-center justify-between px-4 shrink-0">
       <div className="flex items-center gap-2">
         <div className="flex items-center gap-1.5 px-2 py-0.5 bg-emerald-50 rounded">
-          <span className="text-xs font-medium text-emerald-700">CocoLearn Teacher</span>
+          <span className="text-xs font-medium text-emerald-700">CocoStudy Teacher</span>
         </div>
         <div className="w-px h-5 bg-gray-200"></div>
         <div className="flex items-center gap-1.5">
@@ -2146,7 +2611,7 @@ export function UseViewHeader({ config, onBack }: any) {
         </a>
         <div className="w-px h-5 bg-gray-200"></div>
         <button
-          onClick={() => window.open('/student/workbench', '_blank')}
+          onClick={onPublish}
           className="flex items-center gap-1.5 px-3 py-1 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors"
         >
           <Send size={14} />
@@ -2158,12 +2623,12 @@ export function UseViewHeader({ config, onBack }: any) {
 }
 
 // Results视角头部 - 学习数据统计
-export function ResultsViewHeader({ config, onBack, onSwitchToUse }: any) {
+export function ResultsViewHeader({ config, onBack, onSwitchToUse, onPublish }: any) {
   return (
     <header className="h-10 bg-white/80 backdrop-blur-xl border-b border-gray-100 flex items-center justify-between px-4 shrink-0">
       <div className="flex items-center gap-2">
         <div className="flex items-center gap-1.5 px-2 py-0.5 bg-purple-50 rounded">
-          <span className="text-xs font-medium text-purple-700">CocoLearn Teacher</span>
+          <span className="text-xs font-medium text-purple-700">CocoStudy Teacher</span>
         </div>
         <div className="w-px h-5 bg-gray-200"></div>
         <div className="flex items-center gap-1.5">
@@ -2194,7 +2659,7 @@ export function ResultsViewHeader({ config, onBack, onSwitchToUse }: any) {
         </button>
         <div className="w-px h-5 bg-gray-200"></div>
         <button
-          onClick={() => window.open('/student/workbench', '_blank')}
+          onClick={onPublish}
           className="flex items-center gap-1.5 px-3 py-1 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors"
         >
           <Send size={14} />

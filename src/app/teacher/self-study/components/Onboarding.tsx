@@ -36,9 +36,9 @@ interface OnboardingProps {
 function SelfDirectedPreview({ topic }: { topic: string }) {
   const { t } = useLanguage();
   return (
-    <div className="rounded-xl border border-blue-200 bg-gradient-to-br from-blue-50 to-white overflow-hidden">
-      <div className="px-4 py-3 bg-blue-100/50 border-b border-blue-200">
-        <span className="text-sm font-medium text-blue-800">💬 {t('自由探索模式预览')}</span>
+    <div className="rounded-xl border border-primary-200 bg-gradient-to-br from-primary-50 to-white overflow-hidden">
+      <div className="px-4 py-3 bg-primary-100/50 border-b border-primary-200">
+        <span className="text-sm font-medium text-primary-700">💬 {t('自由探索模式预览')}</span>
       </div>
       <div className="p-4 space-y-3">
         {/* AI message */}
@@ -89,16 +89,16 @@ function SelfDirectedPreview({ topic }: { topic: string }) {
 function AiGuidedPreview({ topic }: { topic: string }) {
   const { t } = useLanguage();
   return (
-    <div className="rounded-xl border border-purple-200 bg-gradient-to-br from-purple-50 to-white overflow-hidden">
-      <div className="px-4 py-3 bg-purple-100/50 border-b border-purple-200">
-        <span className="text-sm font-medium text-purple-800">🗺️ {t('AI 自适应学习模式预览')}</span>
+    <div className="rounded-xl border border-accent-200 bg-gradient-to-br from-accent-50 to-white overflow-hidden">
+      <div className="px-4 py-3 bg-accent-100/50 border-b border-accent-200">
+        <span className="text-sm font-medium text-accent-600">🗺️ {t('AI 自适应学习模式预览')}</span>
       </div>
       <div className="p-4 space-y-4">
         {/* Learning path progress */}
         <div>
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-gray-700">📊 {t('学习路径 (2/5 已完成)')}</span>
-            <span className="text-xs text-purple-600 font-medium">40%</span>
+            <span className="text-xs text-accent-600 font-medium">40%</span>
           </div>
           <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
             <div className="h-full w-[40%] bg-gradient-to-r from-purple-500 to-purple-600 rounded-full" />
@@ -115,11 +115,11 @@ function AiGuidedPreview({ topic }: { topic: string }) {
             <span className="text-gray-500 line-through">{t('核心原理解析')}</span>
           </div>
           <div className="flex items-center gap-2 text-sm">
-            <div className="w-4 h-4 rounded-full bg-purple-500 flex items-center justify-center">
+            <div className="w-4 h-4 rounded-full bg-accent-500 flex items-center justify-center">
               <div className="w-2 h-2 bg-white rounded-full" />
             </div>
-            <span className="text-purple-700 font-medium">{t('关键公式与推导')}</span>
-            <span className="text-xs text-purple-500 ml-1">← {t('当前')}</span>
+            <span className="text-accent-600 font-medium">{t('关键公式与推导')}</span>
+            <span className="text-xs text-accent-500 ml-1">← {t('当前')}</span>
           </div>
           <div className="flex items-center gap-2 text-sm">
             <Circle size={16} className="text-gray-300" />
@@ -135,13 +135,13 @@ function AiGuidedPreview({ topic }: { topic: string }) {
           <div className="w-7 h-7 bg-gradient-to-br from-primary-500 to-accent-600 rounded-full flex items-center justify-center flex-shrink-0">
             <Brain size={14} className="text-white" />
           </div>
-          <div className="bg-purple-50 rounded-xl rounded-tl-none px-3 py-2 flex-1">
+          <div className="bg-accent-50 rounded-xl rounded-tl-none px-3 py-2 flex-1">
             <p className="text-sm text-gray-700">
               {t('很好！你已经掌握了基础概念。现在让我们来学习')}「{t('关键公式与推导')}」{t('。')}
               <br />
-              {t('先看看这个公式：')}<span className="font-mono text-purple-700">E=mc²</span>...
+              {t('先看看这个公式：')}<span className="font-mono text-accent-600">E=mc²</span>...
               <br />
-              <span className="text-purple-600">{t('你能解释一下这个公式的含义吗？')}</span>
+              <span className="text-accent-600">{t('你能解释一下这个公式的含义吗？')}</span>
             </p>
           </div>
         </div>
@@ -467,15 +467,15 @@ export default function Onboarding({ onComplete, onCancel }: OnboardingProps) {
                     <div className="flex items-center gap-2 mt-2 animate-fade-in">
                       {state.clarification.learningMode === 'self_directed' ? (
                         <>
-                          <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">📖 {t('自由浏览')}</span>
-                          <span className="px-3 py-1 bg-green-50 text-green-700 rounded-full text-xs font-medium">💬 {t('随时提问')}</span>
-                          <span className="px-3 py-1 bg-amber-50 text-amber-700 rounded-full text-xs font-medium">📝 {t('自主笔记')}</span>
+                          <span className="px-3 py-1 bg-primary-50 text-primary-700 rounded-full text-xs font-medium">📖 {t('自由浏览')}</span>
+                          <span className="px-3 py-1 bg-primary-50 text-primary-700 rounded-full text-xs font-medium">💬 {t('随时提问')}</span>
+                          <span className="px-3 py-1 bg-fresh-50 text-fresh-600 rounded-full text-xs font-medium">📝 {t('自主笔记')}</span>
                         </>
                       ) : (
                         <>
-                          <span className="px-3 py-1 bg-purple-50 text-purple-700 rounded-full text-xs font-medium">🗺️ {t('学习路径')}</span>
-                          <span className="px-3 py-1 bg-rose-50 text-rose-700 rounded-full text-xs font-medium">🧪 {t('随堂检测')}</span>
-                          <span className="px-3 py-1 bg-cyan-50 text-cyan-700 rounded-full text-xs font-medium">📊 {t('进度追踪')}</span>
+                          <span className="px-3 py-1 bg-accent-50 text-accent-600 rounded-full text-xs font-medium">🗺️ {t('学习路径')}</span>
+                          <span className="px-3 py-1 bg-accent-50 text-accent-600 rounded-full text-xs font-medium">🧪 {t('随堂检测')}</span>
+                          <span className="px-3 py-1 bg-primary-50 text-primary-700 rounded-full text-xs font-medium">📊 {t('进度追踪')}</span>
                         </>
                       )}
                     </div>

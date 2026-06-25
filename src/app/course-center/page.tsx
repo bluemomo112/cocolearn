@@ -13,7 +13,7 @@ interface Course {
   source: 'official' | 'organization'
   concepts: string[] // 跨学科大概念
   studentCount: number
-  rating: number
+  teachingMode: 'teaching' | 'self-study' | 'both' // 授课模式/自学模式/双模式
 }
 
 interface KnowledgeNode {
@@ -36,15 +36,9 @@ interface KnowledgeLink {
 }
 
 // ==================== 数据 ====================
-const platformStats = {
-  singleCourses: 186,
-  seriesCourses: 34,
-  teachers: 428,
-  schools: 67,
-}
-
 const subjects = ['全部', '语文', '数学', '物理', '化学', '生物', '地理', '历史', '道德与法治', '信息科技']
 const sources = ['全部', '官方', '组织']
+const teachingModes = ['全部', '授课模式', '自学模式', '双模式']
 
 // 跨学科课程数据
 const courses: Course[] = [
@@ -56,7 +50,7 @@ const courses: Course[] = [
     source: 'official',
     concepts: ['系统与平衡', '生态系统', '成长', '生命周期'],
     studentCount: 1240,
-    rating: 4.8,
+    teachingMode: 'both',
   },
   {
     id: '2',
@@ -66,7 +60,7 @@ const courses: Course[] = [
     source: 'organization',
     concepts: ['诗词鉴赏', '天文现象', '地理特征', '文化传承'],
     studentCount: 890,
-    rating: 4.9,
+    teachingMode: 'teaching',
   },
   {
     id: '3',
@@ -76,7 +70,7 @@ const courses: Course[] = [
     source: 'official',
     concepts: ['统计推断', '数据表示', '算法思维', '可视化设计'],
     studentCount: 2100,
-    rating: 4.7,
+    teachingMode: 'self-study',
   },
   {
     id: '4',
@@ -86,7 +80,7 @@ const courses: Course[] = [
     source: 'organization',
     concepts: ['科学发展', '文化变革', '天文学', '力学基础'],
     studentCount: 643,
-    rating: 4.6,
+    teachingMode: 'teaching',
   },
   {
     id: '5',
@@ -96,7 +90,7 @@ const courses: Course[] = [
     source: 'official',
     concepts: ['波形与频率', '比例关系', '和声原理', '数学建模'],
     studentCount: 756,
-    rating: 4.8,
+    teachingMode: 'both',
   },
   {
     id: '6',
@@ -106,7 +100,7 @@ const courses: Course[] = [
     source: 'organization',
     concepts: ['化学变化', '颜料科学', '材料特性', '色彩理论'],
     studentCount: 512,
-    rating: 4.5,
+    teachingMode: 'self-study',
   },
   {
     id: '7',
@@ -116,7 +110,7 @@ const courses: Course[] = [
     source: 'official',
     concepts: ['算法设计', '逻辑思维', '问题分解', '抽象建模'],
     studentCount: 1890,
-    rating: 4.9,
+    teachingMode: 'both',
   },
   {
     id: '8',
@@ -126,7 +120,7 @@ const courses: Course[] = [
     source: 'official',
     concepts: ['生态平衡', '责任意识', '可持续发展', '环境伦理'],
     studentCount: 1023,
-    rating: 4.7,
+    teachingMode: 'teaching',
   },
   {
     id: '9',
@@ -136,7 +130,7 @@ const courses: Course[] = [
     source: 'organization',
     concepts: ['地缘政治', '气候影响', '资源分布', '文明交流'],
     studentCount: 678,
-    rating: 4.6,
+    teachingMode: 'self-study',
   },
   {
     id: '10',
@@ -146,7 +140,7 @@ const courses: Course[] = [
     source: 'official',
     concepts: ['人工智能', '信息安全', '网络伦理', '数字公民'],
     studentCount: 1456,
-    rating: 4.8,
+    teachingMode: 'both',
   },
   {
     id: '11',
@@ -156,7 +150,7 @@ const courses: Course[] = [
     source: 'organization',
     concepts: ['元素周期律', '恒星演化', '核反应', '宇宙结构'],
     studentCount: 534,
-    rating: 4.7,
+    teachingMode: 'teaching',
   },
   {
     id: '12',
@@ -166,7 +160,7 @@ const courses: Course[] = [
     source: 'official',
     concepts: ['水循环', '能量转换', '气候系统', '全球变暖'],
     studentCount: 1678,
-    rating: 4.8,
+    teachingMode: 'self-study',
   },
 ]
 
@@ -791,25 +785,29 @@ export default function CourseCenter() {
   const [viewMode, setViewMode] = useState<'courses' | 'visualization'>('courses')
   const [selectedSubject, setSelectedSubject] = useState('全部')
   const [selectedSource, setSelectedSource] = useState('全部')
+  const [selectedTeachingMode, setSelectedTeachingMode] = useState('全部')
   const [searchQuery, setSearchQuery] = useState('')
   const [showTeachingModal, setShowTeachingModal] = useState(false)
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null)
+  const [showCourseTypeModal, setShowCourseTypeModal] = useState(false)
 
-  // 处理去授课按钮点击
+  // 处理去预览按钮点击
   const handleTeachClick = (course: Course) => {
-    setSelectedCourse(course)
-    setShowTeachingModal(true)
+    if (course.teachingMode === 'both') {
+      setSelectedCourse(course)
+      setShowTeachingModal(true)
+    } else {
+      // 直接跳转到预览页
+      const mode = course.teachingMode === 'teaching' ? 'teaching' : 'self-study'
+      window.location.href = `/course-center/preview/${course.id}?mode=${mode}`
+    }
   }
-
   // 处理教学模式选择
   const handleModeSelect = (mode: 'teacher-centered' | 'student-centered') => {
     setShowTeachingModal(false)
-    if (mode === 'teacher-centered') {
-      // 讲授模式 - 跳转到讲授页面
-      window.open('https://pbl.cocorobo.cn/pbl-student-table/dist/#/pptEasyClass?type=&courseId=ae814d33-ef5d-11f0-9b8a-005056924926&userid=e9b3eb89-2446-11ee-91d8-005056b86db5&oid=45facc0a-1211-11ec-80ad-005056b86db5&org=&cid=&tType=1&screenType=2', '_blank')
-    } else {
-      // 自学模式 - 跳转到使用视角
-      window.open('/teacher/note-config', '_blank')
+    if (selectedCourse) {
+      const modeParam = mode === 'teacher-centered' ? 'teaching' : 'self-study'
+      window.location.href = `/course-center/preview/${selectedCourse.id}?mode=${modeParam}`
     }
   }
 
@@ -818,6 +816,11 @@ export default function CourseCenter() {
     if (selectedSource !== '全部') {
       if (selectedSource === '官方' && course.source !== 'official') return false
       if (selectedSource === '组织' && course.source !== 'organization') return false
+    }
+    if (selectedTeachingMode !== '全部') {
+      if (selectedTeachingMode === '授课模式' && course.teachingMode !== 'teaching') return false
+      if (selectedTeachingMode === '自学模式' && course.teachingMode !== 'self-study') return false
+      if (selectedTeachingMode === '双模式' && course.teachingMode !== 'both') return false
     }
     if (searchQuery && !course.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
         !course.concepts.some(concept => concept.includes(searchQuery))) return false
@@ -846,93 +849,46 @@ export default function CourseCenter() {
           </p>
         </div>
 
-        {/* 平台统计 */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white text-xl">
-                📚
-              </div>
-              <div>
-                <div className="text-2xl font-bold text-gray-900">{platformStats.singleCourses}</div>
-                <div className="text-sm text-gray-500">单一课程</div>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-accent-500 to-accent-600 flex items-center justify-center text-white text-xl">
-                📖
-              </div>
-              <div>
-                <div className="text-2xl font-bold text-gray-900">{platformStats.seriesCourses}</div>
-                <div className="text-sm text-gray-500">系列课程</div>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white text-xl">
-                👨‍🏫
-              </div>
-              <div>
-                <div className="text-2xl font-bold text-gray-900">{platformStats.teachers}</div>
-                <div className="text-sm text-gray-500">参与教师</div>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center text-white text-xl">
-                🏫
-              </div>
-              <div>
-                <div className="text-2xl font-bold text-gray-900">{platformStats.schools}</div>
-                <div className="text-sm text-gray-500">参与学校</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
         {/* 视图切换和筛选栏 */}
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-100 p-4 mb-6 shadow-sm animate-fade-in-up" style={{ animationDelay: '0.15s' }}>
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            {/* 视图切换 */}
-            <div className="flex items-center bg-gray-100 rounded-xl p-1">
-              <button
-                onClick={() => setViewMode('courses')}
-                className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                  viewMode === 'courses'
-                    ? 'bg-white text-gray-900 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                <span className="flex items-center gap-2">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                  </svg>
-                  课程视图
-                </span>
-              </button>
-              <button
-                onClick={() => setViewMode('visualization')}
-                className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                  viewMode === 'visualization'
-                    ? 'bg-white text-gray-900 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                <span className="flex items-center gap-2">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                  </svg>
-                  知识图谱
-                </span>
-              </button>
-            </div>
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-4 flex-1">
+              {/* 视图切换 */}
+              <div className="flex items-center bg-gray-100 rounded-xl p-1">
+                <button
+                  onClick={() => setViewMode('courses')}
+                  className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                    viewMode === 'courses'
+                      ? 'bg-white text-gray-900 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  <span className="flex items-center gap-2">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                    </svg>
+                    课程视图
+                  </span>
+                </button>
+                <button
+                  onClick={() => setViewMode('visualization')}
+                  className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                    viewMode === 'visualization'
+                      ? 'bg-white text-gray-900 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  <span className="flex items-center gap-2">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                    </svg>
+                    知识图谱
+                  </span>
+                </button>
+              </div>
 
-            {/* 筛选器 */}
-            <div className="flex flex-wrap items-center gap-3">
+              {/* 筛选器 */}
+              <div className="flex items-center gap-3">
               <select
                 value={selectedSubject}
                 onChange={(e) => setSelectedSubject(e.target.value)}
@@ -953,6 +909,16 @@ export default function CourseCenter() {
                 ))}
               </select>
 
+              <select
+                value={selectedTeachingMode}
+                onChange={(e) => setSelectedTeachingMode(e.target.value)}
+                className="px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all"
+              >
+                {teachingModes.map((mode) => (
+                  <option key={mode} value={mode}>{mode === '全部' ? '全部模式' : mode}</option>
+                ))}
+              </select>
+
               <div className="relative">
                 <input
                   type="text"
@@ -970,7 +936,19 @@ export default function CourseCenter() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
               </div>
+              </div>
             </div>
+
+            {/* 创建新课程按钮 */}
+            <button
+              onClick={() => setShowCourseTypeModal(true)}
+              className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 text-white text-sm font-medium rounded-xl hover:bg-emerald-700 transition-colors shrink-0"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              创建新课程
+            </button>
           </div>
         </div>
 
@@ -994,6 +972,113 @@ export default function CourseCenter() {
         onSelect={handleModeSelect}
         courseTitle={selectedCourse?.title}
       />
+
+      {/* 课程类型选择弹窗 */}
+      {showCourseTypeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          {/* 背景遮罩 */}
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => setShowCourseTypeModal(false)}
+          />
+
+          {/* 弹窗内容 */}
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 p-8 animate-fade-in-up">
+            {/* 关闭按钮 */}
+            <button
+              onClick={() => setShowCourseTypeModal(false)}
+              className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            {/* 标题 */}
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">选择课堂模式</h2>
+              <p className="text-gray-500">请根据您的教学需求选择合适的课堂模式</p>
+            </div>
+
+            {/* 课堂模式选项卡片 */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* 以教师为中心课堂 */}
+              <button
+                onClick={() => window.open('https://beta.pbl.cocorobo.cn/pbl-teacher-table/dist/#/pptEasy?cid=ae814d33-ef5d-11f0-9b8a-005056924926&userid=e9b3eb89-2446-11ee-91d8-005056b86db5&oid=45facc0a-1211-11ec-80ad-005056b86db5&org=&role=0', '_blank')}
+                className="group relative w-full bg-gradient-to-br from-emerald-50 to-teal-50 border-2 border-emerald-100 rounded-2xl p-6 hover:border-emerald-300 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 text-left"
+              >
+                <div className="flex flex-col items-center text-center">
+                  {/* 图标 */}
+                  <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-accent-600 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+
+                  {/* 标题 */}
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">以教师为中心课堂</h3>
+
+                  {/* 描述 */}
+                  <p className="text-sm text-gray-500 mb-4">
+                    教师实时控制课堂节奏，学生跟随教师统一进度学习
+                  </p>
+
+                  {/* 特点标签 */}
+                  <div className="flex flex-wrap justify-center gap-2">
+                    <span className="px-2.5 py-1 bg-primary-100 text-primary-600 text-xs font-medium rounded-lg">实时同步</span>
+                    <span className="px-2.5 py-1 bg-primary-100 text-primary-600 text-xs font-medium rounded-lg">统一进度</span>
+                    <span className="px-2.5 py-1 bg-primary-100 text-primary-600 text-xs font-medium rounded-lg">课堂互动</span>
+                  </div>
+                </div>
+
+                {/* 箭头指示 */}
+                <div className="absolute bottom-4 right-4 w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <svg className="w-4 h-4 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+              </button>
+
+              {/* 以学生为中心的课堂 */}
+              <button
+                onClick={() => window.open('teacher/note-config', '_blank')}
+                className="group relative w-full bg-gradient-to-br from-emerald-50 to-teal-50 border-2 border-emerald-100 rounded-2xl p-6 hover:border-emerald-300 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 text-left"
+              >
+                <div className="flex flex-col items-center text-center">
+                  {/* 图标 */}
+                  <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    </svg>
+                  </div>
+
+                  {/* 标题 */}
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">以学生为中心的课堂</h3>
+
+                  {/* 描述 */}
+                  <p className="text-sm text-gray-500 mb-4">
+                    学生自主探索学习，教师提供个性化指导与资源
+                  </p>
+
+                  {/* 特点标签 */}
+                  <div className="flex flex-wrap justify-center gap-2">
+                    <span className="px-2.5 py-1 bg-emerald-100 text-emerald-600 text-xs font-medium rounded-lg">自主学习</span>
+                    <span className="px-2.5 py-1 bg-emerald-100 text-emerald-600 text-xs font-medium rounded-lg">个性进度</span>
+                    <span className="px-2.5 py-1 bg-emerald-100 text-emerald-600 text-xs font-medium rounded-lg">AI辅导</span>
+                  </div>
+                </div>
+
+                {/* 箭头指示 */}
+                <div className="absolute bottom-4 right-4 w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -1033,14 +1118,28 @@ function CourseGridView({ courses, onTeach }: { courses: Course[]; onTeach: (cou
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
 
-            {/* 来源标签 - 右上角 */}
-            <div className="absolute top-3 right-3">
-              <span className={`px-2.5 py-1 text-xs font-medium rounded-lg ${
+            {/* 标签组 - 右上角并排 */}
+            <div className="absolute top-3 right-3 flex gap-2">
+              {/* 来源标签 */}
+              <span className={`px-2.5 py-1 text-xs font-medium rounded-lg backdrop-blur-sm ${
                 course.source === 'official'
-                  ? 'bg-primary-500 text-white'
-                  : 'bg-accent-500 text-white'
+                  ? 'bg-primary-500/90 text-white'
+                  : 'bg-accent-500/90 text-white'
               }`}>
                 {course.source === 'official' ? '官方' : '组织'}
+              </span>
+
+              {/* 教学模式标签 */}
+              <span className={`px-2.5 py-1 text-xs font-medium rounded-lg backdrop-blur-sm ${
+                course.teachingMode === 'both'
+                  ? 'bg-primary-600/90 text-white'
+                  : course.teachingMode === 'teaching'
+                  ? 'bg-accent-600/90 text-white'
+                  : 'bg-fresh-600/90 text-white'
+              }`}>
+                {course.teachingMode === 'both' && '双模式'}
+                {course.teachingMode === 'teaching' && '授课模式'}
+                {course.teachingMode === 'self-study' && '自学模式'}
               </span>
             </div>
           </div>
@@ -1052,9 +1151,9 @@ function CourseGridView({ courses, onTeach }: { courses: Course[]; onTeach: (cou
               {course.title}
             </h3>
 
-            {/* 学科标签 */}
+            {/* 学科标签 - 最多显示3个 */}
             <div className="flex flex-wrap gap-1.5 mb-3">
-              {course.subjects.map((subject) => (
+              {course.subjects.slice(0, 3).map((subject) => (
                 <span
                   key={subject}
                   className="px-2.5 py-1 text-xs font-medium rounded-lg"
@@ -1066,18 +1165,28 @@ function CourseGridView({ courses, onTeach }: { courses: Course[]; onTeach: (cou
                   {subject}
                 </span>
               ))}
+              {course.subjects.length > 3 && (
+                <span className="px-2.5 py-1 text-xs font-medium rounded-lg bg-gray-100 text-gray-600">
+                  +{course.subjects.length - 3}
+                </span>
+              )}
             </div>
 
-            {/* 跨学科概念 */}
+            {/* 跨学科概念 - 最多显示3个 */}
             <div className="flex flex-wrap gap-1.5 mb-4">
-              {course.concepts.map((concept) => (
+              {course.concepts.slice(0, 3).map((concept) => (
                 <span key={concept} className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full">
                   {concept}
                 </span>
               ))}
+              {course.concepts.length > 3 && (
+                <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full">
+                  +{course.concepts.length - 3}
+                </span>
+              )}
             </div>
 
-            {/* 底部信息：学习人数、评分、授课按钮 */}
+            {/* 底部信息：学习人数、授课按钮 */}
             <div className="flex items-center justify-between pt-3 border-t border-gray-100">
               <div className="flex items-center gap-4">
                 {/* 学习人数 */}
@@ -1087,19 +1196,12 @@ function CourseGridView({ courses, onTeach }: { courses: Course[]; onTeach: (cou
                   </svg>
                   {course.studentCount}人学习
                 </span>
-                {/* 评分 */}
-                <span className="flex items-center gap-1 text-sm text-gray-500">
-                  <svg className="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                  </svg>
-                  {course.rating}
-                </span>
               </div>
               <button
                 onClick={() => onTeach(course)}
                 className="px-4 py-2 bg-gradient-to-r from-primary-600 to-accent-600 text-white text-sm font-medium rounded-xl hover:shadow-lg hover:shadow-primary-500/25 transition-all duration-300"
               >
-                去授课
+                去预览
               </button>
             </div>
           </div>
@@ -1526,19 +1628,13 @@ function KnowledgeGraphView({
                       <span className="text-xs text-gray-500">{course.subjects.join('/')}</span>
                       <span className="text-xs text-gray-400">•</span>
                       <span className="text-xs text-gray-500">{course.studentCount}人学习</span>
-                      <span className="text-xs text-yellow-500 flex items-center gap-0.5">
-                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                        </svg>
-                        {course.rating}
-                      </span>
                     </div>
                   </div>
                   <button
                     onClick={() => onTeach(course)}
                     className="px-3 py-1.5 bg-primary-50 text-primary-600 text-xs font-medium rounded-lg hover:bg-primary-100 transition-colors whitespace-nowrap"
                   >
-                    去授课
+                    去预览
                   </button>
                 </div>
               ))}

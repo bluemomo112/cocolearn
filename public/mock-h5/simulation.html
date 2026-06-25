@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>温室效应模拟</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#0a1628;color:#e8e8e8;overflow-x:hidden;min-height:100vh;display:flex;flex-direction:column}
+.wrap{width:100%;max-width:600px;margin:0 auto;padding:8px;flex:1;display:flex;flex-direction:column}
+h1{text-align:center;font-size:clamp(14px,4vw,20px);padding:6px 0;background:linear-gradient(90deg,#ff6b35,#ffa500);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.scene{position:relative;width:100%;aspect-ratio:4/3;border-radius:10px;overflow:hidden;background:linear-gradient(180deg,#0b1a3a 0%,#1a2a5a 40%,#2a4a8a 60%,#3a6aaa 100%);flex-shrink:0}
+.sun{position:absolute;top:4%;left:50%;transform:translateX(-50%);width:15%;aspect-ratio:1;background:radial-gradient(circle,#fff 10%,#ffe066 30%,#ffaa00 60%,transparent 70%);border-radius:50%;z-index:10;animation:sp 3s ease-in-out infinite}
+@keyframes sp{0%,100%{filter:drop-shadow(0 0 8px #ffaa00)}50%{filter:drop-shadow(0 0 18px #ff6600)}}
+.atmo{position:absolute;top:24%;left:0;right:0;height:36%;z-index:5;transition:background 1.5s}
+.atmo-lbl{position:absolute;top:4px;right:8px;font-size:clamp(8px,2vw,11px);opacity:.6;z-index:6}
+.earth{position:absolute;bottom:0;left:0;right:0;height:28%;z-index:8;overflow:hidden}
+.ground{position:absolute;inset:0;background:linear-gradient(180deg,#2d5a1e,#1a3a10);transition:background 1.5s}
+.water{position:absolute;bottom:0;left:0;right:0;height:28%;background:linear-gradient(180deg,#1a6090,#0d3a5a);transition:height 1.5s,background 1.5s}
+.ice-l,.ice-r{position:absolute;bottom:0;width:16%;height:22%;background:linear-gradient(180deg,#e8f4ff,#b0d8f0);z-index:9;transition:height 1.5s,opacity 1.5s;border-radius:60% 60% 0 0}
+.ice-l{left:3%}.ice-r{right:3%}
+.arrows{position:absolute;inset:0;z-index:7;pointer-events:none}
+.ar{position:absolute;width:2px;opacity:0}
+.ar-d{background:linear-gradient(180deg,#ffe066,#ff8800);animation:ad var(--dur,4s) linear infinite}
+.ar-u{background:linear-gradient(0deg,#ff4444,#ff8866);animation:au var(--dur,4s) linear infinite}
+.ar-t{background:linear-gradient(180deg,#ff2200,#ff6644);animation:atr var(--dur,4s) linear infinite;opacity:0}
+@keyframes ad{0%{top:16%;height:0;opacity:0}10%{opacity:.8}50%{top:56%;height:12%;opacity:.8}60%{opacity:0}100%{opacity:0}}
+@keyframes au{0%{bottom:28%;height:0;opacity:0}10%{opacity:.7}45%{bottom:52%;height:12%;opacity:.7}55%{opacity:0}100%{opacity:0}}
+@keyframes atr{0%,45%{top:52%;height:0;opacity:0}55%{top:54%;height:10%;opacity:.85}80%{top:68%;height:6%;opacity:.5}100%{top:74%;height:0;opacity:0}}
+.heat-ov{position:absolute;inset:0;z-index:4;background:radial-gradient(ellipse at 50% 80%,rgba(255,60,0,.2),transparent 70%);opacity:0;transition:opacity 1.5s;pointer-events:none}
+.panel{display:flex;align-items:center;gap:8px;padding:8px;margin-top:6px;background:rgba(255,255,255,.06);border-radius:8px}
+.th-w{position:relative;width:28px;height:100px;flex-shrink:0}
+.th-bg{position:absolute;left:50%;transform:translateX(-50%);width:12px;height:76px;top:0;background:#1a1a2e;border-radius:6px;overflow:hidden;border:1px solid rgba(255,255,255,.15)}
+.th-fill{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(0deg,#ff4444,#ff8800);transition:height 1s;border-radius:0 0 4px 4px}
+.th-bulb{position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:22px;height:22px;border-radius:50%;background:#ff4444;border:2px solid rgba(255,255,255,.15);transition:background 1s}
+.info{flex:1;display:flex;flex-direction:column;gap:4px}
+.temp-val{font-size:clamp(20px,6vw,32px);font-weight:700;transition:color .5s}
+.temp-lbl{font-size:clamp(9px,2.5vw,12px);opacity:.6}
+.status{font-size:clamp(9px,2.5vw,12px);padding:4px 8px;border-radius:4px;background:rgba(255,255,255,.05);line-height:1.5;transition:color .5s}
+.ctrl{margin-top:6px;padding:8px;background:rgba(255,255,255,.06);border-radius:8px}
+.sr{display:flex;align-items:center;gap:8px}
+.sr label{font-size:clamp(9px,2.5vw,12px);white-space:nowrap;min-width:55px}
+.sr .sw{flex:1}
+input[type=range]{-webkit-appearance:none;width:100%;height:6px;border-radius:3px;background:linear-gradient(90deg,#4a9eff,#ff6b35,#ff2200);outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:#fff;border:2px solid #ff6b35;cursor:pointer;box-shadow:0 0 6px rgba(255,107,53,.4)}
+.co2v{font-size:clamp(11px,3vw,14px);font-weight:600;min-width:70px;text-align:right}
+.presets{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap}
+.presets button{flex:1;min-width:55px;padding:4px 6px;border:1px solid rgba(255,255,255,.15);border-radius:4px;background:rgba(255,255,255,.05);color:#ccc;font-size:clamp(8px,2vw,11px);cursor:pointer;transition:all .3s}
+.presets button:hover{background:rgba(255,255,255,.15);color:#fff}
+.presets button.on{border-color:#ff6b35;color:#ff6b35;background:rgba(255,107,53,.1)}
+.legend{display:flex;gap:8px;margin-top:6px;flex-wrap:wrap;justify-content:center}
+.legend i{display:flex;align-items:center;gap:3px;font-size:clamp(8px,2vw,10px);opacity:.7;font-style:normal}
+.legend b{width:8px;height:8px;border-radius:50%;display:inline-block;font-weight:normal}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>温室效应互动模拟</h1>
+<div class="scene" id="scene">
+  <div class="sun"></div>
+  <div class="atmo" id="atmo"><span class="atmo-lbl">大气层</span></div>
+  <div class="arrows" id="arrows"></div>
+  <div class="heat-ov" id="heatOv"></div>
+  <div class="earth">
+    <div class="ground" id="ground"></div>
+    <div class="water" id="water"></div>
+    <div class="ice-l" id="iceL"></div>
+    <div class="ice-r" id="iceR"></div>
+  </div>
+</div>
+<div class="panel">
+  <div class="th-w">
+    <div class="th-bg"><div class="th-fill" id="thFill"></div></div>
+    <div class="th-bulb" id="thBulb"></div>
+  </div>
+  <div class="info">
+    <div class="temp-val" id="tempVal">15.0°C</div>
+    <div class="temp-lbl">全球平均温度</div>
+    <div class="status" id="status">当前状态正常，生态系统平衡。</div>
+  </div>
+</div>
+<div class="ctrl">
+  <div class="sr">
+    <label>CO₂ 浓度</label>
+    <div class="sw"><input type="range" id="slider" min="200" max="1000" value="400" step="10"></div>
+    <span class="co2v" id="co2v">400 ppm</span>
+  </div>
+  <div class="presets" id="presets">
+    <button data-v="280">工业前<br>280ppm</button>
+    <button data-v="420" class="on">现代<br>420ppm</button>
+    <button data-v="560">2050预测<br>560ppm</button>
+    <button data-v="800">极端<br>800ppm</button>
+  </div>
+</div>
+<div class="legend">
+  <i><b style="background:#ffe066"></b>太阳辐射</i>
+  <i><b style="background:#ff4444"></b>地表热辐射</i>
+  <i><b style="background:#ff2200"></b>被困热量</i>
+  <i><b style="background:#b0d8f0"></b>冰盖</i>
+</div>
+</div>
+<script>
+const $ = id => document.getElementById(id);
+const slider = $('slider'), co2v = $('co2v'), tempVal = $('tempVal');
+const atmo = $('atmo'), heatOv = $('heatOv'), ground = $('ground');
+const water = $('water'), iceL = $('iceL'), iceR = $('iceR');
+const thFill = $('thFill'), thBulb = $('thBulb'), status = $('status');
+const arrowsEl = $('arrows'), presetsEl = $('presets');
+
+// Create arrow elements
+function initArrows() {
+  const cols = [18, 32, 45, 58, 72, 85];
+  // Incoming solar
+  cols.forEach((x, i) => {
+    let d = document.createElement('div');
+    d.className = 'ar ar-d';
+    d.style.cssText = `left:${x}%;--dur:${3.5 + i * 0.4}s;animation-delay:${i * 0.6}s`;
+    arrowsEl.appendChild(d);
+  });
+  // Outgoing IR
+  [22, 40, 55, 70, 82].forEach((x, i) => {
+    let d = document.createElement('div');
+    d.className = 'ar ar-u';
+    d.style.cssText = `left:${x}%;--dur:${3.8 + i * 0.3}s;animation-delay:${i * 0.5 + 0.3}s`;
+    arrowsEl.appendChild(d);
+  });
+  // Trapped heat (initially hidden via class toggle)
+  [25, 38, 50, 62, 75, 30, 55, 68].forEach((x, i) => {
+    let d = document.createElement('div');
+    d.className = 'ar ar-t';
+    d.dataset.trap = '1';
+    d.style.cssText = `left:${x}%;--dur:${3.2 + i * 0.35}s;animation-delay:${i * 0.45 + 0.8}s`;
+    arrowsEl.appendChild(d);
+  });
+}
+initArrows();
+
+const trapArrows = arrowsEl.querySelectorAll('[data-trap]');
+
+function lerp(a, b, t) { return a + (b - a) * Math.max(0, Math.min(1, t)); }
+
+function update(co2) {
+  // Normalize: 200=0, 1000=1
+  const t = (co2 - 200) / 800;
+  // Temperature: ~12°C at 200ppm, ~15°C at 400ppm, ~22°C at 1000ppm (nonlinear)
+  const temp = 12 + 10 * Math.pow(t, 0.7);
+  const tempStr = temp.toFixed(1);
+
+  co2v.textContent = co2 + ' ppm';
+  tempVal.textContent = tempStr + '°C';
+
+  // Thermometer fill (0-100%)
+  const fillPct = Math.min(100, ((temp - 10) / 15) * 100);
+  thFill.style.height = fillPct + '%';
+
+  // Colors based on temperature
+  const hot = Math.min(1, Math.max(0, (temp - 14) / 8));
+  const r = Math.round(lerp(74, 255, hot));
+  const g = Math.round(lerp(158, 80, hot));
+  const b = Math.round(lerp(255, 50, hot));
+  tempVal.style.color = `rgb(${r},${g},${b})`;
+  thBulb.style.background = `rgb(${r},${g},${b})`;
+
+  // Atmosphere opacity (CO2 haze)
+  const atmoAlpha = lerp(0, 0.35, t);
+  atmo.style.background = `rgba(255,${Math.round(lerp(160,60,t))},0,${atmoAlpha})`;
+
+  // Heat overlay
+  heatOv.style.opacity = lerp(0, 0.9, t);
+
+  // Ground color shift (green -> brown at high temp)
+  const gGreen = Math.round(lerp(90, 50, hot));
+  const gBrown = Math.round(lerp(30, 20, hot));
+  ground.style.background = `linear-gradient(180deg,rgb(${Math.round(lerp(45,80,hot))},${gGreen},${gBrown}),rgb(26,${Math.round(lerp(58,30,hot))},${Math.round(lerp(16,8,hot))}))`;
+
+  // Water level rises with temperature
+  const waterH = lerp(28, 55, hot);
+  water.style.height = waterH + '%';
+  if (hot > 0.5) water.style.background = `linear-gradient(180deg,#1a${Math.round(lerp(96,70,hot)).toString(16).padStart(2,'0')}90,#0d3a5a)`;
+  else water.style.background = 'linear-gradient(180deg,#1a6090,#0d3a5a)';
+
+  // Ice caps shrink
+  const iceH = lerp(22, 0, Math.min(1, hot * 1.5));
+  const iceO = lerp(1, 0, Math.min(1, hot * 1.5));
+  iceL.style.height = iceH + '%';
+  iceR.style.height = iceH + '%';
+  iceL.style.opacity = iceO;
+  iceR.style.opacity = iceO;
+
+  // Show/hide trapped heat arrows based on CO2
+  const visibleCount = Math.round(t * trapArrows.length);
+  trapArrows.forEach((el, i) => {
+    el.style.display = i < visibleCount ? 'block' : 'none';
+  });
+
+  // Status text
+  let msg, msgColor;
+  if (co2 < 350) {
+    msg = '工业化前水平，气候凉爽稳定，冰盖完整。';
+    msgColor = '#6ab7ff';
+  } else if (co2 < 500) {
+    msg = '接近当前水平，温室效应适中，生态基本平衡。';
+    msgColor = '#a0c8a0';
+  } else if (co2 < 700) {
+    msg = '⚠ CO₂偏高，温度明显上升，冰盖加速融化，海平面上升。';
+    msgColor = '#ffaa44';
+  } else {
+    msg = '⛔ 极端温室效应！冰盖几乎消失，海平面大幅上升，生态危机。';
+    msgColor = '#ff4444';
+  }
+  status.textContent = msg;
+  status.style.color = msgColor;
+
+  // Preset buttons highlight
+  presetsEl.querySelectorAll('button').forEach(btn => {
+    const v = parseInt(btn.dataset.v);
+    btn.classList.toggle('on', Math.abs(co2 - v) < 30);
+  });
+}
+
+slider.addEventListener('input', () => update(parseInt(slider.value)));
+
+presetsEl.addEventListener('click', e => {
+  const btn = e.target.closest('button');
+  if (!btn) return;
+  const v = parseInt(btn.dataset.v);
+  slider.value = v;
+  update(v);
+});
+
+// Init
+update(400);
+</script>
+</body>
+</html>

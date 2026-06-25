@@ -149,7 +149,8 @@ interface Question {
 interface NoteConfig {
   noteInfo: {
     title: string;
-    description: string;
+    cover?: string;
+    tags?: string[];
     subjects?: string[];
     grade?: string;
     bindClasses?: string[];
@@ -336,7 +337,8 @@ export default function NoteConfigPage() {
   const [config, setConfig] = useState<NoteConfig>({
     noteInfo: {
       title: '水循环与水资源',
-      description: '探索水的循环过程，理解水资源的重要性',
+      cover: 'https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=400',
+      tags: ['知识点', '探究'],
       subjects: ['科学', '地理', '环境教育'],
       grade: '四年级',
       bindClasses: ['四年级1班', '四年级2班'],
@@ -403,6 +405,7 @@ export default function NoteConfigPage() {
         <UseViewHeader
           config={config}
           onBack={() => handleViewSwitch('edit')}
+          onPublish={() => setActiveModal('noteInfo')}
         />
         <StudentPreview config={config} leftWidth={leftWidth} rightWidth={rightWidth} />
       </div>
@@ -415,7 +418,7 @@ export default function NoteConfigPage() {
       <header className="h-10 bg-white/80 backdrop-blur-xl border-b border-gray-100 flex items-center justify-between px-4 shrink-0">
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1.5 px-2 py-0.5 bg-primary-50 rounded">
-            <span className="text-xs font-medium text-primary-700">CocoLearn Teacher</span>
+            <span className="text-xs font-medium text-primary-700">CocoStudy Teacher</span>
           </div>
           <div className="w-px h-5 bg-gray-200"></div>
           <button
@@ -454,7 +457,7 @@ export default function NoteConfigPage() {
             查看课程报告
           </a>
           <div className="w-px h-5 bg-gray-200"></div>
-          <button className="flex items-center gap-1.5 px-3 py-1 bg-primary-600 text-white text-xs font-medium rounded-lg hover:bg-primary-700 transition-colors" onClick={() => window.open('/student/workbench', '_blank')}>
+          <button className="flex items-center gap-1.5 px-3 py-1 bg-primary-600 text-white text-xs font-medium rounded-lg hover:bg-primary-700 transition-colors" onClick={() => setActiveModal('noteInfo')}>
             <Save size={14} />
             发布到班级
           </button>
@@ -533,7 +536,6 @@ export default function NoteConfigPage() {
           classes={MOCK_CLASSES}
           onSave={(newNoteInfo: any) => {
             setConfig({ ...config, noteInfo: newNoteInfo });
-            setActiveModal(null);
           }}
           onClose={() => setActiveModal(null)}
         />

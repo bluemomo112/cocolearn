@@ -171,9 +171,9 @@
         // 平铺导航配置
         const navigationItems = [
           { id: 'admin', label: '管理中心', icon: 'Settings', href: 'Admin-Dashboard.html' },
-          { id: 'teacher', label: '教师中心', icon: 'User', href: 'LMS-Teacher-Home.html' },
+          { id: 'teacher', label: '我的主页', icon: 'User', href: 'LMS-Teacher-Home.html' },
           { id: 'course', label: '课程中心', icon: 'LayoutGrid', href: 'LMS-Teacher-CourseCenter.html' },
-          { id: 'resource', label: '资源库', icon: 'FileText', href: 'PD-Teacher-Resource-Hub.html' },
+          { id: 'resource', label: '学习资源', icon: 'FileText', href: 'PD-Teacher-Resource-Hub.html' },
           { id: 'workshop', label: '工作坊', icon: 'Clock', href: 'PD-Teacher-Workshop.html' },
         ];
 
@@ -229,7 +229,7 @@
                     <GraduationCap className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <h1 className="font-bold text-base text-gray-900">CocoLearn</h1>
+                    <h1 className="font-bold text-base text-gray-900">CocoStudy</h1>
                   </div>
                 </a>
 
@@ -440,7 +440,7 @@
                         onClick={() => onTeachClick(course)}
                         className="w-full py-3 bg-indigo-600 text-white rounded-xl font-medium btn-hover flex items-center justify-center gap-2">
                         <Icon name="PlayCircle" size={18} />
-                        去授课
+                        去预览
                     </button>
                 </div>
             </div>
@@ -740,7 +740,7 @@
                                                     <button
                                                         onClick={() => handleTeachClick(course)}
                                                         className="w-full py-2 bg-indigo-600 text-white text-xs rounded-lg hover:bg-indigo-700 transition-all duration-200">
-                                                        去授课
+                                                        去预览
                                                     </button>
                                                 </div>
                                             </div>
@@ -1456,7 +1456,7 @@
                                                 <li>• 节点大小表示概念层级（大=跨学科大概念，中=学科概念，小=学科子概念）</li>
                                                 <li>• 拖动节点可调整布局，使用滚轮缩放视图</li>
                                                 <li>• 调整关联强度阈值可筛选显示的连接关系</li>
-                                                <li>• 点击课程卡片上的"去授课"即可复制课程并开始教学</li>
+                                                <li>• 点击课程卡片上的"去预览"即可复制课程并开始教学</li>
                                             </ul>
                                         </div>
                                     </div>

@@ -72,7 +72,7 @@ export const mockResources: Resource[] = [
 - 储液罐
 - 循环泵
 - 管道系统
-- 滴灌/喷雾装置
+- 洒灌/喷雾装置
 
 ### 2. 根系支撑系统
 - 定植篮
@@ -428,6 +428,71 @@ IF 温度 > 28℃ THEN 启动降温
     path: 'mock_data/视频1.mp4',
     description: '植物工厂实景展示和工作原理演示',
     duration: '视频约5分钟'
+  },
+  // 互动网页资源
+  {
+    id: 'resource_interactive_1',
+    title: '光合作用过程动画',
+    type: 'interactive',
+    description: '动画展示光反应和暗反应的完整过程',
+    url: '/mock-h5/animation.html',
+    interactiveCategory: 'animation',
+  },
+  {
+    id: 'resource_interactive_2',
+    title: '植物水分运输动画',
+    type: 'interactive',
+    description: '从根部吸水到叶片蒸腾的全过程动画',
+    url: '/mock-h5/animation.html',
+    interactiveCategory: 'animation',
+  },
+  {
+    id: 'resource_interactive_3',
+    title: '二次函数图像探索器',
+    type: 'interactive',
+    description: 'Desmos 风格，调节参数观察图像变化',
+    url: '/mock-h5/visualization.html',
+    interactiveCategory: 'visualization',
+  },
+  {
+    id: 'resource_interactive_4',
+    title: '植物生长数据可视化',
+    type: 'interactive',
+    description: '多维度农业数据交互式可视化',
+    url: '/mock-h5/visualization.html',
+    interactiveCategory: 'visualization',
+  },
+  {
+    id: 'resource_interactive_5',
+    title: 'PhET: 温室效应模拟',
+    type: 'interactive',
+    description: '调节大气成分观察温度变化',
+    url: '/mock-h5/simulation.html',
+    interactiveCategory: 'simulation',
+  },
+  {
+    id: 'resource_interactive_6',
+    title: 'PhET: pH值模拟实验',
+    type: 'interactive',
+    description: '测量不同溶液的酸碱性',
+    url: '/mock-h5/simulation.html',
+    interactiveCategory: 'simulation',
+  },
+  {
+    id: 'resource_interactive_7',
+    title: '植物工厂知识闯关',
+    type: 'interactive',
+    description: '互动闯关测试，检验植物工厂知识掌握',
+    url: '/mock-h5/test.html',
+    interactiveCategory: 'test',
+  },
+  {
+    id: 'resource_interactive_8',
+    title: '水培系统设计挑战',
+    type: 'interactive',
+    description: '拖拽式互动练习，设计水培系统',
+    url: '/mock-h5/test.html',
+    interactiveCategory: 'test',
   }
 ];
 
@@ -435,41 +500,121 @@ IF 温度 > 28℃ THEN 启动降温
  * Mock任务数据
  */
 export const mockTasks: Task[] = [
-  // 客观题（知识检测）
+  // 客观题（知识检测）- 更复杂的题目
   {
     id: 'task_quiz_1',
     type: 'quiz',
-    title: '植物工厂基础知识测验',
-    description: '检测对植物工厂基本概念的理解',
+    title: '植物工厂核心技术综合测验',
+    description: '检测对植物工厂核心技术的深入理解和应用能力',
     status: 'available',
     required: true,
     questions: [
       {
         id: 'q1',
         type: 'single_choice',
-        content: '植物工厂与传统农业最本质的区别是什么？',
+        content: '在植物工厂中，为什么LED光源比传统荧光灯更适合作为人工光源？',
         options: [
-          'A. 使用更多的化肥',
-          'B. 完全可控的生长环境',
-          'C. 种植面积更大',
-          'D. 只能种植蔬菜'
+          '价格更便宜',
+          '可以精确调控光谱组成，匹配植物光合作用需求',
+          '发光效率更低',
+          '使用寿命更短'
         ],
-        answer: 'B',
-        explanation: '植物工厂的核心特点是通过人工控制光照、温度、湿度、CO2浓度等环境因素，实现作物全年稳定生产。'
+        answer: '可以精确调控光谱组成，匹配植物光合作用需求',
+        explanation: 'LED光源的核心优势在于可以根据植物不同生长阶段的需求，精确调控红光、蓝光等不同波长的光谱比例，从而优化光合作用效率。此外，LED还具有能耗低、发热少、使用寿命长等优点。'
       },
       {
         id: 'q2',
-        type: 'single_choice',
-        content: '水培系统中，植物主要通过什么方式获取养分？',
+        type: 'multiple_choice',
+        content: '水培营养液的EC值（电导率）过高会导致哪些问题？（多选）',
         options: [
-          'A. 土壤中的有机物',
-          'B. 营养液中的矿物质',
-          'C. 空气中的氮气',
-          'D. 阳光中的能量'
+          '植物根系吸水困难，出现生理性干旱',
+          '营养液浓度过低，植物缺乏养分',
+          '盐分积累导致根系损伤',
+          '促进植物快速生长'
         ],
-        answer: 'B',
-        explanation: '水培是无土栽培的一种，植物根系直接浸泡在含有必需矿物质的营养液中吸收养分。'
+        answer: ['植物根系吸水困难，出现生理性干旱', '盐分积累导致根系损伤'],
+        explanation: 'EC值过高意味着营养液中盐分浓度过高，会造成渗透压升高，使植物根系难以吸水（生理性干旱）。同时，高浓度盐分会直接损伤根系细胞，影响植物健康生长。'
       },
+      {
+        id: 'q3',
+        type: 'fill_in_blank',
+        content: '植物工厂中，光合作用的光补偿点是指光合速率与______速率相等时的光照强度。当光照强度低于光补偿点时，植物会______（积累/消耗）有机物。',
+        answer: '呼吸；消耗',
+        explanation: '光补偿点是光合作用的重要概念。当光照强度等于光补偿点时，光合作用产生的有机物刚好被呼吸作用消耗完。低于光补偿点时，呼吸作用大于光合作用，植物会消耗储存的有机物。'
+      },
+      {
+        id: 'q4',
+        type: 'single_choice',
+        content: '在植物工厂的环境控制中，为什么白天需要补充CO2，而夜间不需要？',
+        options: [
+          '夜间CO2浓度自然升高',
+          '植物只在白天进行光合作用，需要CO2作为原料',
+          '夜间植物不呼吸',
+          '为了节约成本'
+        ],
+        answer: '植物只在白天进行光合作用，需要CO2作为原料',
+        explanation: '光合作用需要光能、CO2和水作为原料。在有光照的白天，植物进行光合作用，大量消耗CO2。而夜间没有光照，光合作用停止，不需要补充CO2。实际上，夜间植物只进行呼吸作用，会释放CO2。'
+      },
+      {
+        id: 'q5',
+        type: 'multiple_choice',
+        content: '以下哪些因素会影响植物工厂中植物的蒸腾作用强度？（多选）',
+        options: [
+          '环境温度',
+          '空气湿度',
+          '光照强度',
+          '营养液pH值'
+        ],
+        answer: ['环境温度', '空气湿度', '光照强度'],
+        explanation: '蒸腾作用主要受环境因素影响：温度升高会加快蒸腾；湿度降低会增大水势梯度，促进蒸腾；光照增强会使气孔开放，加速蒸腾。营养液pH值主要影响养分吸收，对蒸腾作用影响较小。'
+      },
+      {
+        id: 'q6',
+        type: 'fill_in_blank',
+        content: '植物工厂采用立体栽培技术，可以使单位面积产量提高______倍以上。这种高效生产的关键在于充分利用了______空间。',
+        answer: '几十；垂直',
+        explanation: '立体栽培通过多层种植架，充分利用垂直空间，使得单位占地面积的产量大幅提升。现代植物工厂通常有10-20层种植架，产量可达传统农业的几十倍甚至上百倍。'
+      },
+      {
+        id: 'q7',
+        type: 'single_choice',
+        content: '植物工厂中，为什么要严格控制昼夜温差？',
+        options: [
+          '节约能源成本',
+          '防止设备损坏',
+          '模拟自然环境，促进植物正常生长发育',
+          '减少病虫害'
+        ],
+        answer: '模拟自然环境，促进植物正常生长发育',
+        explanation: '适当的昼夜温差对植物生长至关重要。白天温度较高有利于光合作用，夜间温度降低可以减少呼吸消耗，促进有机物积累。合理的温差还能促进某些植物的开花结实。'
+      },
+      {
+        id: 'q8',
+        type: 'multiple_choice',
+        content: '植物工厂相比传统温室大棚，具有哪些显著优势？（多选）',
+        options: [
+          '完全不受外界气候影响，可实现全年稳定生产',
+          '密闭环境减少病虫害，可实现无农药生产',
+          '建设成本更低',
+          '水肥利用效率更高，更加环保'
+        ],
+        answer: [
+          '完全不受外界气候影响，可实现全年稳定生产',
+          '密闭环境减少病虫害，可实现无农药生产',
+          '水肥利用效率更高，更加环保'
+        ],
+        explanation: '植物工厂的核心优势在于环境完全可控、清洁生产和资源高效利用。虽然建设成本较高，但长期运营效益显著，特别适合高附加值作物和特殊环境下的农业生产。'
+      }
+    ]
+  },
+  {
+    id: 'task_quiz_2',
+    type: 'quiz',
+    title: '水培系统深度理解测验',
+    description: '评估对水培技术原理和实践的掌握程度',
+    status: 'available',
+    required: false,
+    questions: [
       {
         id: 'q3',
         type: 'multiple_choice',

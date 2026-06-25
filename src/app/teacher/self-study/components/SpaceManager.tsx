@@ -74,16 +74,16 @@ export default function SpaceManager({
   }).length;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="h-full bg-gray-50 flex flex-col">
       {/* 背景装饰 */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-20 right-10 w-96 h-96 bg-primary-200/20 rounded-full blur-3xl" />
         <div className="absolute bottom-20 left-10 w-72 h-72 bg-accent-200/20 rounded-full blur-3xl" />
       </div>
 
-      <div className="relative z-10 max-w-6xl mx-auto px-6 py-8">
+      <div className="relative z-10 max-w-6xl mx-auto px-6 py-8 flex-1 flex flex-col overflow-hidden w-full">
         {/* 头部 */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-8 flex-shrink-0">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">{t('我的学习空间')}</h1>
             <p className="text-gray-600">{t('管理你的自主学习项目')}</p>
@@ -98,7 +98,7 @@ export default function SpaceManager({
         </div>
 
         {/* 统计卡片 */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 flex-shrink-0">
           <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 bg-primary-100 rounded-xl flex items-center justify-center">
@@ -119,8 +119,8 @@ export default function SpaceManager({
           </div>
           <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center">
-                <Calendar size={20} className="text-amber-600" />
+              <div className="w-10 h-10 bg-fresh-100 rounded-xl flex items-center justify-center">
+                <Calendar size={20} className="text-fresh-600" />
               </div>
               <span className="text-sm text-gray-500">{t('本周活跃')}</span>
             </div>
@@ -129,6 +129,7 @@ export default function SpaceManager({
         </div>
 
         {/* 空间列表 */}
+        <div className="flex-1 overflow-y-auto">
         {spaces.length === 0 ? (
           <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center">
             <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -256,6 +257,7 @@ export default function SpaceManager({
             ))}
           </div>
         )}
+        </div>
       </div>
 
       {/* 删除确认弹窗 */}

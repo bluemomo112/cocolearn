@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { applyTheme, themes } from './ThemeProvider'
 
 export type ThemeName = 'green' | 'blue' | 'purple'
 
@@ -44,29 +45,17 @@ export default function ThemeSwitcher() {
     }
   }, [])
 
-  const handleThemeChange = async (themeName: ThemeName) => {
+  const handleThemeChange = (themeName: ThemeName) => {
     setCurrentTheme(themeName)
     setShowMenu(false)
 
     // 保存到 localStorage
     localStorage.setItem('theme', themeName)
 
-    // 调用 API 切换主题
-    try {
-      const response = await fetch('/api/theme', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ theme: themeName }),
-      })
-
-      if (response.ok) {
-        // 刷新页面以应用新主题
-        window.location.reload()
-      }
-    } catch (error) {
-      console.error('Failed to switch theme:', error)
+    // 应用主题
+    const theme = themes[themeName]
+    if (theme) {
+      applyTheme(theme)
     }
   }
 

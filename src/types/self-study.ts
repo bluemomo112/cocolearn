@@ -62,6 +62,35 @@ export interface LearningPath {
   updatedAt: Date;
 }
 
+// 发布元数据
+export interface PublishMetadata {
+  spaceName?: string;          // 学习空间名称
+  isAnonymous?: boolean;       // 是否匿名模式
+  accessCode?: string;         // 访问码（匿名模式使用）
+  grade?: string;              // 年级，如 "四年级"
+  subjects?: string[];         // 学科，如 ["科学", "地理"]
+  bindClasses?: string[];      // 绑定班级，如 ["四年级1班", "四年级2班"]
+  publishedAt?: Date;          // 发布时间
+  publishedBy?: string;        // 发布者
+}
+
+// 发布配置范围
+export interface PublishScope {
+  includeResources: boolean;
+  includeTasks: boolean;
+  includeAISettings: boolean;
+  includeLearningPath: boolean;
+}
+
+// 发布版本
+export interface PublishVersion {
+  version: number;
+  publishedAt: Date;
+  scope: PublishScope;
+  shareLink: string;
+  snapshot: Partial<SpaceConfig>; // 发布时的配置快照
+}
+
 // 自学空间配置（SpaceConfig）
 export interface SpaceConfig {
   id: string;
@@ -69,6 +98,16 @@ export interface SpaceConfig {
   description?: string;
   topic?: string; // 学习主题
   scenario?: PresetScenario; // 预设场景
+
+  // 笔记元信息
+  cover?: string; // 封面图
+  tags?: string[]; // 标签
+  subjects?: string[]; // 学科
+  grade?: string; // 年级
+  bindClasses?: string[]; // 绑定班级
+  publishScope?: PublishScope; // 发布范围
+  publishedLink?: string; // 发布链接
+  publishedCode?: string; // 访问码
 
   // 学习模式（替代 interactionMode）
   learningMode: LearningMode;
@@ -89,8 +128,32 @@ export interface SpaceConfig {
   // 笔记模板
   noteTemplate: 'blank' | 'cornell' | 'sky_rain_umbrella';
 
+  // AI 交互配置
+  freeConfig?: {
+    selectedAgentId: string;
+    teacherPrompt: string;
+    enableFence: boolean;
+  };
+
+  guidedConfig?: {
+    selectedWorkflowId: string;
+    stagePrompts: Record<string, string>; // stageId -> custom prompt
+  };
+
+  // AI 监控配置
+  metaConfig?: {
+    selectedStrategyId: string;
+    teacherPrompt: string;
+  };
+
   // 能力追踪维度（通用版可自定义）
   competencyDimensions: CompetencyType[];
+
+  // 发布状态
+  publishStatus: 'unpublished' | 'published';
+  publishedVersions: PublishVersion[];
+  currentPublishVersion?: number;
+  publishMetadata?: PublishMetadata; // 发布元数据
 
   // 元数据
   createdAt: Date;
@@ -220,6 +283,8 @@ export function createDefaultSpaceConfig(partial?: Partial<SpaceConfig>): SpaceC
     },
     noteTemplate: 'blank',
     competencyDimensions: ['critical_thinking', 'information_synthesis', 'metacognition'],
+    publishStatus: 'unpublished',
+    publishedVersions: [],
     createdAt: now,
     updatedAt: now,
     ...partial,

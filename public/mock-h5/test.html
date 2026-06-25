@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>植物工厂知识闯关</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;background:linear-gradient(135deg,#1a0a2e 0%,#2d1b4e 40%,#4a2c6e 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:12px;color:#f0e6ff}
+.box{width:100%;max-width:480px}
+.card{background:rgba(255,255,255,.08);backdrop-filter:blur(12px);border-radius:20px;padding:24px;border:1px solid rgba(255,255,255,.1);box-shadow:0 8px 32px rgba(0,0,0,.3);transition:opacity .3s,transform .3s}
+.card.out{opacity:0;transform:translateY(12px)}
+.hd{text-align:center;margin-bottom:20px}
+.hd h1{font-size:1.3em;background:linear-gradient(90deg,#f5a623,#f7c948);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:4px}
+.hd p{font-size:.8em;color:#c4a8e0}
+.bar-wrap{display:flex;align-items:center;gap:10px;margin-bottom:20px}
+.bar{flex:1;height:8px;background:rgba(255,255,255,.1);border-radius:4px;overflow:hidden}
+.bar-fill{height:100%;background:linear-gradient(90deg,#f5a623,#d4a5ff);border-radius:4px;transition:width .4s}
+.bar-txt{font-size:.75em;color:#c4a8e0;white-space:nowrap}
+.tag{display:inline-block;font-size:.7em;padding:3px 10px;border-radius:10px;margin-bottom:10px;font-weight:600}
+.tag-s{background:rgba(245,166,35,.25);color:#f7c948}
+.tag-t{background:rgba(100,200,150,.25);color:#7ee8a8}
+.tag-m{background:rgba(160,120,255,.25);color:#c9a8ff}
+.qtxt{font-size:1.05em;line-height:1.6;margin-bottom:18px;font-weight:500}
+.opts{display:flex;flex-direction:column;gap:10px}
+.ob{background:rgba(255,255,255,.07);border:1.5px solid rgba(255,255,255,.15);border-radius:12px;padding:12px 16px;color:#f0e6ff;font-size:.92em;text-align:left;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:10px;line-height:1.4}
+.ob:hover{background:rgba(255,255,255,.13);border-color:rgba(245,166,35,.4)}
+.ob.sel{background:rgba(245,166,35,.15);border-color:#f5a623}
+.ob.ok{background:rgba(80,200,120,.18)!important;border-color:#50c878!important}
+.ob.no{background:rgba(255,80,80,.18)!important;border-color:#ff5050!important}
+.ob.miss{background:rgba(80,200,120,.1)!important;border-color:rgba(80,200,120,.5)!important}
+.ob[disabled]{cursor:default;pointer-events:none}
+.ind{width:22px;height:22px;border:1.5px solid rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;font-size:.75em;flex-shrink:0;transition:all .2s}
+.ind-r{border-radius:50%}
+.ind-c{border-radius:4px}
+.ob.sel .ind{background:#f5a623;border-color:#f5a623;color:#1a0a2e}
+.ob.ok .ind{background:#50c878;border-color:#50c878;color:#1a0a2e}
+.ob.no .ind{background:#ff5050;border-color:#ff5050;color:#fff}
+.ob.miss .ind{background:rgba(80,200,120,.4);border-color:#50c878;color:#fff}
+.srow{margin-top:16px;display:flex;justify-content:center}
+.sbtn{background:linear-gradient(135deg,#f5a623,#e09520);color:#1a0a2e;border:none;border-radius:12px;padding:10px 32px;font-size:.95em;font-weight:600;cursor:pointer;transition:all .2s;opacity:.4;pointer-events:none}
+.sbtn.on{opacity:1;pointer-events:auto}
+.sbtn.on:hover{transform:scale(1.03);box-shadow:0 4px 16px rgba(245,166,35,.4)}
+.fb{margin-top:16px;padding:14px;border-radius:12px;font-size:.88em;line-height:1.6;animation:fi .3s}
+.fb-ok{background:rgba(80,200,120,.12);border:1px solid rgba(80,200,120,.3)}
+.fb-no{background:rgba(255,80,80,.12);border:1px solid rgba(255,80,80,.3)}
+.nbtn{display:block;margin:16px auto 0;background:linear-gradient(135deg,#9b6dff,#7b4dd4);color:#fff;border:none;border-radius:12px;padding:10px 36px;font-size:.93em;font-weight:600;cursor:pointer;transition:all .2s}
+.nbtn:hover{transform:scale(1.03);box-shadow:0 4px 16px rgba(155,109,255,.4)}
+.res{text-align:center}
+.res .emo{font-size:3em;margin-bottom:12px}
+.res .sc{font-size:2em;font-weight:700;background:linear-gradient(90deg,#f5a623,#f7c948);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.res .scsub{font-size:.9em;color:#c4a8e0;margin:8px 0 20px}
+.det{display:flex;flex-direction:column;gap:8px;margin-bottom:20px;text-align:left}
+.dr{display:flex;align-items:center;gap:8px;font-size:.85em;padding:8px 12px;background:rgba(255,255,255,.05);border-radius:8px}
+.dt{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.dt-g{background:#50c878}
+.dt-r{background:#ff5050}
+.rbtn{background:linear-gradient(135deg,#f5a623,#e09520);color:#1a0a2e;border:none;border-radius:12px;padding:12px 40px;font-size:1em;font-weight:600;cursor:pointer;transition:all .2s}
+.rbtn:hover{transform:scale(1.03);box-shadow:0 4px 16px rgba(245,166,35,.4)}
+@keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+<div class="box"><div class="card" id="card">
+<div class="hd"><h1>&#127793; 植物工厂知识闯关</h1><p>测试你对植物工厂的了解</p></div>
+<div id="ct"></div>
+</div></div>
+<script>
+var QS=[
+{tp:"s",lb:"单选题",tc:"tag-s",q:"植物工厂的主要优势是什么？",
+ o:["不受气候影响全年生产","成本低廉","不需要技术","产量低但质量好"],a:[0],
+ e:"植物工厂通过人工环境控制，可以不受外界气候影响，实现全年稳定生产，这是其最核心的优势。"},
+{tp:"t",lb:"判断题",tc:"tag-t",q:"植物工厂可以完全不使用土壤进行种植。",
+ o:["正确 ✓","错误 ✗"],a:[0],
+ e:"植物工厂普遍采用水培、气雾培等无土栽培技术，完全不需要土壤即可种植作物。"},
+{tp:"m",lb:"多选题",tc:"tag-m",q:"植物工厂中需要控制的关键环境因素有哪些？（多选）",
+ o:["温度和湿度","光照强度与光谱","CO₂浓度","土壤酸碱度"],a:[0,1,2],
+ e:"植物工厂需要精确控制温度、湿度、光照和CO₂浓度。由于采用无土栽培，土壤酸碱度不在控制范围内。"},
+{tp:"s",lb:"单选题",tc:"tag-s",q:"LED灯在植物工厂中的主要作用是什么？",
+ o:["装饰美观","提供光合作用所需的特定光谱","加热空气","驱赶害虫"],a:[1],
+ e:"LED灯可以发出植物光合作用所需的特定光谱（如红光和蓝光），高效促进植物生长，是植物工厂的核心设备之一。"},
+{tp:"t",lb:"判断题",tc:"tag-t",q:"植物工厂的初始建设成本低于传统农业。",
+ o:["正确 ✓","错误 ✗"],a:[1],
+ e:"植物工厂需要大量设备投入（LED灯、环控系统、水培设施等），初始建设成本远高于传统农业，但长期运营可通过高产出和稳定性获得回报。"}
+];
+var ci=0,sel=[],scores=[],locked=false;
+var card=document.getElementById("card"),ct=document.getElementById("ct");
+var labels="ABCDEFGH";
+
+function render(){
+  var q=QS[ci],h="",isM=q.tp==="m",ic=isM?"ind-c":"ind-r";
+  h+='<div class="bar-wrap"><div class="bar"><div class="bar-fill" style="width:'+(ci/QS.length*100)+'%"></div></div><div class="bar-txt">'+(ci+1)+'/'+QS.length+'</div></div>';
+  h+='<div class="tag '+q.tc+'">'+q.lb+'</div>';
+  h+='<div class="qtxt">'+q.q+'</div>';
+  h+='<div class="opts" id="opts">';
+  for(var i=0;i<q.o.length;i++){
+    h+='<button class="ob" data-i="'+i+'"><span class="ind '+ic+'">'+labels[i]+'</span><span>'+q.o[i]+'</span></button>';
+  }
+  h+='</div>';
+  if(isM) h+='<div class="srow"><button class="sbtn" id="sbtn" onclick="check()">确认提交</button></div>';
+  h+='<div id="fb"></div>';
+  ct.innerHTML=h;
+  sel=[];locked=false;
+  document.querySelectorAll(".ob").forEach(function(b){
+    b.addEventListener("click",function(){pick(this)});
+  });
+}
+
+function pick(btn){
+  if(locked)return;
+  var idx=+btn.dataset.i,q=QS[ci],isM=q.tp==="m";
+  if(isM){
+    var p=sel.indexOf(idx);
+    if(p>-1){sel.splice(p,1);btn.classList.remove("sel")}
+    else{sel.push(idx);btn.classList.add("sel")}
+    var sb=document.getElementById("sbtn");
+    if(sb) sb.className=sel.length?"sbtn on":"sbtn";
+  }else{
+    sel=[idx];
+    document.querySelectorAll(".ob").forEach(function(b){b.classList.remove("sel")});
+    btn.classList.add("sel");
+    setTimeout(function(){check()},300);
+  }
+}
+
+function check(){
+  if(locked||!sel.length)return;
+  locked=true;
+  var q=QS[ci],ans=q.a,ok=false;
+  if(sel.length===ans.length){
+    ok=true;
+    for(var i=0;i<ans.length;i++){if(sel.indexOf(ans[i])<0){ok=false;break}}
+  }
+  scores.push(ok);
+  var btns=document.querySelectorAll(".ob");
+  btns.forEach(function(b){
+    var idx=+b.dataset.i,isSel=sel.indexOf(idx)>-1,isAns=ans.indexOf(idx)>-1;
+    if(isSel&&isAns)b.className="ob ok";
+    else if(isSel&&!isAns)b.className="ob no";
+    else if(!isSel&&isAns)b.className="ob miss";
+    b.setAttribute("disabled","true");
+  });
+  var sb=document.getElementById("sbtn");
+  if(sb)sb.style.display="none";
+  var fb=document.getElementById("fb");
+  fb.innerHTML='<div class="fb '+(ok?"fb-ok":"fb-no")+'">'+(ok?"✅ 回答正确！":"❌ 回答错误！")+"<br>"+q.e+"</div>"
+    +'<button class="nbtn" onclick="next()">'+(ci<QS.length-1?"下一题 →":"查看结果 →")+"</button>";
+}
+
+function next(){
+  card.classList.add("out");
+  setTimeout(function(){
+    ci++;
+    if(ci<QS.length)render();
+    else showResult();
+    card.classList.remove("out");
+  },300);
+}
+
+function showResult(){
+  var n=0;scores.forEach(function(s){if(s)n++});
+  var pct=Math.round(n/QS.length*100);
+  var emo=pct===100?"🏆🎉":pct>=60?"👏😊":"💪📖";
+  var msg=pct===100?"满分通关！你是植物工厂专家！":pct>=60?"表现不错，继续加油！":"还需努力，再来一次吧！";
+  var h='<div class="res"><div class="emo">'+emo+'</div>';
+  h+='<div class="sc">'+n+' / '+QS.length+'</div>';
+  h+='<div class="scsub">正确率 '+pct+'% · '+msg+'</div>';
+  h+='<div class="det">';
+  for(var i=0;i<QS.length;i++){
+    h+='<div class="dr"><span class="dt '+(scores[i]?"dt-g":"dt-r")+'"></span><span>第'+(i+1)+'题：'+QS[i].q.substring(0,18)+'…</span><span style="margin-left:auto">'+(scores[i]?"✅":"❌")+'</span></div>';
+  }
+  h+='</div><button class="rbtn" onclick="restart()">再来一次</button></div>';
+  ct.innerHTML=h;
+}
+
+function restart(){
+  card.classList.add("out");
+  setTimeout(function(){ci=0;sel=[];scores=[];locked=false;render();card.classList.remove("out")},300);
+}
+
+render();
+</script>
+</body>
+</html>

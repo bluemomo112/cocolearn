@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { BookOpen, Users, GraduationCap, Sparkles, Target, TrendingUp, Award, ChevronRight } from 'lucide-react'
 
 export default function Home() {
   return (
@@ -29,7 +30,7 @@ export default function Home() {
             为学生提供个性化的学习体验
           </p>
 
-          <div className="flex flex-wrap justify-center gap-4">
+          {/* <div className="flex flex-wrap justify-center gap-4">
             <Link
               href="/course-center"
               className="px-8 py-4 bg-primary-600 text-white rounded-2xl font-semibold hover:bg-primary-700 hover:scale-105 transition-all duration-300 active:scale-95 shadow-lg hover:shadow-xl"
@@ -42,101 +43,181 @@ export default function Home() {
             >
               管理者看板
             </Link>
+          </div> */}
+        </div>
+
+        {/* 主功能入口 - 3个大卡片 */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-20">
+          {/* 课程中心 */}
+          <Link href="/course-center" className="group">
+            <div className="bg-white rounded-3xl p-10 shadow-lg border border-gray-100 hover:shadow-2xl hover:-translate-y-3 transition-all duration-300 h-full">
+              <div className="w-20 h-20 bg-gradient-to-br from-primary-500 to-primary-600 rounded-3xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-lg">
+                <BookOpen className="w-10 h-10 text-white" strokeWidth={2} />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-primary-600 transition-colors">
+                课程中心
+              </h3>
+              <p className="text-gray-600 mb-6 leading-relaxed">
+                浏览精选跨学科课程，开启个性化学习之旅
+              </p>
+              <div className="flex items-center text-primary-600 font-medium group-hover:translate-x-2 transition-transform">
+                立即探索
+                <ChevronRight className="w-5 h-5 ml-1" />
+              </div>
+            </div>
+          </Link>
+
+          {/* 我的主页 */}
+          <Link href="/teacher" className="group">
+            <div className="bg-white rounded-3xl p-10 shadow-lg border border-gray-100 hover:shadow-2xl hover:-translate-y-3 transition-all duration-300 h-full">
+              <div className="w-20 h-20 bg-gradient-to-br from-accent-500 to-accent-600 rounded-3xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-lg">
+                <Users className="w-10 h-10 text-white" strokeWidth={2} />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-accent-600 transition-colors">
+                我的主页
+              </h3>
+              <p className="text-gray-600 mb-6 leading-relaxed">
+                创建课程、管理教学、分析学情，一站式解决
+              </p>
+              <div className="flex items-center text-accent-600 font-medium group-hover:translate-x-2 transition-transform">
+                进入工作台
+                <ChevronRight className="w-5 h-5 ml-1" />
+              </div>
+            </div>
+          </Link>
+
+          {/* 自学模式 */}
+          <Link href="/teacher/self-study" className="group">
+            <div className="bg-white rounded-3xl p-10 shadow-lg border border-gray-100 hover:shadow-2xl hover:-translate-y-3 transition-all duration-300 h-full">
+              <div className="w-20 h-20 bg-gradient-to-br from-fresh-500 to-fresh-600 rounded-3xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-lg">
+                <GraduationCap className="w-10 h-10 text-white" strokeWidth={2} />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-fresh-600 transition-colors">
+                自学模式
+              </h3>
+              <p className="text-gray-600 mb-6 leading-relaxed">
+                AI 智能助教陪伴，打造专属学习空间
+              </p>
+              <div className="flex items-center text-fresh-600 font-medium group-hover:translate-x-2 transition-transform">
+                开始自学
+                <ChevronRight className="w-5 h-5 ml-1" />
+              </div>
+            </div>
+          </Link>
+        </div>
+
+        {/* 平台特色 */}
+        <div className="bg-white rounded-3xl p-12 shadow-lg border border-gray-100 mb-16 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 mb-3">平台特色</h2>
+            <p className="text-gray-600">为跨学科教学提供全方位支持</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mb-12">
+            <div className="text-center group">
+              <div className="w-16 h-16 bg-gradient-to-br from-primary-100 to-primary-200 rounded-2xl flex items-center justify-center mx-auto mb-5 group-hover:scale-110 transition-transform duration-300">
+                <Target className="w-8 h-8 text-primary-600" strokeWidth={2} />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-3">跨学科融合</h3>
+              <p className="text-gray-600 leading-relaxed">
+                打破学科边界，整合多学科知识体系，培养学生综合素养与创新思维
+              </p>
+            </div>
+
+            <div className="text-center group">
+              <div className="w-16 h-16 bg-gradient-to-br from-accent-100 to-accent-200 rounded-2xl flex items-center justify-center mx-auto mb-5 group-hover:scale-110 transition-transform duration-300">
+                <Sparkles className="w-8 h-8 text-accent-600" strokeWidth={2} />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-3">AI 智能辅助</h3>
+              <p className="text-gray-600 leading-relaxed">
+                智能助教全程陪伴，提供个性化学习建议，实时答疑解惑
+              </p>
+            </div>
+
+            <div className="text-center group">
+              <div className="w-16 h-16 bg-gradient-to-br from-fresh-100 to-fresh-200 rounded-2xl flex items-center justify-center mx-auto mb-5 group-hover:scale-110 transition-transform duration-300">
+                <TrendingUp className="w-8 h-8 text-fresh-600" strokeWidth={2} />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-3">数据驱动</h3>
+              <p className="text-gray-600 leading-relaxed">
+                可视化追踪学习进度，科学评估教学效果，助力精准教学
+              </p>
+            </div>
+          </div>
+
+          {/* 数据统计 */}
+          <div className="grid grid-cols-3 gap-8 pt-8 border-t border-gray-100">
+            <div className="text-center">
+              <div className="text-4xl font-bold text-primary-600 mb-2">1,200+</div>
+              <div className="text-gray-600">精选课程</div>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl font-bold text-accent-600 mb-2">500+</div>
+              <div className="text-gray-600">活跃教师</div>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl font-bold text-fresh-600 mb-2">10,000+</div>
+              <div className="text-gray-600">学习资源</div>
+            </div>
           </div>
         </div>
 
-        {/* 功能卡片 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
-          <Link href="/teacher" className="group">
-            <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 hover:shadow-xl hover:-translate-y-2 transition-all duration-300">
-              <div className="w-14 h-14 bg-primary-100 rounded-2xl flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300">
-                <svg className="w-7 h-7 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-primary-600 transition-colors">
-                教师工作台
-              </h3>
-              <p className="text-gray-500 text-sm">
-                教学管理、课程创建、学情分析一站式解决
-              </p>
+        {/* 教师推荐 */}
+        <div className="bg-gradient-to-br from-primary-50 to-accent-50 rounded-3xl p-12 animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">课程推荐</h2>
+              <p className="text-gray-600">优秀的跨学科教学实践</p>
             </div>
-          </Link>
+            <Award className="w-12 h-12 text-primary-600" strokeWidth={1.5} />
+          </div>
 
-          <Link href="/resource-hub" className="group">
-            <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 hover:shadow-xl hover:-translate-y-2 transition-all duration-300">
-              <div className="w-14 h-14 bg-accent-100 rounded-2xl flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300">
-                <svg className="w-7 h-7 text-accent-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-accent-600 transition-colors">
-                资源库
-              </h3>
-              <p className="text-gray-500 text-sm">
-                探索跨学科课程资源，知识图谱可视化
-              </p>
-            </div>
-          </Link>
-
-          <Link href="/teacher/knowledge" className="group">
-            <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 hover:shadow-xl hover:-translate-y-2 transition-all duration-300">
-              <div className="w-14 h-14 bg-primary-100 rounded-2xl flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300">
-                <svg className="w-7 h-7 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-primary-600 transition-colors">
-                知识库
-              </h3>
-              <p className="text-gray-500 text-sm">
-                管理教学资源，智能切片与语义检索
-              </p>
-            </div>
-          </Link>
-
-          <Link href="/admin" className="group">
-            <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 hover:shadow-xl hover:-translate-y-2 transition-all duration-300">
-              <div className="w-14 h-14 bg-accent-100 rounded-2xl flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300">
-                <svg className="w-7 h-7 text-accent-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-accent-600 transition-colors">
-                管理看板
-              </h3>
-              <p className="text-gray-500 text-sm">
-                全局数据监控、教师与课程管理
-              </p>
-            </div>
-          </Link>
-        </div>
-
-        {/* 特色功能 */}
-        <div className="bg-white rounded-3xl p-10 shadow-sm border border-gray-100 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
-          <h2 className="text-2xl font-bold text-gray-900 text-center mb-10">平台特色</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {[
               {
-                icon: '🎯',
-                title: '跨学科融合',
-                desc: '打破学科边界，培养学生综合素养'
+                teacher: '张老师',
+                subject: '数学 × 物理',
+                course: '运动中的数学建模',
+                students: 156,
+                rating: 4.9
               },
               {
-                icon: '🤖',
-                title: 'AI 智能辅助',
-                desc: '智能助教全程陪伴，个性化学习体验'
+                teacher: '李老师',
+                subject: '历史 × 地理',
+                course: '丝绸之路的文明交融',
+                students: 203,
+                rating: 4.8
               },
               {
-                icon: '📊',
-                title: '数据驱动',
-                desc: '可视化追踪教学效果，科学评估成长'
+                teacher: '王老师',
+                subject: '生物 × 化学',
+                course: '生命的化学密码',
+                students: 178,
+                rating: 4.9
+              },
+              {
+                teacher: '陈老师',
+                subject: '语文 × 艺术',
+                course: '诗词中的美学世界',
+                students: 192,
+                rating: 4.7
               }
-            ].map((feature, index) => (
-              <div key={index} className="text-center">
-                <div className="text-4xl mb-4">{feature.icon}</div>
-                <h3 className="font-semibold text-gray-900 mb-2">{feature.title}</h3>
-                <p className="text-sm text-gray-500">{feature.desc}</p>
+            ].map((item, index) => (
+              <div key={index} className="bg-white rounded-2xl p-6 hover:shadow-lg transition-shadow duration-300">
+                <div className="flex items-start justify-between mb-4">
+                  <div>
+                    <div className="text-sm text-primary-600 font-medium mb-1">{item.subject}</div>
+                    <h3 className="text-lg font-bold text-gray-900">{item.course}</h3>
+                  </div>
+                  <div className="flex items-center gap-1 bg-amber-50 px-3 py-1 rounded-full">
+                    <span className="text-amber-600 text-sm font-semibold">{item.rating}</span>
+                    <span className="text-amber-500">★</span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between text-sm text-gray-600">
+                  <span>{item.teacher}</span>
+                  <span>{item.students} 名学生</span>
+                </div>
               </div>
             ))}
           </div>

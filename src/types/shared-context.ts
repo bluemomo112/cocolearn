@@ -17,21 +17,32 @@ export interface Message {
 export interface Resource {
   id: string;
   title: string;
-  type: 'document' | 'presentation' | 'video';
-  fileType: 'docx' | 'pptx' | 'mp4';
-  path: string;
+  type: 'document' | 'presentation' | 'video' | 'interactive';
+  fileType?: 'docx' | 'pptx' | 'mp4';
+  path?: string;
   description: string;
   duration?: string;
   textContent?: string;
+  url?: string;
+  interactiveCategory?: 'animation' | 'visualization' | 'simulation' | 'test';
+  // 试卷相关扩展
+  sourceType?: 'manual_upload' | 'exam_paper' | 'student_answer_sheet';
+  linkedTaskId?: string;
+  studentName?: string;
+  visibility?: ResourceVisibility;
+  // 内容来源标记（用于区分教师发布内容和学生添加内容）
+  source?: 'teacher' | 'student';
 }
 
 export interface TaskQuestion {
   id: string;
-  type: 'single_choice' | 'multiple_choice';
-  content: string;
-  options: string[];
+  type: 'single_choice' | 'multiple_choice' | 'fill_in_blank' | 'true_false';
+  content: string;           // Markdown 格式，支持 ![img](url)、视频嵌入等
+  options?: string[];         // Markdown 格式选项
   answer: string | string[];
-  explanation?: string;
+  explanation?: string;       // Markdown 格式解析
+  blanks?: number;            // 填空题的空格数量
+  points?: number;            // 每题分值，默认 1
 }
 
 export interface TaskRubric {
@@ -39,6 +50,22 @@ export interface TaskRubric {
   good: string;
   pass: string;
   fail: string;
+}
+
+// 任务级别设置
+export interface TaskSettings {
+  showAnswersAfterSubmit: boolean;
+  showExplanationsAfterSubmit: boolean;
+  allowRetry: boolean;
+  fullscreenMode: boolean;
+  allowViewResources: boolean; // 开卷模式
+  source: 'exam_converted' | 'ai_generated' | 'manual';
+}
+
+// 资源可见性配置
+export interface ResourceVisibility {
+  mode: 'always' | 'after_task' | 'hidden';
+  afterTaskId?: string;
 }
 
 export interface Task {
@@ -55,6 +82,9 @@ export interface Task {
   prerequisite?: string[];
   submissionPlaceholder?: string;
   relatedResourceIds?: string[];
+  settings?: TaskSettings;
+  // 内容来源标记（用于区分教师发布内容和学生添加内容）
+  source?: 'teacher' | 'student';
 }
 
 export interface CompetencyUpdate {
@@ -118,6 +148,16 @@ export interface TaskSubmission {
   isAllCorrect?: boolean; // 客观题是否全对
   assessment?: TaskAssessment; // 主观题的评估结果
   details?: any[]; // 客观题的详细结果
+}
+
+// 任务尝试历史记录
+export interface TaskAttemptHistory {
+  taskId: string;
+  attempts: Array<{
+    attemptNumber: number;
+    submittedAt: Date;
+    score?: number;
+  }>;
 }
 
 export interface ResourceAccessLog {
