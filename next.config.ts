@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  transpilePackages: ['@cross/self-learn'],
   images: {
     remotePatterns: [
       {
