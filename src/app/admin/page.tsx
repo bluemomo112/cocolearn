@@ -167,6 +167,75 @@ export default function AdminDashboard() {
           ))}
         </div>
 
+        {/* Quick Modules */}
+        <div className="mb-6 animate-fade-in">
+          <h2 className="text-lg font-semibold text-gray-900 mb-3">管理入口</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Link
+              href="/admin/courses"
+              className="group flex items-center gap-3 p-4 bg-white rounded-2xl border border-gray-100 hover:border-primary-300 hover:shadow-md transition-all"
+            >
+              <div className="flex items-center justify-center w-11 h-11 rounded-xl bg-primary-50 text-primary-600 group-hover:bg-primary-100 transition-colors">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="font-medium text-gray-900">课程管理</div>
+                <div className="text-xs text-gray-500 mt-0.5">审核、上下架课程</div>
+              </div>
+            </Link>
+
+            <Link
+              href="/admin/teachers"
+              className="group flex items-center gap-3 p-4 bg-white rounded-2xl border border-gray-100 hover:border-primary-300 hover:shadow-md transition-all"
+            >
+              <div className="flex items-center justify-center w-11 h-11 rounded-xl bg-primary-50 text-primary-600 group-hover:bg-primary-100 transition-colors">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="font-medium text-gray-900">教师管理</div>
+                <div className="text-xs text-gray-500 mt-0.5">账号、权限与档案</div>
+              </div>
+            </Link>
+
+            <Link
+              href="/admin/resources"
+              className="group flex items-center gap-3 p-4 bg-white rounded-2xl border-2 border-primary-300 hover:shadow-md transition-all"
+            >
+              <div className="flex items-center justify-center w-11 h-11 rounded-xl bg-primary-100 text-primary-700 group-hover:bg-primary-200 transition-colors">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="font-medium text-gray-900 flex items-center gap-1.5">
+                  学习资源管理
+                  <span className="px-1.5 py-0.5 text-[10px] bg-primary-100 text-primary-700 rounded font-medium">NEW</span>
+                </div>
+                <div className="text-xs text-gray-500 mt-0.5">名师课堂 / 互动工具 / 学习资源</div>
+              </div>
+            </Link>
+
+            <Link
+              href="/admin/reports"
+              className="group flex items-center gap-3 p-4 bg-white rounded-2xl border border-gray-100 hover:border-primary-300 hover:shadow-md transition-all"
+            >
+              <div className="flex items-center justify-center w-11 h-11 rounded-xl bg-primary-50 text-primary-600 group-hover:bg-primary-100 transition-colors">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="font-medium text-gray-900">报表中心</div>
+                <div className="text-xs text-gray-500 mt-0.5">导出数据与分析</div>
+              </div>
+            </Link>
+          </div>
+        </div>
+
         {/* Charts Row */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
           {/* User Trend Chart */}
