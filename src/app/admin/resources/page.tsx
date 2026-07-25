@@ -58,7 +58,7 @@ export default function AdminResourcesPage() {
 
     // 排序
     return result.sort((a, b) => b.sortWeight - a.sortWeight || new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-  }, [activeTab, statusFilter, searchQuery])
+  }, [activeTab, statusFilter, searchQuery, localResources])
 
   const hasFilters = searchQuery.trim() || statusFilter !== 'all'
 

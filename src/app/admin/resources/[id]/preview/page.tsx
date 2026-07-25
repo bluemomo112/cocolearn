@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter, useParams } from 'next/navigation'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import { mockResources, type Resource, type ResourceSection } from '@/data/mockResourceHubData'
 
@@ -55,24 +55,13 @@ export default function PreviewResourcePage() {
   const router = useRouter()
   const params = useParams()
   const id = params.id as string
-  const [resource, setResource] = useState<Resource | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [resource] = useState<Resource | null>(() => mockResources.find(r => r.id === id) || null)
   const [showIframe, setShowIframe] = useState(false)
   const [testLog, setTestLog] = useState<Array<{ type: 'info' | 'success' | 'warn'; message: string; time: string }>>([])
-
-  useEffect(() => {
-    const found = mockResources.find(r => r.id === id)
-    setResource(found || null)
-    setLoading(false)
-  }, [id])
 
   const log = (type: 'info' | 'success' | 'warn', message: string) => {
     const time = new Date().toLocaleTimeString('zh-CN', { hour12: false })
     setTestLog(prev => [{ type, message, time }, ...prev.slice(0, 9)])
-  }
-
-  if (loading) {
-    return <div className="p-8 text-gray-500">加载中...</div>
   }
 
   if (!resource) {

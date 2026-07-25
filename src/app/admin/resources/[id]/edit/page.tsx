@@ -9,14 +9,9 @@ export default function EditResourcePage() {
   const router = useRouter()
   const params = useParams()
   const id = params.id as string
-  const [resource, setResource] = useState<Resource | null>(null)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    const found = mockResources.find(r => r.id === id)
-    setResource(found || null)
-    setLoading(false)
-  }, [id])
+  const [resource] = useState<Resource | null>(() => {
+    return mockResources.find(r => r.id === id) || null
+  })
 
   const handleSave = (data: Omit<Resource, 'id' | 'sortWeight' | 'createdAt' | 'updatedAt' | 'createdBy'>, publish: boolean) => {
     if (!resource) return
@@ -33,14 +28,6 @@ export default function EditResourcePage() {
 
     alert(publish ? '资源已发布' : '草稿已保存')
     router.push('/admin/resources')
-  }
-
-  const handlePreview = () => {
-    router.push(`/admin/resources/${id}/preview`)
-  }
-
-  if (loading) {
-    return <div className="p-8 text-gray-500">加载中...</div>
   }
 
   if (!resource) {

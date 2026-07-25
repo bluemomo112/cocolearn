@@ -33,7 +33,6 @@ export default function ResourceForm({ mode, initialData, defaultSection, onSave
   const [fileUrl, setFileUrl] = useState(initialData?.fileUrl || '')
   const [externalUrl, setExternalUrl] = useState(initialData?.externalUrl || '')
   const [embedCode, setEmbedCode] = useState(initialData?.embedCode || '')
-  const [showPreview, setShowPreview] = useState(false)
   const [openMode, setOpenMode] = useState<ResourceOpenMode>(initialData?.openMode || 'redirect')
   const [downloadable, setDownloadable] = useState(initialData?.downloadable ?? true)
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -41,31 +40,30 @@ export default function ResourceForm({ mode, initialData, defaultSection, onSave
   // source 是不是被锁定（编辑模式）
   const isSourceLocked = mode === 'edit'
 
-  // 打开方式的智能默认值（仅创建时）
-  useEffect(() => {
-    if (mode !== 'create') return
-
-    if (source === 'link') {
-      setOpenMode('redirect')
-    } else if (source === 'file' && fileFormat) {
-      if (IFRAME_FRIENDLY_FORMATS.includes(fileFormat.toLowerCase())) {
-        setOpenMode('iframe')
-      } else {
+  // 处理 source 变化时设置默认值
+  const handleSourceChange = (newSource: ResourceSource) => {
+    setSource(newSource)
+    
+    // 仅创建模式下设置默认值
+    if (mode === 'create') {
+      if (newSource === 'link') {
         setOpenMode('redirect')
+      } else if (newSource === 'file' && fileFormat) {
+        if (IFRAME_FRIENDLY_FORMATS.includes(fileFormat.toLowerCase())) {
+          setOpenMode('iframe')
+        } else {
+          setOpenMode('redirect')
+        }
+      }
+      
+      // 设置下载开关默认值
+      if (newSource === 'file') {
+        setDownloadable(true)
+      } else {
+        setDownloadable(false)
       }
     }
-  }, [source, fileFormat, mode])
-
-  // 上传文件的智能默认下载开关（仅创建时）
-  useEffect(() => {
-    if (mode !== 'create') return
-
-    if (source === 'file') {
-      setDownloadable(true)
-    } else {
-      setDownloadable(false)
-    }
-  }, [source, mode])
+  }
 
   // 处理文件上传（mock，实际不真传）
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -159,18 +157,6 @@ export default function ResourceForm({ mode, initialData, defaultSection, onSave
           >
             取消
           </Link>
-          {mode === 'edit' && (
-            <button
-              type="button"
-              onClick={() => setShowPreview(true)}
-              className="px-4 py-2 text-sm text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-            >
-              <svg className="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-              </svg>
-              预览效果
-            </button>
-          )}
           <button
             onClick={() => handleSave(false)}
             className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
@@ -348,7 +334,7 @@ export default function ResourceForm({ mode, initialData, defaultSection, onSave
                   <button
                     key={opt.value}
                     type="button"
-                    onClick={() => !disabled && setSource(opt.value)}
+                    onClick={() => !disabled && handleSourceChange(opt.value)}
                     disabled={disabled}
                     className={`flex flex-col items-start gap-2 p-4 border-2 rounded-xl text-left transition-all ${
                       selected
@@ -584,7 +570,7 @@ export default function ResourceForm({ mode, initialData, defaultSection, onSave
             </div>
             {iframeWarning && (
               <p className="mt-2 text-sm text-orange-600 bg-orange-50 border border-orange-200 rounded p-2">
-                该格式（{fileFormat}）通常无法站内内嵌预览，建议选"跳转新标签页"
+                该格式（{fileFormat}）通常无法站内内嵌预览，建议选&ldquo;跳转新标签页&rdquo;
               </p>
             )}
           </div>
