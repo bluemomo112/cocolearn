@@ -36,6 +36,7 @@ export default function ResourceForm({ mode, initialData, defaultSection, onSave
   const [openMode, setOpenMode] = useState<ResourceOpenMode>(initialData?.openMode || 'redirect')
   const [downloadable, setDownloadable] = useState(initialData?.downloadable ?? true)
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [showPreviewModal, setShowPreviewModal] = useState(false)
 
   // source 是不是被锁定（编辑模式）
   const isSourceLocked = mode === 'edit'
@@ -137,19 +138,20 @@ export default function ResourceForm({ mode, initialData, defaultSection, onSave
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-6">
-      {/* 顶部 */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <div className="flex items-center gap-2 text-sm text-gray-500 mb-1">
-            <Link href="/admin/resources" className="hover:text-gray-700">学习资源管理</Link>
-            <span>/</span>
-            <span>{mode === 'create' ? '新建资源' : '编辑资源'}</span>
+    <div>
+      <div className="max-w-7xl mx-auto px-6 py-6">
+        {/* 顶部 */}
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <div className="flex items-center gap-2 text-sm text-gray-500 mb-1">
+              <Link href="/admin/resources" className="hover:text-gray-700">学习资源管理</Link>
+              <span>/</span>
+              <span>{mode === 'create' ? '新建资源' : '编辑资源'}</span>
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900">
+              {mode === 'create' ? '新建资源' : '编辑资源'}
+            </h1>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            {mode === 'create' ? '新建资源' : '编辑资源'}
-          </h1>
-        </div>
         <div className="flex items-center gap-3">
           <Link
             href="/admin/resources"
@@ -157,11 +159,20 @@ export default function ResourceForm({ mode, initialData, defaultSection, onSave
           >
             取消
           </Link>
+          {mode === 'edit' && (
+            <button
+              type="button"
+              onClick={() => setShowPreviewModal(true)}
+              className="px-4 py-2 text-sm font-medium text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+            >
+              测试打开效果
+            </button>
+          )}
           <button
             onClick={() => handleSave(false)}
-            className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+            className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
           >
-            存为草稿
+            保存草稿
           </button>
           <button
             onClick={() => handleSave(true)}
@@ -170,6 +181,7 @@ export default function ResourceForm({ mode, initialData, defaultSection, onSave
             {mode === 'create' ? '发布' : '保存并发布'}
           </button>
         </div>
+      </div>
       </div>
 
       <div className="grid grid-cols-3 gap-6">
@@ -645,6 +657,141 @@ export default function ResourceForm({ mode, initialData, defaultSection, onSave
           </div>
         </div>
       </div>
+
+      {/* 预览模态框 */}
+      {showPreviewModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl w-[90vw] h-[90vh] flex flex-col overflow-hidden shadow-2xl">
+            {/* 模态框头部 */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gray-50">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-primary-100 flex items-center justify-center">
+                  <svg className="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">测试打开效果</h3>
+                  <p className="text-sm text-gray-500">模拟教师点击卡片后的体验</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowPreviewModal(false)}
+                className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+              >
+                <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* 预览内容区 */}
+            <div className="flex-1 overflow-hidden bg-gray-100">
+              {openMode === 'iframe' ? (
+                <div className="w-full h-full flex flex-col">
+                  {/* 模拟浏览器地址栏 */}
+                  <div className="bg-white border-b border-gray-200 px-4 py-2 flex items-center gap-3">
+                    <div className="flex gap-1.5">
+                      <div className="w-3 h-3 rounded-full bg-red-400"></div>
+                      <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
+                      <div className="w-3 h-3 rounded-full bg-green-400"></div>
+                    </div>
+                    <div className="flex-1 bg-gray-100 rounded px-3 py-1 text-sm text-gray-600 truncate">
+                      {source === 'file' && fileUrl
+                        ? fileUrl
+                        : source === 'link' && externalUrl
+                        ? externalUrl
+                        : source === 'video' && embedCode
+                        ? '嵌入视频播放器'
+                        : source === 'html' && (fileUrl || externalUrl)
+                        ? fileUrl || externalUrl
+                        : source === 'ai' && externalUrl
+                        ? externalUrl
+                        : '未配置资源地址'}
+                    </div>
+                  </div>
+
+                  {/* iframe 内容 */}
+                  <div className="flex-1 bg-white">
+                    {source === 'file' && fileUrl && (
+                      <iframe src={fileUrl} className="w-full h-full border-0" title="资源预览" />
+                    )}
+                    {source === 'link' && externalUrl && (
+                      <iframe src={externalUrl} className="w-full h-full border-0" title="资源预览" />
+                    )}
+                    {source === 'video' && embedCode && (
+                      <div
+                        className="w-full h-full"
+                        dangerouslySetInnerHTML={{ __html: embedCode }}
+                      />
+                    )}
+                    {source === 'html' && (fileUrl || externalUrl) && (
+                      <iframe
+                        src={fileUrl || externalUrl}
+                        className="w-full h-full border-0"
+                        title="资源预览"
+                      />
+                    )}
+                    {source === 'ai' && externalUrl && (
+                      <iframe src={externalUrl} className="w-full h-full border-0" title="AI 应用预览" />
+                    )}
+                    {(!fileUrl && !externalUrl && !embedCode) && (
+                      <div className="w-full h-full flex items-center justify-center text-gray-400">
+                        请先配置资源地址
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                /* 跳转模式预览 */
+                <div className="w-full h-full flex items-center justify-center">
+                  <div className="bg-white rounded-xl p-8 max-w-md text-center shadow-lg">
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary-100 flex items-center justify-center">
+                      <svg className="w-8 h-8 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                      </svg>
+                    </div>
+                    <h4 className="text-lg font-semibold text-gray-900 mb-2">将跳转到新标签页</h4>
+                    <p className="text-sm text-gray-600 mb-4">
+                      {source === 'link' && externalUrl && externalUrl}
+                      {source === 'ai' && externalUrl && externalUrl}
+                      {source === 'file' && '本地文件将触发下载'}
+                      {source === 'video' && '视频将在新标签页打开'}
+                      {source === 'html' && (fileUrl || externalUrl) && (fileUrl || externalUrl)}
+                    </p>
+                    <button
+                      onClick={() => {
+                        const url = source === 'file' ? fileUrl : source === 'html' ? (fileUrl || externalUrl) : externalUrl
+                        if (url) {
+                          window.open(url, '_blank')
+                        }
+                      }}
+                      disabled={!fileUrl && !externalUrl && source !== 'video'}
+                      className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                    >
+                      模拟跳转
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* 模态框底部 */}
+            <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex items-center justify-between">
+              <div className="text-sm text-gray-600">
+                当前打开方式：<span className="font-medium text-gray-900">{openMode === 'iframe' ? '站内弹窗' : '跳转新标签页'}</span>
+              </div>
+              <button
+                onClick={() => setShowPreviewModal(false)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 rounded-lg transition-colors"
+              >
+                关闭预览
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
