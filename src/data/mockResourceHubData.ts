@@ -1,8 +1,13 @@
 // 学习资源 Hub Mock 数据
 // 板块顺序（前端展示）：名师课堂 → 互动工具 → 学习资源
 export type ResourceSection = 'master-class' | 'interactive-tool' | 'learning-resource';
-// 资源来源：本地文件 / 网页链接 / 嵌入代码 / H5 应用
-export type ResourceSource = 'file' | 'link' | 'embed' | 'h5';
+// 资源来源：
+//   file  本地文件（PDF/视频/文档等，唯一可下载）
+//   link  网页链接（贴入 URL）
+//   video 外部视频（贴入 embed 代码）
+//   html  网页文件（本地上传 .html/.zip 或粘贴 URL）
+//   ai    AI 应用（对接站内/第三方 AI 工具）
+export type ResourceSource = 'file' | 'link' | 'video' | 'html' | 'ai';
 export type ResourceOpenMode = 'redirect' | 'iframe';
 export type ResourceStatus = 'draft' | 'published';
 
@@ -20,9 +25,10 @@ export interface Resource {
   fileFormat?: string; // pdf, mp4, docx, etc.
   // source=link 时
   externalUrl?: string;
-  // source=embed 时
+  // source=video 时（视频 embed 代码）
   embedCode?: string;
-  // source=h5 时（预留，暂时复用 externalUrl）
+  // source=html 时可能是本地文件（fileUrl）或粘贴 URL（externalUrl），二选一
+  // source=ai 时使用 externalUrl 指向 AI 应用地址（可为站内路径）
   openMode: ResourceOpenMode;
   downloadable: boolean;
   status: ResourceStatus;

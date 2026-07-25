@@ -4,10 +4,8 @@ import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import { mockResources, type Resource, type ResourceSection, type ResourceStatus } from '@/data/mockResourceHubData'
 
-// 模拟状态管理（实际项目中应该用状态管理库或 API）
-let localResources = [...mockResources]
-
 export default function AdminResourcesPage() {
+  const [localResources, setLocalResources] = useState<Resource[]>([...mockResources])
   const [activeTab, setActiveTab] = useState<ResourceSection>('master-class')
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | ResourceStatus>('all')
@@ -66,25 +64,21 @@ export default function AdminResourcesPage() {
 
   const handleDelete = (id: string) => {
     if (confirm('资源和上传的文件都会被清除，无法恢复。确定要删除吗？')) {
-      localResources = localResources.filter(r => r.id !== id)
-      // 触发重新渲染
-      setSearchQuery(prev => prev)
+      setLocalResources(prev => prev.filter(r => r.id !== id))
     }
   }
 
   const handlePublish = (id: string) => {
-    localResources = localResources.map(r =>
+    setLocalResources(prev => prev.map(r =>
       r.id === id ? { ...r, status: 'published' as ResourceStatus, updatedAt: new Date().toISOString() } : r
-    )
-    setSearchQuery(prev => prev)
+    ))
   }
 
   const handleUnpublish = (id: string) => {
     if (confirm('下线后教师端立即不再展示，确定要下线吗？')) {
-      localResources = localResources.map(r =>
+      setLocalResources(prev => prev.map(r =>
         r.id === id ? { ...r, status: 'draft' as ResourceStatus, updatedAt: new Date().toISOString() } : r
-      )
-      setSearchQuery(prev => prev)
+      ))
     }
   }
 
@@ -99,8 +93,7 @@ export default function AdminResourcesPage() {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       }
-      localResources = [...localResources, duplicate]
-      setSearchQuery(prev => prev)
+      setLocalResources(prev => [...prev, duplicate])
     }
   }
 
@@ -129,15 +122,14 @@ export default function AdminResourcesPage() {
     reordered.splice(targetIndex, 0, removed)
 
     // 更新 sortWeight（从高到低）
-    reordered.forEach((r, index) => {
-      const resource = localResources.find(lr => lr.id === r.id)
-      if (resource) {
-        resource.sortWeight = 1000 - index * 10
-      }
-    })
+    setLocalResources(prev => 
+      prev.map(r => {
+        const newIndex = reordered.findIndex(rr => rr.id === r.id)
+        return newIndex >= 0 ? { ...r, sortWeight: 1000 - newIndex * 10 } : r
+      })
+    )
 
     setDraggedId(null)
-    setSearchQuery(prev => prev)
   }
 
   return (
@@ -265,7 +257,7 @@ export default function AdminResourcesPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredResources.map((resource) => (
+                {filteredResources.map((resource, index) => (
                   <tr
                     key={resource.id}
                     draggable={!hasFilters}
@@ -288,9 +280,15 @@ export default function AdminResourcesPage() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="font-medium text-gray-900">{resource.title}</div>
-                      {resource.description && (
-                        <div className="text-sm text-gray-600 line-clamp-1">{resource.description}</div>
-                      )}
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-medium rounded border bg-primary-50 text-primary-700 border-primary-200">
+                          {sectionConfig[resource.section].icon}
+                          {sectionConfig[resource.section].label}
+                        </span>
+                        {resource.description && (
+                          <span className="text-xs text-gray-500 truncate max-w-xs">{resource.description}</span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-4 py-3">
                       <span className={`inline-block px-2 py-1 text-xs font-medium rounded ${
@@ -309,6 +307,26 @@ export default function AdminResourcesPage() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
+                        {!hasFilters && index > 0 && (
+                          <button
+                            onClick={() => {
+                              const reordered = [...filteredResources]
+                              const [item] = reordered.splice(index, 1)
+                              reordered.unshift(item)
+                              setLocalResources(prev => {
+                                const updated = prev.map(r => {
+                                  const newIndex = reordered.findIndex(rr => rr.id === r.id)
+                                  return newIndex >= 0 ? { ...r, sortWeight: 1000 - newIndex } : r
+                                })
+                                return updated
+                              })
+                            }}
+                            className="text-xs text-amber-600 hover:text-amber-700 font-medium"
+                            title="置顶"
+                          >
+                            置顶
+                          </button>
+                        )}
                         <Link
                           href={`/admin/resources/${resource.id}/edit`}
                           className="text-sm text-primary-600 hover:text-primary-700"

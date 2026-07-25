@@ -21,7 +21,7 @@ const sectionLabels: Record<ResourceSection, string> = {
 // 可站内预览的格式
 const IFRAME_FRIENDLY_FORMATS = ['pdf', 'mp4', 'md', 'webm', 'ogg', 'jpg', 'jpeg', 'png', 'gif']
 
-export default function ResourceForm({ mode, initialData, defaultSection, onSave, onPreview }: ResourceFormProps) {
+export default function ResourceForm({ mode, initialData, defaultSection, onSave }: Omit<ResourceFormProps, 'onPreview'>) {
   const [title, setTitle] = useState(initialData?.title || '')
   const [description, setDescription] = useState(initialData?.description || '')
   const [coverImage, setCoverImage] = useState(initialData?.coverImage || '')
@@ -33,6 +33,7 @@ export default function ResourceForm({ mode, initialData, defaultSection, onSave
   const [fileUrl, setFileUrl] = useState(initialData?.fileUrl || '')
   const [externalUrl, setExternalUrl] = useState(initialData?.externalUrl || '')
   const [embedCode, setEmbedCode] = useState(initialData?.embedCode || '')
+  const [showPreview, setShowPreview] = useState(false)
   const [openMode, setOpenMode] = useState<ResourceOpenMode>(initialData?.openMode || 'redirect')
   const [downloadable, setDownloadable] = useState(initialData?.downloadable ?? true)
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -100,11 +101,14 @@ export default function ResourceForm({ mode, initialData, defaultSection, onSave
     if (!coverImage) newErrors.coverImage = '请上传封面图'
 
     if (source === 'file' && !fileUrl) newErrors.file = '请上传文件'
-    if (source === 'link' || source === 'h5') {
-      if (!externalUrl.trim()) newErrors.externalUrl = source === 'h5' ? '请填写 H5 应用地址' : '请填写链接 URL'
+    if (source === 'html' && !fileUrl && !externalUrl.trim()) {
+      newErrors.file = '请上传 HTML 文件或粘贴网页 URL'
+    }
+    if (source === 'link' || source === 'ai') {
+      if (!externalUrl.trim()) newErrors.externalUrl = source === 'ai' ? '请填写 AI 应用地址' : '请贴入网页 URL'
       else if (!/^https?:\/\//.test(externalUrl)) newErrors.externalUrl = 'URL 必须以 http:// 或 https:// 开头'
     }
-    if (source === 'embed' && !embedCode.trim()) newErrors.embedCode = '请粘贴嵌入代码'
+    if (source === 'video' && !embedCode.trim()) newErrors.embedCode = '请粘贴视频 embed 代码'
 
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
@@ -121,8 +125,10 @@ export default function ResourceForm({ mode, initialData, defaultSection, onSave
       source,
       ...(source === 'file'
         ? { fileUrl, fileName, fileSize, fileFormat }
-        : source === 'embed'
+        : source === 'video'
         ? { embedCode: embedCode.trim() }
+        : source === 'html' && fileUrl
+        ? { fileUrl, fileName, fileSize, fileFormat }
         : { externalUrl: externalUrl.trim() }),
       openMode,
       downloadable,
@@ -153,14 +159,14 @@ export default function ResourceForm({ mode, initialData, defaultSection, onSave
           >
             取消
           </Link>
-          {mode === 'edit' && onPreview && (
+          {mode === 'edit' && (
             <button
-              onClick={onPreview}
-              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+              type="button"
+              onClick={() => setShowPreview(true)}
+              className="px-4 py-2 text-sm text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
             >
               <svg className="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
               </svg>
               预览效果
             </button>
@@ -283,7 +289,7 @@ export default function ResourceForm({ mode, initialData, defaultSection, onSave
               添加资源 <span className="text-red-500">*</span>
               {isSourceLocked && <span className="ml-2 text-xs text-gray-500">（创建后不可切换）</span>}
             </label>
-            <div className="grid grid-cols-4 gap-3">
+            <div className="grid grid-cols-5 gap-3">
               {[
                 {
                   value: 'file' as ResourceSource,
@@ -298,7 +304,7 @@ export default function ResourceForm({ mode, initialData, defaultSection, onSave
                 {
                   value: 'link' as ResourceSource,
                   label: '网页链接',
-                  desc: '贴入外部 URL',
+                  desc: '贴入网页 URL',
                   icon: (
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
@@ -306,9 +312,19 @@ export default function ResourceForm({ mode, initialData, defaultSection, onSave
                   ),
                 },
                 {
-                  value: 'embed' as ResourceSource,
-                  label: '嵌入代码',
-                  desc: 'iframe/embed 代码',
+                  value: 'video' as ResourceSource,
+                  label: '外部视频',
+                  desc: '贴入视频 embed 代码',
+                  icon: (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                  ),
+                },
+                {
+                  value: 'html' as ResourceSource,
+                  label: '网页文件',
+                  desc: '上传 .html 或贴 URL',
                   icon: (
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
@@ -316,12 +332,12 @@ export default function ResourceForm({ mode, initialData, defaultSection, onSave
                   ),
                 },
                 {
-                  value: 'h5' as ResourceSource,
-                  label: 'H5 应用',
-                  desc: '轻应用/小工具地址',
+                  value: 'ai' as ResourceSource,
+                  label: 'AI 应用',
+                  desc: '站内/第三方 AI 工具',
                   icon: (
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                     </svg>
                   ),
                 },
@@ -418,43 +434,106 @@ export default function ResourceForm({ mode, initialData, defaultSection, onSave
             </div>
           )}
 
-          {source === 'embed' && (
+          {source === 'video' && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                嵌入代码 <span className="text-red-500">*</span>
+                视频 embed 代码 <span className="text-red-500">*</span>
               </label>
               <textarea
                 value={embedCode}
                 onChange={(e) => setEmbedCode(e.target.value)}
-                placeholder='<iframe src="..." width="100%" height="500"></iframe>'
+                placeholder='<iframe src="https://www.youtube.com/embed/xxx" width="100%" height="500"></iframe>'
                 rows={6}
                 className={`w-full px-4 py-2.5 border rounded-xl font-mono text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors ${
                   errors.embedCode ? 'border-red-500' : 'border-gray-300'
                 }`}
               />
               <p className="mt-1.5 text-xs text-gray-500">
-                粘贴视频/幻灯片/图表等第三方 embed 代码（通常为 iframe 或 script 标签）
+                从 YouTube、Bilibili、腾讯视频等平台复制嵌入代码（通常为 iframe 标签）
               </p>
               {errors.embedCode && <p className="mt-1 text-sm text-red-500">{errors.embedCode}</p>}
             </div>
           )}
 
-          {source === 'h5' && (
+          {source === 'html' && (
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  方式一：上传 HTML 文件或压缩包
+                </label>
+                {fileName ? (
+                  <div className="flex items-center gap-3 p-4 border border-gray-200 rounded-xl bg-gray-50">
+                    <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary-100 text-primary-600">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-gray-900 truncate">{fileName}</div>
+                      <div className="text-sm text-gray-500">
+                        {fileFormat.toUpperCase()} · {(fileSize / 1024 / 1024).toFixed(2)} MB
+                      </div>
+                    </div>
+                    <label className="px-3 py-1.5 text-sm text-primary-600 hover:bg-primary-50 rounded-lg cursor-pointer transition-colors">
+                      替换
+                      <input type="file" accept=".html,.htm,.zip" onChange={handleFileUpload} className="sr-only" />
+                    </label>
+                  </div>
+                ) : (
+                  <label className="flex flex-col items-center justify-center w-full py-8 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-primary-400 hover:bg-primary-50/30 bg-gray-50 transition-colors group">
+                    <div className="w-12 h-12 rounded-full bg-white border border-gray-200 flex items-center justify-center mb-3 group-hover:border-primary-300">
+                      <svg className="w-6 h-6 text-gray-400 group-hover:text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                      </svg>
+                    </div>
+                    <span className="text-sm text-gray-700">点击上传 HTML 文件</span>
+                    <span className="text-xs text-gray-400 mt-1">支持 .html、.htm、.zip</span>
+                    <input type="file" accept=".html,.htm,.zip" onChange={handleFileUpload} className="sr-only" />
+                  </label>
+                )}
+              </div>
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-200" />
+                </div>
+                <div className="relative flex justify-center text-xs">
+                  <span className="px-2 bg-white text-gray-500">或者</span>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  方式二：粘贴已部署的网页 URL
+                </label>
+                <input
+                  type="url"
+                  value={externalUrl}
+                  onChange={(e) => setExternalUrl(e.target.value)}
+                  placeholder="https://example.com/game.html"
+                  className={`w-full px-4 py-2.5 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors ${
+                    errors.externalUrl ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                />
+              </div>
+              {errors.file && <p className="mt-1 text-sm text-red-500">{errors.file}</p>}
+            </div>
+          )}
+
+          {source === 'ai' && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                H5 应用地址 <span className="text-red-500">*</span>
+                AI 应用地址 <span className="text-red-500">*</span>
               </label>
               <input
                 type="url"
                 value={externalUrl}
                 onChange={(e) => setExternalUrl(e.target.value)}
-                placeholder="https://h5.example.com/app"
+                placeholder="https://ai.example.com/chat 或 /ai-tools/translator"
                 className={`w-full px-4 py-2.5 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors ${
                   errors.externalUrl ? 'border-red-500' : 'border-gray-300'
                 }`}
               />
               <p className="mt-1.5 text-xs text-gray-500">
-                轻应用/小工具的入口地址，例如问卷、计算器、模拟器等
+                可填入站内路径（如 /ai-tools/xxx）或第三方 AI 应用 URL
               </p>
               {errors.externalUrl && <p className="mt-1 text-sm text-red-500">{errors.externalUrl}</p>}
             </div>
@@ -510,23 +589,25 @@ export default function ResourceForm({ mode, initialData, defaultSection, onSave
             )}
           </div>
 
-          {/* 下载开关 */}
-          <div>
-            <label className="flex items-center justify-between p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
-              <div>
-                <div className="font-medium text-gray-900">支持下载</div>
-                <div className="text-sm text-gray-500 mt-1">
-                  开启后，卡片上会显示独立的下载入口
+          {/* 下载开关（仅本地文件类型可见） */}
+          {source === 'file' && (
+            <div>
+              <label className="flex items-center justify-between p-4 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors">
+                <div>
+                  <div className="font-medium text-gray-900">支持下载</div>
+                  <div className="text-sm text-gray-500 mt-1">
+                    开启后，卡片上会显示独立的下载入口
+                  </div>
                 </div>
-              </div>
-              <input
-                type="checkbox"
-                checked={downloadable}
-                onChange={(e) => setDownloadable(e.target.checked)}
-                className="w-5 h-5"
-              />
-            </label>
-          </div>
+                <input
+                  type="checkbox"
+                  checked={downloadable}
+                  onChange={(e) => setDownloadable(e.target.checked)}
+                  className="w-5 h-5 text-primary-600 rounded focus:ring-2 focus:ring-primary-500/50"
+                />
+              </label>
+            </div>
+          )}
         </div>
 
         {/* 右侧实时预览 */}

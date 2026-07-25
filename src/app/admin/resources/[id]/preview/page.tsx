@@ -14,8 +14,9 @@ const SECTION_META: Record<ResourceSection, { title: string; badgeClass: string 
 const SOURCE_LABEL: Record<Resource['source'], string> = {
   file: '本地文件',
   link: '网页链接',
-  embed: '嵌入代码',
-  h5: 'H5 应用',
+  video: '外部视频',
+  html: '网页文件',
+  ai: 'AI 应用',
 }
 
 // ============ Icons ============
@@ -118,7 +119,7 @@ export default function PreviewResourcePage() {
   }
 
   const testOpenInNewTab = () => {
-    if (resource.source === 'embed') {
+    if (resource.source === 'video') {
       log('warn', '嵌入代码资源无独立 URL，无法在新标签打开')
       return
     }
@@ -137,7 +138,7 @@ export default function PreviewResourcePage() {
       log('warn', '该资源未开启下载')
       return
     }
-    if (resource.source === 'embed') {
+    if (resource.source === 'video') {
       log('warn', '嵌入代码资源不支持下载')
       return
     }
@@ -264,13 +265,13 @@ export default function PreviewResourcePage() {
                   <dd className="text-gray-900 truncate">{resource.fileName}</dd>
                 </div>
               )}
-              {(resource.source === 'link' || resource.source === 'h5') && resource.externalUrl && (
+              {(resource.source === 'link' || resource.source === 'html') && resource.externalUrl && (
                 <div className="col-span-2">
                   <dt className="text-gray-500 mb-0.5">链接</dt>
                   <dd className="text-primary-600 truncate">{resource.externalUrl}</dd>
                 </div>
               )}
-              {resource.source === 'embed' && resource.embedCode && (
+              {resource.source === 'video' && resource.embedCode && (
                 <div className="col-span-2">
                   <dt className="text-gray-500 mb-0.5">嵌入代码（预览）</dt>
                   <dd>
@@ -293,7 +294,7 @@ export default function PreviewResourcePage() {
             <div className="space-y-2.5">
               <button
                 onClick={testOpenInNewTab}
-                disabled={resource.source === 'embed'}
+                disabled={resource.source === 'video'}
                 className="w-full flex items-center gap-2.5 px-4 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-700 hover:border-primary-400 hover:bg-primary-50/40 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-gray-200 disabled:hover:bg-transparent transition-colors"
               >
                 <ExternalIcon />
@@ -308,7 +309,7 @@ export default function PreviewResourcePage() {
               </button>
               <button
                 onClick={testDownload}
-                disabled={!resource.downloadable || resource.source === 'embed'}
+                disabled={!resource.downloadable || resource.source === 'video'}
                 className="w-full flex items-center gap-2.5 px-4 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-700 hover:border-primary-400 hover:bg-primary-50/40 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-gray-200 disabled:hover:bg-transparent transition-colors"
               >
                 <DownloadIcon />
@@ -380,7 +381,7 @@ export default function PreviewResourcePage() {
               </button>
             </div>
             <div className="flex-1 bg-gray-50">
-              {resource.source === 'embed' ? (
+              {resource.source === 'video' ? (
                 <div
                   className="w-full h-full overflow-auto"
                   dangerouslySetInnerHTML={{ __html: resource.embedCode || '' }}

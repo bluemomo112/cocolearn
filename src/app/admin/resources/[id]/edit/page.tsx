@@ -64,7 +64,6 @@ export default function EditResourcePage() {
       mode="edit"
       initialData={resource}
       onSave={handleSave}
-      onPreview={handlePreview}
     />
   )
 }

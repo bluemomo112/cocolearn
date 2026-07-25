@@ -336,19 +336,19 @@ function IframeModal({
   onClose: () => void
 }) {
   const url = resource.source === 'file' ? resource.fileUrl! :
-              resource.source === 'embed' ? '' :
+              resource.source === 'video' ? '' :
               resource.externalUrl!
   const [loadError, setLoadError] = useState(false)
   const [copied, setCopied] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
 
   const handleOpenInNewTab = () => {
-    if (resource.source === 'embed') return
+    if (resource.source === 'video') return
     window.open(url, '_blank')
   }
 
   const handleCopyLink = async () => {
-    if (resource.source === 'embed') return
+    if (resource.source === 'video') return
     try {
       await navigator.clipboard.writeText(url)
       setCopied(true)
@@ -414,7 +414,7 @@ function IframeModal({
             )}
 
             {/* 新标签打开 */}
-            {resource.source !== 'embed' && (
+            {resource.source !== 'video' && (
               <button
                 onClick={handleOpenInNewTab}
                 className="flex items-center gap-1.5 px-3 h-9 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
@@ -428,7 +428,7 @@ function IframeModal({
             )}
 
             {/* 复制链接 */}
-            {resource.source !== 'embed' && (
+            {resource.source !== 'video' && (
               <button
                 onClick={handleCopyLink}
                 className="flex items-center gap-1.5 px-3 h-9 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
@@ -481,7 +481,7 @@ function IframeModal({
         {/* 内容区 */}
         <div className="flex-1 relative bg-gray-50">
           {!loadError ? (
-            resource.source === 'embed' ? (
+            resource.source === 'video' ? (
               <div
                 className="w-full h-full overflow-auto"
                 dangerouslySetInnerHTML={{ __html: resource.embedCode || '' }}
@@ -521,7 +521,8 @@ function IframeModal({
             <span>来源类型：{
               resource.source === 'file' ? '本地文件' :
               resource.source === 'link' ? '外部链接' :
-              resource.source === 'embed' ? '嵌入代码' : 'H5 应用'
+              resource.source === 'video' ? '外部视频' :
+              resource.source === 'html' ? '网页文件' : 'AI 应用'
             }</span>
             {resource.fileFormat && <span>格式：{resource.fileFormat.toUpperCase()}</span>}
           </div>
