@@ -136,7 +136,7 @@ export default function ResourceHubPage() {
 
   return (
     <div className="min-h-full bg-gradient-to-b from-primary-50/30 to-white">
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* 页面头 */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">学习资源中心</h1>
@@ -198,11 +198,18 @@ export default function ResourceHubPage() {
           const hasMore = resources.length > 8 && !hasSearchQuery
 
           return (
-            <section key={section} className="mb-10">
+            <section
+              key={section}
+              className="mb-8 bg-white rounded-3xl border border-gray-100 shadow-sm p-6 sm:p-8"
+            >
               {/* 板块标题栏 */}
-              <div className="flex items-end justify-between mb-5">
+              <div className="flex items-end justify-between mb-6 pb-5 border-b border-gray-100">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-primary-50 text-primary-600 flex items-center justify-center">
+                  <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${
+                    section === 'master-class' ? 'bg-primary-50 text-primary-600' :
+                    section === 'interactive-tool' ? 'bg-amber-50 text-amber-600' :
+                    'bg-blue-50 text-blue-600'
+                  }`}>
                     {SectionIcons[section]}
                   </div>
                   <div>
@@ -238,7 +245,7 @@ export default function ResourceHubPage() {
 
               {/* 卡片网格 */}
               {resources.length > 0 && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                   {displayResources.map(resource => (
                     <ResourceCard
                       key={resource.id}
