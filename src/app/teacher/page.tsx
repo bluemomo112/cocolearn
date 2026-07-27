@@ -11,32 +11,34 @@ const recentCourses = [
   {
     id: '1',
     title: '植物工厂探究',
-    subjects: ['科学', '数学', '信息技术'],
-    progress: 75,
-    students: 32,
-    lastUpdate: '2小时前',
-    status: 'ongoing',
+    author: 'Mo老师',
+    createdAt: '2026-05-12 09:30:00',
+    updatedAt: '2026-07-25 14:20:33',
     cover: 'https://images.unsplash.com/photo-1501630834273-4b5604d2ee31?w=400&h=300&fit=crop',
   },
   {
     id: '2',
     title: '数学建模与环境保护',
-    subjects: ['数学', '生物'],
-    progress: 100,
-    students: 28,
-    lastUpdate: '1天前',
-    status: 'completed',
+    author: 'Mo老师',
+    createdAt: '2026-04-08 10:05:00',
+    updatedAt: '2026-07-26 09:12:47',
     cover: 'https://images.unsplash.com/photo-1509228468518-180dd4864904?w=400&h=300&fit=crop',
   },
   {
     id: '3',
     title: '文艺复兴的科学革命',
-    subjects: ['历史', '物理'],
-    progress: 30,
-    students: 25,
-    lastUpdate: '3天前',
-    status: 'ongoing',
+    author: 'Mo老师',
+    createdAt: '2026-03-20 16:40:00',
+    updatedAt: '2026-07-24 11:05:19',
     cover: 'https://images.unsplash.com/photo-1568667256549-094345857637?w=400&h=300&fit=crop',
+  },
+  {
+    id: '4',
+    title: '能源与可持续发展',
+    author: 'Mo老师',
+    createdAt: '2026-07-18 09:00:00',
+    updatedAt: '2026-07-20 15:30:00',
+    cover: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&h=300&fit=crop',
   },
 ]
 
@@ -45,13 +47,6 @@ const studentActivities = [
   { id: '2', name: '王芳', action: '提交了作业', course: '数学建模与环境保护', time: '15分钟前', avatar: '王' },
   { id: '3', name: '张伟', action: '发起了讨论', course: '水循环与气候变化', time: '30分钟前', avatar: '张' },
   { id: '4', name: '刘洋', action: '请求了AI辅导', course: '文艺复兴的科学革命', time: '1小时前', avatar: '刘' },
-]
-
-const quickStats = [
-  { label: '学生总数', value: '108', change: '+5', icon: '👥', color: 'blue' },
-  { label: '本周待批改', value: '8项', change: '-3', icon: '📋', color: 'blue' },
-  { label: '跨学科参与度', value: '83%', change: '+4%', icon: '🎯', color: 'blue' },
-  { label: '平均任务完成率', value: '78%', change: '+4%', icon: '📊', color: 'blue' },
 ]
 
 const todayTasks = [
@@ -134,9 +129,28 @@ interface CompetencyFilterOptions {
   studentGroup?: 'all' | 'active' | 'inactive';
 }
 
+// 每次展示的课程数量，点击"加载更多"再追加一批
+const COURSE_PAGE_SIZE = 3
+
 export default function TeacherDashboard() {
   const [activeTab, setActiveTab] = useState<'my-courses' | 'students' | 'insights' | 'ai-apps' | 'knowledge' | 'growth'>('my-courses')
   const [showCourseTypeModal, setShowCourseTypeModal] = useState(false)
+  const [courseSearch, setCourseSearch] = useState('')
+  const [courseSort, setCourseSort] = useState<'latest' | 'name'>('latest')
+  const [visibleCourseCount, setVisibleCourseCount] = useState(COURSE_PAGE_SIZE)
+
+  const filteredCourses = recentCourses
+    .filter((course) =>
+      !courseSearch ||
+      course.title.toLowerCase().includes(courseSearch.toLowerCase()) ||
+      course.author.toLowerCase().includes(courseSearch.toLowerCase())
+    )
+    .sort((a, b) => {
+      if (courseSort === 'name') return a.title.localeCompare(b.title, 'zh')
+      return b.updatedAt.localeCompare(a.updatedAt)
+    })
+  const visibleCourses = filteredCourses.slice(0, visibleCourseCount)
+  const hasMoreCourses = visibleCourseCount < filteredCourses.length
 
   // 获取当前日期
   const today = new Date()
@@ -213,27 +227,6 @@ export default function TeacherDashboard() {
 
         {activeTab === 'my-courses' && (
           <div className="space-y-6">
-            {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-              {quickStats.map((stat) => (
-                <div
-                  key={stat.label}
-                  className="bg-white rounded-2xl p-5 border border-gray-100 hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
-                >
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-2xl">{stat.icon}</span>
-                    <span className={`text-xs font-medium px-2 py-1 rounded-full ${
-                      stat.change.startsWith('+') ? 'bg-primary-100 text-primary-600' : 'bg-red-100 text-red-600'
-                    }`}>
-                      {stat.change}
-                    </span>
-                  </div>
-                  <p className="text-3xl font-bold text-gray-900 mb-1">{stat.value}</p>
-                  <p className="text-sm text-gray-500">{stat.label}</p>
-                </div>
-              ))}
-            </div>
-
             {/* 探索更多课程资源 Banner */}
             <div className="bg-gradient-to-r from-primary-50 to-accent-50 rounded-2xl p-6 border border-primary-100 flex items-center justify-between animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
               <div>
@@ -262,15 +255,44 @@ export default function TeacherDashboard() {
               </div>
             </div>
 
+            {/* 筛选/排序栏 */}
+            <div className="bg-white rounded-2xl border border-gray-100 p-4 flex items-center gap-3 animate-fade-in-up" style={{ animationDelay: '0.35s' }}>
+              <div className="relative flex-1 max-w-xs">
+                <input
+                  type="text"
+                  placeholder="请输入关键字"
+                  value={courseSearch}
+                  onChange={(e) => { setCourseSearch(e.target.value); setVisibleCourseCount(COURSE_PAGE_SIZE) }}
+                  className="pl-10 pr-4 py-2 w-full bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all"
+                />
+                <svg
+                  className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <select
+                value={courseSort}
+                onChange={(e) => { setCourseSort(e.target.value as 'latest' | 'name'); setVisibleCourseCount(COURSE_PAGE_SIZE) }}
+                className="px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all"
+              >
+                <option value="latest">最近修改</option>
+                <option value="name">按名称排序</option>
+              </select>
+            </div>
+
             {/* Course List Header */}
             <div className="flex items-center justify-between animate-fade-in-up" style={{ animationDelay: '0.35s' }}>
               <h2 className="text-xl font-semibold text-gray-900">课程列表</h2>
-              <span className="text-sm text-gray-500">共 4 门课程 · 2 已发布 · 2 草稿</span>
+              <span className="text-sm text-gray-500">共 {filteredCourses.length} 门课程</span>
             </div>
 
             {/* Course Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
-              {recentCourses.map((course, index) => (
+              {visibleCourses.map((course) => (
                 <div
                   key={course.id}
                   className="group bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
@@ -284,128 +306,83 @@ export default function TeacherDashboard() {
                       className="object-cover group-hover:scale-105 transition-transform duration-500"
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-
-                    {/* Status Badge */}
-                    <div className="absolute top-3 left-3">
-                      <span className={`px-2.5 py-1 rounded-lg text-xs font-medium ${
-                        course.status === 'completed'
-                          ? 'bg-primary-500 text-white'
-                          : course.status === 'draft'
-                          ? 'bg-gray-500 text-white'
-                          : 'bg-accent-500 text-white'
-                      }`}>
-                        {course.status === 'completed' ? '已发布' : course.status === 'draft' ? '草稿' : '已发布'}
-                      </span>
-                    </div>
-
-                    {/* Menu Button */}
-                    <button className="absolute top-3 right-3 w-8 h-8 bg-white/90 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-                      </svg>
-                    </button>
-
-                    {/* Subjects */}
-                    <div className="absolute bottom-3 left-3 right-3 flex gap-1.5">
-                      {course.subjects.map((s) => (
-                        <span key={s} className="px-2 py-0.5 bg-white/90 text-gray-700 rounded text-xs font-medium">
-                          {s}
-                        </span>
-                      ))}
-                    </div>
                   </div>
 
                   {/* Course Info */}
                   <div className="p-4">
                     <h4 className="font-semibold text-gray-900 mb-2 line-clamp-1">{course.title}</h4>
-                    <div className="flex items-center gap-3 text-sm text-gray-500 mb-4">
-                      <span className="flex items-center gap-1">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                        </svg>
-                        {course.students}
-                      </span>
-                      <span>·</span>
-                      <span>{course.lastUpdate}</span>
+                    <div className="flex items-center gap-1.5 text-sm text-gray-500 mb-2">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                      <span>{course.author}</span>
+                    </div>
+                    <div className="text-xs text-gray-400 mb-4 space-y-0.5">
+                      <p>创建：{course.createdAt}</p>
+                      <p>修改：{course.updatedAt}</p>
                     </div>
 
-                    {/* Progress */}
-                    {course.status !== 'draft' && (
-                      <div className="mb-4">
-                        <div className="flex items-center justify-between text-sm mb-1">
-                          <span className="text-gray-500">完成进度</span>
-                          <span className="font-medium text-gray-900">{course.progress}%</span>
-                        </div>
-                        <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-primary-500 rounded-full transition-all"
-                            style={{ width: `${course.progress}%` }}
-                          />
-                        </div>
-                      </div>
-                    )}
-
                     {/* Actions */}
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 pt-3 border-t border-gray-100">
+                      <Link
+                        href={`/teacher/courses/${course.id}/preview`}
+                        title="预览"
+                        className="flex items-center justify-center w-9 h-9 border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-5.197-3.03A1 1 0 008 9.03v5.938a1 1 0 001.555.832l5.197-3.03a1 1 0 000-1.732z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </Link>
+                      <button
+                        title="复制"
+                        className="flex items-center justify-center w-9 h-9 border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                      </button>
                       <Link
                         href={`/teacher/courses/${course.id}/edit`}
-                        className="flex-1 px-3 py-2 border border-gray-200 text-gray-700 text-sm font-medium rounded-xl hover:bg-gray-50 transition-colors text-center"
+                        title="编辑"
+                        className="flex items-center justify-center w-9 h-9 border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 transition-colors"
                       >
-                        编辑
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
                       </Link>
-                      {course.status !== 'draft' && (
-                        <>
-                          <button
-                            onClick={() => setShowCourseTypeModal(true)}
-                            className="flex-1 px-3 py-2 bg-primary-600 text-white text-sm font-medium rounded-xl hover:bg-primary-700 transition-colors text-center"
-                          >
-                            授课
-                          </button>
-                          <Link
-                            href={`/teacher/courses/${course.id}/results`}
-                            className="flex-1 px-3 py-2 border border-accent-300 text-accent-700 text-sm font-medium rounded-xl hover:bg-accent-50 transition-colors text-center"
-                          >
-                            查看结果
-                          </Link>
-                        </>
-                      )}
+                      <button
+                        title="删除"
+                        className="flex items-center justify-center w-9 h-9 border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M4 7h16M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3" />
+                        </svg>
+                      </button>
+                      <button
+                        title="分享"
+                        className="flex items-center justify-center w-9 h-9 border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342a4 4 0 100-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a4 4 0 105.368-5.368 4 4 0 00-5.368 5.368zm0 9.316a4 4 0 105.368 5.368 4 4 0 00-5.368-5.368z" />
+                        </svg>
+                      </button>
                     </div>
                   </div>
                 </div>
               ))}
-
-              {/* Draft Course Card */}
-              <div className="group bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-                <div className="relative h-40 bg-gray-100 flex items-center justify-center">
-                  <div className="absolute top-3 left-3">
-                    <span className="px-2.5 py-1 rounded-lg text-xs font-medium bg-gray-500 text-white">
-                      草稿
-                    </span>
-                  </div>
-                  <svg className="w-16 h-16 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                  </svg>
-                </div>
-                <div className="p-4">
-                  <h4 className="font-semibold text-gray-900 mb-2">能源与可持续发展</h4>
-                  <div className="flex items-center gap-3 text-sm text-gray-500 mb-4">
-                    <span>化学 · 地理</span>
-                    <span>·</span>
-                    <span>1周前</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Link
-                      href="/teacher/courses/4/edit"
-                      className="flex-1 px-3 py-2 border border-gray-200 text-gray-700 text-sm font-medium rounded-xl hover:bg-gray-50 transition-colors text-center"
-                    >
-                      继续编辑
-                    </Link>
-                  </div>
-                </div>
-              </div>
             </div>
 
+            {hasMoreCourses && (
+              <div className="flex justify-center">
+                <button
+                  onClick={() => setVisibleCourseCount((count) => count + COURSE_PAGE_SIZE)}
+                  className="px-6 py-2.5 bg-white border border-gray-200 text-gray-700 text-sm font-medium rounded-xl hover:bg-gray-50 transition-colors shadow-sm"
+                >
+                  加载更多
+                </button>
+              </div>
+            )}
           </div>
         )}
 

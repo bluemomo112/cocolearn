@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
 import * as d3 from 'd3'
 
 // ==================== 类型定义 ====================
@@ -13,7 +14,9 @@ interface Course {
   source: 'official' | 'organization'
   concepts: string[] // 跨学科大概念
   studentCount: number
-  teachingMode: 'teaching' | 'self-study' | 'both' // 授课模式/自学模式/双模式
+  author: string
+  grades: string[]
+  date: string
 }
 
 interface KnowledgeNode {
@@ -37,8 +40,13 @@ interface KnowledgeLink {
 
 // ==================== 数据 ====================
 const subjects = ['全部', '语文', '数学', '物理', '化学', '生物', '地理', '历史', '道德与法治', '信息科技']
-const sources = ['全部', '官方', '组织']
-const teachingModes = ['全部', '授课模式', '自学模式', '双模式']
+const grades = ['全部', '幼儿园', '一年级', '二年级', '三年级', '四年级', '五年级', '六年级', '七年级', '八年级', '九年级', '高一', '高二', '高三', '教师培训']
+
+// 知识图谱视图暂时下线，恢复时改回 true 即可
+const SHOW_KNOWLEDGE_GRAPH = false
+
+// 每次展示的课程数量，点击"加载更多"再追加一批
+const PAGE_SIZE = 6
 
 // 跨学科课程数据
 const courses: Course[] = [
@@ -50,7 +58,9 @@ const courses: Course[] = [
     source: 'official',
     concepts: ['系统与平衡', '生态系统', '成长', '生命周期'],
     studentCount: 1240,
-    teachingMode: 'both',
+    author: '曾好',
+    grades: ['五年级', '六年级'],
+    date: '2026-07-15 15:08:33',
   },
   {
     id: '2',
@@ -60,7 +70,9 @@ const courses: Course[] = [
     source: 'organization',
     concepts: ['诗词鉴赏', '天文现象', '地理特征', '文化传承'],
     studentCount: 890,
-    teachingMode: 'teaching',
+    author: '兰薇',
+    grades: ['六年级'],
+    date: '2026-07-10 16:57:57',
   },
   {
     id: '3',
@@ -70,7 +82,9 @@ const courses: Course[] = [
     source: 'official',
     concepts: ['统计推断', '数据表示', '算法思维', '可视化设计'],
     studentCount: 2100,
-    teachingMode: 'self-study',
+    author: 'tonytony',
+    grades: ['六年级', '七年级'],
+    date: '2026-07-09 10:06:12',
   },
   {
     id: '4',
@@ -80,7 +94,9 @@ const courses: Course[] = [
     source: 'organization',
     concepts: ['科学发展', '文化变革', '天文学', '力学基础'],
     studentCount: 643,
-    teachingMode: 'teaching',
+    author: '邱梓芸',
+    grades: ['教师培训'],
+    date: '2026-07-03 17:30:26',
   },
   {
     id: '5',
@@ -90,7 +106,9 @@ const courses: Course[] = [
     source: 'official',
     concepts: ['波形与频率', '比例关系', '和声原理', '数学建模'],
     studentCount: 756,
-    teachingMode: 'both',
+    author: '马誉珊',
+    grades: ['三年级', '四年级'],
+    date: '2026-06-16 16:43:59',
   },
   {
     id: '6',
@@ -100,7 +118,9 @@ const courses: Course[] = [
     source: 'organization',
     concepts: ['化学变化', '颜料科学', '材料特性', '色彩理论'],
     studentCount: 512,
-    teachingMode: 'self-study',
+    author: '牛倩楠',
+    grades: ['五年级'],
+    date: '2026-05-19 17:23:12',
   },
   {
     id: '7',
@@ -110,7 +130,9 @@ const courses: Course[] = [
     source: 'official',
     concepts: ['算法设计', '逻辑思维', '问题分解', '抽象建模'],
     studentCount: 1890,
-    teachingMode: 'both',
+    author: '曾好',
+    grades: ['七年级', '八年级'],
+    date: '2026-05-02 09:41:20',
   },
   {
     id: '8',
@@ -120,7 +142,9 @@ const courses: Course[] = [
     source: 'official',
     concepts: ['生态平衡', '责任意识', '可持续发展', '环境伦理'],
     studentCount: 1023,
-    teachingMode: 'teaching',
+    author: '兰薇',
+    grades: ['八年级'],
+    date: '2026-04-21 13:55:08',
   },
   {
     id: '9',
@@ -130,7 +154,9 @@ const courses: Course[] = [
     source: 'organization',
     concepts: ['地缘政治', '气候影响', '资源分布', '文明交流'],
     studentCount: 678,
-    teachingMode: 'self-study',
+    author: '邱梓芸',
+    grades: ['九年级'],
+    date: '2026-04-02 11:18:44',
   },
   {
     id: '10',
@@ -140,7 +166,9 @@ const courses: Course[] = [
     source: 'official',
     concepts: ['人工智能', '信息安全', '网络伦理', '数字公民'],
     studentCount: 1456,
-    teachingMode: 'both',
+    author: 'tonytony',
+    grades: ['教师培训'],
+    date: '2026-03-18 14:27:36',
   },
   {
     id: '11',
@@ -150,7 +178,9 @@ const courses: Course[] = [
     source: 'organization',
     concepts: ['元素周期律', '恒星演化', '核反应', '宇宙结构'],
     studentCount: 534,
-    teachingMode: 'teaching',
+    author: '马誉珊',
+    grades: ['高一', '高二'],
+    date: '2026-03-05 08:52:15',
   },
   {
     id: '12',
@@ -160,7 +190,9 @@ const courses: Course[] = [
     source: 'official',
     concepts: ['水循环', '能量转换', '气候系统', '全球变暖'],
     studentCount: 1678,
-    teachingMode: 'self-study',
+    author: '牛倩楠',
+    grades: ['六年级'],
+    date: '2026-02-14 10:33:50',
   },
 ]
 
@@ -701,131 +733,36 @@ const subjectColors: Record<string, string> = {
   '美术': '#f43f5e',
 }
 
-// ==================== 教学模式选择弹窗 ====================
-function TeachingModeModal({
-  isOpen,
-  onClose,
-  onSelect,
-  courseTitle,
-}: {
-  isOpen: boolean
-  onClose: () => void
-  onSelect: (mode: 'teacher-centered' | 'student-centered') => void
-  courseTitle?: string
-}) {
-  if (!isOpen) return null
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* 背景遮罩 */}
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-
-      {/* 弹窗内容 */}
-      <div className="relative bg-white rounded-3xl shadow-2xl max-w-lg w-full mx-4 overflow-hidden animate-scale-in">
-        {/* 头部 */}
-        <div className="px-8 pt-8 pb-4">
-          <h2 className="text-2xl font-bold text-gray-900 text-center">选择授课模式</h2>
-          {courseTitle && (
-            <p className="text-gray-500 text-center mt-2 text-sm">课程：{courseTitle}</p>
-          )}
-          <p className="text-gray-500 text-center mt-1">请选择本次授课的教学模式</p>
-        </div>
-
-        {/* 选项 */}
-        <div className="px-8 pb-8 space-y-4">
-          {/* 讲授模式 */}
-          <button
-            onClick={() => onSelect('teacher-centered')}
-            className="w-full p-6 rounded-2xl border-2 border-gray-200 hover:border-primary-500 hover:bg-primary-50/50 transition-all duration-300 text-left group"
-          >
-            <div className="flex items-start gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white text-2xl flex-shrink-0 group-hover:scale-110 transition-transform">
-                👨‍🏫
-              </div>
-              <div className="flex-1">
-                <h3 className="text-lg font-bold text-gray-900 mb-1">讲授模式（以教师为中心的课堂模式）</h3>
-                <p className="text-sm text-gray-600">教师主导课堂，进行知识讲解与示范，适合新知识的系统性教学</p>
-              </div>
-            </div>
-          </button>
-
-          {/* 自学模式 */}
-          <button
-            onClick={() => onSelect('student-centered')}
-            className="w-full p-6 rounded-2xl border-2 border-gray-200 hover:border-accent-500 hover:bg-accent-50/50 transition-all duration-300 text-left group"
-          >
-            <div className="flex items-start gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-accent-500 to-accent-600 flex items-center justify-center text-white text-2xl flex-shrink-0 group-hover:scale-110 transition-transform">
-                🎯
-              </div>
-              <div className="flex-1">
-                <h3 className="text-lg font-bold text-gray-900 mb-1">自学模式（以学生为中心的课堂模式）</h3>
-                <p className="text-sm text-gray-600">学生自主探究学习，教师和AI虚拟导师作为引导者与支持者，适合培养学生自主学习能力</p>
-              </div>
-            </div>
-          </button>
-        </div>
-
-        {/* 关闭按钮 */}
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
-        >
-          <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
-    </div>
-  )
-}
-
 // ==================== 主组件 ====================
 export default function CourseCenter() {
   const [viewMode, setViewMode] = useState<'courses' | 'visualization'>('courses')
   const [selectedSubject, setSelectedSubject] = useState('全部')
-  const [selectedSource, setSelectedSource] = useState('全部')
-  const [selectedTeachingMode, setSelectedTeachingMode] = useState('全部')
+  const [selectedGrade, setSelectedGrade] = useState('全部')
   const [searchQuery, setSearchQuery] = useState('')
-  const [showTeachingModal, setShowTeachingModal] = useState(false)
-  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null)
+  const [sortBy, setSortBy] = useState<'latest' | 'name'>('latest')
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
   const [showCourseTypeModal, setShowCourseTypeModal] = useState(false)
 
-  // 处理去预览按钮点击
-  const handleTeachClick = (course: Course) => {
-    if (course.teachingMode === 'both') {
-      setSelectedCourse(course)
-      setShowTeachingModal(true)
-    } else {
-      // 直接跳转到预览页
-      const mode = course.teachingMode === 'teaching' ? 'teaching' : 'self-study'
-      window.location.href = `/course-center/preview/${course.id}?mode=${mode}`
-    }
-  }
-  // 处理教学模式选择
-  const handleModeSelect = (mode: 'teacher-centered' | 'student-centered') => {
-    setShowTeachingModal(false)
-    if (selectedCourse) {
-      const modeParam = mode === 'teacher-centered' ? 'teaching' : 'self-study'
-      window.location.href = `/course-center/preview/${selectedCourse.id}?mode=${modeParam}`
-    }
+  // 知识图谱视图（隐藏中）点击相关课程时的跳转
+  const goToPreview = (course: Course) => {
+    window.location.href = `/course-center/preview/${course.id}`
   }
 
-  const filteredCourses = courses.filter((course) => {
-    if (selectedSubject !== '全部' && !course.subjects.includes(selectedSubject)) return false
-    if (selectedSource !== '全部') {
-      if (selectedSource === '官方' && course.source !== 'official') return false
-      if (selectedSource === '组织' && course.source !== 'organization') return false
-    }
-    if (selectedTeachingMode !== '全部') {
-      if (selectedTeachingMode === '授课模式' && course.teachingMode !== 'teaching') return false
-      if (selectedTeachingMode === '自学模式' && course.teachingMode !== 'self-study') return false
-      if (selectedTeachingMode === '双模式' && course.teachingMode !== 'both') return false
-    }
-    if (searchQuery && !course.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
-        !course.concepts.some(concept => concept.includes(searchQuery))) return false
-    return true
-  })
+  const filteredCourses = courses
+    .filter((course) => {
+      if (selectedSubject !== '全部' && !course.subjects.includes(selectedSubject)) return false
+      if (selectedGrade !== '全部' && !course.grades.includes(selectedGrade)) return false
+      if (searchQuery && !course.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
+          !course.author.toLowerCase().includes(searchQuery.toLowerCase())) return false
+      return true
+    })
+    .sort((a, b) => {
+      if (sortBy === 'name') return a.title.localeCompare(b.title, 'zh')
+      return b.date.localeCompare(a.date)
+    })
+
+  const visibleCourses = filteredCourses.slice(0, visibleCount)
+  const hasMore = visibleCount < filteredCourses.length
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -854,44 +791,56 @@ export default function CourseCenter() {
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-4 flex-1">
               {/* 视图切换 */}
-              <div className="flex items-center bg-gray-100 rounded-xl p-1">
-                <button
-                  onClick={() => setViewMode('courses')}
-                  className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                    viewMode === 'courses'
-                      ? 'bg-white text-gray-900 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                >
-                  <span className="flex items-center gap-2">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                    </svg>
-                    课程视图
-                  </span>
-                </button>
-                <button
-                  onClick={() => setViewMode('visualization')}
-                  className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                    viewMode === 'visualization'
-                      ? 'bg-white text-gray-900 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                >
-                  <span className="flex items-center gap-2">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                    </svg>
-                    知识图谱
-                  </span>
-                </button>
-              </div>
+              {SHOW_KNOWLEDGE_GRAPH && (
+                <div className="flex items-center bg-gray-100 rounded-xl p-1">
+                  <button
+                    onClick={() => setViewMode('courses')}
+                    className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                      viewMode === 'courses'
+                        ? 'bg-white text-gray-900 shadow-sm'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    <span className="flex items-center gap-2">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                      </svg>
+                      课程视图
+                    </span>
+                  </button>
+                  <button
+                    onClick={() => setViewMode('visualization')}
+                    className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                      viewMode === 'visualization'
+                        ? 'bg-white text-gray-900 shadow-sm'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    <span className="flex items-center gap-2">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                      </svg>
+                      知识图谱
+                    </span>
+                  </button>
+                </div>
+              )}
 
               {/* 筛选器 */}
               <div className="flex items-center gap-3">
               <select
+                value={selectedGrade}
+                onChange={(e) => { setSelectedGrade(e.target.value); setVisibleCount(PAGE_SIZE) }}
+                className="px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all"
+              >
+                {grades.map((grade) => (
+                  <option key={grade} value={grade}>{grade === '全部' ? '全部年级' : grade}</option>
+                ))}
+              </select>
+
+              <select
                 value={selectedSubject}
-                onChange={(e) => setSelectedSubject(e.target.value)}
+                onChange={(e) => { setSelectedSubject(e.target.value); setVisibleCount(PAGE_SIZE) }}
                 className="px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all"
               >
                 {subjects.map((subject) => (
@@ -899,32 +848,12 @@ export default function CourseCenter() {
                 ))}
               </select>
 
-              <select
-                value={selectedSource}
-                onChange={(e) => setSelectedSource(e.target.value)}
-                className="px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all"
-              >
-                {sources.map((source) => (
-                  <option key={source} value={source}>{source === '全部' ? '全部来源' : source}</option>
-                ))}
-              </select>
-
-              <select
-                value={selectedTeachingMode}
-                onChange={(e) => setSelectedTeachingMode(e.target.value)}
-                className="px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all"
-              >
-                {teachingModes.map((mode) => (
-                  <option key={mode} value={mode}>{mode === '全部' ? '全部模式' : mode}</option>
-                ))}
-              </select>
-
               <div className="relative">
                 <input
                   type="text"
-                  placeholder="搜索课程或知识点..."
+                  placeholder="请输入关键字"
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => { setSearchQuery(e.target.value); setVisibleCount(PAGE_SIZE) }}
                   className="pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 w-56 transition-all"
                 />
                 <svg
@@ -936,6 +865,15 @@ export default function CourseCenter() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
               </div>
+
+              <select
+                value={sortBy}
+                onChange={(e) => { setSortBy(e.target.value as 'latest' | 'name'); setVisibleCount(PAGE_SIZE) }}
+                className="px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all"
+              >
+                <option value="latest">最新发布</option>
+                <option value="name">按名称排序</option>
+              </select>
               </div>
             </div>
 
@@ -953,25 +891,29 @@ export default function CourseCenter() {
         </div>
 
         {/* 内容区域 */}
-        {viewMode === 'courses' ? (
-          <CourseGridView courses={filteredCourses} onTeach={handleTeachClick} />
-        ) : (
+        {SHOW_KNOWLEDGE_GRAPH && viewMode === 'visualization' ? (
           <KnowledgeGraphView
             selectedSubject={selectedSubject}
             onSelectSubject={setSelectedSubject}
             courses={courses}
-            onTeach={handleTeachClick}
+            onTeach={goToPreview}
           />
+        ) : (
+          <>
+            <CourseGridView courses={visibleCourses} />
+            {hasMore && (
+              <div className="flex justify-center mt-8">
+                <button
+                  onClick={() => setVisibleCount((count) => count + PAGE_SIZE)}
+                  className="px-6 py-2.5 bg-white border border-gray-200 text-gray-700 text-sm font-medium rounded-xl hover:bg-gray-50 transition-colors shadow-sm"
+                >
+                  加载更多
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
-
-      {/* 教学模式选择弹窗 */}
-      <TeachingModeModal
-        isOpen={showTeachingModal}
-        onClose={() => setShowTeachingModal(false)}
-        onSelect={handleModeSelect}
-        courseTitle={selectedCourse?.title}
-      />
 
       {/* 课程类型选择弹窗 */}
       {showCourseTypeModal && (
@@ -1084,7 +1026,10 @@ export default function CourseCenter() {
 }
 
 // ==================== 课程网格视图 ====================
-function CourseGridView({ courses, onTeach }: { courses: Course[]; onTeach: (course: Course) => void }) {
+// 标签超出固定数量时，用 "+N" 汇总，避免卡片高度随标签数量变化
+const MAX_VISIBLE_TAGS = 3
+
+function CourseGridView({ courses }: { courses: Course[] }) {
   if (courses.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 bg-white/80 backdrop-blur-sm rounded-3xl border border-gray-100 shadow-sm animate-fade-in">
@@ -1101,112 +1046,75 @@ function CourseGridView({ courses, onTeach }: { courses: Course[]; onTeach: (cou
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-      {courses.map((course, index) => (
-        <div
-          key={course.id}
-          className="bg-white/90 backdrop-blur-sm rounded-2xl border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 group animate-fade-in-up"
-          style={{ animationDelay: `${0.2 + index * 0.05}s` }}
-        >
-          {/* 封面 */}
-          <div className="relative h-44 overflow-hidden">
-            <Image
-              src={course.cover}
-              alt={course.title}
-              fill
-              className="object-cover group-hover:scale-105 transition-transform duration-500"
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
+      {courses.map((course, index) => {
+        const tags = [
+          ...course.subjects.map((label) => ({ label, type: 'subject' as const })),
+          ...course.grades.map((label) => ({ label, type: 'grade' as const })),
+        ]
+        const visibleTags = tags.slice(0, MAX_VISIBLE_TAGS)
+        const overflowCount = tags.length - visibleTags.length
 
-            {/* 标签组 - 右上角并排 */}
-            <div className="absolute top-3 right-3 flex gap-2">
-              {/* 来源标签 */}
-              <span className={`px-2.5 py-1 text-xs font-medium rounded-lg backdrop-blur-sm ${
-                course.source === 'official'
-                  ? 'bg-primary-500/90 text-white'
-                  : 'bg-accent-500/90 text-white'
-              }`}>
-                {course.source === 'official' ? '官方' : '组织'}
-              </span>
-
-              {/* 教学模式标签 */}
-              <span className={`px-2.5 py-1 text-xs font-medium rounded-lg backdrop-blur-sm ${
-                course.teachingMode === 'both'
-                  ? 'bg-primary-600/90 text-white'
-                  : course.teachingMode === 'teaching'
-                  ? 'bg-accent-600/90 text-white'
-                  : 'bg-fresh-600/90 text-white'
-              }`}>
-                {course.teachingMode === 'both' && '双模式'}
-                {course.teachingMode === 'teaching' && '授课模式'}
-                {course.teachingMode === 'self-study' && '自学模式'}
-              </span>
-            </div>
-          </div>
-
-          {/* 内容 */}
-          <div className="p-5">
-            {/* 课程标题 */}
-            <h3 className="font-bold text-gray-900 text-lg mb-3 line-clamp-2 group-hover:text-primary-600 transition-colors">
-              {course.title}
-            </h3>
-
-            {/* 学科标签 - 最多显示3个 */}
-            <div className="flex flex-wrap gap-1.5 mb-3">
-              {course.subjects.slice(0, 3).map((subject) => (
-                <span
-                  key={subject}
-                  className="px-2.5 py-1 text-xs font-medium rounded-lg"
-                  style={{
-                    backgroundColor: `${subjectColors[subject]}15`,
-                    color: subjectColors[subject],
-                  }}
-                >
-                  {subject}
-                </span>
-              ))}
-              {course.subjects.length > 3 && (
-                <span className="px-2.5 py-1 text-xs font-medium rounded-lg bg-gray-100 text-gray-600">
-                  +{course.subjects.length - 3}
-                </span>
-              )}
+        return (
+          <Link
+            key={course.id}
+            href={`/course-center/preview/${course.id}`}
+            className="bg-white/90 backdrop-blur-sm rounded-2xl border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 group animate-fade-in-up"
+            style={{ animationDelay: `${0.2 + index * 0.05}s` }}
+          >
+            {/* 封面 */}
+            <div className="relative h-44 overflow-hidden">
+              <Image
+                src={course.cover}
+                alt={course.title}
+                fill
+                className="object-cover group-hover:scale-105 transition-transform duration-500"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
             </div>
 
-            {/* 跨学科概念 - 最多显示3个 */}
-            <div className="flex flex-wrap gap-1.5 mb-4">
-              {course.concepts.slice(0, 3).map((concept) => (
-                <span key={concept} className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full">
-                  {concept}
-                </span>
-              ))}
-              {course.concepts.length > 3 && (
-                <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full">
-                  +{course.concepts.length - 3}
-                </span>
-              )}
-            </div>
+            {/* 内容 */}
+            <div className="p-5">
+              {/* 课程标题 */}
+              <h3 className="font-bold text-gray-900 text-lg mb-3 line-clamp-2 group-hover:text-primary-600 transition-colors">
+                {course.title}
+              </h3>
 
-            {/* 底部信息：学习人数、授课按钮 */}
-            <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-              <div className="flex items-center gap-4">
-                {/* 学习人数 */}
-                <span className="flex items-center gap-1 text-sm text-gray-500">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                  </svg>
-                  {course.studentCount}人学习
-                </span>
+              {/* 学科/年级标签：固定高度，超出用 +N 汇总，卡片高度不随标签数量变化 */}
+              <div className="flex items-center flex-nowrap gap-1.5 h-7 overflow-hidden mb-4">
+                {visibleTags.map((tag) => (
+                  <span
+                    key={`${tag.type}-${tag.label}`}
+                    className={`shrink-0 px-2.5 py-1 text-xs font-medium rounded-lg whitespace-nowrap ${
+                      tag.type === 'subject'
+                        ? 'bg-primary-50 text-primary-700'
+                        : 'bg-gray-100 text-gray-600'
+                    }`}
+                  >
+                    {tag.label}
+                  </span>
+                ))}
+                {overflowCount > 0 && (
+                  <span className="shrink-0 px-2.5 py-1 text-xs font-medium rounded-lg bg-gray-100 text-gray-500">
+                    +{overflowCount}
+                  </span>
+                )}
               </div>
-              <button
-                onClick={() => onTeach(course)}
-                className="px-4 py-2 bg-gradient-to-r from-primary-600 to-accent-600 text-white text-sm font-medium rounded-xl hover:shadow-lg hover:shadow-primary-500/25 transition-all duration-300"
-              >
-                去预览
-              </button>
+
+              {/* 底部信息：作者、日期 */}
+              <div className="flex items-center justify-between pt-3 border-t border-gray-100 text-xs text-gray-500">
+                <span className="flex items-center gap-1.5 min-w-0">
+                  <span className="w-5 h-5 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-[10px] text-white font-semibold shrink-0">
+                    {course.author.slice(0, 1)}
+                  </span>
+                  <span className="truncate">{course.author}</span>
+                </span>
+                <span className="shrink-0">{course.date}</span>
+              </div>
             </div>
-          </div>
-        </div>
-      ))}
+          </Link>
+        )
+      })}
     </div>
   )
 }

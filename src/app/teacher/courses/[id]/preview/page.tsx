@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 
-export default function CoursePreview() {
+export default function TeacherCoursePreview() {
   const router = useRouter()
 
   return (
