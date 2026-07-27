@@ -1,320 +1,231 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
+import { mockWorkshops, WORKSHOP_STATUS_META, type WorkshopStatus } from '@/data/mockWorkshopData'
 
-// 工作坊数据
-const workshops = [
-  {
-    id: 'ws_001',
-    title: '跨学科教学设计工作坊',
-    description: '通过系统化的学习，掌握跨学科课程设计的核心方法，运用C-POTE模型提炼大概念、设计真实情境任务',
-    coverImage: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=600&h=400&fit=crop',
-    progress: 60,
-    participants: 128,
-    startTime: '2026-03-10',
-    endTime: '2026-04-10',
-    status: 'ongoing',
-    tags: ['跨学科', '教学设计', 'C-POTE'],
-    instructor: {
-      name: '张教授',
-      avatar: '张'
-    }
-  },
-  {
-    id: 'ws_002',
-    title: '课堂提问与深度学习工作坊',
-    description: '基于布鲁姆认知目标层级，设计促进高阶思维的提问序列，培养学生元认知能力与批判性思维',
-    coverImage: 'https://images.unsplash.com/photo-1509062522246-3755977927d7?w=600&h=400&fit=crop',
-    progress: 100,
-    participants: 95,
-    startTime: '2025-10-01',
-    endTime: '2025-10-31',
-    status: 'completed',
-    tags: ['提问技巧', '深度学习', '布鲁姆'],
-    instructor: {
-      name: '李老师',
-      avatar: '李'
-    }
-  },
-  {
-    id: 'ws_003',
-    title: 'AI融合教学实践工作坊',
-    description: '探索AI智能体与跨学科教学的深度融合，设计人机协同的学习任务，提升课堂个性化支持能力',
-    coverImage: 'https://images.unsplash.com/photo-1677442135703-1787eea5ce01?w=600&h=400&fit=crop',
-    progress: 0,
-    participants: 0,
-    startTime: '2026-07-01',
-    endTime: '2026-07-31',
-    status: 'upcoming',
-    tags: ['AI融合教学', '智能体', '个性化学习'],
-    instructor: {
-      name: '王博士',
-      avatar: '王'
-    }
-  },
-  {
-    id: 'ws_004',
-    title: '形成性评价与教学调整工作坊',
-    description: '掌握嵌入式形成性评价策略，通过课堂证据即时诊断学习状态，实现"教学评一致性"',
-    coverImage: 'https://images.unsplash.com/photo-1606326608606-aa0b62935f2b?w=600&h=400&fit=crop',
-    progress: 35,
-    participants: 76,
-    startTime: '2026-05-06',
-    endTime: '2026-06-06',
-    status: 'ongoing',
-    tags: ['形成性评价', '教学评一致', '学习诊断'],
-    instructor: {
-      name: '陈老师',
-      avatar: '陈'
-    }
-  },
-  {
-    id: 'ws_005',
-    title: '项目式学习设计工作坊',
-    description: '掌握PBL核心设计方法：从真实情境问题出发，设计驱动性问题与探究任务序列，培养学生综合素养',
-    coverImage: 'https://images.unsplash.com/photo-1531482615713-2afd69097998?w=600&h=400&fit=crop',
-    progress: 100,
-    participants: 112,
-    startTime: '2025-09-01',
-    endTime: '2025-09-30',
-    status: 'completed',
-    tags: ['PBL', '驱动性问题', '综合素养'],
-    instructor: {
-      name: '刘教授',
-      avatar: '刘'
-    }
-  },
-]
+// ============ Icons ============
+const SearchIcon = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+  </svg>
+)
+
+const CalendarIcon = () => (
+  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+  </svg>
+)
+
+const LocationIcon = () => (
+  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+  </svg>
+)
+
+const InstructorIcon = () => (
+  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+  </svg>
+)
+
+const ChevronRightIcon = () => (
+  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+  </svg>
+)
+
+// 格式化日期区间
+function formatDateRange(start: string, end: string) {
+  const s = new Date(start)
+  const e = new Date(end)
+  const startStr = `${s.getFullYear()}.${(s.getMonth() + 1).toString().padStart(2, '0')}.${s.getDate().toString().padStart(2, '0')}`
+  const endStr = `${e.getFullYear()}.${(e.getMonth() + 1).toString().padStart(2, '0')}.${e.getDate().toString().padStart(2, '0')}`
+  if (s.getFullYear() === e.getFullYear() && s.getMonth() === e.getMonth() && s.getDate() === e.getDate()) {
+    return startStr
+  }
+  return `${startStr} – ${endStr}`
+}
 
 export default function WorkshopPage() {
-  const [activeFilter, setActiveFilter] = useState<'all' | 'ongoing' | 'completed' | 'upcoming'>('all')
+  const [activeFilter, setActiveFilter] = useState<'all' | WorkshopStatus>('all')
   const [searchQuery, setSearchQuery] = useState('')
 
-  const filteredWorkshops = workshops.filter(workshop => {
-    const matchesFilter = activeFilter === 'all' || workshop.status === activeFilter
-    const matchesSearch = searchQuery === '' ||
-      workshop.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      workshop.description.toLowerCase().includes(searchQuery.toLowerCase())
-    return matchesFilter && matchesSearch
-  })
+  const filteredWorkshops = useMemo(() => {
+    return mockWorkshops.filter(workshop => {
+      const matchesFilter = activeFilter === 'all' || workshop.status === activeFilter
+      const matchesSearch = searchQuery === '' ||
+        workshop.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        workshop.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        workshop.instructor.name.toLowerCase().includes(searchQuery.toLowerCase())
+      return matchesFilter && matchesSearch
+    }).sort((a, b) => {
+      // 未开始 > 进行中 > 已结束 > 已取消
+      const order: Record<WorkshopStatus, number> = { ongoing: 0, upcoming: 1, completed: 2, cancelled: 3 }
+      const diff = order[a.status] - order[b.status]
+      if (diff !== 0) return diff
+      // 同状态按开始时间倒序
+      return b.startDate.localeCompare(a.startDate)
+    })
+  }, [activeFilter, searchQuery])
 
-  const stats = {
-    total: workshops.length,
-    ongoing: workshops.filter(w => w.status === 'ongoing').length,
-    completed: workshops.filter(w => w.status === 'completed').length,
-    upcoming: workshops.filter(w => w.status === 'upcoming').length
-  }
+  const stats = useMemo(() => ({
+    all: mockWorkshops.length,
+    upcoming: mockWorkshops.filter(w => w.status === 'upcoming').length,
+    ongoing: mockWorkshops.filter(w => w.status === 'ongoing').length,
+    completed: mockWorkshops.filter(w => w.status === 'completed').length,
+  }), [])
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* 背景装饰 */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-20 left-10 w-72 h-72 bg-primary-200/30 rounded-full blur-3xl" />
-        <div className="absolute bottom-20 right-10 w-96 h-96 bg-accent-200/20 rounded-full blur-3xl" />
-      </div>
-
-      <div className="relative z-10 max-w-5xl mx-auto px-6 py-8">
-        {/* 页面标题 */}
-        <div className="text-center mb-10 animate-fade-in-up">
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-            <span className="gradient-text">教师工作坊</span>
-          </h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            系统化的教师专业发展学习项目，提升跨学科教学能力
-          </p>
+    <div className="min-h-full bg-gradient-to-b from-primary-50/30 to-white">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* 页面头 */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">教师工作坊</h1>
+          <p className="text-gray-500">线下培训活动的线上入口，浏览资料与活动信息</p>
         </div>
 
-        {/* 统计卡片 */}
-        <div className="grid grid-cols-4 gap-4 mb-8 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-            <div className="text-3xl font-bold text-gray-900 mb-1">{stats.total}</div>
-            <div className="text-sm text-gray-600">全部工作坊</div>
-          </div>
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-            <div className="text-3xl font-bold text-accent-600 mb-1">{stats.ongoing}</div>
-            <div className="text-sm text-gray-600">进行中</div>
-          </div>
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-            <div className="text-3xl font-bold text-primary-600 mb-1">{stats.completed}</div>
-            <div className="text-sm text-gray-600">已完成</div>
-          </div>
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-            <div className="text-3xl font-bold text-gray-500 mb-1">{stats.upcoming}</div>
-            <div className="text-sm text-gray-600">即将开始</div>
-          </div>
-        </div>
-
-        {/* 筛选和搜索栏 */}
-        <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between mb-8 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-          <div className="flex flex-wrap gap-2 w-full md:w-auto">
-            {[
-              { key: 'all', label: '全部' },
-              { key: 'ongoing', label: '进行中' },
-              { key: 'completed', label: '已完成' },
-              { key: 'upcoming', label: '即将开始' }
-            ].map(filter => (
+        {/* 筛选 + 搜索 */}
+        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mb-6">
+          <div className="flex flex-wrap gap-2">
+            {([
+              { key: 'all', label: '全部', count: stats.all },
+              { key: 'ongoing', label: '进行中', count: stats.ongoing },
+              { key: 'upcoming', label: '未开始', count: stats.upcoming },
+              { key: 'completed', label: '已结束', count: stats.completed },
+            ] as const).map(filter => (
               <button
                 key={filter.key}
-                onClick={() => setActiveFilter(filter.key as typeof activeFilter)}
-                className={`px-5 py-2.5 rounded-xl font-medium transition-all duration-300 ${
+                onClick={() => setActiveFilter(filter.key)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                   activeFilter === filter.key
-                    ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/30'
-                    : 'bg-white/80 backdrop-blur-sm text-gray-700 hover:bg-white hover:shadow-md border border-gray-100'
+                    ? 'bg-primary-500 text-white'
+                    : 'bg-white text-gray-600 border border-gray-200 hover:border-primary-300 hover:text-primary-600'
                 }`}
               >
                 {filter.label}
+                <span className={`ml-1.5 text-xs ${activeFilter === filter.key ? 'text-primary-100' : 'text-gray-400'}`}>
+                  {filter.count}
+                </span>
               </button>
             ))}
           </div>
 
-          <div className="w-full md:w-80">
+          <div className="w-full sm:w-72">
             <div className="relative">
-              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                <SearchIcon />
+              </div>
               <input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="搜索工作坊..."
-                className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/80 backdrop-blur-sm border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50 focus:border-primary-500 transition-all duration-200"
+                placeholder="搜索标题、讲师或简介"
+                className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-white border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 text-sm"
               />
             </div>
           </div>
         </div>
 
         {/* 工作坊列表 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredWorkshops.map((workshop, index) => (
-            <Link
-              key={workshop.id}
-              href={`/workshop/${workshop.id}`}
-              className="group relative bg-white rounded-3xl shadow-sm hover:shadow-2xl transition-all duration-500 overflow-hidden hover:-translate-y-2 block animate-fade-in-up border border-gray-100"
-              style={{ animationDelay: `${index * 0.05}s` }}
-            >
-              {/* 状态标签 */}
-              <div className="absolute top-4 left-4 z-10">
-                <span className={`px-3 py-1 rounded-full text-xs font-bold shadow-lg ${
-                  workshop.status === 'ongoing'
-                    ? 'bg-accent-500 text-white'
-                    : workshop.status === 'completed'
-                    ? 'bg-primary-500 text-white'
-                    : 'bg-gray-500 text-white'
-                }`}>
-                  {workshop.status === 'ongoing' ? '进行中' : workshop.status === 'completed' ? '已完成' : '即将开始'}
-                </span>
-              </div>
-
-              {/* 封面图片 */}
-              <div className="relative h-44 overflow-hidden">
-                <Image
-                  src={workshop.coverImage}
-                  alt={workshop.title}
-                  fill
-                  className="object-cover group-hover:scale-105 transition-transform duration-500"
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-
-                {/* 讲师信息 */}
-                <div className="absolute bottom-3 left-3 flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-accent-600 flex items-center justify-center text-white text-sm font-medium">
-                    {workshop.instructor.avatar}
-                  </div>
-                  <span className="text-white text-sm font-medium">{workshop.instructor.name}</span>
-                </div>
-              </div>
-
-              {/* 内容 */}
-              <div className="p-5">
-                <h3 className="font-bold text-gray-900 text-lg mb-2 line-clamp-1 group-hover:text-primary-600 transition-colors">
-                  {workshop.title}
-                </h3>
-                <p className="text-sm text-gray-600 mb-4 line-clamp-2 leading-relaxed">
-                  {workshop.description}
-                </p>
-
-                {/* 标签 */}
-                <div className="flex flex-wrap gap-1.5 mb-4">
-                  {workshop.tags.slice(0, 3).map(tag => (
-                    <span key={tag} className="px-2 py-0.5 bg-primary-50 text-primary-600 text-xs rounded-full">
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-
-                {/* 进度条 */}
-                {workshop.status !== 'upcoming' && (
-                  <div className="mb-4">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-xs text-gray-500">学习进度</span>
-                      <span className="text-xs font-semibold text-primary-600">{workshop.progress}%</span>
-                    </div>
-                    <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-gradient-to-r from-primary-500 to-accent-500 rounded-full transition-all duration-500"
-                        style={{ width: `${workshop.progress}%` }}
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {/* 底部信息 */}
-                <div className="flex items-center justify-between text-sm text-gray-500">
-                  <div className="flex items-center gap-1">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
-                    <span>{workshop.participants} 人参与</span>
-                  </div>
-                  <span>
-                    {workshop.status === 'upcoming' ? `${workshop.startTime} 开始` : `截止 ${workshop.endTime}`}
-                  </span>
-                </div>
-
-                {/* 操作按钮 */}
-                <button
-                  className={`w-full mt-4 px-4 py-3 rounded-xl font-medium transition-all duration-300 flex items-center justify-center gap-2 ${
-                    workshop.status === 'upcoming'
-                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                      : 'bg-primary-500 text-white hover:bg-primary-600 hover:shadow-lg shadow-primary-500/30'
-                  }`}
-                  disabled={workshop.status === 'upcoming'}
+        {filteredWorkshops.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {filteredWorkshops.map(workshop => {
+              const statusMeta = WORKSHOP_STATUS_META[workshop.status]
+              return (
+                <Link
+                  key={workshop.id}
+                  href={`/workshop/${workshop.id}`}
+                  className="group relative bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all"
                 >
-                  {workshop.status === 'ongoing' && '继续学习'}
-                  {workshop.status === 'completed' && '查看详情'}
-                  {workshop.status === 'upcoming' && '即将开始'}
-                  {workshop.status !== 'upcoming' && (
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  )}
-                </button>
-              </div>
+                  {/* 封面区（渐变占位或图片） */}
+                  <div className="relative h-40 bg-gradient-to-br from-primary-50 to-gray-100 overflow-hidden">
+                    {/* 状态标签 */}
+                    <div className="absolute top-3 left-3 z-10">
+                      <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${statusMeta.bgColor} ${statusMeta.color}`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${
+                          workshop.status === 'ongoing' ? 'bg-primary-500 animate-pulse' :
+                          workshop.status === 'upcoming' ? 'bg-gray-400' :
+                          workshop.status === 'cancelled' ? 'bg-red-500' :
+                          'bg-blue-500'
+                        }`} />
+                        {statusMeta.label}
+                      </span>
+                    </div>
 
-              {/* 光效 */}
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary-500/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 pointer-events-none" />
-            </Link>
-          ))}
-        </div>
+                    {/* 讲师头像浮层 */}
+                    <div className="absolute bottom-3 left-3 flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-white border-2 border-white shadow flex items-center justify-center text-primary-600 font-medium text-sm">
+                        {workshop.instructor.name.slice(0, 1)}
+                      </div>
+                      <span className="text-white text-xs font-medium drop-shadow-md bg-black/30 px-2 py-0.5 rounded">
+                        {workshop.instructor.name}
+                      </span>
+                    </div>
+                  </div>
 
-        {/* 空状态 */}
-        {filteredWorkshops.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-16 bg-white rounded-3xl border border-gray-100 shadow-sm animate-fade-in">
-            <div className="w-24 h-24 mb-6 bg-gradient-to-br from-gray-100 to-gray-200 rounded-3xl flex items-center justify-center">
-              <svg className="w-12 h-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
+                  {/* 内容区 */}
+                  <div className="p-4">
+                    <h3 className="font-semibold text-gray-900 mb-2 line-clamp-1 group-hover:text-primary-600 transition-colors">
+                      {workshop.title}
+                    </h3>
+                    <p className="text-xs text-gray-500 mb-3 line-clamp-2 leading-relaxed min-h-[2rem]">
+                      {workshop.description}
+                    </p>
+
+                    {/* 时间/地点信息 */}
+                    <div className="space-y-1.5 text-xs text-gray-500 mb-3">
+                      <div className="flex items-center gap-1.5">
+                        <CalendarIcon />
+                        <span>{formatDateRange(workshop.startDate, workshop.endDate)}</span>
+                      </div>
+                      <div className="flex items-start gap-1.5">
+                        <div className="mt-0.5"><LocationIcon /></div>
+                        <span className="line-clamp-1 flex-1">{workshop.location}</span>
+                      </div>
+                    </div>
+
+                    {/* 标签 */}
+                    {workshop.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mb-3">
+                        {workshop.tags.slice(0, 3).map(tag => (
+                          <span key={tag} className="px-2 py-0.5 bg-gray-50 text-gray-600 text-[10px] rounded">
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* 底部信息 */}
+                    <div className="flex items-center justify-between pt-3 border-t border-gray-100 text-xs">
+                      <span className="text-gray-500">
+                        {workshop.materials.length} 份资料
+                      </span>
+                      <span className="text-primary-600 font-medium flex items-center gap-0.5 group-hover:gap-1.5 transition-all">
+                        查看详情 <ChevronRightIcon />
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              )
+            })}
+          </div>
+        ) : (
+          <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center">
+            <div className="w-16 h-16 rounded-2xl bg-gray-50 text-gray-300 flex items-center justify-center mx-auto mb-3">
+              <SearchIcon />
             </div>
-            <h3 className="text-xl font-bold text-gray-800 mb-2">未找到匹配的工作坊</h3>
-            <p className="text-gray-500 mb-6">试试调整筛选条件或搜索关键词</p>
-            <button
-              onClick={() => { setSearchQuery(''); setActiveFilter('all') }}
-              className="px-6 py-2.5 bg-primary-500 text-white font-medium rounded-xl hover:bg-primary-600 transition-all duration-200"
-            >
-              清除筛选
-            </button>
+            <p className="text-gray-500 mb-3">
+              {searchQuery ? '没有找到匹配的工作坊' : '暂无工作坊'}
+            </p>
+            {(searchQuery || activeFilter !== 'all') && (
+              <button
+                onClick={() => { setSearchQuery(''); setActiveFilter('all') }}
+                className="text-sm text-primary-600 hover:text-primary-700 font-medium"
+              >
+                清除筛选
+              </button>
+            )}
           </div>
         )}
       </div>

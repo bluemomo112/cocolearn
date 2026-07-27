@@ -220,6 +220,24 @@ export default function AdminDashboard() {
             </Link>
 
             <Link
+              href="/admin/workshops"
+              className="group flex items-center gap-3 p-4 bg-white rounded-2xl border-2 border-primary-300 hover:shadow-md transition-all"
+            >
+              <div className="flex items-center justify-center w-11 h-11 rounded-xl bg-amber-100 text-amber-700 group-hover:bg-amber-200 transition-colors">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="font-medium text-gray-900 flex items-center gap-1.5">
+                  工作坊管理
+                  <span className="px-1.5 py-0.5 text-[10px] bg-amber-100 text-amber-700 rounded font-medium">NEW</span>
+                </div>
+                <div className="text-xs text-gray-500 mt-0.5">线下培训活动与资料</div>
+              </div>
+            </Link>
+
+            <Link
               href="/admin/reports"
               className="group flex items-center gap-3 p-4 bg-white rounded-2xl border border-gray-100 hover:border-primary-300 hover:shadow-md transition-all"
             >
