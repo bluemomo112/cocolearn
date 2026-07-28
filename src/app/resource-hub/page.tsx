@@ -333,7 +333,7 @@ function ResourceCard({
 }
 
 // ===================================================================
-// iframe 弹窗
+// iframe 弹窗（编辑页风格：模拟浏览器窗口，简洁）
 // ===================================================================
 function IframeModal({
   resource,
@@ -346,32 +346,14 @@ function IframeModal({
               resource.source === 'video' ? '' :
               resource.externalUrl!
   const [loadError, setLoadError] = useState(false)
-  const [copied, setCopied] = useState(false)
-  const [isFullscreen, setIsFullscreen] = useState(false)
 
-  const handleOpenInNewTab = () => {
-    if (resource.source === 'video') return
-    window.open(url, '_blank')
-  }
-
-  const handleCopyLink = async () => {
-    if (resource.source === 'video') return
-    try {
-      await navigator.clipboard.writeText(url)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    } catch {
-      // fallback
-      const ta = document.createElement('textarea')
-      ta.value = url
-      document.body.appendChild(ta)
-      ta.select()
-      document.execCommand('copy')
-      document.body.removeChild(ta)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    }
-  }
+  const displayUrl =
+    resource.source === 'file' && resource.fileUrl ? resource.fileUrl :
+    resource.source === 'link' && resource.externalUrl ? resource.externalUrl :
+    resource.source === 'video' && resource.embedCode ? '嵌入视频播放器' :
+    resource.source === 'html' && (resource.fileUrl || resource.externalUrl) ? (resource.fileUrl || resource.externalUrl) :
+    resource.source === 'ai' && resource.externalUrl ? resource.externalUrl :
+    '未配置资源地址'
 
   const handleDownload = () => {
     if (!resource.downloadable) return
@@ -389,95 +371,39 @@ function IframeModal({
       onKeyDown={(e) => e.key === 'Escape' && onClose()}
     >
       <div
-        className={`bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden transition-all ${
-          isFullscreen ? 'w-full h-full max-w-none max-h-none rounded-none' : 'w-full h-full max-w-6xl max-h-[90vh]'
-        }`}
+        className="bg-white rounded-2xl shadow-2xl w-[90vw] h-[90vh] flex flex-col overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* 顶部工具栏 */}
-        <div className="flex items-center gap-3 px-5 py-3 border-b border-gray-100 bg-white">
-          {/* 标题区 */}
-          <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-gray-900 truncate">{resource.title}</h3>
-            {resource.description && (
-              <p className="text-xs text-gray-500 truncate mt-0.5">{resource.description}</p>
-            )}
+        {/* 顶部：图标 + 标题 + 关闭 */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gray-50">
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            <div className="w-10 h-10 rounded-lg bg-primary-100 flex items-center justify-center flex-shrink-0">
+              <svg className="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+            </div>
+            <div className="min-w-0 flex-1">
+              <h3 className="text-lg font-semibold text-gray-900 truncate">{resource.title}</h3>
+              {resource.description && (
+                <p className="text-sm text-gray-500 truncate">{resource.description}</p>
+              )}
+            </div>
           </div>
-
-          {/* 操作按钮组 */}
-          <div className="flex items-center gap-1">
-            {/* 下载 */}
+          <div className="flex items-center gap-2 flex-shrink-0">
             {resource.downloadable && (
               <button
                 onClick={handleDownload}
-                className="flex items-center gap-1.5 px-3 h-9 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-200 rounded-lg transition-colors"
                 title="下载资源"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                </svg>
-                <span className="hidden sm:inline">下载</span>
+                <DownloadIcon />
+                下载
               </button>
             )}
-
-            {/* 新标签打开 */}
-            {resource.source !== 'video' && (
-              <button
-                onClick={handleOpenInNewTab}
-                className="flex items-center gap-1.5 px-3 h-9 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-                title="在新标签页打开"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                </svg>
-                <span className="hidden sm:inline">新标签</span>
-              </button>
-            )}
-
-            {/* 复制链接 */}
-            {resource.source !== 'video' && (
-              <button
-                onClick={handleCopyLink}
-                className="flex items-center gap-1.5 px-3 h-9 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-                title={copied ? '已复制!' : '复制链接'}
-              >
-                {copied ? (
-                  <svg className="w-4 h-4 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                ) : (
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-                  </svg>
-                )}
-                <span className="hidden sm:inline">{copied ? '已复制' : '复制链接'}</span>
-              </button>
-            )}
-
-            {/* 全屏切换 */}
-            <button
-              onClick={() => setIsFullscreen(!isFullscreen)}
-              className="flex items-center justify-center w-9 h-9 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-              title={isFullscreen ? '退出全屏' : '全屏显示'}
-            >
-              {isFullscreen ? (
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25" />
-                </svg>
-              ) : (
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-                </svg>
-              )}
-            </button>
-
-            {/* 分隔线 */}
-            <div className="w-px h-6 bg-gray-200 mx-1" />
-
-            {/* 关闭 */}
             <button
               onClick={onClose}
-              className="flex items-center justify-center w-9 h-9 text-gray-600 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors"
+              className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
               title="关闭 (ESC)"
             >
               <CloseIcon />
@@ -485,57 +411,56 @@ function IframeModal({
           </div>
         </div>
 
-        {/* 内容区 */}
-        <div className="flex-1 relative bg-gray-50">
-          {!loadError ? (
-            resource.source === 'video' ? (
-              <div
-                className="w-full h-full overflow-auto"
-                dangerouslySetInnerHTML={{ __html: resource.embedCode || '' }}
-              />
-            ) : (
-              <iframe
-                src={url}
-                className="w-full h-full border-0"
-                onError={() => setLoadError(true)}
-                sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
-              />
-            )
-          ) : (
-            <div className="absolute inset-0 flex items-center justify-center p-8">
-              <div className="text-center max-w-md">
-                <div className="w-16 h-16 rounded-2xl bg-orange-50 text-orange-500 flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                  </svg>
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">该内容无法内嵌显示</h3>
-                <p className="text-gray-500 mb-6">部分网站禁止在 iframe 中加载，你可以在新标签页打开此资源。</p>
-                <button
-                  onClick={handleOpenInNewTab}
-                  className="px-6 py-2.5 bg-primary-600 text-white text-sm font-medium rounded-xl hover:bg-primary-700 transition-colors"
-                >
-                  在新标签页打开
-                </button>
-              </div>
+        {/* 内容区：模拟浏览器窗口 */}
+        <div className="flex-1 overflow-hidden bg-gray-100 flex flex-col">
+          {/* 模拟浏览器地址栏 */}
+          <div className="bg-white border-b border-gray-200 px-4 py-2 flex items-center gap-3 flex-shrink-0">
+            <div className="flex gap-1.5">
+              <div className="w-3 h-3 rounded-full bg-red-400" />
+              <div className="w-3 h-3 rounded-full bg-yellow-400" />
+              <div className="w-3 h-3 rounded-full bg-green-400" />
             </div>
-          )}
-        </div>
-
-        {/* 底部信息栏 */}
-        <div className="flex items-center justify-between px-5 py-2.5 border-t border-gray-100 bg-gray-50 text-xs text-gray-500">
-          <div className="flex items-center gap-3">
-            <span>来源类型：{
-              resource.source === 'file' ? '本地文件' :
-              resource.source === 'link' ? '外部链接' :
-              resource.source === 'video' ? '外部视频' :
-              resource.source === 'html' ? '网页文件' : 'AI 应用'
-            }</span>
-            {resource.fileFormat && <span>格式：{resource.fileFormat.toUpperCase()}</span>}
+            <div className="flex-1 bg-gray-100 rounded px-3 py-1 text-sm text-gray-600 truncate">
+              {displayUrl}
+            </div>
           </div>
-          <div className="flex items-center gap-1.5">
-            <kbd className="px-1.5 py-0.5 bg-white border border-gray-200 rounded text-xs">ESC</kbd>
-            <span>关闭</span>
+
+          {/* iframe 内容 */}
+          <div className="flex-1 bg-white overflow-hidden">
+            {!loadError ? (
+              resource.source === 'video' ? (
+                <div
+                  className="w-full h-full overflow-auto"
+                  dangerouslySetInnerHTML={{ __html: resource.embedCode || '' }}
+                />
+              ) : (
+                <iframe
+                  src={url}
+                  className="w-full h-full border-0"
+                  onError={() => setLoadError(true)}
+                  sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+                  title={resource.title}
+                />
+              )
+            ) : (
+              <div className="w-full h-full flex items-center justify-center p-8">
+                <div className="text-center max-w-md">
+                  <div className="w-16 h-16 rounded-2xl bg-orange-50 text-orange-500 flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">该内容无法内嵌显示</h3>
+                  <p className="text-gray-500 mb-6">部分网站禁止在 iframe 中加载，你可以在新标签页打开。</p>
+                  <button
+                    onClick={() => window.open(url, '_blank')}
+                    className="px-6 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 transition-colors"
+                  >
+                    在新标签页打开
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

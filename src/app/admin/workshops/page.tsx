@@ -40,7 +40,7 @@ export default function AdminWorkshopsPage() {
       const q = searchQuery.toLowerCase()
       result = result.filter(w =>
         w.title.toLowerCase().includes(q) ||
-        w.instructor.name.toLowerCase().includes(q) ||
+        w.instructors.some(ins => ins.name.toLowerCase().includes(q)) ||
         w.description.toLowerCase().includes(q)
       )
     }
@@ -168,7 +168,7 @@ export default function AdminWorkshopsPage() {
                       <td className="px-4 py-3">
                         <div className="font-medium text-gray-900 line-clamp-1">{workshop.title}</div>
                         <div className="text-xs text-gray-500 mt-0.5 flex items-center gap-1">
-                          <span>讲师：{workshop.instructor.name}</span>
+                          <span>讲师：{workshop.instructors.map(i => i.name).join('、')}</span>
                           {workshop.tags.length > 0 && (
                             <>
                               <span>·</span>
@@ -184,7 +184,7 @@ export default function AdminWorkshopsPage() {
                         <div className="line-clamp-1">{workshop.location}</div>
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-600">
-                        {workshop.materials.length}
+                        {workshop.materials?.length ?? 0}
                       </td>
                       <td className="px-4 py-3">
                         <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${statusMeta.bgColor} ${statusMeta.color}`}>

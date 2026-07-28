@@ -58,7 +58,7 @@ export default function WorkshopPage() {
       const matchesSearch = searchQuery === '' ||
         workshop.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         workshop.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        workshop.instructor.name.toLowerCase().includes(searchQuery.toLowerCase())
+        workshop.instructors.some(ins => ins.name.toLowerCase().includes(searchQuery.toLowerCase()))
       return matchesFilter && matchesSearch
     }).sort((a, b) => {
       // 未开始 > 进行中 > 已结束 > 已取消
@@ -153,15 +153,18 @@ export default function WorkshopPage() {
                       </span>
                     </div>
 
-                    {/* 讲师头像浮层 */}
-                    <div className="absolute bottom-3 left-3 flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-full bg-white border-2 border-white shadow flex items-center justify-center text-primary-600 font-medium text-sm">
-                        {workshop.instructor.name.slice(0, 1)}
+                    {/* 讲师浮层：显示第一位 + 更多提示 */}
+                    {workshop.instructors.length > 0 && (
+                      <div className="absolute bottom-3 left-3 flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-white border-2 border-white shadow flex items-center justify-center text-primary-600 font-medium text-sm">
+                          {workshop.instructors[0].name.slice(0, 1)}
+                        </div>
+                        <span className="text-white text-xs font-medium drop-shadow-md bg-black/30 px-2 py-0.5 rounded">
+                          {workshop.instructors[0].name}
+                          {workshop.instructors.length > 1 && ` 等 ${workshop.instructors.length} 位`}
+                        </span>
                       </div>
-                      <span className="text-white text-xs font-medium drop-shadow-md bg-black/30 px-2 py-0.5 rounded">
-                        {workshop.instructor.name}
-                      </span>
-                    </div>
+                    )}
                   </div>
 
                   {/* 内容区 */}
@@ -199,7 +202,7 @@ export default function WorkshopPage() {
                     {/* 底部信息 */}
                     <div className="flex items-center justify-between pt-3 border-t border-gray-100 text-xs">
                       <span className="text-gray-500">
-                        {workshop.materials.length} 份资料
+                        {(workshop.materials?.length ?? 0)} 份资料
                       </span>
                       <span className="text-primary-600 font-medium flex items-center gap-0.5 group-hover:gap-1.5 transition-all">
                         查看详情 <ChevronRightIcon />
