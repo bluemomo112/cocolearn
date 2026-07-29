@@ -24,12 +24,6 @@ const LocationIcon = () => (
   </svg>
 )
 
-const InstructorIcon = () => (
-  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-  </svg>
-)
-
 const ChevronRightIcon = () => (
   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -153,18 +147,7 @@ export default function WorkshopPage() {
                       </span>
                     </div>
 
-                    {/* 讲师浮层：显示第一位 + 更多提示 */}
-                    {workshop.instructors.length > 0 && (
-                      <div className="absolute bottom-3 left-3 flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-white border-2 border-white shadow flex items-center justify-center text-primary-600 font-medium text-sm">
-                          {workshop.instructors[0].name.slice(0, 1)}
-                        </div>
-                        <span className="text-white text-xs font-medium drop-shadow-md bg-black/30 px-2 py-0.5 rounded">
-                          {workshop.instructors[0].name}
-                          {workshop.instructors.length > 1 && ` 等 ${workshop.instructors.length} 位`}
-                        </span>
-                      </div>
-                    )}
+
                   </div>
 
                   {/* 内容区 */}
@@ -199,11 +182,8 @@ export default function WorkshopPage() {
                       </div>
                     )}
 
-                    {/* 底部信息 */}
-                    <div className="flex items-center justify-between pt-3 border-t border-gray-100 text-xs">
-                      <span className="text-gray-500">
-                        {(workshop.materials?.length ?? 0)} 份资料
-                      </span>
+                    {/* 底部：只保留"查看详情"入口 */}
+                    <div className="flex items-center justify-end pt-3 border-t border-gray-100 text-xs">
                       <span className="text-primary-600 font-medium flex items-center gap-0.5 group-hover:gap-1.5 transition-all">
                         查看详情 <ChevronRightIcon />
                       </span>

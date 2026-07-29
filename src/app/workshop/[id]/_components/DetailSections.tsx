@@ -1,31 +1,36 @@
 'use client'
 
 import Link from 'next/link'
+import ReactMarkdown from 'react-markdown'
 import type {
   WorkshopInstructor,
   WorkshopLinkedCourse,
-  WorkshopLinkedResource,
   WorkshopMaterial,
   WorkshopPhoto,
   WorkshopVideo,
-  WorkshopParticipant,
-  WorkshopParticipantOutcome,
+  TeacherSubmission,
 } from '@/data/mockWorkshopData'
 import { AvatarBubble, SectionBlock, formatFileSize } from './detailHelpers'
-import { OUTCOME_TYPE_META } from './PreviewModals'
 
 // ============ 讲师团队 ============
+// flex-wrap 自适应；单个讲师是完整卡片，多个自然换行
 export function InstructorsSection({ instructors }: { instructors: WorkshopInstructor[] }) {
   return (
-    <SectionBlock title="讲师团队" subtitle={`共 ${instructors.length} 位讲师`}>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <SectionBlock
+      title={instructors.length === 1 ? '主讲人' : '讲师团队'}
+      subtitle={instructors.length > 1 ? `共 ${instructors.length} 位` : undefined}
+    >
+      <div className="flex flex-wrap gap-3">
         {instructors.map((ins) => (
-          <div key={ins.id} className="flex gap-3 p-4 bg-gray-50 rounded-xl border border-gray-100">
-            <AvatarBubble name={ins.name} avatar={ins.avatar} size={56} />
+          <div
+            key={ins.id}
+            className="flex-1 min-w-[260px] flex gap-3 p-4 bg-gray-50 rounded-xl border border-gray-100"
+          >
+            <AvatarBubble name={ins.name} avatar={ins.avatar} size={48} />
             <div className="min-w-0 flex-1">
               <div className="font-semibold text-gray-900">{ins.name}</div>
-              {ins.title && <div className="text-sm text-primary-600 mt-0.5">{ins.title}</div>}
-              {ins.bio && <p className="text-xs text-gray-500 mt-2 leading-relaxed line-clamp-3">{ins.bio}</p>}
+              {ins.title && <div className="text-xs text-primary-600 mt-0.5">{ins.title}</div>}
+              {ins.bio && <p className="text-xs text-gray-600 mt-2 leading-relaxed line-clamp-3">{ins.bio}</p>}
             </div>
           </div>
         ))}
@@ -34,12 +39,12 @@ export function InstructorsSection({ instructors }: { instructors: WorkshopInstr
   )
 }
 
-// ============ 活动规划 ============
+// ============ 活动规划（Markdown 渲染）============
 export function AgendaSection({ agenda }: { agenda: string }) {
   return (
     <SectionBlock title="活动规划" subtitle="日程与安排">
-      <div className="prose prose-sm max-w-none text-gray-700 whitespace-pre-wrap leading-relaxed">
-        {agenda}
+      <div className="prose prose-sm max-w-none text-gray-700 prose-headings:mt-4 prose-headings:mb-2 prose-p:my-2 prose-li:my-1">
+        <ReactMarkdown>{agenda}</ReactMarkdown>
       </div>
     </SectionBlock>
   )
@@ -72,41 +77,6 @@ export function LinkedCoursesSection({ courses }: { courses: WorkshopLinkedCours
               {c.description && (
                 <p className="text-xs text-gray-500 mt-1.5 line-clamp-2">{c.description}</p>
               )}
-            </div>
-          </Link>
-        ))}
-      </div>
-    </SectionBlock>
-  )
-}
-
-// ============ 关联学习资源 ============
-const RESOURCE_SECTION_LABELS = {
-  'master-class': '名师课堂',
-  'interactive-tool': '互动工具',
-  'learning-resource': '学习资源',
-}
-
-export function LinkedResourcesSection({ resources }: { resources: WorkshopLinkedResource[] }) {
-  return (
-    <SectionBlock title="关联学习资源" subtitle="从学习资源库精选的配套材料">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        {resources.map((r) => (
-          <Link
-            key={r.id}
-            href={`/resource-hub?resource=${r.id}`}
-            className="group bg-gray-50 rounded-xl border border-gray-100 overflow-hidden hover:shadow-md hover:border-primary-200 transition-all"
-          >
-            <div className="aspect-video bg-gradient-to-br from-primary-50 via-white to-accent-50 flex items-center justify-center">
-              <svg className="w-10 h-10 text-primary-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-            </div>
-            <div className="p-3">
-              <div className="text-xs text-primary-600 mb-1">{RESOURCE_SECTION_LABELS[r.section]}</div>
-              <div className="font-medium text-gray-900 text-sm line-clamp-2 group-hover:text-primary-600 transition-colors">
-                {r.title}
-              </div>
             </div>
           </Link>
         ))}
@@ -239,65 +209,123 @@ export function VideosSection({
   )
 }
 
-// ============ 参会老师及成果 ============
-export function ParticipantsSection({
-  participants,
-  onPreviewOutcome,
+// ============ 教师作品区（教师本人提交）============
+const SUBMISSION_TYPE_META: Record<TeacherSubmission['type'], { label: string; color: string }> = {
+  course: { label: '课程', color: 'text-primary-600 bg-primary-50' },
+  file:   { label: '文件', color: 'text-blue-600 bg-blue-50' },
+  image:  { label: '图片', color: 'text-pink-600 bg-pink-50' },
+  text:   { label: '心得', color: 'text-amber-600 bg-amber-50' },
+}
+
+function formatSubmittedAt(iso: string): string {
+  const d = new Date(iso)
+  return `${d.getMonth() + 1}月${d.getDate()}日 ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+}
+
+export function SubmissionsSection({
+  submissions,
+  onPreview,
+  currentTeacherId,
+  onOpenSubmit,
 }: {
-  participants: WorkshopParticipant[]
-  onPreviewOutcome: (o: WorkshopParticipantOutcome) => void
+  submissions: TeacherSubmission[]
+  onPreview: (s: TeacherSubmission) => void
+  currentTeacherId: string
+  onOpenSubmit: () => void
 }) {
+  // 按老师聚合
+  const grouped = submissions.reduce<Record<string, TeacherSubmission[]>>((acc, s) => {
+    (acc[s.teacherId] = acc[s.teacherId] || []).push(s)
+    return acc
+  }, {})
+  const teacherIds = Object.keys(grouped)
+
   return (
     <SectionBlock
-      title="参会老师与成果"
-      subtitle={`共 ${participants.length} 位老师，${participants.reduce((sum, p) => sum + p.outcomes.length, 0)} 份成果`}
+      title="参会老师作品"
+      subtitle={`${teacherIds.length} 位老师，共 ${submissions.length} 份作品`}
     >
-      <div className="space-y-6">
-        {participants.map((p) => (
-          <div key={p.id} className="border-l-2 border-primary-200 pl-4">
-            {/* 老师信息 */}
-            <div className="flex items-start gap-3 mb-3">
-              <AvatarBubble name={p.name} avatar={p.avatar} size={44} />
-              <div className="min-w-0 flex-1">
-                <div className="font-medium text-gray-900">{p.name}</div>
-                <div className="text-xs text-gray-500 mt-0.5">
-                  {[p.school, p.subject].filter(Boolean).join(' · ') || '—'}
-                </div>
-                {p.bio && <p className="text-xs text-gray-500 mt-1.5 leading-relaxed">{p.bio}</p>}
-              </div>
-            </div>
-
-            {/* 成果列表 */}
-            {p.outcomes.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 ml-14">
-                {p.outcomes.map((o) => {
-                  const meta = OUTCOME_TYPE_META[o.type]
-                  return (
-                    <button
-                      key={o.id}
-                      type="button"
-                      onClick={() => onPreviewOutcome(o)}
-                      className="group flex items-start gap-2.5 p-3 bg-gray-50 hover:bg-white rounded-lg border border-gray-100 hover:border-primary-200 hover:shadow-sm transition-all text-left"
-                    >
-                      <div className="w-8 h-8 rounded-md bg-white flex items-center justify-center text-primary-600 flex-shrink-0 border border-gray-100">
-                        {meta.icon}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="text-sm font-medium text-gray-900 group-hover:text-primary-600 transition-colors truncate">
-                          {o.title}
-                        </div>
-                        <div className="text-xs text-gray-500 mt-0.5">{meta.label}</div>
-                      </div>
-                    </button>
-                  )
-                })}
-              </div>
-            ) : (
-              <div className="ml-14 text-xs text-gray-400 italic">暂无成果</div>
-            )}
-          </div>
-        ))}
+      {/* 提交入口 */}
+      <div className="flex items-center justify-between mb-4 p-3 bg-primary-50 border border-primary-100 rounded-xl">
+        <div className="flex items-center gap-2 text-sm text-primary-700">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+          </svg>
+          <span>参加了这次工作坊？分享你的作品或心得</span>
+        </div>
+        <button
+          type="button"
+          onClick={onOpenSubmit}
+          className="px-3 py-1.5 bg-primary-600 hover:bg-primary-700 text-white text-sm rounded-lg transition-colors"
+        >
+          提交我的作品
+        </button>
       </div>
+
+      {teacherIds.length === 0 ? (
+        <div className="py-8 text-center text-sm text-gray-400">
+          还没有老师提交作品，快来抢占第一位吧
+        </div>
+      ) : (
+        <div className="space-y-5">
+          {teacherIds.map((teacherId) => {
+            const items = grouped[teacherId]
+            const first = items[0]
+            const isMe = teacherId === currentTeacherId
+            return (
+              <div key={teacherId} className="border-l-2 border-primary-200 pl-4">
+                {/* 老师身份行 */}
+                <div className="flex items-center gap-3 mb-3">
+                  <AvatarBubble name={first.teacherName} size={36} />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium text-gray-900 flex items-center gap-2">
+                      {first.teacherName}
+                      {isMe && <span className="text-xs px-1.5 py-0.5 bg-primary-100 text-primary-700 rounded">我</span>}
+                    </div>
+                    <div className="text-xs text-gray-500 mt-0.5">
+                      {[first.teacherSchool, first.teacherSubject].filter(Boolean).join(' · ') || '—'}
+                      {' · '}
+                      {items.length} 份作品
+                    </div>
+                  </div>
+                </div>
+
+                {/* 作品卡片 */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 ml-11">
+                  {items.map((s) => {
+                    const meta = SUBMISSION_TYPE_META[s.type]
+                    return (
+                      <button
+                        key={s.id}
+                        type="button"
+                        onClick={() => onPreview(s)}
+                        className="group flex items-start gap-2.5 p-3 bg-gray-50 hover:bg-white rounded-lg border border-gray-100 hover:border-primary-200 hover:shadow-sm transition-all text-left"
+                      >
+                        <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-medium flex-shrink-0 mt-0.5 ${meta.color}`}>
+                          {meta.label}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <div className="text-sm font-medium text-gray-900 truncate group-hover:text-primary-600 transition-colors">
+                            {s.title}
+                          </div>
+                          {s.description && (
+                            <div className="text-xs text-gray-500 mt-0.5 line-clamp-1">
+                              {s.description}
+                            </div>
+                          )}
+                          <div className="text-[10px] text-gray-400 mt-1">
+                            {formatSubmittedAt(s.submittedAt)}
+                          </div>
+                        </div>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
     </SectionBlock>
   )
 }

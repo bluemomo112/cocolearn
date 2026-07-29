@@ -54,48 +54,53 @@ export interface WorkshopVideo {
   duration?: string;       // 时长文本（"12:30"）
 }
 
-// ---- 参会老师及其成果 ----
-export interface WorkshopParticipantOutcome {
+// ---- 教师提交的作品 ----
+// 由教师本人在教师端"提交我的作品"入口发布
+// 一位教师可以提交多个作品；作品类型对应 4 种来源
+export type SubmissionType =
+  | 'course'   // 从"我的课程"里选一门
+  | 'file'     // 上传文件（PDF/Word/PPT 等）
+  | 'image'    // 上传图片
+  | 'text';    // 心得/反思文字
+
+export interface TeacherSubmission {
   id: string;
-  type: 'file' | 'link' | 'image' | 'text';  // 成果类型
+  // 提交者
+  teacherId: string;       // 平台内的教师 ID
+  teacherName: string;     // 冗余存储，避免 join
+  teacherSchool?: string;
+  teacherSubject?: string;
+  // 提交时间
+  submittedAt: string;
+  // 内容
+  type: SubmissionType;
   title: string;
   description?: string;
-  // type=file/image
+  // type=course
+  courseId?: string;       // 引用教师自己课程库里的课程 ID
+  courseCover?: string;    // 快照（避免课程改动影响历史提交）
+  courseSubject?: string;
+  courseGrade?: string;
+  // type=file
   fileUrl?: string;
   fileName?: string;
-  // type=link
-  externalUrl?: string;
+  fileSize?: number;
+  fileFormat?: string;
+  // type=image
+  imageUrl?: string;
   // type=text
-  content?: string;
+  content?: string;        // 心得正文（Markdown）
 }
 
-export interface WorkshopParticipant {
-  id: string;
-  name: string;
-  school?: string;         // 所在学校
-  subject?: string;        // 学科
-  avatar?: string;
-  bio?: string;            // 个人简介
-  outcomes: WorkshopParticipantOutcome[];  // 该老师在本次工作坊的成果
-}
-
-// ---- 关联的学习资源（可选，从资源库勾选） ----
-export interface WorkshopLinkedResource {
-  id: string;              // Resource.id
-  title: string;
-  description?: string;
-  section: 'master-class' | 'interactive-tool' | 'learning-resource';
-  // 展示时按 ResourceCard 的模式，点击直接打开学习资源的预览弹窗
-}
-
-// ---- 关联的课程 ----
+// ---- 关联的课程（可选，作为示范课）----
+// 由后台运营配置，来自平台已有课程库
 export interface WorkshopLinkedCourse {
   id: string;              // course.id
-  title: string;           // 课程名
+  title: string;
   description?: string;
   coverImage?: string;
-  subject?: string;        // 学科
-  grade?: string;          // 年级
+  subject?: string;
+  grade?: string;
 }
 
 // ---- 主体：工作坊 ----
@@ -112,13 +117,13 @@ export interface Workshop {
   location: string;                 // 线下地址
   // 分类
   tags: string[];
-  // 可选内容板块（全部选填）
-  linkedCourses?: WorkshopLinkedCourse[];   // 关联课程
-  linkedResources?: WorkshopLinkedResource[]; // 关联学习资源（勾选自资源库）
-  materials?: WorkshopMaterial[];    // 培训资料（本场专属）
-  photos?: WorkshopPhoto[];          // 活动相册
-  videos?: WorkshopVideo[];          // 活动视频
-  participants?: WorkshopParticipant[]; // 参会老师及成果
+  // 后台配置的可选内容板块（全部选填）
+  linkedCourses?: WorkshopLinkedCourse[];   // 关联课程（示范课，运营配置）
+  materials?: WorkshopMaterial[];    // 培训资料（本场专属，运营上传）
+  photos?: WorkshopPhoto[];          // 活动相册（运营上传合影/花絮）
+  videos?: WorkshopVideo[];          // 活动视频（运营上传录像/回放）
+  // 教师本人提交的内容（不由后台运营录入）
+  submissions?: TeacherSubmission[];  // 参会教师提交的作品
   // 状态
   status: WorkshopStatus;
   isCancelled: boolean;
@@ -266,14 +271,6 @@ export const mockWorkshops: Workshop[] = [
         grade: '五年级',
       },
     ],
-    linkedResources: [
-      {
-        id: 'res_kwl_template',
-        title: 'KWL 图表模板包',
-        description: '10 种学科变体，可直接课堂使用',
-        section: 'learning-resource',
-      },
-    ],
     materials: [
       {
         id: 'mat_004_1',
@@ -310,57 +307,65 @@ export const mockWorkshops: Workshop[] = [
         duration: '58:12',
       },
     ],
-    participants: [
+    submissions: [
       {
-        id: 'p_001',
-        name: '陈小蓝',
-        school: '深圳中学',
-        subject: '语文',
-        bio: '10 年教龄，热衷课堂创新',
-        outcomes: [
-          {
-            id: 'out_001_1',
-            type: 'file',
-            title: '古诗单元形成性评价方案',
-            description: '包含 4 个嵌入式评价点',
-            fileName: '古诗评价方案.pdf',
-            fileUrl: '#',
-          },
-          {
-            id: 'out_001_2',
-            type: 'image',
-            title: '学生思维可视化作品拼贴',
-            fileUrl: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800&h=600&fit=crop',
-          },
-        ],
+        id: 'sub_001',
+        teacherId: 't_chen',
+        teacherName: '陈小蓝',
+        teacherSchool: '深圳中学',
+        teacherSubject: '语文',
+        submittedAt: '2025-11-06T14:30:00.000Z',
+        type: 'course',
+        title: '古诗单元 · 形成性评价改版',
+        description: '参加工作坊后，我把这一单元的 4 个课时都嵌入了形成性评价点',
+        courseId: '1',
+        courseSubject: '语文',
+        courseGrade: '八年级',
       },
       {
-        id: 'p_002',
-        name: '林晓明',
-        school: '广州执信中学',
-        subject: '数学',
-        outcomes: [
-          {
-            id: 'out_002_1',
-            type: 'link',
-            title: '在线互动课件（分数概念）',
-            externalUrl: 'https://example.com/interactive',
-          },
-        ],
+        id: 'sub_002',
+        teacherId: 't_chen',
+        teacherName: '陈小蓝',
+        teacherSchool: '深圳中学',
+        teacherSubject: '语文',
+        submittedAt: '2025-11-07T09:15:00.000Z',
+        type: 'image',
+        title: '学生思维可视化作品拼贴',
+        description: '课堂上让学生用 KWL 图梳理，最后把作品拍照拼贴',
+        imageUrl: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800&h=600&fit=crop',
       },
       {
-        id: 'p_003',
-        name: '张思远',
-        school: '广州市第二中学',
-        subject: '物理',
-        outcomes: [
-          {
-            id: 'out_003_1',
-            type: 'text',
-            title: '培训感悟：从"考"到"评"',
-            content: '过去我总是想着怎么设计试题去"考"学生，这次工作坊让我真正理解了评价是为了改进教学……',
-          },
-        ],
+        id: 'sub_003',
+        teacherId: 't_lin',
+        teacherName: '林晓明',
+        teacherSchool: '广州执信中学',
+        teacherSubject: '数学',
+        submittedAt: '2025-11-06T16:20:00.000Z',
+        type: 'file',
+        title: '分数概念评价方案（含量规）',
+        fileName: '分数概念评价.pdf',
+        fileFormat: 'pdf',
+        fileSize: 850000,
+        fileUrl: '#',
+      },
+      {
+        id: 'sub_004',
+        teacherId: 't_zhang',
+        teacherName: '张思远',
+        teacherSchool: '广州市第二中学',
+        teacherSubject: '物理',
+        submittedAt: '2025-11-07T20:00:00.000Z',
+        type: 'text',
+        title: '培训感悟：从"考"到"评"',
+        content: `# 培训感悟：从"考"到"评"
+
+过去我总是想着怎么设计试题去**"考"**学生，这次工作坊让我真正理解了评价是为了改进教学。
+
+## 三点收获
+
+1. **评价即学习**：形成性评价不是额外的负担
+2. **反馈的时效**：延迟反馈的价值远低于即时反馈
+3. **学生自评**：让学生成为评价的主体`,
       },
     ],
     status: 'completed',

@@ -8,16 +8,14 @@ import type {
   WorkshopMaterial,
   WorkshopPhoto,
   WorkshopVideo,
-  WorkshopParticipant,
   WorkshopLinkedCourse,
-  WorkshopLinkedResource,
 } from '@/data/mockWorkshopData'
 import { calculateWorkshopStatus } from '@/data/mockWorkshopData'
 import MaterialListEditor from './MaterialListEditor'
 import InstructorListEditor from './InstructorListEditor'
 import PhotoListEditor from './PhotoListEditor'
 import VideoListEditor from './VideoListEditor'
-import ParticipantListEditor from './ParticipantListEditor'
+import AgendaEditor from './AgendaEditor'
 
 interface WorkshopFormProps {
   mode: 'create' | 'edit'
@@ -42,9 +40,7 @@ export default function WorkshopForm({ mode, initialData, onSave }: WorkshopForm
   const [materials, setMaterials] = useState<WorkshopMaterial[]>(initialData?.materials || [])
   const [photos, setPhotos] = useState<WorkshopPhoto[]>(initialData?.photos || [])
   const [videos, setVideos] = useState<WorkshopVideo[]>(initialData?.videos || [])
-  const [participants, setParticipants] = useState<WorkshopParticipant[]>(initialData?.participants || [])
   const [linkedCourses, setLinkedCourses] = useState<WorkshopLinkedCourse[]>(initialData?.linkedCourses || [])
-  const [linkedResources, setLinkedResources] = useState<WorkshopLinkedResource[]>(initialData?.linkedResources || [])
 
   const [errors, setErrors] = useState<Record<string, string>>({})
 
@@ -88,11 +84,10 @@ export default function WorkshopForm({ mode, initialData, onSave }: WorkshopForm
       location: location.trim(),
       tags,
       linkedCourses: linkedCourses.length ? linkedCourses : undefined,
-      linkedResources: linkedResources.length ? linkedResources : undefined,
       materials: materials.length ? materials : undefined,
       photos: photos.length ? photos : undefined,
       videos: videos.length ? videos : undefined,
-      participants: participants.length ? participants : undefined,
+      // submissions 由教师本人在教师端提交，后台仅查看，不在此配置
       isCancelled,
     })
   }
@@ -302,16 +297,9 @@ export default function WorkshopForm({ mode, initialData, onSave }: WorkshopForm
               <div className="w-1 h-5 bg-gray-300 rounded" />
               <h2 className="text-base font-semibold text-gray-900">活动规划</h2>
               <span className="text-xs text-gray-400 ml-1">选填</span>
-              <span className="text-xs text-gray-400 ml-auto">日程、大纲等长文本；不填则不显示</span>
+              <span className="text-xs text-gray-400 ml-auto">日程、大纲等长文本（Markdown）；不填则不显示</span>
             </div>
-            <textarea
-              value={agenda}
-              onChange={(e) => setAgenda(e.target.value)}
-              rows={8}
-              placeholder="例：&#10;Day 1（上午）：开场 + 理论&#10;Day 1（下午）：小组研讨&#10;Day 2：分组产出与汇报"
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors font-mono text-sm resize-y"
-            />
-            <p className="text-xs text-gray-400 mt-2">支持换行；教师端按原文展示。</p>
+            <AgendaEditor value={agenda} onChange={setAgenda} />
           </div>
 
           {/* 培训资料 - 选填 */}
@@ -347,56 +335,44 @@ export default function WorkshopForm({ mode, initialData, onSave }: WorkshopForm
             <VideoListEditor videos={videos} onChange={setVideos} />
           </div>
 
-          {/* 参会老师及成果 - 选填 */}
+          {/* 关联课程 - 选填 */}
           <div className="bg-white rounded-2xl border border-gray-100 p-6">
             <div className="flex items-center gap-2 pb-3 mb-4 border-b border-gray-100">
               <div className="w-1 h-5 bg-gray-300 rounded" />
-              <h2 className="text-base font-semibold text-gray-900">参会老师及成果</h2>
+              <h2 className="text-base font-semibold text-gray-900">关联课程</h2>
               <span className="text-xs text-gray-400 ml-1">选填</span>
-              <span className="text-xs text-gray-400 ml-auto">按老师分组展示其工作坊产出</span>
+              <span className="text-xs text-gray-400 ml-auto">作为示范课或配套课程</span>
             </div>
-            <ParticipantListEditor participants={participants} onChange={setParticipants} />
+            <p className="text-xs text-gray-400 mb-3">通过课程 ID 关联平台已有课程（研发阶段接入课程库下拉选择）</p>
+            <SimpleLinkedListEditor
+              items={linkedCourses}
+              onChange={setLinkedCourses}
+              fields={[
+                { key: 'id', label: '课程 ID', required: true, placeholder: 'course_001' },
+                { key: 'title', label: '课程名', required: true, placeholder: '如：物理·浮力探究单元' },
+                { key: 'subject', label: '学科', placeholder: '物理' },
+                { key: 'grade', label: '年级', placeholder: '八年级' },
+                { key: 'description', label: '描述', placeholder: '一句话说明' },
+              ]}
+              emptyText="暂无关联课程"
+            />
           </div>
 
-          {/* 关联课程 & 学习资源 - 选填 */}
-          <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-5">
-            <div className="flex items-center gap-2 pb-3 border-b border-gray-100">
-              <div className="w-1 h-5 bg-gray-300 rounded" />
-              <h2 className="text-base font-semibold text-gray-900">关联内容</h2>
-              <span className="text-xs text-gray-400 ml-1">选填</span>
-            </div>
-
-            <div>
-              <div className="text-sm font-medium text-gray-700 mb-2">关联课程</div>
-              <p className="text-xs text-gray-400 mb-3">通过课程 ID 关联（暂用手动录入，后续接入课程库）</p>
-              <SimpleLinkedListEditor
-                items={linkedCourses}
-                onChange={setLinkedCourses}
-                fields={[
-                  { key: 'id', label: '课程 ID', required: true, placeholder: 'course_001' },
-                  { key: 'title', label: '课程名', required: true, placeholder: '如：物理·浮力探究单元' },
-                  { key: 'subject', label: '学科', placeholder: '物理' },
-                  { key: 'grade', label: '年级', placeholder: '八年级' },
-                  { key: 'description', label: '描述', placeholder: '一句话说明' },
-                ]}
-                emptyText="暂无关联课程"
-              />
-            </div>
-
-            <div>
-              <div className="text-sm font-medium text-gray-700 mb-2">关联学习资源</div>
-              <p className="text-xs text-gray-400 mb-3">从学习资源库勾选（暂用手动录入 ID）</p>
-              <SimpleLinkedListEditor
-                items={linkedResources}
-                onChange={setLinkedResources}
-                fields={[
-                  { key: 'id', label: '资源 ID', required: true, placeholder: 'res_001' },
-                  { key: 'title', label: '资源标题', required: true, placeholder: '如：C-POTE 模型详解' },
-                  { key: 'section', label: '所属板块', required: true, placeholder: 'master-class / interactive-tool / learning-resource' },
-                  { key: 'description', label: '描述', placeholder: '一句话说明' },
-                ]}
-                emptyText="暂无关联资源"
-              />
+          {/* 教师作品说明 - 只读提示 */}
+          <div className="bg-blue-50 rounded-2xl border border-blue-100 p-5">
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center flex-shrink-0">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div className="text-sm">
+                <div className="font-medium text-blue-900 mb-1">教师作品由老师本人提交</div>
+                <p className="text-blue-700 leading-relaxed">
+                  参会老师会在教师端工作坊详情页点击&ldquo;提交我的作品&rdquo;上传成果（可从个人课程库选、上传文件、图片或写心得）。
+                  后台仅可查看/下架不当内容，不在此处录入。
+                </p>
+              </div>
             </div>
           </div>
 

@@ -9,7 +9,7 @@ import {
   type WorkshopMaterial,
   type WorkshopPhoto,
   type WorkshopVideo,
-  type WorkshopParticipantOutcome,
+  type TeacherSubmission,
 } from '@/data/mockWorkshopData'
 
 import { formatDateRange } from './_components/detailHelpers'
@@ -17,18 +17,26 @@ import {
   MaterialPreview,
   PhotoPreview,
   VideoPreview,
-  OutcomePreview,
+  SubmissionPreview,
 } from './_components/PreviewModals'
 import {
   InstructorsSection,
   AgendaSection,
   LinkedCoursesSection,
-  LinkedResourcesSection,
   MaterialsSection,
   PhotosSection,
   VideosSection,
-  ParticipantsSection,
+  SubmissionsSection,
 } from './_components/DetailSections'
+import SubmitWorkModal from './_components/SubmitWorkModal'
+
+// 模拟当前登录教师（实际应从 auth 获取）
+const CURRENT_TEACHER = {
+  id: 't_current',
+  name: '当前老师',
+  school: '示例中学',
+  subject: '语文',
+}
 
 export default function WorkshopDetailPage() {
   const params = useParams()
@@ -38,7 +46,10 @@ export default function WorkshopDetailPage() {
   const [previewMaterial, setPreviewMaterial] = useState<WorkshopMaterial | null>(null)
   const [previewPhoto, setPreviewPhoto] = useState<WorkshopPhoto | null>(null)
   const [previewVideo, setPreviewVideo] = useState<WorkshopVideo | null>(null)
-  const [previewOutcome, setPreviewOutcome] = useState<WorkshopParticipantOutcome | null>(null)
+  const [previewSubmission, setPreviewSubmission] = useState<TeacherSubmission | null>(null)
+  const [showSubmit, setShowSubmit] = useState(false)
+  // 本地内存维护教师提交（原型行为，刷新丢失）
+  const [localSubmissions, setLocalSubmissions] = useState<TeacherSubmission[]>(workshop?.submissions || [])
 
   if (!workshop) {
     return (
@@ -57,6 +68,20 @@ export default function WorkshopDetailPage() {
   }
 
   const statusMeta = WORKSHOP_STATUS_META[workshop.status]
+
+  const handleSubmit = (submission: Omit<TeacherSubmission, 'id' | 'submittedAt' | 'teacherId' | 'teacherName' | 'teacherSchool' | 'teacherSubject'>) => {
+    const full: TeacherSubmission = {
+      ...submission,
+      id: `sub_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      submittedAt: new Date().toISOString(),
+      teacherId: CURRENT_TEACHER.id,
+      teacherName: CURRENT_TEACHER.name,
+      teacherSchool: CURRENT_TEACHER.school,
+      teacherSubject: CURRENT_TEACHER.subject,
+    }
+    setLocalSubmissions([...localSubmissions, full])
+    setShowSubmit(false)
+  }
 
   return (
     <div className="min-h-full bg-gradient-to-b from-primary-50/30 to-white">
@@ -108,14 +133,11 @@ export default function WorkshopDetailPage() {
           </div>
         </section>
 
-        {/* 各内容板块（无内容自动隐藏） */}
+        {/* 各板块：无内容自动隐藏 */}
         {workshop.instructors.length > 0 && <InstructorsSection instructors={workshop.instructors} />}
         {workshop.agenda?.trim() && <AgendaSection agenda={workshop.agenda} />}
         {workshop.linkedCourses && workshop.linkedCourses.length > 0 && (
           <LinkedCoursesSection courses={workshop.linkedCourses} />
-        )}
-        {workshop.linkedResources && workshop.linkedResources.length > 0 && (
-          <LinkedResourcesSection resources={workshop.linkedResources} />
         )}
         {workshop.materials && workshop.materials.length > 0 && (
           <MaterialsSection materials={workshop.materials} onPreview={setPreviewMaterial} />
@@ -126,9 +148,14 @@ export default function WorkshopDetailPage() {
         {workshop.videos && workshop.videos.length > 0 && (
           <VideosSection videos={workshop.videos} onPreview={setPreviewVideo} />
         )}
-        {workshop.participants && workshop.participants.length > 0 && (
-          <ParticipantsSection participants={workshop.participants} onPreviewOutcome={setPreviewOutcome} />
-        )}
+
+        {/* 教师作品区 —— 永远展示（因为要显示"提交我的作品"入口） */}
+        <SubmissionsSection
+          submissions={localSubmissions}
+          onPreview={setPreviewSubmission}
+          currentTeacherId={CURRENT_TEACHER.id}
+          onOpenSubmit={() => setShowSubmit(true)}
+        />
       </div>
 
       {/* 预览弹窗 */}
@@ -141,8 +168,14 @@ export default function WorkshopDetailPage() {
       {previewVideo && (
         <VideoPreview video={previewVideo} onClose={() => setPreviewVideo(null)} />
       )}
-      {previewOutcome && (
-        <OutcomePreview outcome={previewOutcome} onClose={() => setPreviewOutcome(null)} />
+      {previewSubmission && (
+        <SubmissionPreview submission={previewSubmission} onClose={() => setPreviewSubmission(null)} />
+      )}
+      {showSubmit && (
+        <SubmitWorkModal
+          onSubmit={handleSubmit}
+          onClose={() => setShowSubmit(false)}
+        />
       )}
     </div>
   )
